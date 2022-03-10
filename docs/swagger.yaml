@@ -1,0 +1,320 @@
+definitions:
+  block.ErrRes:
+    properties:
+      err:
+        description: 错误信息
+        type: string
+    type: object
+  block.GetBlockReq:
+    properties:
+      block_number:
+        description: 区块号
+        type: string
+    type: object
+  block.GetBlockRes:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/database.Block'
+      msg:
+        type: string
+    type: object
+  block.GetReceiptsRes:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/database.TxLog'
+        type: array
+      msg:
+        type: string
+    type: object
+  block.GetTxReq:
+    properties:
+      tx_hash:
+        description: 交易hash
+        type: string
+    type: object
+  block.GetTxRes:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/database.Transaction'
+      msg:
+        type: string
+    type: object
+  block.PageReq:
+    properties:
+      page:
+        description: 页
+        type: integer
+      page_size:
+        description: 页码
+        type: integer
+    type: object
+  block.TxPageReq:
+    properties:
+      address:
+        description: 地址 不区分传 ""
+        type: string
+      block_number:
+        description: 区块号 不区分
+        type: string
+      page:
+        description: 页
+        type: integer
+      page_size:
+        description: 页码
+        type: integer
+      tx_type:
+        description: 交易类型  如ERC20  ERC1155 ERC721  internal  不区分传""
+        type: string
+    type: object
+  block.ViewBlocksRes:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/database.Block'
+        type: array
+      msg:
+        type: string
+      total:
+        type: integer
+    type: object
+  block.ViewTxsRes:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/database.Transaction'
+        type: array
+      msg:
+        type: string
+      total:
+        type: integer
+    type: object
+  database.Block:
+    properties:
+      difficulty:
+        type: string
+      extraData:
+        type: string
+      gasLimit:
+        type: string
+      gasUsed:
+        type: string
+      miner:
+        type: string
+      mixHash:
+        type: string
+      number:
+        type: string
+      parentHash:
+        type: string
+      receiptsRoot:
+        type: string
+      sha3Uncles:
+        type: string
+      size:
+        type: string
+      stateRoot:
+        type: string
+      timestamp:
+        type: string
+      transactionsRoot:
+        type: string
+      tx_count:
+        type: integer
+    type: object
+  database.Transaction:
+    properties:
+      blockHash:
+        type: string
+      blockNumber:
+        type: string
+      from:
+        type: string
+      gas:
+        type: string
+      gasPrice:
+        type: string
+      hash:
+        type: string
+      input:
+        type: string
+      internal_calls:
+        type: string
+      internal_value_transfer:
+        type: string
+      nonce:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+      to:
+        type: string
+      token_transfer:
+        type: string
+      transactionIndex:
+        type: string
+      tx_type:
+        type: string
+      value:
+        type: string
+    type: object
+  database.TxLog:
+    properties:
+      address:
+        type: string
+      data:
+        type: string
+      topics:
+        type: string
+      tx_hash:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact: {}
+  description: 区块链浏览器
+  title: Gin swagger
+  version: "1.0"
+paths:
+  /block/getBlock:
+    get:
+      consumes:
+      - application/json
+      description: 查询区块
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/block.GetBlockReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/block.GetBlockRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/block.ErrRes'
+      summary: 查询区块
+      tags:
+      - 区块查询
+  /block/getTransaction:
+    get:
+      consumes:
+      - application/json
+      description: 查询交易
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/block.GetTxReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/block.GetTxRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/block.ErrRes'
+      summary: 查询交易
+      tags:
+      - 区块查询
+  /block/getTransactionLogs:
+    get:
+      consumes:
+      - application/json
+      description: 查询收据
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/block.GetTxReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/block.GetReceiptsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/block.ErrRes'
+      summary: 查询收据
+      tags:
+      - 区块查询
+  /block/viewBlocks:
+    get:
+      consumes:
+      - application/json
+      description: 查询区块列表
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/block.PageReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/block.ViewBlocksRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/block.ErrRes'
+      summary: 查询区块列表
+      tags:
+      - 区块查询
+  /block/viewTransactions:
+    get:
+      consumes:
+      - application/json
+      description: 查询交易列表
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/block.TxPageReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/block.ViewTxsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/block.ErrRes'
+      summary: 查询交易列表
+      tags:
+      - 区块查询
+swagger: "2.0"
