@@ -9,10 +9,10 @@ type ErrRes struct {
 type CheckAuthRes struct {
 	Code   int64  `json:"code" `
 	Msg    string `json:"msg"`
-	Result uint64 `json:"result" ` //0 no exchange 1 no fee  2 normal
+	Result uint64 `json:"result" ` //0 没有创建过交易所 1 欠费  2 交易所状态正常
 }
 
 // CheckAuthReq 请求
 type CheckAuthReq struct {
-	Address string `form:"address" json:"address"` //区块号
+	Address string `form:"address" json:"address"` //地址
 }
