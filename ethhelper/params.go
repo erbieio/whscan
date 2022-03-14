@@ -24,7 +24,6 @@ const from = "0x077d34394Ed01b3f31fBd9816cF35d4558146066"
 
 type CallParamTemp struct {
 	To   string `json:"to"`
-
 	Data string `json:"data"`
 }
 

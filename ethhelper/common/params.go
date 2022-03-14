@@ -2,7 +2,7 @@ package common
 
 const (
 	//mainPoint = "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-	MainPoint = "http://192.168.1.235:8546"
+	MainPoint = "http://192.168.1.235:8546/"
 	//MainPoint        = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 	InfraPoint  = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 	erc721      = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
@@ -10,12 +10,16 @@ const (
 	NFT1155Addr = "0xA1e67a33e090Afe696D7317e05c506d7687Bb2E5"
 
 	IsApproveForAllHash = "0xe985e9c5"
-	GetApproved721Hash  = "0x081812fc"
-	BalanceOf1155Hash   = "0x00fdd58e"
-	OwnerOf721Hash      = "0x6352211e"
+
+	GetApproved721Hash = "0x081812fc"
+	BalanceOf1155Hash  = "0x00fdd58e"
+	OwnerOf721Hash     = "0x6352211e"
 
 	Erc721Interface  = "80ac58cd"
 	Erc1155Interface = "d9b67a26"
+
+	ERBPayAddress = "0xECF23b1BFEA048EDB22CD7a0D26A2f86923a29Ad"
+	CheckAuthHash = "0x4b165090"
 )
 const (
 	WETH          = "0xf4bb2e28688e89fcce3c0580d37d36a7672e8a9f"

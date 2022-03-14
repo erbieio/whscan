@@ -1,0 +1,65 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					}
+				],
+				"name": "timestampToHour",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "_hours",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/tools/Time.sol": "TimetampToHour"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/tools/Time.sol": {
+			"keccak256": "0xb001422f882a70c26c3fb13e0519379e92dda02f3f932f748d0e97060a724177",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://3ea060e41708a48271e75b70a9c3244251bdfd2082f58eb78751d1c0bc7077b4",
+				"dweb:/ipfs/Qme3JKSLoi9dqA7ZRA1LgqEHr8whh4vBPXC4MzpXguUQ2R"
+			]
+		}
+	},
+	"version": 1
+}

@@ -9,7 +9,7 @@ import (
 
 
 func TestTxCount(t *testing.T) {
-	c, err := TransactionCount("0x077d34394Ed01b3f31fBd9816cF35d4558146066")
+	c, err := CheckAuth("0x10CEc672c6BB2f6782BEED65987E020902B7bD15")
 	fmt.Println(c, err)
 }
 func TestTransactionReceipt(t *testing.T) {

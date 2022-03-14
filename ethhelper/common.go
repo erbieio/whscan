@@ -92,6 +92,28 @@ func Decimals(contract string) (uint64, error) {
 		return tmp.Uint64(), nil
 	}
 }
+func CheckAuth(addr string) (uint64, error) {
+	var tmp big.Int
+	payload := make([]byte, 36)
+
+	tmp.SetString(common.CheckAuthHash, 0)
+	copy(payload[:4], tmp.Bytes())
+	tmp.SetString(addr, 0)
+	copy(payload[36-len(tmp.Bytes()):], tmp.Bytes())
+	params := CallParamTemp{To: common.ERBPayAddress, Data: "0x" + hex.EncodeToString(payload)}
+	jsonData, err := json.Marshal(params)
+	if err != nil {
+		return 0, errors.New("Umarshal failed:" + err.Error() + string(jsonData))
+	}
+	fmt.Println(string(jsonData))
+	var ret string
+	if err = client.Call(&ret, "eth_call", params, "latest"); err != nil {
+		return 0, errors.New("Call failed:" + err.Error())
+	} else {
+		tmp.SetString(ret, 0)
+		return tmp.Uint64(), nil
+	}
+}
 
 func TransactionCount(addr string) (count int64, err error) {
 	var c string

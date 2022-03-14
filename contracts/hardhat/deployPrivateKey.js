@@ -1,0 +1,4 @@
+const deployPriKey="0x5949add40dd8d8114ecf232eaa924963dc743762f61246251ba5c9f30a47e72d"
+
+
+exports.deployPriKey = deployPriKey

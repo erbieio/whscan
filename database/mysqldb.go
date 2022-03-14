@@ -11,9 +11,9 @@ import (
 var DB *gorm.DB
 
 func init() {
-	//NewMysqlDb()
-	////同步表结构
-	//migrate(DB)
+	NewMysqlDb()
+	//同步表结构
+	migrate(DB)
 }
 
 func migrate(db *gorm.DB) error {

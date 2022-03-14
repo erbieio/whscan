@@ -3,11 +3,13 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"server/handlers/block"
+	"server/handlers/extra"
 	"server/middleware"
 )
 
 func init() {
 	include(block.Routers)
+	include(extra.Routers)
 }
 
 type Option func(*gin.Engine)
