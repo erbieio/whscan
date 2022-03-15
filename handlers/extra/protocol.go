@@ -7,7 +7,7 @@ type ErrRes struct {
 
 // CheckAuthRes 返回
 type CheckAuthRes struct {
-	Code   int64  `json:"code" `
+	Code   int64  `json:"code"` //0 成功  其他失败
 	Msg    string `json:"msg"`
 	Result uint64 `json:"result" ` //0 没有创建过交易所 1 欠费  2 交易所状态正常
 }

@@ -144,7 +144,7 @@
 			},
 			{
 				"inputs": [],
-				"name": "payForOpenRenew",
+				"name": "payForRenew",
 				"outputs": [],
 				"stateMutability": "payable",
 				"type": "function"
@@ -293,11 +293,11 @@
 			]
 		},
 		"contracts/tokens/ERBPay.sol": {
-			"keccak256": "0xad717c7071ef52e4c3677ad8ca3f35b5af7ea5d5ec65e2cfb2da93e1ca0bb6e0",
+			"keccak256": "0xe473c351e39d9a099f3547cb18bbb267b53160778ec72094069b2485b875b125",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://948c534d5f60e73574fc1add18a6a43585f28711c841ee3e21143eb20fc0b8f3",
-				"dweb:/ipfs/QmdRCUtza2Kn53NT3sqj8L1eXkzpZGkiVYBk7BPvrtu6Ne"
+				"bzz-raw://a7d22de9be2bcce3b987716aebd0b5f95351fc440f63d45b56798a9c69ad9fa0",
+				"dweb:/ipfs/QmZZGSEfxRGC34sqLuJEyfSDj26jxkF7C4WS5PQCyrv73m"
 			]
 		}
 	},

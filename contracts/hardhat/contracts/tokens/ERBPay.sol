@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ERBPay is Ownable{
-    uint256 yearFee=200;
-    uint256 otherFee=100;
+    uint256 yearFee=200*1e18;
+    uint256 otherFee=100*1e18;
     address public yearFeeAddress;
     address public otherFeeAddress;
     mapping(address=>uint256)public endTime;
@@ -38,7 +38,7 @@ contract ERBPay is Ownable{
        emit PayForOpenExchange(msg.sender,msg.value);
     }
 
-    function payForOpenRenew()external payable{
+    function payForRenew()external payable{
        require(msg.value == yearFee,"msg.value invalid");
        require(endTime[msg.sender] !=0 ,"no exchange exist");
        payable(yearFeeAddress).transfer(yearFee);
@@ -47,7 +47,7 @@ contract ERBPay is Ownable{
     }
 
     //0 no exchange 1 no fee  2 normal
-    function checkAuth(address addr)view external returns(uint256){
+    function checkAuth(address addr)view public returns(uint256){
         if(endTime[addr]==0){
            return 0;
         }else if(endTime[addr]<block.timestamp){
@@ -55,6 +55,7 @@ contract ERBPay is Ownable{
         }
         return 2;
     }
+    
     fallback() payable external {}
     receive() payable external {}
 }

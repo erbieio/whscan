@@ -10,9 +10,9 @@ func Routers(e *gin.Engine) {
 	e.GET("/extra/checkAuth", checkAuth)
 }
 
-// @Tags  区块查询
-// @Summary 查询区块
-// @Description 查询区块
+// @Tags  其他接口
+// @Summary 查询交易所状态
+// @Description 查询交易所状态
 // @Accept json
 // @Produce json
 // @Param body body CheckAuthReq true "body"

@@ -9,7 +9,7 @@ import (
 
 
 func TestTxCount(t *testing.T) {
-	c, err := CheckAuth("0x10CEc672c6BB2f6782BEED65987E020902B7bD15")
+	c, err := CheckAuth("0x70228A292b35d276cc19D5Ffe6CB9C4AF6f3aeC7")
 	fmt.Println(c, err)
 }
 func TestTransactionReceipt(t *testing.T) {
@@ -25,9 +25,9 @@ func TestSendDealAuctionTx(t *testing.T) {
 }
 func TestGetBlock(t *testing.T) {
 	var b big.Int
-	b.SetString("9358322", 0)
+	b.SetString("10000", 0)
 	s := hex.EncodeToString(b.Bytes())
-	GetBlock("0x" + s)
+	fmt.Println(GetBlock("0x" + s))
 }
 func TestGenCreateNftSign(t *testing.T) {
 	GenCreateNftSign("0xEe501cc4eC6d23cfdEE5eD297FEB3016B5cC7E9D", "0x40eF9242BaDa1A92a917E8aa8aF70e635455dd5F", "abcd", "8", "1", "1000")
