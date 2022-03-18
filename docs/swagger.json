@@ -1,12 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "区块链浏览器",
+        "description": "区块链监控程序后端",
         "title": "Gin swagger",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:3000",
+    "host": "192.168.1.237:3001",
     "paths": {
         "/block/getBlock": {
             "get": {
@@ -203,6 +203,46 @@
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/block.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/extra/checkAuth": {
+            "get": {
+                "description": "查询交易所状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "其他接口"
+                ],
+                "summary": "查询交易所状态",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/extra.CheckAuthReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/extra.CheckAuthRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/extra.ErrRes"
                         }
                     }
                 }
@@ -479,6 +519,54 @@
                     "type": "string"
                 },
                 "tx_hash": {
+                    "type": "string"
+                }
+            }
+        },
+        "extra.CheckAuthReq": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "地址",
+                    "type": "string"
+                }
+            }
+        },
+        "extra.CheckAuthRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "0 成功  其他失败",
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/extra.CheckAuthResData"
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "extra.CheckAuthResData": {
+            "type": "object",
+            "properties": {
+                "exchanger_balance": {
+                    "type": "string"
+                },
+                "exchanger_flag": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "2 交易所付费状态正常  其他数字为欠费或者没交费",
+                    "type": "integer"
+                }
+            }
+        },
+        "extra.ErrRes": {
+            "type": "object",
+            "properties": {
+                "err": {
+                    "description": "错误信息",
                     "type": "string"
                 }
             }

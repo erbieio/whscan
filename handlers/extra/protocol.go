@@ -7,9 +7,15 @@ type ErrRes struct {
 
 // CheckAuthRes 返回
 type CheckAuthRes struct {
-	Code   int64  `json:"code"` //0 成功  其他失败
-	Msg    string `json:"msg"`
-	Result uint64 `json:"result" ` //0 没有创建过交易所 1 欠费  2 交易所状态正常
+	Code int64            `json:"code"` //0 成功  其他失败
+	Msg  string           `json:"msg"`
+	Data CheckAuthResData `json:"data" `
+}
+
+type CheckAuthResData struct {
+	Status           uint64 `json:"status"` //2 交易所付费状态正常  其他数字为欠费或者没交费
+	ExchangerFlag    bool   `json:"exchanger_flag"`
+	ExchangerBalance string `json:"exchanger_balance" `
 }
 
 // CheckAuthReq 请求

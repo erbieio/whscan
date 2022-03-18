@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.7+commit.e28d00a7"
+		"version": "0.8.13+commit.abaa5c0e"
 	},
 	"language": "Solidity",
 	"output": {
@@ -27,25 +27,6 @@
 					}
 				],
 				"name": "OwnershipTransferred",
-				"type": "event"
-			},
-			{
-				"anonymous": false,
-				"inputs": [
-					{
-						"indexed": true,
-						"internalType": "address",
-						"name": "sender",
-						"type": "address"
-					},
-					{
-						"indexed": false,
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					}
-				],
-				"name": "PayForOpenExchange",
 				"type": "event"
 			},
 			{
@@ -111,19 +92,6 @@
 			},
 			{
 				"inputs": [],
-				"name": "otherFeeAddress",
-				"outputs": [
-					{
-						"internalType": "address",
-						"name": "",
-						"type": "address"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
 				"name": "owner",
 				"outputs": [
 					{
@@ -137,13 +105,6 @@
 			},
 			{
 				"inputs": [],
-				"name": "payForOpenExchange",
-				"outputs": [],
-				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
 				"name": "payForRenew",
 				"outputs": [],
 				"stateMutability": "payable",
@@ -152,32 +113,6 @@
 			{
 				"inputs": [],
 				"name": "renounceOwnership",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "amount",
-						"type": "uint256"
-					}
-				],
-				"name": "setOtherFee",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_addr",
-						"type": "address"
-					}
-				],
-				"name": "setOtherFeeAddress",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -270,7 +205,7 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": false,
+			"enabled": true,
 			"runs": 200
 		},
 		"remappings": []
@@ -293,11 +228,11 @@
 			]
 		},
 		"contracts/tokens/ERBPay.sol": {
-			"keccak256": "0xe473c351e39d9a099f3547cb18bbb267b53160778ec72094069b2485b875b125",
+			"keccak256": "0x3b17dc8b972d80133327c15bb6cdc3bb4b45c08b9c6822143b44be172b20d204",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://a7d22de9be2bcce3b987716aebd0b5f95351fc440f63d45b56798a9c69ad9fa0",
-				"dweb:/ipfs/QmZZGSEfxRGC34sqLuJEyfSDj26jxkF7C4WS5PQCyrv73m"
+				"bzz-raw://80f36fcc8917098a4707b2bc12d1e31e9c677bd67a249c66ac953a8e6c049f7b",
+				"dweb:/ipfs/QmbZPnGEeJajVgNYwGUv4CCDF5ugapxRRz7wgNnNbFxZSx"
 			]
 		}
 	},

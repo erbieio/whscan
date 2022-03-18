@@ -2,7 +2,7 @@ package common
 
 const (
 	//mainPoint = "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-	MainPoint = "http://192.168.1.235:8555/"
+	MainPoint = "http://192.168.1.235:8561/"
 	//MainPoint        = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 	InfraPoint  = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 	erc721      = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
@@ -18,7 +18,7 @@ const (
 	Erc721Interface  = "80ac58cd"
 	Erc1155Interface = "d9b67a26"
 
-	ERBPayAddress = "0x11fDA554BEc658E85AD41005c11C72141f9F5694"
+	ERBPayAddress = "0x782936e5A3d929e5536AF48EC85546c4857c70eB"
 	CheckAuthHash = "0x4b165090"
 )
 const (

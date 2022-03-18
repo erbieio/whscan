@@ -6,63 +6,7 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [
-					{
-						"internalType": "string",
-						"name": "name_",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "symbol_",
-						"type": "string"
-					},
-					{
-						"internalType": "address",
-						"name": "_seed",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_early",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_private1",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_private2",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_team",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_developers",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_foundation",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_community",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_nftExchange",
-						"type": "address"
-					}
-				],
+				"inputs": [],
 				"stateMutability": "nonpayable",
 				"type": "constructor"
 			},
@@ -379,12 +323,6 @@
 				},
 				"totalSupply()": {
 					"details": "Returns the amount of tokens in existence."
-				},
-				"transfer(address,uint256)": {
-					"details": "Moves `amount` tokens from the caller's account to `recipient`. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event."
-				},
-				"transferFrom(address,address,uint256)": {
-					"details": "Moves `amount` tokens from `sender` to `recipient` using the allowance mechanism. `amount` is then deducted from the caller's allowance. Returns a boolean value indicating whether the operation succeeded. Emits a {Transfer} event."
 				}
 			},
 			"version": 1
@@ -397,7 +335,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/tokens/ERB.sol": "ERBToken"
+			"contracts/tokens/Token.sol": "ERBToken"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -412,11 +350,11 @@
 	},
 	"sources": {
 		"@openzeppelin/contracts/token/ERC20/IERC20.sol": {
-			"keccak256": "0x61437cb513a887a1bbad006e7b1c8b414478427d33de47c5600af3c748f108da",
+			"keccak256": "0xbbc8ac883ac3c0078ce5ad3e288fbb3ffcc8a30c3a98c0fda0114d64fc44fca2",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://2c3d0973630ed74f2b5ce3944677a885dc70ec32fc83b35f55045a10224da32b",
-				"dweb:/ipfs/QmbefZ5RoEZKNHXCALfh683PnaNYzKPcKMFjyY1DVAgq8A"
+				"bzz-raw://87a7a5d2f6f63f84598af02b8c50ca2df2631cb8ba2453e8d95fcb17e4be9824",
+				"dweb:/ipfs/QmR76hqtAcRqoFj33tmNjcWTLrgNsAaakYwnKZ8zoJtKei"
 			]
 		},
 		"@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": {
@@ -435,12 +373,12 @@
 				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
 			]
 		},
-		"contracts/tokens/ERB.sol": {
-			"keccak256": "0xa30da8491cf9ceb2e140f11bd5748b6918e76e05515e486a297af1fca3238389",
+		"contracts/tokens/Token.sol": {
+			"keccak256": "0x43d8f114b05c43dbb5895433f32b5af2892971aed4d2df43b67f6e22c6a692e8",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://aa13b0685cf02ab97044d99bcb06779d83e60ac2c7af59f4ebe2f880f175cafe",
-				"dweb:/ipfs/QmQyK1QWcpmpAxBjntzzTe3PTrAApaLy7uRfNiQXGGN7SL"
+				"bzz-raw://cc7aecb567107d739b780da387119ff314a7dd76f087b2dd27fdaaaa14af3c59",
+				"dweb:/ipfs/QmZ5pA1bdgv9tvqdzds6WLsZXPbHfcvBtC36yDu8wPA4uL"
 			]
 		}
 	},

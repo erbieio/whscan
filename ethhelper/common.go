@@ -54,14 +54,15 @@ func BalanceOf(addr string) (balance string, err error) {
 	return balance, nil
 }
 
-func GetBlock(number string) (Balance Block, err error) {
-	var block Block
+
+func GetBlock(number string) (block Block, err error) {
 	err = client.Call(&block, "eth_getBlockByNumber", number, true)
 	if err != nil {
 		return block, err
 	}
 	return block, nil
 }
+
 func GetBlockNumber() (num uint64, err error) {
 	var ret string
 	err = client.Call(&ret, "eth_blockNumber")

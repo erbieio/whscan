@@ -222,6 +222,46 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/extra/checkAuth": {
+            "get": {
+                "description": "查询交易所状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "其他接口"
+                ],
+                "summary": "查询交易所状态",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/extra.CheckAuthReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/extra.CheckAuthRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/extra.ErrRes"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -497,6 +537,54 @@ var doc = `{
                     "type": "string"
                 }
             }
+        },
+        "extra.CheckAuthReq": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "地址",
+                    "type": "string"
+                }
+            }
+        },
+        "extra.CheckAuthRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "0 成功  其他失败",
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/extra.CheckAuthResData"
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "extra.CheckAuthResData": {
+            "type": "object",
+            "properties": {
+                "exchanger_balance": {
+                    "type": "string"
+                },
+                "exchanger_flag": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "2 交易所付费状态正常  其他数字为欠费或者没交费",
+                    "type": "integer"
+                }
+            }
+        },
+        "extra.ErrRes": {
+            "type": "object",
+            "properties": {
+                "err": {
+                    "description": "错误信息",
+                    "type": "string"
+                }
+            }
         }
     }
 }`
@@ -513,11 +601,11 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "localhost:3000",
+	Host:        "192.168.1.237:3001",
 	BasePath:    "",
 	Schemes:     []string{},
 	Title:       "Gin swagger",
-	Description: "区块链浏览器",
+	Description: "区块链监控程序后端",
 }
 
 type s struct{}

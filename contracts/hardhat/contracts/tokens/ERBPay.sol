@@ -4,11 +4,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ERBPay is Ownable{
     uint256 yearFee=200*1e18;
-    uint256 otherFee=100*1e18;
-    address public yearFeeAddress;
-    address public otherFeeAddress;
+    address public yearFeeAddress=0x10CEc672c6BB2f6782BEED65987E020902B7bD15;
     mapping(address=>uint256)public endTime;
-    event PayForOpenExchange(address indexed sender, uint256 amount);
     event PayForOpenRenew(address indexed sender, uint256 amount);
     constructor () {
     }
@@ -17,32 +14,14 @@ contract ERBPay is Ownable{
         yearFee=amount;
     }
 
-    function setOtherFee(uint256 amount) external onlyOwner{
-        otherFee=amount;
-    }
-
     function setYearFeeAddress(address _addr) external onlyOwner{
         yearFeeAddress=_addr;
     }
 
-    function setOtherFeeAddress(address _addr) external onlyOwner{
-        otherFeeAddress=_addr;
-    }
-
-    function payForOpenExchange()external payable{
-       require(msg.value == yearFee+otherFee ,"msg.value invalid");
-       require(endTime[msg.sender]==0 ,"already opened");
-       payable(otherFeeAddress).transfer(otherFee);
-       payable(yearFeeAddress).transfer(yearFee);
-       endTime[msg.sender]=block.timestamp+86400*365;
-       emit PayForOpenExchange(msg.sender,msg.value);
-    }
-
     function payForRenew()external payable{
        require(msg.value == yearFee,"msg.value invalid");
-       require(endTime[msg.sender] !=0 ,"no exchange exist");
        payable(yearFeeAddress).transfer(yearFee);
-       endTime[msg.sender]=endTime[msg.sender]+86400*365;
+       endTime[msg.sender]=block.timestamp+86400*365;
        emit PayForOpenRenew(msg.sender,msg.value);
     }
 

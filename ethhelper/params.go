@@ -7,7 +7,7 @@ import (
 const (
 	erc721Input    = "0x01ffc9a7" + common2.Erc721Interface + "00000000000000000000000000000000000000000000000000000000"
 	erc1155Input   = "0x01ffc9a7" + common2.Erc1155Interface + "00000000000000000000000000000000000000000000000000000000"
-	erc20Input    = "0x01ffc9a7" + common2.Erc721Interface + "00000000000000000000000000000000000000000000000000000000"
+	erc20Input     = "0x01ffc9a7" + common2.Erc721Interface + "00000000000000000000000000000000000000000000000000000000"
 	nameHash       = "0x06fdde03"
 	postUrl        = "http://192.168.1.238:8081/v2"
 	newCollections = "/newCollections"
@@ -44,6 +44,7 @@ type Block struct {
 	MixDigest    string `json:"mixHash"`
 	Size         string `json:"size"`
 }
+
 
 type Tx struct {
 	Hash             string `json:"hash"`

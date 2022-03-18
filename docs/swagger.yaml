@@ -180,10 +180,42 @@ definitions:
       tx_hash:
         type: string
     type: object
-host: localhost:3000
+  extra.CheckAuthReq:
+    properties:
+      address:
+        description: 地址
+        type: string
+    type: object
+  extra.CheckAuthRes:
+    properties:
+      code:
+        description: 0 成功  其他失败
+        type: integer
+      data:
+        $ref: '#/definitions/extra.CheckAuthResData'
+      msg:
+        type: string
+    type: object
+  extra.CheckAuthResData:
+    properties:
+      exchanger_balance:
+        type: string
+      exchanger_flag:
+        type: boolean
+      status:
+        description: 2 交易所付费状态正常  其他数字为欠费或者没交费
+        type: integer
+    type: object
+  extra.ErrRes:
+    properties:
+      err:
+        description: 错误信息
+        type: string
+    type: object
+host: 192.168.1.237:3001
 info:
   contact: {}
-  description: 区块链浏览器
+  description: 区块链监控程序后端
   title: Gin swagger
   version: "1.0"
 paths:
@@ -317,4 +349,30 @@ paths:
       summary: 查询交易列表
       tags:
       - 区块查询
+  /extra/checkAuth:
+    get:
+      consumes:
+      - application/json
+      description: 查询交易所状态
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/extra.CheckAuthReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/extra.CheckAuthRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/extra.ErrRes'
+      summary: 查询交易所状态
+      tags:
+      - 其他接口
 swagger: "2.0"

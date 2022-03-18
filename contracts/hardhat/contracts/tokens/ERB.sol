@@ -22,7 +22,7 @@ contract ERBToken is Context, IERC20, IERC20Metadata {
     constructor(string memory name_, string memory symbol_, address _seed, address _early, address _private1, address _private2, address _team, address _developers, address _foundation, address _community, address _nftExchange){
         _name = name_;
         _symbol = symbol_;
-        _mint(address(this), 25 * 1e25);
+        _mint(msg.sender, 25 * 1e25);
         locked[_seed] = true;
         locked[_early] = true;
         locked[_private1] = true;

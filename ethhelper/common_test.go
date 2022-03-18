@@ -7,11 +7,10 @@ import (
 	"testing"
 )
 
-
 func TestTxCount(t *testing.T) {
-	c, err := CheckAuth("0x70228A292b35d276cc19D5Ffe6CB9C4AF6f3aeC7")
-	fmt.Println(c, err)
+
 }
+
 func TestTransactionReceipt(t *testing.T) {
 	c, err := TransactionReceipt("0x6d1443e8b5682f94aca101a9455508ee4777c4c68b81752b9c1a04734cb0c919")
 	fmt.Println(c, err)
@@ -25,7 +24,7 @@ func TestSendDealAuctionTx(t *testing.T) {
 }
 func TestGetBlock(t *testing.T) {
 	var b big.Int
-	b.SetString("10000", 0)
+	b.SetString("100", 0)
 	s := hex.EncodeToString(b.Bytes())
 	fmt.Println(GetBlock("0x" + s))
 }

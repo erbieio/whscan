@@ -12,7 +12,7 @@ import (
 // @title Gin swagger
 // @version 1.0
 // @description 区块链监控程序后端
-// @host http://192.168.1.237:3001
+// @host 192.168.1.237:3001
 func main() {
 	go monitor.SyncBlock()
 	r := routers.Init()
