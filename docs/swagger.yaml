@@ -189,7 +189,7 @@ definitions:
   extra.CheckAuthRes:
     properties:
       code:
-        description: 0 成功  其他失败
+        description: 0 成功  1 地址有误 其他失败
         type: integer
       data:
         $ref: '#/definitions/extra.CheckAuthResData'
@@ -210,6 +210,20 @@ definitions:
     properties:
       err:
         description: 错误信息
+        type: string
+    type: object
+  extra.RequestErbTestReq:
+    properties:
+      address:
+        description: 地址
+        type: string
+    type: object
+  extra.RequestErbTestRes:
+    properties:
+      code:
+        description: 0 成功  1 地址有误 其他失败
+        type: integer
+      msg:
         type: string
     type: object
 host: 192.168.1.237:3001
@@ -373,6 +387,32 @@ paths:
           schema:
             $ref: '#/definitions/extra.ErrRes'
       summary: 查询交易所状态
+      tags:
+      - 其他接口
+  /extra/requestErbTest:
+    get:
+      consumes:
+      - application/json
+      description: 请求ERB测试币
+      parameters:
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/extra.RequestErbTestReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/extra.RequestErbTestRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/extra.ErrRes'
+      summary: 请求ERB测试币
       tags:
       - 其他接口
 swagger: "2.0"

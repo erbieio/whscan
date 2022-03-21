@@ -2,10 +2,16 @@ package ethhelper
 
 import (
 	"bytes"
+	"context"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	common2 "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"log"
 	"math/big"
@@ -53,7 +59,6 @@ func BalanceOf(addr string) (balance string, err error) {
 	}
 	return balance, nil
 }
-
 
 func GetBlock(number string) (block Block, err error) {
 	err = client.Call(&block, "eth_getBlockByNumber", number, true)
@@ -189,4 +194,57 @@ func CallViewFunc(contract, funcHash string) (string, error) {
 	} else {
 		return ret, nil
 	}
+}
+
+func SendErbForFaucet(toAddr string) error {
+	client, err := ethclient.Dial(common.MainPoint)
+	if err != nil {
+		log.Println(err)
+	}
+
+	privateKey, err := crypto.HexToECDSA(common.SendErbPrivateKey)
+	if err != nil {
+		log.Println(err)
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return errors.New("cannot assert type: publicKey")
+	}
+
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		return err
+	}
+
+	value, _ := new(big.Int).SetString("100000000000000000000", 0) // in wei (100 erb)
+	gasLimit := uint64(500000)
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return err
+	}
+
+	toAddress := common2.HexToAddress(toAddr)
+	var data []byte
+	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data)
+
+	chainID, err := client.NetworkID(context.Background())
+	if err != nil {
+		return err
+	}
+
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+	if err != nil {
+		return err
+	}
+
+	err = client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("tx sent: %s", signedTx.Hash().Hex())
+	return nil
 }

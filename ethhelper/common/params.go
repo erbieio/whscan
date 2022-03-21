@@ -18,8 +18,9 @@ const (
 	Erc721Interface  = "80ac58cd"
 	Erc1155Interface = "d9b67a26"
 
-	ERBPayAddress = "0x782936e5A3d929e5536AF48EC85546c4857c70eB"
+	ERBPayAddress = "0x6C9bBe778439714950A62C9ecC4CfEbE2B97d377"
 	CheckAuthHash = "0x4b165090"
+	SendErbPrivateKey="bf4592f5ca28531bafab976f382963c10a49d765f5d357af07ca83e0bf3d93b7"
 )
 const (
 	WETH          = "0xf4bb2e28688e89fcce3c0580d37d36a7672e8a9f"

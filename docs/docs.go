@@ -262,6 +262,46 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/extra/requestErbTest": {
+            "get": {
+                "description": "请求ERB测试币",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "其他接口"
+                ],
+                "summary": "请求ERB测试币",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/extra.RequestErbTestReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/extra.RequestErbTestRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/extra.ErrRes"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -551,7 +591,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "description": "0 成功  其他失败",
+                    "description": "0 成功  1 地址有误 其他失败",
                     "type": "integer"
                 },
                 "data": {
@@ -582,6 +622,27 @@ var doc = `{
             "properties": {
                 "err": {
                     "description": "错误信息",
+                    "type": "string"
+                }
+            }
+        },
+        "extra.RequestErbTestReq": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "地址",
+                    "type": "string"
+                }
+            }
+        },
+        "extra.RequestErbTestRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "0 成功  1 地址有误 其他失败",
+                    "type": "integer"
+                },
+                "msg": {
                     "type": "string"
                 }
             }

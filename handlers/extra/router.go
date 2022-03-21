@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"math/big"
@@ -15,6 +16,38 @@ import (
 
 func Routers(e *gin.Engine) {
 	e.GET("/extra/checkAuth", checkAuth)
+	e.GET("/extra/requestErbTest", requestErbTest)
+}
+
+// @Tags  其他接口
+// @Summary 请求ERB测试币
+// @Description 请求ERB测试币
+// @Accept json
+// @Produce json
+// @Param body body RequestErbTestReq true "body"
+// @Success 200 {object} RequestErbTestRes
+// @Failure 400 {object} ErrRes
+// @Router /extra/requestErbTest [get]
+func requestErbTest(c *gin.Context) {
+	var req RequestErbTestReq
+	err := c.BindQuery(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, RequestErbTestRes{Code: -1, Msg: err.Error()})
+		return
+	}
+
+	if !common.IsHexAddress(req.Address){
+		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: 1, Msg: "address invalid"})
+		return
+	}
+
+	err = ethhelper.SendErbForFaucet(req.Address)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, RequestErbTestRes{Code: -1, Msg: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, RequestErbTestRes{Code: 0, Msg: "ok"})
 }
 
 // @Tags  其他接口
@@ -31,6 +64,11 @@ func checkAuth(c *gin.Context) {
 	err := c.BindQuery(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: -1, Msg: err.Error()})
+		return
+	}
+
+	if !common.IsHexAddress(req.Address){
+		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: 1, Msg: err.Error()})
 		return
 	}
 

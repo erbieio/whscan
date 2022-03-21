@@ -7,7 +7,7 @@ type ErrRes struct {
 
 // CheckAuthRes 返回
 type CheckAuthRes struct {
-	Code int64            `json:"code"` //0 成功  其他失败
+	Code int64            `json:"code"` //0 成功  1 地址有误 其他失败
 	Msg  string           `json:"msg"`
 	Data CheckAuthResData `json:"data" `
 }
@@ -22,3 +22,15 @@ type CheckAuthResData struct {
 type CheckAuthReq struct {
 	Address string `form:"address" json:"address"` //地址
 }
+
+// RequestErbTestReq 请求
+type RequestErbTestReq struct {
+	Address string `form:"address" json:"address"` //地址
+}
+
+// RequestErbTestRes  返回
+type  RequestErbTestRes struct {
+	Code int64            `json:"code"` //0 成功  1 地址有误 其他失败
+	Msg  string           `json:"msg"`
+}
+

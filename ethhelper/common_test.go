@@ -8,7 +8,8 @@ import (
 )
 
 func TestTxCount(t *testing.T) {
-
+  b,e:=BalanceOf("0x10CEc672c6BB2f6782BEED65987E020902B7bD15")
+  fmt.Println(b,e)
 }
 
 func TestTransactionReceipt(t *testing.T) {
@@ -30,4 +31,12 @@ func TestGetBlock(t *testing.T) {
 }
 func TestGenCreateNftSign(t *testing.T) {
 	GenCreateNftSign("0xEe501cc4eC6d23cfdEE5eD297FEB3016B5cC7E9D", "0x40eF9242BaDa1A92a917E8aa8aF70e635455dd5F", "abcd", "8", "1", "1000")
+}
+
+var httpUrl = "http://192.168.1.235:8561"
+/*
+	以太坊交易发送
+*/
+func TestSendTx(t *testing.T) {
+
 }
