@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -19,15 +18,20 @@ func SyncBlock() {
 		log.Infof(err.Error())
 	}
 	for {
-		blockNumber, _ = ethhelper.GetBlockNumber()
-		if blockNumber == 0 || blockNumber == currentBlockNumber {
+		if blockNumber != 0 {
+			blockNumber, _ = ethhelper.GetBlockNumber()
+		}
+
+		if currentBlockNumber == 0 || blockNumber == currentBlockNumber {
 			time.Sleep(5 * time.Second)
 			continue
 		}
+
 		currentBlockNumber = blockNumber
 		var tmp big.Int
 		tmp.SetUint64(currentBlockNumber)
-		b, err := ethhelper.GetBlock("0x" + hex.EncodeToString(tmp.Bytes()))
+
+		b, err := ethhelper.GetBlock("0x" + tmp.Text(16))
 		if err != nil {
 			log.Infof(err.Error())
 		}

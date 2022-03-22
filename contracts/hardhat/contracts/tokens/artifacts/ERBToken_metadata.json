@@ -6,63 +6,7 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [
-					{
-						"internalType": "string",
-						"name": "name_",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "symbol_",
-						"type": "string"
-					},
-					{
-						"internalType": "address",
-						"name": "_seed",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_early",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_private1",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_private2",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_team",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_developers",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_foundation",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_community",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_nftExchange",
-						"type": "address"
-					}
-				],
+				"inputs": [],
 				"stateMutability": "nonpayable",
 				"type": "constructor"
 			},
@@ -391,7 +335,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/tokens/ERB.sol": "ERBToken"
+			"contracts/tokens/Token.sol": "ERBToken"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -429,12 +373,12 @@
 				"dweb:/ipfs/QmRK2Y5Yc6BK7tGKkgsgn3aJEQGi5aakeSPZvS65PV8Xp3"
 			]
 		},
-		"contracts/tokens/ERB.sol": {
-			"keccak256": "0x8001d03e3a8f53cb8480e42c43231facec5ea299365ba41b747622a5a9b74b97",
+		"contracts/tokens/Token.sol": {
+			"keccak256": "0x43d8f114b05c43dbb5895433f32b5af2892971aed4d2df43b67f6e22c6a692e8",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://a2379eb20669b981dfceded36198ae6f100aa1af58d30978af053c991e228de1",
-				"dweb:/ipfs/QmVDxxugLjaRFcHSUtkfgX4KfPQz6DZm47T1MRiaxGHZMB"
+				"bzz-raw://cc7aecb567107d739b780da387119ff314a7dd76f087b2dd27fdaaaa14af3c59",
+				"dweb:/ipfs/QmZ5pA1bdgv9tvqdzds6WLsZXPbHfcvBtC36yDu8wPA4uL"
 			]
 		}
 	},

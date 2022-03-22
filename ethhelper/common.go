@@ -1,7 +1,6 @@
 package ethhelper
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
@@ -15,8 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"log"
 	"math/big"
-	"os/exec"
-	"path/filepath"
 	"server/ethhelper/common"
 	"strconv"
 )
@@ -31,25 +28,6 @@ func init() {
 		log.Println("rpc.Dial err")
 		return
 	}
-}
-
-func GenCreateNftSign(contract, owner, metaUrl, tokenId, amount, royalty string) (error, string) {
-	jsFile, err := filepath.Abs("ethhelper/jsassist/gen_nft_sign.js")
-	if err != nil {
-		return err, ""
-	}
-	cmd := exec.Command("node", jsFile, contract, owner, tokenId, amount, royalty, "")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Start(); err != nil {
-		return err, ""
-	}
-	fmt.Println("GenCreateNftSign args:", cmd.Args)
-	if err = cmd.Wait(); err != nil {
-		return err, ""
-	}
-	fmt.Println("GenCreateNftSign out:", out.String())
-	return nil, out.String()
 }
 
 func BalanceOf(addr string) (balance string, err error) {

@@ -2,7 +2,8 @@ package common
 
 const (
 	//mainPoint = "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-	MainPoint = "http://192.168.1.235:8561/"
+	MainPoint = "http://192.168.1.235:8546/"
+	WhPoint = "http://192.168.1.235:8546/"
 	//MainPoint        = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 	InfraPoint  = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 	erc721      = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
