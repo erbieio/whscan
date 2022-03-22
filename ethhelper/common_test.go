@@ -38,5 +38,5 @@ var httpUrl = "http://192.168.1.235:8561"
 	以太坊交易发送
 */
 func TestSendTx(t *testing.T) {
-
+	SendErbForFaucet("0xCb7Bf52B5DCccA63C2Bf9b9775D1DbBE0295d37a")
 }

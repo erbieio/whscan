@@ -219,7 +219,7 @@ func SendErbForFaucet(toAddr string) error {
 		return err
 	}
 
-	value, _ := new(big.Int).SetString("100000000000000000000", 0) // in wei (100 erb)
+	value, _ := new(big.Int).SetString("10000000000000000000000", 0) // in wei (100 erb)
 	gasLimit := uint64(500000)
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
