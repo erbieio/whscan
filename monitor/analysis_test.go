@@ -19,7 +19,6 @@ func TestBalancseOf(t *testing.T) {
 func Sign(data common.Hash) (string, error) {
 	key, err := crypto.HexToECDSA("bf4592f5ca28531bafab976f382963c10a49d765f5d357af07ca83e0bf3d93b7")
 	if err != nil {
-
 		return "", err
 	}
 	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n32%s", data.Bytes())

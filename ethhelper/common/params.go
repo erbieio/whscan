@@ -2,7 +2,7 @@ package common
 
 const (
 	//mainPoint = "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
-	MainPoint = "http://192.168.1.235:8546/"
+	MainPoint = "http://api.wormholestest.com:8561"
 	WhPoint = "http://192.168.1.235:8546/"
 	//MainPoint        = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
 	InfraPoint  = "https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
@@ -19,9 +19,9 @@ const (
 	Erc721Interface  = "80ac58cd"
 	Erc1155Interface = "d9b67a26"
 
-	ERBPayAddress = "0x6C9bBe778439714950A62C9ecC4CfEbE2B97d377"
+	ERBPayAddress = "0x782936e5A3d929e5536AF48EC85546c4857c70eB"
 	CheckAuthHash = "0x4b165090"
-	SendErbPrivateKey="bf4592f5ca28531bafab976f382963c10a49d765f5d357af07ca83e0bf3d93b7"
+	SendErbPrivateKey="f616c4d20311a2e73c67ef334630f834b7fb42304a1d4448fb2058e9940ecc0a"
 )
 const (
 	WETH          = "0xf4bb2e28688e89fcce3c0580d37d36a7672e8a9f"

@@ -33,7 +33,7 @@ func (t Transaction) Insert() error {
 }
 
 func FetchTxs(page, size int, addr, ty, block string) (data []Transaction, count int64, err error) {
-	db := DB.Table("transaction_models").Limit(size).Offset((page - 1) * size)
+	db := DB.Table("transaction_models")
 	if addr != "" {
 		db = db.Where("`from`=? or `to`=?", addr, addr)
 	}
@@ -47,8 +47,8 @@ func FetchTxs(page, size int, addr, ty, block string) (data []Transaction, count
 	if block != "" {
 		db = db.Where("block_number=?", block)
 	}
-	err = db.Debug().Count(&count).Error
-	err = db.Debug().Order("id desc").Find(&data).Error
+	err = db.Count(&count).Error
+	err = db.Limit(size).Offset((page - 1) * size).Order("id desc").Find(&data).Error
 	return data, count, err
 }
 

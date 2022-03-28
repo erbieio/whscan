@@ -21,7 +21,7 @@ type Block struct {
 	Difficulty  string `json:"difficulty"       gencodec:"required"`
 	Size        string `json:"size"`
 	MixDigest   string `json:"mixHash"`
-	Extra       string `json:"extraData"        gencodec:"required"`
+	Extra       string `gorm:"type:text" json:"extraData"        gencodec:"required"`
 }
 
 func (b Block) Insert() error {
@@ -31,9 +31,8 @@ func (b Block) Insert() error {
 }
 
 func FetchBlocks(page, size int) (data []Block, count int64, err error) {
-	db := DB.Table("block_models").Limit(size).Offset((page - 1) * size).Order("id desc")
-	err = db.Count(&count).Error
-	err = db.Find(&data).Error
+	err = DB.Table("block_models").Count(&count).Error
+	err = DB.Table("block_models").Limit(size).Offset((page - 1) * size).Order("id desc").Find(&data).Error
 	return data, count, err
 }
 

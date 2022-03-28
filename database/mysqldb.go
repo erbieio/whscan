@@ -25,24 +25,27 @@ func migrate(db *gorm.DB) error {
 	).Error
 }
 
+type Config struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Database string `json:"database"`
+	ERBPay   string `json:"ERBPay"`
+}
+
+var Conf Config
+
 func NewMysqlDb() {
-	type Config struct {
-		User     string `json:"user"`
-		Password string `json:"password"`
-		Host     string `json:"host"`
-		Port     string `json:"port"`
-		Database string `json:"database"`
-	}
-	var conf Config
 	filePtr, err := os.Open("./config.json")
 	if err != nil {
 		log.Info("InitEnv failed!")
 	}
 	defer filePtr.Close()
 	decoder := json.NewDecoder(filePtr)
-	err = decoder.Decode(&conf)
+	err = decoder.Decode(&Conf)
 
-	DB, err = gorm.Open("mysql", conf.User+":"+conf.Password+"@tcp("+conf.Host+":"+conf.Port+")/"+conf.Database+"?charset=utf8&parseTime=True&loc=Local")
+	DB, err = gorm.Open("mysql", Conf.User+":"+Conf.Password+"@tcp("+Conf.Host+":"+Conf.Port+")/"+Conf.Database+"?charset=utf8&parseTime=True&loc=Local")
 	if err != nil {
 		panic(err)
 	}

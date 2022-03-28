@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"log"
 	"math/big"
+	"server/database"
 	"server/ethhelper/common"
 	"strconv"
 )
@@ -84,7 +85,7 @@ func CheckAuth(addr string) (uint64, error) {
 	copy(payload[:4], tmp.Bytes())
 	tmp.SetString(addr, 0)
 	copy(payload[36-len(tmp.Bytes()):], tmp.Bytes())
-	params := CallParamTemp{To: common.ERBPayAddress, Data: "0x" + hex.EncodeToString(payload)}
+	params := CallParamTemp{To: database.Conf.ERBPay, Data: "0x" + hex.EncodeToString(payload)}
 	jsonData, err := json.Marshal(params)
 	if err != nil {
 		return 0, errors.New("Umarshal failed:" + err.Error() + string(jsonData))
@@ -197,7 +198,7 @@ func SendErbForFaucet(toAddr string) error {
 		return err
 	}
 
-	value, _ := new(big.Int).SetString("10000000000000000000000", 0) // in wei (100 erb)
+	value, _ := new(big.Int).SetString("100000000000000000000", 0) // in wei (100 erb)
 	gasLimit := uint64(500000)
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {

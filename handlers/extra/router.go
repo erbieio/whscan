@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"net/http"
 	"server/ethhelper"
+	common2 "server/ethhelper/common"
 	"server/log"
 	"time"
 )
@@ -111,7 +112,7 @@ func getAccountInfoFromGeth(addr string) (bool, string, error) {
 	contentType := "application/json"
 	client := &http.Client{Timeout: 10 * time.Second}
 	jsonStr, _ := json.Marshal(p)
-	req, err := http.NewRequest("POST", "http://192.168.1.235:8561", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST",  common2.MainPoint, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		log.Info("GetAccountInfoFromGeth http.NewRequest err:", err)
 		return false, "", err

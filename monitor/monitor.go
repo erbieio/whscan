@@ -26,8 +26,10 @@ func SyncBlock() {
 			time.Sleep(5 * time.Second)
 			continue
 		}
+		if currentBlockNumber != 0 && blockNumber != 0 {
+			currentBlockNumber = blockNumber
+		}
 
-		currentBlockNumber = blockNumber
 		var tmp big.Int
 		tmp.SetUint64(currentBlockNumber)
 
