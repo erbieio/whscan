@@ -7,9 +7,9 @@ import (
 
 // Pledge 帐户质押金额
 type Pledge struct {
-	Address string `json:"address" gorm:"type:CHAR(44);primaryKey"` //质押帐户
-	Amount  string `json:"amount" gorm:"type:CHAR(64)"`             //质押金额
-	Count   uint64 `json:"count"`                                   //质押次数，PledgeAdd和PledgeSub都加一次
+	Address string `json:"address" gorm:"type:CHAR(44);primary_key"` //质押帐户
+	Amount  string `json:"amount" gorm:"type:CHAR(64)"`              //质押金额
+	Count   uint64 `json:"count"`                                    //质押次数，PledgeAdd和PledgeSub都加一次
 }
 
 type ExchangerPledge Pledge //交易所质押

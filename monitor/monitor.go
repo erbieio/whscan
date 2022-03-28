@@ -112,9 +112,10 @@ func SyncBlock() {
 				tx.Status = "0"
 			}
 
-			if len(t.Input) >= 10 && t.Input[0:10] == "wormholes:" {
+			input, _ := hexutil.Decode(t.Input)
+			if len(input) >= 10 && string(input[0:10]) == "wormholes:" {
 				// 从input字段判断是否是wormholes交易，并解析处理
-				HandleWH([]byte(t.Input[10:]), t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
+				HandleWH(input[10:], t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
 			}
 
 			tx.TxType = ty
@@ -180,21 +181,24 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 	var w Wormholes
 	var err error
 	defer func() {
-		if err := json.Unmarshal(input, &w); err != nil {
-			log.Infof("解析wormholes", "区块", number, "交易", txHash, "input", input, "错误", err)
+		if err != nil {
+			log.Infof("解析wormholes", "区块", number, "交易", txHash, "input", string(input), "错误", err)
 		}
 	}()
+	if err := json.Unmarshal(input, &w); err != nil {
+		return
+	}
 
 	if status == false {
 		err = errors.New("失败的交易不解析")
 		return
 	}
 
-	timestamp, err := strconv.ParseUint(time, 16, 64)
+	timestamp, err := strconv.ParseUint(time[2:], 16, 64)
 	if err != nil {
 		return
 	}
-	blockNumber, err := strconv.ParseUint(number, 16, 64)
+	blockNumber, err := strconv.ParseUint(number[2:], 16, 64)
 	if err != nil {
 		return
 	}
@@ -237,7 +241,7 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 			return
 		}
 
-	case 6: //NFT兑换
+	case 6: //官方NFT兑换
 		return
 
 	case 9: //共识质押
@@ -313,18 +317,17 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 	case 16: //NFT惰性定价购买交易，买家发起（先铸造NFT，卖家给价格签名）
 		// 从签名恢复NFT创建者地址（也是卖家地址）
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		addr, err := recoverAddress(msg, w.Seller2.Sig)
+		creator, err := recoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return
 		}
-		creator := addr.String()
 		// 获取最新NFT地址
 		nftAddr, err := database.GetNFTAddr()
 		if err != nil {
 			return
 		}
 		// 版税费率字符串转数字
-		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty, 16, 32)
+		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
 		if err != nil {
 			return
 		}
@@ -361,18 +364,17 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 	case 17: //NFT惰性定价购买交易，交易所发起（先铸造NFT，卖家给价格签名）
 		// 从签名恢复NFT创建者地址（也是卖家地址）
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		addr, err := recoverAddress(msg, w.Seller2.Sig)
+		creator, err := recoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return
 		}
-		creator := addr.String()
 		// 获取最新NFT地址
 		nftAddr, err := database.GetNFTAddr()
 		if err != nil {
 			return
 		}
 		// 版税费率字符串转数字
-		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty, 16, 32)
+		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
 		if err != nil {
 			return
 		}
@@ -409,11 +411,10 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 	case 18: //NFT出价成交交易，由交易所授权的地址发起（买家给价格签名）
 		// 从授权签名恢复交易所地址
 		msg := w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
-		addr, err := recoverAddress(msg, w.ExchangerAuth.Sig)
+		exchangerAddr, err := recoverAddress(msg, w.ExchangerAuth.Sig)
 		if err != nil {
 			return
 		}
-		exchangerAddr := addr.String()
 		nftTx := database.NFTTx{
 			TxType:        6,
 			NFTAddr:       w.Buyer.NFTAddress,
@@ -432,22 +433,23 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 	case 19: //NFT惰性出价成交交易，由交易所授权的地址发起（买家给价格签名）
 		// 从签名恢复NFT创建者地址（也是卖家地址）
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		addr, err := recoverAddress(msg, w.Seller2.Sig)
+		creator, err := recoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return
 		}
-		creator := addr.String()
 		// 从授权签名恢复交易所地址
 		msg = w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
-		addr, err = recoverAddress(msg, w.ExchangerAuth.Sig)
-		exchangerAddr := addr.String()
+		exchangerAddr, err := recoverAddress(msg, w.ExchangerAuth.Sig)
+		if err != nil {
+			return
+		}
 		// 获取最新NFT地址
 		nftAddr, err := database.GetNFTAddr()
 		if err != nil {
 			return
 		}
 		// 版税费率字符串转数字
-		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty, 16, 32)
+		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
 		if err != nil {
 			return
 		}
@@ -520,22 +522,21 @@ func hashMsg(data []byte) ([]byte, string) {
 }
 
 // recoverAddress Wormholes链代码复制 go-ethereum/core/evm.go 338行
-func recoverAddress(msg string, sigStr string) (common.Address, error) {
+func recoverAddress(msg string, sigStr string) (string, error) {
 	sigData := hexutil.MustDecode(sigStr)
 	if len(sigData) != 65 {
-		return common.Address{}, fmt.Errorf("signature must be 65 bytes long")
+		return common.Address{}.Hex(), fmt.Errorf("signature must be 65 bytes long")
 	}
 	if sigData[64] != 27 && sigData[64] != 28 {
-		return common.Address{}, fmt.Errorf("invalid Ethereum signature (V is not 27 or 28)")
+		return common.Address{}.Hex(), fmt.Errorf("invalid Ethereum signature (V is not 27 or 28)")
 	}
 	sigData[64] -= 27
 	hash, _ := hashMsg([]byte(msg))
-	fmt.Println("sigdebug hash=", hexutil.Encode(hash))
 	rpk, err := crypto.SigToPub(hash, sigData)
 	if err != nil {
-		return common.Address{}, err
+		return common.Address{}.Hex(), err
 	}
-	return crypto.PubkeyToAddress(*rpk), nil
+	return strings.ToLower(crypto.PubkeyToAddress(*rpk).Hex()), nil
 }
 
 func toDecimal(src string, decimal int) string {
