@@ -22,6 +22,11 @@ func migrate(db *gorm.DB) error {
 		&BlockModel{},
 		&TransactionModel{},
 		&TxLogModel{},
+		&Exchanger{},
+		&UserNFT{},
+		&NFTTx{},
+		ConsensusPledge{},
+		ExchangerPledge{},
 	).Error
 }
 

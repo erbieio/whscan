@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"server/database"
@@ -9,6 +10,11 @@ import (
 	"server/log"
 	"strconv"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/crypto/sha3"
 )
 
 func SyncBlock() {
@@ -106,6 +112,11 @@ func SyncBlock() {
 				tx.Status = "0"
 			}
 
+			if len(t.Input) >= 10 && t.Input[0:10] == "wormholes:" {
+				// 从input字段判断是否是wormholes交易，并解析处理
+				HandleWH([]byte(t.Input[10:]), t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
+			}
+
 			tx.TxType = ty
 			tokenStr, _ := json.Marshal(tokenTransfers)
 			tx.TokenTransfer = string(tokenStr)
@@ -116,6 +127,415 @@ func SyncBlock() {
 		}
 		blockNumber = currentBlockNumber
 	}
+}
+
+// HandleWH 解析wormholes区块链的特殊交易
+func HandleWH(input []byte, number, time, txHash, from, to, value string, status bool) {
+	type Wormholes struct {
+		Type       uint8  `json:"type"`
+		NFTAddress string `json:"nft_address"`
+		Exchanger  string `json:"exchanger"`
+		Royalty    uint32 `json:"royalty"`
+		MetaURL    string `json:"meta_url"`
+		FeeRate    uint32 `json:"fee_rate"`
+		Name       string `json:"name"`
+		Url        string `json:"url"`
+		Dir        string `json:"dir"`
+		StartIndex string `json:"start_index"`
+		Number     uint64 `json:"number"`
+		Buyer      struct {
+			Amount      string `json:"price"`
+			NFTAddress  string `json:"nft_address"`
+			Exchanger   string `json:"exchanger"`
+			BlockNumber string `json:"block_number"`
+			Seller      string `json:"seller"`
+			Sig         string `json:"sig"`
+		} `json:"buyer"`
+		Seller1 struct {
+			Amount      string `json:"price"`
+			NFTAddress  string `json:"nft_address"`
+			Exchanger   string `json:"exchanger"`
+			BlockNumber string `json:"block_number"`
+			Seller      string `json:"seller"`
+			Sig         string `json:"sig"`
+		} `json:"seller1"`
+		Seller2 struct {
+			Amount        string `json:"price"`
+			Royalty       string `json:"royalty"`
+			MetaURL       string `json:"meta_url"`
+			ExclusiveFlag string `json:"exclusive_flag"`
+			Exchanger     string `json:"exchanger"`
+			BlockNumber   string `json:"block_number"`
+			Sig           string `json:"sig"`
+		} `json:"seller2"`
+		ExchangerAuth struct {
+			ExchangerOwner string `json:"exchanger_owner"`
+			To             string `json:"to"`
+			BlockNumber    string `json:"block_number"`
+			Sig            string `json:"sig"`
+		} `json:"exchanger_auth"`
+		Creator string `json:"creator"`
+		Version string `json:"version"`
+	}
+	var w Wormholes
+	var err error
+	defer func() {
+		if err := json.Unmarshal(input, &w); err != nil {
+			log.Infof("解析wormholes", "区块", number, "交易", txHash, "input", input, "错误", err)
+		}
+	}()
+
+	if status == false {
+		err = errors.New("失败的交易不解析")
+		return
+	}
+
+	timestamp, err := strconv.ParseUint(time, 16, 64)
+	if err != nil {
+		return
+	}
+	blockNumber, err := strconv.ParseUint(number, 16, 64)
+	if err != nil {
+		return
+	}
+
+	switch w.Type {
+	case 0: //用户自行铸造NFT
+		nftAddr, err := database.GetNFTAddr()
+		if err != nil {
+			return
+		}
+		nft := database.UserNFT{
+			Address:       nftAddr,
+			RoyaltyRatio:  w.Royalty, //单位万分之一
+			MetaUrl:       w.MetaURL,
+			ExchangerAddr: w.Exchanger,
+			Creator:       to,
+			Timestamp:     timestamp,
+			BlockNumber:   blockNumber,
+			TxHash:        txHash,
+			Owner:         to,
+		}
+		err = nft.Insert()
+		if err != nil {
+			return
+		}
+
+	case 1: //NFT自行转移
+		nftTx := database.NFTTx{
+			TxType:        1,
+			NFTAddr:       w.NFTAddress,
+			ExchangerAddr: nil, //自行转移没有交易所
+			From:          "",  //插入数据库时实时填充原拥有者
+			To:            to,
+			Price:         nil,
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 6: //NFT兑换
+		return
+
+	case 9: //共识质押
+		err = database.ConsensusPledgeAdd(from, value)
+		if err != nil {
+			return
+		}
+
+	case 10: //撤销共识质押
+		err = database.ConsensusPledgeSub(from, value)
+		if err != nil {
+			return
+		}
+
+	case 11: //开启交易所
+		exchanger := database.Exchanger{
+			Address:     from,
+			Name:        w.Name,
+			URL:         w.Url,
+			FeeRatio:    w.FeeRate, //单位万分之一
+			Creator:     from,
+			Timestamp:   timestamp,
+			IsOpen:      true,
+			BlockNumber: blockNumber,
+			TxHash:      txHash,
+		}
+		err = database.OpenExchange(&exchanger)
+		if err != nil {
+			return
+		}
+
+	case 12: //关闭交易所
+		err = database.CloseExchange(from)
+		if err != nil {
+			return
+		}
+
+	case 13: //官方注入NFT
+		return
+
+	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
+		nftTx := database.NFTTx{
+			TxType:        2,
+			NFTAddr:       w.Buyer.NFTAddress,
+			ExchangerAddr: &w.Buyer.Exchanger,
+			From:          "", //插入数据库时实时填充原拥有者
+			To:            to,
+			Price:         &value, //单位为wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 15: //NFT定价购买交易（买家发起，卖家给价格签名）
+		nftTx := database.NFTTx{
+			TxType:        3,
+			NFTAddr:       w.Seller1.NFTAddress,
+			ExchangerAddr: &w.Seller1.Exchanger,
+			From:          "",     //插入数据库时实时填充原拥有者
+			To:            from,   //交易发起者即买家
+			Price:         &value, //单位为wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 16: //NFT惰性定价购买交易，买家发起（先铸造NFT，卖家给价格签名）
+		// 从签名恢复NFT创建者地址（也是卖家地址）
+		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
+		addr, err := recoverAddress(msg, w.Seller2.Sig)
+		if err != nil {
+			return
+		}
+		creator := addr.String()
+		// 获取最新NFT地址
+		nftAddr, err := database.GetNFTAddr()
+		if err != nil {
+			return
+		}
+		// 版税费率字符串转数字
+		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty, 16, 32)
+		if err != nil {
+			return
+		}
+		nft := database.UserNFT{
+			Address:       nftAddr,
+			RoyaltyRatio:  uint32(royaltyRatio),
+			MetaUrl:       w.Seller2.MetaURL,
+			ExchangerAddr: w.Seller2.Exchanger,
+			Creator:       creator,
+			Timestamp:     timestamp,
+			BlockNumber:   blockNumber,
+			TxHash:        txHash,
+			Owner:         creator,
+		}
+		nft.Insert()
+		if err != nil {
+			return
+		}
+		nftTx := database.NFTTx{
+			TxType:        4,
+			NFTAddr:       nftAddr,
+			ExchangerAddr: &w.Seller2.Exchanger,
+			From:          creator,
+			To:            from,   //交易发起者即买家
+			Price:         &value, //单位为wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 17: //NFT惰性定价购买交易，交易所发起（先铸造NFT，卖家给价格签名）
+		// 从签名恢复NFT创建者地址（也是卖家地址）
+		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
+		addr, err := recoverAddress(msg, w.Seller2.Sig)
+		if err != nil {
+			return
+		}
+		creator := addr.String()
+		// 获取最新NFT地址
+		nftAddr, err := database.GetNFTAddr()
+		if err != nil {
+			return
+		}
+		// 版税费率字符串转数字
+		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty, 16, 32)
+		if err != nil {
+			return
+		}
+		nft := database.UserNFT{
+			Address:       nftAddr,
+			RoyaltyRatio:  uint32(royaltyRatio),
+			MetaUrl:       w.Seller2.MetaURL,
+			ExchangerAddr: from, //交易发起者即交易所地址
+			Creator:       creator,
+			Timestamp:     timestamp,
+			BlockNumber:   blockNumber,
+			TxHash:        txHash,
+			Owner:         creator,
+		}
+		nft.Insert()
+		if err != nil {
+			return
+		}
+		nftTx := database.NFTTx{
+			TxType:        5,
+			NFTAddr:       nftAddr,
+			ExchangerAddr: &from, //交易发起者即交易所地址
+			From:          creator,
+			To:            to,
+			Price:         &value, //单位为wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 18: //NFT出价成交交易，由交易所授权的地址发起（买家给价格签名）
+		// 从授权签名恢复交易所地址
+		msg := w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
+		addr, err := recoverAddress(msg, w.ExchangerAuth.Sig)
+		if err != nil {
+			return
+		}
+		exchangerAddr := addr.String()
+		nftTx := database.NFTTx{
+			TxType:        6,
+			NFTAddr:       w.Buyer.NFTAddress,
+			ExchangerAddr: &exchangerAddr,
+			From:          "", //插入数据库时实时填充原拥有者
+			To:            to,
+			Price:         &value, //单位为wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 19: //NFT惰性出价成交交易，由交易所授权的地址发起（买家给价格签名）
+		// 从签名恢复NFT创建者地址（也是卖家地址）
+		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
+		addr, err := recoverAddress(msg, w.Seller2.Sig)
+		if err != nil {
+			return
+		}
+		creator := addr.String()
+		// 从授权签名恢复交易所地址
+		msg = w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
+		addr, err = recoverAddress(msg, w.ExchangerAuth.Sig)
+		exchangerAddr := addr.String()
+		// 获取最新NFT地址
+		nftAddr, err := database.GetNFTAddr()
+		if err != nil {
+			return
+		}
+		// 版税费率字符串转数字
+		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty, 16, 32)
+		if err != nil {
+			return
+		}
+		nft := database.UserNFT{
+			Address:       nftAddr,
+			RoyaltyRatio:  uint32(royaltyRatio),
+			MetaUrl:       w.Seller2.MetaURL,
+			ExchangerAddr: exchangerAddr, //交易发起者即交易所地址
+			Creator:       creator,
+			Timestamp:     timestamp,
+			BlockNumber:   blockNumber,
+			TxHash:        txHash,
+			Owner:         creator,
+		}
+		nft.Insert()
+		if err != nil {
+			return
+		}
+		nftTx := database.NFTTx{
+			TxType:        7,
+			NFTAddr:       nftAddr,
+			ExchangerAddr: &exchangerAddr,
+			From:          creator,
+			To:            to,
+			Price:         &value, //单位为wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 20: //NFT撮合交易，交易所发起
+		nftTx := database.NFTTx{
+			TxType:        8,
+			NFTAddr:       w.Buyer.NFTAddress,
+			ExchangerAddr: &from,
+			From:          "", //插入数据库时实时填充原拥有者
+			To:            to,
+			Price:         &value, //单位为wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+		}
+		err = nftTx.Insert()
+		if err != nil {
+			return
+		}
+
+	case 21: //交易所质押
+		err = database.ExchangerPledgeAdd(from, value)
+		if err != nil {
+			return
+		}
+
+	case 22: //撤销交易所质押
+		err = database.ExchangerPledgeSub(from, value)
+		if err != nil {
+			return
+		}
+	}
+}
+
+// hashMsg Wormholes链代码复制 go-ethereum/core/evm.go 330行
+func hashMsg(data []byte) ([]byte, string) {
+	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(data), string(data))
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write([]byte(msg))
+	return hasher.Sum(nil), msg
+}
+
+// recoverAddress Wormholes链代码复制 go-ethereum/core/evm.go 338行
+func recoverAddress(msg string, sigStr string) (common.Address, error) {
+	sigData := hexutil.MustDecode(sigStr)
+	if len(sigData) != 65 {
+		return common.Address{}, fmt.Errorf("signature must be 65 bytes long")
+	}
+	if sigData[64] != 27 && sigData[64] != 28 {
+		return common.Address{}, fmt.Errorf("invalid Ethereum signature (V is not 27 or 28)")
+	}
+	sigData[64] -= 27
+	hash, _ := hashMsg([]byte(msg))
+	fmt.Println("sigdebug hash=", hexutil.Encode(hash))
+	rpk, err := crypto.SigToPub(hash, sigData)
+	if err != nil {
+		return common.Address{}, err
+	}
+	return crypto.PubkeyToAddress(*rpk), nil
 }
 
 func toDecimal(src string, decimal int) string {
