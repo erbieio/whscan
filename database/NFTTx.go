@@ -31,9 +31,20 @@ func (nt NFTTx) Insert() error {
 	return DB.Create(&nt).Error
 }
 
-func FetchNFTTxs(page, size int) (data []NFTTx, count int, err error) {
-	err = DB.Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
-	count = len(data)
+func FetchNFTTxs(exchanger string, page, size uint64) (data []NFTTx, count int64, err error) {
+	if exchanger != "" {
+		err = DB.Where("exchanger_addr=?", exchanger).Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Where("exchanger_addr=?", exchanger).Model(&NFTTx{}).Count(&count).Error
+	} else {
+		err = DB.Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&NFTTx{}).Count(&count).Error
+	}
 	return
 }
 

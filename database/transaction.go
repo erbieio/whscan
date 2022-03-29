@@ -28,7 +28,7 @@ type Transaction struct {
 
 func (t Transaction) Insert() error {
 	var m TransactionModel
-	m.Transaction=t
+	m.Transaction = t
 	return DB.Create(&m).Error
 }
 
@@ -70,7 +70,7 @@ type TxLog struct {
 
 func (t TxLog) Insert() error {
 	var m TxLogModel
-	m.TxLog=t
+	m.TxLog = t
 	return DB.Create(&m).Error
 }
 

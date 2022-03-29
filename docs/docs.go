@@ -223,6 +223,87 @@ var doc = `{
                 }
             }
         },
+        "/exchanger": {
+            "get": {
+                "description": "按地址查询交易所",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "交易所"
+                ],
+                "summary": "查询交易所",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "交易所地址",
+                        "name": "address",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/exchanger.ExchangerRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exchanger.ExchangerRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/exchanger/page": {
+            "get": {
+                "description": "按创建时间逆序查询交易所列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "交易所"
+                ],
+                "summary": "查询交易所列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页，默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小，默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/exchanger.PageRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exchanger.PageRes"
+                        }
+                    }
+                }
+            }
+        },
         "/extra/checkAuth": {
             "get": {
                 "description": "查询交易所状态",
@@ -305,6 +386,156 @@ var doc = `{
         }
     },
     "definitions": {
+        "NFT.ErrRes": {
+            "type": "object",
+            "properties": {
+                "err": {
+                    "description": "错误信息",
+                    "type": "string"
+                }
+            }
+        },
+        "NFT.GetBlockReq": {
+            "type": "object",
+            "properties": {
+                "block_number": {
+                    "description": "区块号",
+                    "type": "string"
+                }
+            }
+        },
+        "NFT.GetBlockRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/database.Block"
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "NFT.GetReceiptsRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.TxLog"
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "NFT.GetTxReq": {
+            "type": "object",
+            "properties": {
+                "tx_hash": {
+                    "description": "交易hash",
+                    "type": "string"
+                }
+            }
+        },
+        "NFT.GetTxRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/database.Transaction"
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "NFT.PageReq": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "description": "页",
+                    "type": "integer"
+                },
+                "page_size": {
+                    "description": "页码",
+                    "type": "integer"
+                }
+            }
+        },
+        "NFT.TxPageReq": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "地址 不区分传 \"\"",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "区块号 不区分",
+                    "type": "string"
+                },
+                "page": {
+                    "description": "页",
+                    "type": "integer"
+                },
+                "page_size": {
+                    "description": "页码",
+                    "type": "integer"
+                },
+                "tx_type": {
+                    "description": "交易类型  如ERC20  ERC1155 ERC721  internal  不区分传\"\"",
+                    "type": "string"
+                }
+            }
+        },
+        "NFT.ViewBlocksRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.Block"
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "NFT.ViewTxsRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.Transaction"
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "block.ErrRes": {
             "type": "object",
             "properties": {
@@ -505,6 +736,47 @@ var doc = `{
                 }
             }
         },
+        "database.Exchanger": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "交易所地址",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "创建时的区块号",
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "创建者地址",
+                    "type": "string"
+                },
+                "fee_ratio": {
+                    "description": "手续费率,单位万分之一",
+                    "type": "integer"
+                },
+                "is_open": {
+                    "description": "是否开启中",
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "交易所名称",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "开启时间",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "创建的交易",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "交易所URL",
+                    "type": "string"
+                }
+            }
+        },
         "database.Transaction": {
             "type": "object",
             "properties": {
@@ -575,6 +847,39 @@ var doc = `{
                 },
                 "tx_hash": {
                     "type": "string"
+                }
+            }
+        },
+        "exchanger.ExchangerRes": {
+            "type": "object",
+            "properties": {
+                "err_str": {
+                    "description": "查询错误字符串，如果有",
+                    "type": "string"
+                },
+                "exchangers": {
+                    "description": "交易所",
+                    "$ref": "#/definitions/database.Exchanger"
+                }
+            }
+        },
+        "exchanger.PageRes": {
+            "type": "object",
+            "properties": {
+                "err_str": {
+                    "description": "查询错误字符串，如果有",
+                    "type": "string"
+                },
+                "exchangers": {
+                    "description": "交易所列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.Exchanger"
+                    }
+                },
+                "total": {
+                    "description": "交易所总数",
+                    "type": "integer"
                 }
             }
         },
@@ -662,7 +967,7 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "192.168.1.237:3001",
+	Host:        "127.0.0.1:3001",
 	BasePath:    "",
 	Schemes:     []string{},
 	Title:       "Gin swagger",

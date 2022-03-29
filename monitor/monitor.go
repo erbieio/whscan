@@ -316,7 +316,7 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 		if err != nil {
 			return
 		}
-		fmt.Println("官方注入", startIndex, w.Number, w.Royalty, w.Creator)
+		fmt.Println("官方注入", startIndex, w.Number, w.Royalty, w.Creator, w.Dir)
 		return
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）

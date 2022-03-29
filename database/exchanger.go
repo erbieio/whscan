@@ -5,7 +5,7 @@ import "github.com/jinzhu/gorm"
 // Exchanger 交易所属性信息
 type Exchanger struct {
 	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //交易所地址
-	Name        string `json:"name"`                                     //交易所名称
+	Name        string `json:"name" gorm:"type:VARCHAR(256)"`            //交易所名称
 	URL         string `json:"url"`                                      //交易所URL
 	FeeRatio    uint32 `json:"fee_ratio"`                                //手续费率,单位万分之一
 	Creator     string `json:"creator" gorm:"type:CHAR(42)"`             //创建者地址
@@ -13,6 +13,7 @@ type Exchanger struct {
 	IsOpen      bool   `json:"is_open"`                                  //是否开启中
 	BlockNumber uint64 `json:"block_number" gorm:"index"`                //创建时的区块号
 	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //创建的交易
+	NFTCount    uint64 `json:"nft_count" gorm:"-"`                       //NFT总数，批量查询的此字段无效
 }
 
 func OpenExchange(e *Exchanger) error {
@@ -32,13 +33,28 @@ func CloseExchange(addr string) error {
 	return DB.Model(&Exchanger{}).Where("address=?", addr).Update("is_open", false).Error
 }
 
-func FetchExchangers(page, size int) (data []Exchanger, count int, err error) {
-	err = DB.Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
-	count = len(data)
+func FetchExchangers(name string, page, size uint64) (data []Exchanger, count int64, err error) {
+	if name != "" {
+		err = DB.Where("name=?", name).Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Where("name=?", name).Model(&Exchanger{}).Count(&count).Error
+	} else {
+		err = DB.Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&Exchanger{}).Count(&count).Error
+	}
 	return
 }
 
 func FindExchanger(addr string) (data Exchanger, err error) {
 	err = DB.Where("address=?", addr).First(&data).Error
+	if err != nil {
+		return
+	}
+	err = DB.Where("exchanger_addr=?", addr).Model(&UserNFT{}).Count(&data.NFTCount).Error
 	return
 }

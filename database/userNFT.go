@@ -2,6 +2,7 @@ package database
 
 import (
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -30,9 +31,30 @@ func (un UserNFT) Insert() error {
 	return DB.Create(&un).Error
 }
 
-func FetchUserNFTs(page, size int) (data []UserNFT, count int, err error) {
-	err = DB.Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
-	count = len(data)
+func FetchUserNFTs(exchanger, owner string, page, size uint64) (data []UserNFT, count int64, err error) {
+	if exchanger != "" || owner != "" {
+		where := ""
+		if exchanger != "" {
+			where += "exchanger_addr='" + exchanger + "'"
+		}
+		if owner != "" {
+			if exchanger != "" {
+				where += " AND "
+			}
+			where += "owner='" + owner + "'"
+		}
+		err = DB.Where(where).Order("address DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Where(where).Model(&UserNFT{}).Count(&count).Error
+	} else {
+		err = DB.Order("address DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&UserNFT{}).Count(&count).Error
+	}
 	return
 }
 
@@ -65,5 +87,5 @@ func GetNFTAddr() (string, error) {
 	if err := initNFTCount(); err != nil {
 		return "", err
 	}
-	return common.BigToAddress(userNFTCount).String(), nil
+	return strings.ToLower(common.BigToAddress(userNFTCount).String()), nil
 }

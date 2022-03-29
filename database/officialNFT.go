@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jinzhu/gorm"
@@ -45,6 +46,23 @@ func DispatchSNFT(validators []string, blockNumber, timestamp uint64) error {
 	return nil
 }
 
+func FetchOfficialNFTs(owner string, page, size uint64) (data []OfficialNFT, count int64, err error) {
+	if owner != "" {
+		err = DB.Where("owner=?", owner).Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Where("owner=?", owner).Model(&OfficialNFT{}).Count(&count).Error
+	} else {
+		err = DB.Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&OfficialNFT{}).Count(&count).Error
+	}
+	return
+}
+
 func dequeueSNFT() (addr string, err error) {
 	if err = initSNFTCount(); err != nil {
 		return "", err
@@ -65,7 +83,7 @@ func dequeueSNFT() (addr string, err error) {
 		addr = recycleSNFT.Address
 		err = DB.Delete(&recycleSNFT).Error
 	} else {
-		addr = common.BigToAddress(SNFTCount).String()
+		addr = strings.ToLower(common.BigToAddress(SNFTCount).String())
 		SNFTCount = SNFTCount.Add(SNFTCount, common.Big1)
 	}
 	return
