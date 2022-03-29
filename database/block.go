@@ -41,3 +41,8 @@ func FindBlock(num string) (data Block, err error) {
 	err = db.First(&data).Error
 	return data, err
 }
+
+func BlockCount() (count uint64, err error) {
+	err = DB.Model(&BlockModel{}).Count(&count).Error
+	return
+}

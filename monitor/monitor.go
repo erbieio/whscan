@@ -21,117 +21,115 @@ import (
 )
 
 func SyncBlock() {
-	var blockNumber uint64
-	currentBlockNumber, err := ethhelper.GetBlockNumber()
+	number, err := database.BlockCount()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("从%v区块开始数据分析", number)
+	for {
+		currentNumber, err := ethhelper.GetBlockNumber()
+		if err != nil || currentNumber < number {
+			fmt.Printf("最新区块高度%v：在%v区块休眠, 错误：%v", currentNumber, number, err)
+			time.Sleep(5 * time.Second)
+		} else {
+			HandleBlock(number)
+			number++
+		}
+	}
+}
+
+func HandleBlock(number uint64) {
+	var tmp big.Int
+	tmp.SetUint64(number)
+
+	b, err := ethhelper.GetBlock("0x" + tmp.Text(16))
 	if err != nil {
 		log.Infof(err.Error())
 	}
-	for {
-		if blockNumber != 0 {
-			blockNumber, _ = ethhelper.GetBlockNumber()
+	var block database.Block
+	hexTo10 := func(v string) string {
+		tmp.SetString(v, 0)
+		return fmt.Sprintf("%v", tmp.Uint64())
+	}
+	block.ParentHash = b.UncleHash
+	block.UncleHash = b.UncleHash
+	block.Coinbase = b.Coinbase
+	block.Root = b.Root
+	block.TxHash = b.TxHash
+	block.ReceiptHash = b.ReceiptHash
+	block.Difficulty = b.Difficulty
+	block.Number = hexTo10(b.Number)
+	block.GasLimit = hexTo10(b.GasLimit)
+	block.GasUsed = hexTo10(b.GasUsed)
+	block.Extra = b.Extra
+	block.MixDigest = b.MixDigest
+	block.Size = hexTo10(b.Size)
+	block.TxCount = len(b.Transactions)
+	block.Ts = hexTo10(b.Ts)
+	err = block.Insert()
+	if err != nil {
+		log.Infof(err.Error())
+	}
+	type ethTransfer struct {
+		From  string `json:"from"`
+		To    string `json:"to"`
+		Value string `json:"value"`
+	}
+	var eths []ethTransfer
+	for _, t := range b.Transactions {
+		var tx database.Transaction
+		tx.Hash = t.Hash
+		tx.From = t.From
+		tx.To = t.To
+		tx.Value = hexTo10(t.Value)
+		tx.Value = toDecimal(tx.Value, 18)
+		tx.Nonce = hexTo10(t.Nonce)
+		tx.BlockHash = t.BlockHash
+		tx.BlockNumber = hexTo10(t.BlockNumber)
+		tx.TransactionIndex = hexTo10(t.TransactionIndex)
+		tx.Gas = hexTo10(t.Gas)
+		tx.GasPrice = hexTo10(t.GasPrice)
+		tx.Input = t.Input
+
+		calls := TraceTxInternalCall(tx.Hash, tx.From, tx.To)
+		callsStr, _ := json.Marshal(calls)
+		tx.InternalCalls = string(callsStr)
+		for _, c := range calls {
+			var f float64
+			f, _ = strconv.ParseFloat(c.Value, 64)
+			if f != 0 {
+				eths = append(eths, ethTransfer{
+					From:  c.From,
+					To:    c.To,
+					Value: c.Value,
+				})
+			}
+		}
+		ethsStr, _ := json.Marshal(eths)
+		tx.InternalValueTransfer = string(ethsStr)
+		tx.Ts = block.Ts
+		status, ty, tokenTransfers := analysisTokenTransfer(tx.Hash)
+		if status == "0x1" {
+			tx.Status = "1"
+		} else {
+			tx.Status = "0"
 		}
 
-		if currentBlockNumber == 0 || blockNumber == currentBlockNumber {
-			time.Sleep(5 * time.Second)
-			continue
+		input, _ := hexutil.Decode(t.Input)
+		if len(input) >= 10 && string(input[0:10]) == "wormholes:" {
+			// 从input字段判断是否是wormholes交易，并解析处理
+			HandleWHTx(input[10:], t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
 		}
-		if currentBlockNumber != 0 && blockNumber != 0 {
-			currentBlockNumber = blockNumber
-		}
+		extra, _ := hexutil.Decode(b.Extra)
+		handleWHBlock(extra, b.Number, b.Ts)
 
-		var tmp big.Int
-		tmp.SetUint64(currentBlockNumber)
-
-		b, err := ethhelper.GetBlock("0x" + tmp.Text(16))
+		tx.TxType = ty
+		tokenStr, _ := json.Marshal(tokenTransfers)
+		tx.TokenTransfer = string(tokenStr)
+		err = tx.Insert()
 		if err != nil {
 			log.Infof(err.Error())
 		}
-		var block database.Block
-		hexTo10 := func(v string) string {
-			tmp.SetString(v, 0)
-			return fmt.Sprintf("%v", tmp.Uint64())
-		}
-		block.ParentHash = b.UncleHash
-		block.UncleHash = b.UncleHash
-		block.Coinbase = b.Coinbase
-		block.Root = b.Root
-		block.TxHash = b.TxHash
-		block.ReceiptHash = b.ReceiptHash
-		block.Difficulty = b.Difficulty
-		block.Number = hexTo10(b.Number)
-		block.GasLimit = hexTo10(b.GasLimit)
-		block.GasUsed = hexTo10(b.GasUsed)
-		block.Extra = b.Extra
-		block.MixDigest = b.MixDigest
-		block.Size = hexTo10(b.Size)
-		block.TxCount = len(b.Transactions)
-		block.Ts = hexTo10(b.Ts)
-		err = block.Insert()
-		if err != nil {
-			log.Infof(err.Error())
-		}
-		type ethTransfer struct {
-			From  string `json:"from"`
-			To    string `json:"to"`
-			Value string `json:"value"`
-		}
-		var eths []ethTransfer
-		for _, t := range b.Transactions {
-			var tx database.Transaction
-			tx.Hash = t.Hash
-			tx.From = t.From
-			tx.To = t.To
-			tx.Value = hexTo10(t.Value)
-			tx.Value = toDecimal(tx.Value, 18)
-			tx.Nonce = hexTo10(t.Nonce)
-			tx.BlockHash = t.BlockHash
-			tx.BlockNumber = hexTo10(t.BlockNumber)
-			tx.TransactionIndex = hexTo10(t.TransactionIndex)
-			tx.Gas = hexTo10(t.Gas)
-			tx.GasPrice = hexTo10(t.GasPrice)
-			tx.Input = t.Input
-
-			calls := TraceTxInternalCall(tx.Hash, tx.From, tx.To)
-			callsStr, _ := json.Marshal(calls)
-			tx.InternalCalls = string(callsStr)
-			for _, c := range calls {
-				var f float64
-				f, _ = strconv.ParseFloat(c.Value, 64)
-				if f != 0 {
-					eths = append(eths, ethTransfer{
-						From:  c.From,
-						To:    c.To,
-						Value: c.Value,
-					})
-				}
-			}
-			ethsStr, _ := json.Marshal(eths)
-			tx.InternalValueTransfer = string(ethsStr)
-			tx.Ts = block.Ts
-			status, ty, tokenTransfers := analysisTokenTransfer(tx.Hash)
-			if status == "0x1" {
-				tx.Status = "1"
-			} else {
-				tx.Status = "0"
-			}
-
-			input, _ := hexutil.Decode(t.Input)
-			if len(input) >= 10 && string(input[0:10]) == "wormholes:" {
-				// 从input字段判断是否是wormholes交易，并解析处理
-				HandleWHTx(input[10:], t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
-			}
-			extra, _ := hexutil.Decode(b.Extra)
-			handleWHBlock(extra, b.Number, b.Ts)
-
-			tx.TxType = ty
-			tokenStr, _ := json.Marshal(tokenTransfers)
-			tx.TokenTransfer = string(tokenStr)
-			err = tx.Insert()
-			if err != nil {
-				log.Infof(err.Error())
-			}
-		}
-		blockNumber = currentBlockNumber
 	}
 }
 
