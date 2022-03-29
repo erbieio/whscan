@@ -2,8 +2,10 @@ package database
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/jinzhu/gorm"
 )
 
 // OfficialNFT SNFT属性信息
@@ -14,34 +16,72 @@ type OfficialNFT struct {
 	Owner       string `json:"owner" gorm:"type:CHAR(44)"`               //所有者
 }
 
-// SNFTRecycler SNFT兑换回收
-type SNFTRecycler struct {
+// RecycleSNFT SNFT兑换回收
+type RecycleSNFT struct {
 	ID      uint64 `gorm:"primary_key;auto_increment"` //编号
 	Address string ` gorm:"type:CHAR(44)"`             //SNFT地址
 }
 
-//maxSNFTAddr 可用SNFT地址（新的地址是之前地址加一）
-var maxSNFTAddr *big.Int
-var sNFTPools []string
-
-// SNFTRecycle SNFT回收,删除NFT，将地址放回池子
-func SNFTRecycle(addr string) error {
-	if err := initSNFTPools(); err != nil {
-		return err
-	}
+// EnqueueSNFT SNFT入队回收，将地址放到回收池子
+func EnqueueSNFT(addr string) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
-		return sNFTRecycle(addr)
+		return recycleSNFT(addr)
 	})
 }
 
-func sNFTRecycle(addr string) error {
+func DispatchSNFT(validators []string, blockNumber, timestamp uint64) error {
+	for _, validator := range validators {
+		SNFT, err := dequeueSNFT()
+		if err != nil {
+			return err
+		}
+		DB.Create(OfficialNFT{
+			Address:     SNFT,
+			Timestamp:   timestamp,
+			BlockNumber: blockNumber,
+			Owner:       validator,
+		})
+	}
+	return nil
+}
+
+func dequeueSNFT() (addr string, err error) {
+	if err = initSNFTCount(); err != nil {
+		return "", err
+	}
+	// 否则返回可用SNFT地址，并将可用SNFT地址加一
+	var count int64
+	err = DB.Model(&RecycleSNFT{}).Count(&count).Error
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		// 从回收池里取出id最小的一个并删除
+		recycleSNFT := RecycleSNFT{}
+		err = DB.Order("id ASC").Limit(1).Find(&recycleSNFT).Error
+		if err != nil {
+			return
+		}
+		addr = recycleSNFT.Address
+		err = DB.Delete(&recycleSNFT).Error
+	} else {
+		addr = common.BigToAddress(SNFTCount).String()
+		SNFTCount = SNFTCount.Add(SNFTCount, common.Big1)
+	}
+	return
+}
+
+func recycleSNFT(addr string) error {
 	if len(addr) == 42 {
-		// 加入池子并写到数据库
-		sNFTPools = append(sNFTPools, addr)
-		return DB.Create(&SNFTRecycler{Address: addr}).Error
+		// 删除SNFT并将地址写到SNFT回收表里
+		err := DB.Delete(&OfficialNFT{}, "address=?", addr).Error
+		if err != nil {
+			return err
+		}
+		return DB.Create(&RecycleSNFT{Address: addr}).Error
 	} else {
 		for i := 0; i < 16; i++ {
-			err := SNFTRecycle(fmt.Sprintf("%s%x", addr, i))
+			err := recycleSNFT(fmt.Sprintf("%s%x", addr, i))
 			if err != nil {
 				return err
 			}
@@ -50,14 +90,24 @@ func sNFTRecycle(addr string) error {
 	return nil
 }
 
-// initNFTAddr 初始化NFT地址，值为NFT总数加一
-func initSNFTPools() (err error) {
-	if sNFTPools == nil || maxSNFTAddr == nil {
-		err = DB.Model(&SNFTRecycler{}).Order("id ASC").Select("address").Find(&sNFTPools).Error
+//SNFTCount SNFT数量（包含回收池里的）
+var SNFTCount *big.Int
+
+// initSNFTCount 初始化SNFT数量
+func initSNFTCount() (err error) {
+	if SNFTCount == nil {
+		var count1, count2 int64
+		err = DB.Model(&OfficialNFT{}).Count(&count1).Error
 		if err != nil {
 			return
 		}
-		err = DB.Select("MAX(address)").Find(&maxSNFTAddr).Error
+		err = DB.Model(&RecycleSNFT{}).Count(&count2).Error
+		if err != nil {
+			return
+		}
+		SNFTCount = big.NewInt(0)
+		SNFTCount.SetString("8000000000000000000000000000000000000000", 16)
+		SNFTCount = SNFTCount.Add(SNFTCount, big.NewInt(count1+count2))
 	}
 	return
 }

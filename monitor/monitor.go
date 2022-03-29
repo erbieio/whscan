@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"server/database"
 	"server/ethhelper"
 	"server/log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -115,8 +118,10 @@ func SyncBlock() {
 			input, _ := hexutil.Decode(t.Input)
 			if len(input) >= 10 && string(input[0:10]) == "wormholes:" {
 				// 从input字段判断是否是wormholes交易，并解析处理
-				HandleWH(input[10:], t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
+				HandleWHTx(input[10:], t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
 			}
+			extra, _ := hexutil.Decode(b.Extra)
+			handleWHBlock(extra, b.Number, b.Ts)
 
 			tx.TxType = ty
 			tokenStr, _ := json.Marshal(tokenTransfers)
@@ -130,8 +135,33 @@ func SyncBlock() {
 	}
 }
 
-// HandleWH 解析wormholes区块链的特殊交易
-func HandleWH(input []byte, number, time, txHash, from, to, value string, status bool) {
+func handleWHBlock(input []byte, number, time string) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.Infof("解析validators", "区块", number, "Extra", string(input), "错误", err)
+		}
+	}()
+	timestamp, err := strconv.ParseUint(time[2:], 16, 64)
+	if err != nil {
+		return
+	}
+	blockNumber, err := strconv.ParseUint(number[2:], 16, 64)
+	if err != nil {
+		return
+	}
+	validators, err := decodeValidators(input)
+	if err != nil {
+		return
+	}
+	err = database.DispatchSNFT(validators, blockNumber, timestamp)
+	if err != nil {
+		return
+	}
+}
+
+// HandleWHTx 解析wormholes区块链的特殊交易
+func HandleWHTx(input []byte, number, time, txHash, from, to, value string, status bool) {
 	type Wormholes struct {
 		Type       uint8  `json:"type"`
 		NFTAddress string `json:"nft_address"`
@@ -242,6 +272,7 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 		}
 
 	case 6: //官方NFT兑换
+		database.EnqueueSNFT(w.NFTAddress)
 		return
 
 	case 9: //共识质押
@@ -280,6 +311,12 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 		}
 
 	case 13: //官方注入NFT
+		//todo
+		startIndex, err := strconv.ParseUint(w.StartIndex[2:], 16, 64)
+		if err != nil {
+			return
+		}
+		fmt.Println("官方注入", startIndex, w.Number, w.Royalty, w.Creator)
 		return
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
@@ -511,6 +548,49 @@ func HandleWH(input []byte, number, time, txHash, from, to, value string, status
 			return
 		}
 	}
+}
+
+func decodeValidators(extra []byte) ([]string, error) {
+	var istanbulExtra *IstanbulExtra
+	err := rlp.DecodeBytes(extra[32:], &istanbulExtra)
+	if err != nil {
+		return nil, err
+	}
+	ret := make([]string, 0, len(istanbulExtra.Validators))
+	for _, validator := range istanbulExtra.Validators {
+		ret = append(ret, strings.ToLower(validator.Hex()))
+	}
+	return ret, nil
+}
+
+// IstanbulExtra represents the legacy IBFT header extradata
+type IstanbulExtra struct {
+	Validators    []common.Address
+	Seal          []byte
+	CommittedSeal [][]byte
+}
+
+// EncodeRLP serializes ist into the Ethereum RLP format.
+func (ist *IstanbulExtra) EncodeRLP(w io.Writer) error {
+	return rlp.Encode(w, []interface{}{
+		ist.Validators,
+		ist.Seal,
+		ist.CommittedSeal,
+	})
+}
+
+// DecodeRLP implements rlp.Decoder, and load the istanbul fields from a RLP stream.
+func (ist *IstanbulExtra) DecodeRLP(s *rlp.Stream) error {
+	var istanbulExtra struct {
+		Validators    []common.Address
+		Seal          []byte
+		CommittedSeal [][]byte
+	}
+	if err := s.Decode(&istanbulExtra); err != nil {
+		return err
+	}
+	ist.Validators, ist.Seal, ist.CommittedSeal = istanbulExtra.Validators, istanbulExtra.Seal, istanbulExtra.CommittedSeal
+	return nil
 }
 
 // hashMsg Wormholes链代码复制 go-ethereum/core/evm.go 330行

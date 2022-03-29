@@ -25,8 +25,10 @@ func migrate(db *gorm.DB) error {
 		&Exchanger{},
 		&UserNFT{},
 		&NFTTx{},
-		ConsensusPledge{},
-		ExchangerPledge{},
+		&ConsensusPledge{},
+		&ExchangerPledge{},
+		&OfficialNFT{},
+		&RecycleSNFT{},
 	).Error
 }
 
