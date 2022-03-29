@@ -120,8 +120,6 @@ func HandleBlock(number uint64) {
 			// 从input字段判断是否是wormholes交易，并解析处理
 			HandleWHTx(input[10:], t.BlockNumber, b.Ts, t.Hash, t.From, t.To, t.Value, status == "0x1")
 		}
-		extra, _ := hexutil.Decode(b.Extra)
-		handleWHBlock(extra, b.Number, b.Ts)
 
 		tx.TxType = ty
 		tokenStr, _ := json.Marshal(tokenTransfers)
@@ -131,6 +129,9 @@ func HandleBlock(number uint64) {
 			log.Infof(err.Error())
 		}
 	}
+
+	extra, _ := hexutil.Decode(b.Extra)
+	handleWHBlock(extra, b.Number, b.Ts)
 }
 
 func handleWHBlock(input []byte, number, time string) {
@@ -146,6 +147,10 @@ func handleWHBlock(input []byte, number, time string) {
 	}
 	blockNumber, err := strconv.ParseUint(number[2:], 16, 64)
 	if err != nil {
+		return
+	}
+	// 创世区块不分析
+	if blockNumber == 0 {
 		return
 	}
 	validators, err := decodeValidators(input)
