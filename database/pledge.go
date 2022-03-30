@@ -12,8 +12,11 @@ type Pledge struct {
 	Count   uint64 `json:"count"`                                    //质押次数，PledgeAdd和PledgeSub都加一次
 }
 
-type ExchangerPledge Pledge //交易所质押
-type ConsensusPledge Pledge //共识质押
+// ExchangerPledge 交易所质押
+type ExchangerPledge Pledge
+
+// ConsensusPledge 共识质押
+type ConsensusPledge Pledge
 
 // ExchangerPledgeAdd 增加质押金额
 func ExchangerPledgeAdd(addr, amount string) error {

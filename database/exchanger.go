@@ -12,7 +12,7 @@ type Exchanger struct {
 	URL         string `json:"url"`                                      //交易所URL
 	FeeRatio    uint32 `json:"fee_ratio"`                                //手续费率,单位万分之一
 	Creator     string `json:"creator" gorm:"type:CHAR(42)"`             //创建者地址
-	Timestamp   uint64 `json:"timestamp"`                                //开启时间
+	Timestamp   uint64 `json:"timestamp" gorm:"index"`                   //开启时间
 	IsOpen      bool   `json:"is_open"`                                  //是否开启中
 	BlockNumber uint64 `json:"block_number" gorm:"index"`                //创建时的区块号
 	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //创建的交易

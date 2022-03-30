@@ -6,8 +6,8 @@ type NFTTx struct {
 	TxType        int32   `json:"tx_type"`
 	NFTAddr       string  `json:"nft_addr" gorm:"type:CHAR(42)"`            //交易的NFT地址
 	ExchangerAddr *string `json:"exchanger_addr" gorm:"type:CHAR(42)"`      //交易所地址
-	From          string  `json:"from" gorm:"type:CHAR(42)"`                //卖家
-	To            string  `json:"to" gorm:"type:CHAR(42)"`                  //买家
+	From          string  `json:"from" gorm:"type:CHAR(42);index"`          //卖家
+	To            string  `json:"to" gorm:"type:CHAR(42);index"`            //买家
 	Price         *string `json:"price"`                                    //价格,单位为wei
 	Timestamp     uint64  `json:"timestamp"`                                //交易时间戳
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"` //交易哈希
