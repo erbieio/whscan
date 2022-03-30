@@ -9,6 +9,6 @@ type ErrRes struct {
 
 // PageRes SNFT分页返回参数
 type PageRes struct {
-	Total int64                  `json:"total"` //SNFT总数
-	NFTs  []database.OfficialNFT `json:"nfts"`  //SNFT列表
+	Total int64           `json:"total"` //SNFT总数
+	NFTs  []database.SNFT `json:"nfts"`  //SNFT列表
 }

@@ -500,6 +500,47 @@ var doc = `{
                 }
             }
         },
+        "/snft/block": {
+            "get": {
+                "description": "查询指定区块的SNFT奖励列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SNFT"
+                ],
+                "summary": "查询区块SNFT列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "区块号",
+                        "name": "number",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/database.SNFT"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/SNFT.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/snft/page": {
             "get": {
                 "description": "按创建时间逆序查询SNFT列表",
@@ -608,7 +649,7 @@ var doc = `{
                     "description": "SNFT列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/database.OfficialNFT"
+                        "$ref": "#/definitions/database.SNFT"
                     }
                 },
                 "total": {
@@ -899,7 +940,7 @@ var doc = `{
                 }
             }
         },
-        "database.OfficialNFT": {
+        "database.SNFT": {
             "type": "object",
             "properties": {
                 "address": {
@@ -931,11 +972,11 @@ var doc = `{
                     "type": "string"
                 },
                 "reward_at": {
-                    "description": "奖励时间戳，矿工获取被奖励这个SNFT的时间",
+                    "description": "奖励时间戳,矿工被奖励这个SNFT的时间",
                     "type": "integer"
                 },
                 "reward_number": {
-                    "description": "奖励的区块高度，矿工获取被奖励这个SNFT的区块高度",
+                    "description": "奖励区块高度,矿工被奖励这个SNFT的区块高度",
                     "type": "integer"
                 },
                 "royalty_ratio": {

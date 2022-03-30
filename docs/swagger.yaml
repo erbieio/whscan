@@ -38,7 +38,7 @@ definitions:
       nfts:
         description: SNFT列表
         items:
-          $ref: '#/definitions/database.OfficialNFT'
+          $ref: '#/definitions/database.SNFT'
         type: array
       total:
         description: SNFT总数
@@ -237,7 +237,7 @@ definitions:
         description: 交易类型,1：转移、2:出价成交、3:定价购买、4：惰性定价购买、5：惰性定价购买、6：出价成交、7：惰性出价成交、8：撮合交易
         type: integer
     type: object
-  database.OfficialNFT:
+  database.SNFT:
     properties:
       address:
         description: SNFT地址
@@ -261,10 +261,10 @@ definitions:
         description: 所有者,未分配和回收的为null
         type: string
       reward_at:
-        description: 奖励时间戳，矿工获取被奖励这个SNFT的时间
+        description: 奖励时间戳,矿工被奖励这个SNFT的时间
         type: integer
       reward_number:
-        description: 奖励的区块高度，矿工获取被奖励这个SNFT的区块高度
+        description: 奖励区块高度,矿工被奖励这个SNFT的区块高度
         type: integer
       royalty_ratio:
         description: 版税费率,单位万分之一
@@ -731,6 +731,33 @@ paths:
       summary: 查询NFT交易列表
       tags:
       - NFT
+  /snft/block:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定区块的SNFT奖励列表
+      parameters:
+      - description: 区块号
+        in: query
+        name: number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/database.SNFT'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/SNFT.ErrRes'
+      summary: 查询区块SNFT列表
+      tags:
+      - SNFT
   /snft/page:
     get:
       consumes:

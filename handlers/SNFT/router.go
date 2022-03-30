@@ -8,6 +8,7 @@ import (
 
 func Routers(e *gin.Engine) {
 	e.GET("/snft/page", pageSNFT)
+	e.GET("/snft/block", blockSNFT)
 }
 
 // @Tags  SNFT
@@ -39,11 +40,37 @@ func pageSNFT(c *gin.Context) {
 		req.PageSize = 10
 	}
 
-	data, count, err := database.FetchOfficialNFTs(req.Owner, req.Page, req.PageSize)
+	data, count, err := database.FetchSNFTs(req.Owner, req.Page, req.PageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, ErrRes{ErrStr: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, PageRes{Total: count, NFTs: data})
+}
 
+// @Tags  SNFT
+// @Summary 查询区块SNFT列表
+// @Description 查询指定区块的SNFT奖励列表
+// @Accept json
+// @Produce json
+// @Param number query string true "区块号"
+// @Success 200 {object} []database.SNFT
+// @Failure 400 {object} ErrRes
+// @Router /snft/block [get]
+func blockSNFT(c *gin.Context) {
+	req := struct {
+		Number uint64 `form:"number"`
+	}{}
+	err := c.BindQuery(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	data, err := database.BlockSNFTs(req.Number)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
 }

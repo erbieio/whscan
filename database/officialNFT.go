@@ -8,15 +8,15 @@ import (
 	"strings"
 )
 
-// OfficialNFT SNFT属性信息
-type OfficialNFT struct {
+// SNFT SNFT属性信息
+type SNFT struct {
 	Address      string  `json:"address" gorm:"type:CHAR(44);primary_key"` //SNFT地址
 	CreateAt     uint64  `json:"create_at"`                                //创建时间戳
 	CreateNumber uint64  `json:"create_number" gorm:"index"`               //创建的区块高度
 	Creator      string  `json:"creator" gorm:"type:CHAR(44)"`             //创建者地址
 	Awardee      *string `json:"awardee"`                                  //被奖励的矿工获地址
-	RewardAt     *uint64 `json:"reward_at"`                                //奖励时间戳，矿工获取被奖励这个SNFT的时间
-	RewardNumber *uint64 `json:"reward_number"`                            //奖励的区块高度，矿工获取被奖励这个SNFT的区块高度
+	RewardAt     *uint64 `json:"reward_at"`                                //奖励时间戳,矿工被奖励这个SNFT的时间
+	RewardNumber *uint64 `json:"reward_number"`                            //奖励区块高度,矿工被奖励这个SNFT的区块高度
 	Owner        *string `json:"owner" gorm:"type:CHAR(44)"`               //所有者,未分配和回收的为null
 	RoyaltyRatio uint32  `json:"royalty_ratio"`                            //版税费率,单位万分之一
 	MetaUrl      string  `json:"meta_url"`                                 //元信息链接
@@ -54,7 +54,7 @@ func ImportSNFT(addr string, royalty uint32, metaUrl, creator string, number, ti
 }
 
 func injectSNFT(tx *gorm.DB, addr string, royalty uint32, metaUrl, creator string, number, timestamp uint64) error {
-	return DB.Create(&OfficialNFT{
+	return DB.Create(&SNFT{
 		Address:      addr,
 		CreateAt:     timestamp,
 		CreateNumber: number,
@@ -66,7 +66,7 @@ func injectSNFT(tx *gorm.DB, addr string, royalty uint32, metaUrl, creator strin
 
 func DispatchSNFT(validators, snfts []string, number, timestamp uint64) error {
 	for i, validator := range validators {
-		err := DB.Select("owner", "awardee", "reward_number", "reward_at").Save(&OfficialNFT{
+		err := DB.Select("owner", "awardee", "reward_number", "reward_at").Save(&SNFT{
 			Address:      snfts[i],
 			Owner:        &validator,
 			Awardee:      &validator,
@@ -80,26 +80,31 @@ func DispatchSNFT(validators, snfts []string, number, timestamp uint64) error {
 	return nil
 }
 
-func FetchOfficialNFTs(owner string, page, size uint64) (data []OfficialNFT, count int64, err error) {
+func FetchSNFTs(owner string, page, size uint64) (data []SNFT, count int64, err error) {
 	if owner != "" {
-		err = DB.Where("owner=?", owner).Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Where("owner=?", owner).Order("create_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
-		err = DB.Where("owner=?", owner).Model(&OfficialNFT{}).Count(&count).Error
+		err = DB.Where("owner=?", owner).Model(&SNFT{}).Count(&count).Error
 	} else {
-		err = DB.Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Order("create_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
-		err = DB.Model(&OfficialNFT{}).Count(&count).Error
+		err = DB.Model(&SNFT{}).Count(&count).Error
 	}
+	return
+}
+
+func BlockSNFTs(number uint64) (data []SNFT, err error) {
+	err = DB.Where("reward_number=?", number).Find(&data).Error
 	return
 }
 
 func recycleSNFT(tx *gorm.DB, addr string) error {
 	if len(addr) == 42 {
-		return tx.Model(&OfficialNFT{}).Where("address=?", addr).UpdateColumns(map[string]interface{}{
+		return tx.Model(&SNFT{}).Where("address=?", addr).UpdateColumns(map[string]interface{}{
 			"owner":         nil,
 			"Awardee":       nil,
 			"reward_at":     nil,
