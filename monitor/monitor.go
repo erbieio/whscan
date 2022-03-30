@@ -128,7 +128,7 @@ func HandleBlock(number uint64) {
 		}
 	}
 
-	handleWHBlock(b.Number, b.Ts)
+	// handleWHBlock(b.Number, b.Ts)
 }
 
 func handleGensisSNFT(timestamp uint64) error {
