@@ -57,6 +57,16 @@ func GetBlockNumber() (num uint64, err error) {
 	return b.Uint64(), nil
 }
 
+func GetSNFT(addr string) (snft SNFT, err error) {
+	err = client.Call(&snft, "eth_getAccountInfo", addr, "0x1")
+	return
+}
+
+func GetReward(number string) (rewards []Reward, err error) {
+	err = client.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", number, true)
+	return
+}
+
 func Decimals(contract string) (uint64, error) {
 	var tmp big.Int
 	payload := make([]byte, 4)

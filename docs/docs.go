@@ -467,6 +467,12 @@ var doc = `{
                     },
                     {
                         "type": "string",
+                        "description": "指定帐户,空则查询所有帐户的",
+                        "name": "account",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "页,默认1",
                         "name": "page",
                         "in": "query"
@@ -900,16 +906,40 @@ var doc = `{
                     "description": "SNFT地址",
                     "type": "string"
                 },
-                "block_number": {
+                "awardee": {
+                    "description": "被奖励的矿工获地址",
+                    "type": "string"
+                },
+                "create_at": {
+                    "description": "创建时间戳",
+                    "type": "integer"
+                },
+                "create_number": {
                     "description": "创建的区块高度",
                     "type": "integer"
                 },
-                "owner": {
-                    "description": "所有者",
+                "creator": {
+                    "description": "创建者地址",
                     "type": "string"
                 },
-                "timestamp": {
-                    "description": "创建时间戳",
+                "meta_url": {
+                    "description": "元信息链接",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "所有者,未分配和回收的为null",
+                    "type": "string"
+                },
+                "reward_at": {
+                    "description": "奖励时间戳，矿工获取被奖励这个SNFT的时间",
+                    "type": "integer"
+                },
+                "reward_number": {
+                    "description": "奖励的区块高度，矿工获取被奖励这个SNFT的区块高度",
+                    "type": "integer"
+                },
+                "royalty_ratio": {
+                    "description": "版税费率,单位万分之一",
                     "type": "integer"
                 }
             }
@@ -1050,6 +1080,10 @@ var doc = `{
                 "total": {
                     "description": "交易所总数",
                     "type": "integer"
+                },
+                "yesterday_total": {
+                    "description": "昨日新开交易所数量",
+                    "type": "integer"
                 }
             }
         },
@@ -1137,7 +1171,7 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
-	Host:        "192.168.1.237:3001",
+	Host:        "",
 	BasePath:    "",
 	Schemes:     []string{},
 	Title:       "Gin swagger",

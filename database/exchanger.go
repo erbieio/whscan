@@ -1,6 +1,9 @@
 package database
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+	"time"
+)
 
 // Exchanger 交易所属性信息
 type Exchanger struct {
@@ -47,6 +50,18 @@ func FetchExchangers(name string, page, size uint64) (data []Exchanger, count in
 		}
 		err = DB.Model(&Exchanger{}).Count(&count).Error
 	}
+	return
+}
+
+// YesterdayExchangerTotal 昨日创建的交易所数量
+func YesterdayExchangerTotal() (count int64, err error) {
+	now := time.Now().Local()
+	loc, _ := time.LoadLocation("Local")
+	daySecond := 24 * time.Hour.Milliseconds() / 1000
+	startTime, _ := time.ParseInLocation("2006-01-02 15:04:05", now.Format("2006-01-02")+" 00:00:00", loc)
+	stop := startTime.Unix()
+	start := stop - daySecond
+	err = DB.Model(&Exchanger{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&count).Error
 	return
 }
 

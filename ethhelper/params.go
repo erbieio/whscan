@@ -45,7 +45,6 @@ type Block struct {
 	Size         string `json:"size"`
 }
 
-
 type Tx struct {
 	Hash             string `json:"hash"`
 	From             string `json:"from"`
@@ -81,6 +80,19 @@ type Receipt struct {
 	LogsBloom         string `json:"logsBloom"`
 	Status            string `json:"status"`
 }
+
+type SNFT struct {
+	Address string
+	Creator string
+	Royalty uint32
+	MetaURL string
+}
+
+type Reward struct {
+	Address    string
+	NfTAddress string
+}
+
 type CallParam struct {
 	From string `json:"from"`
 	To   string `json:"to"`

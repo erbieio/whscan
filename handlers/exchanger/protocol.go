@@ -9,6 +9,7 @@ type ErrRes struct {
 
 // PageRes 交易所分页返回参数
 type PageRes struct {
-	Total      int64                `json:"total"`      //交易所总数
-	Exchangers []database.Exchanger `json:"exchangers"` //交易所列表
+	Total          int64                `json:"total"`           //交易所总数
+	YesterdayTotal int64                `json:"yesterday_total"` //昨日新开交易所数量
+	Exchangers     []database.Exchanger `json:"exchangers"`      //交易所列表
 }

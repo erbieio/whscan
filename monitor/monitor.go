@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math/big"
 	"server/database"
 	"server/ethhelper"
@@ -16,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -25,11 +23,11 @@ func SyncBlock() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("从%v区块开始数据分析", number)
+	fmt.Printf("从%v区块开始数据分析\n", number)
 	for {
 		currentNumber, err := ethhelper.GetBlockNumber()
 		if err != nil || currentNumber < number {
-			fmt.Printf("最新区块高度%v：在%v区块休眠, 错误：%v", currentNumber, number, err)
+			fmt.Printf("最新区块高度%v：在%v区块休眠, 错误：%v\n", currentNumber, number, err)
 			time.Sleep(5 * time.Second)
 		} else {
 			HandleBlock(number)
@@ -130,15 +128,35 @@ func HandleBlock(number uint64) {
 		}
 	}
 
-	extra, _ := hexutil.Decode(b.Extra)
-	handleWHBlock(extra, b.Number, b.Ts)
+	handleWHBlock(b.Number, b.Ts)
 }
 
-func handleWHBlock(input []byte, number, time string) {
+func handleGensisSNFT(timestamp uint64) error {
+	SNFTAddr := big.NewInt(0)
+	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
+lo:
+	addr := strings.ToLower(common.BigToAddress(SNFTAddr).String())
+	snft, err := ethhelper.GetSNFT(addr)
+	if err != nil {
+		return err
+	}
+	if snft.MetaURL != "" {
+		err = database.ImportSNFT(addr, snft.Royalty, snft.MetaURL, snft.Creator, 0, timestamp)
+		if err != nil {
+			return err
+		}
+		SNFTAddr = SNFTAddr.Add(SNFTAddr, common.Big1)
+		goto lo
+	}
+	fmt.Println("创世区块SNFT导入到地址：", addr)
+	return nil
+}
+
+func handleWHBlock(number, time string) {
 	var err error
 	defer func() {
 		if err != nil {
-			log.Infof("解析validators", "区块", number, "Extra", string(input), "错误", err)
+			log.Infof("解析validators", "区块", number, "错误", err)
 		}
 	}()
 	timestamp, err := strconv.ParseUint(time[2:], 16, 64)
@@ -149,15 +167,21 @@ func handleWHBlock(input []byte, number, time string) {
 	if err != nil {
 		return
 	}
-	// 创世区块不分析
+	// 创世区块到入预设SNFT
 	if blockNumber == 0 {
+		handleGensisSNFT(timestamp)
 		return
 	}
-	validators, err := decodeValidators(input)
+	rewards, err := ethhelper.GetReward(number)
 	if err != nil {
 		return
 	}
-	err = database.DispatchSNFT(validators, blockNumber, timestamp)
+	var validators, snfts []string
+	for _, reward := range rewards {
+		validators = append(validators, reward.Address)
+		snfts = append(snfts, reward.NfTAddress)
+	}
+	err = database.DispatchSNFT(validators, snfts, blockNumber, timestamp)
 	if err != nil {
 		return
 	}
@@ -274,8 +298,8 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 			return
 		}
 
-	case 6: //官方NFT兑换
-		database.EnqueueSNFT(w.NFTAddress)
+	case 6: //官方NFT兑换,回收碎片到碎片池
+		database.RecycleSNFT(w.NFTAddress)
 		return
 
 	case 9: //共识质押
@@ -314,13 +338,15 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 		}
 
 	case 13: //官方注入NFT
-		//todo
-		startIndex, err := strconv.ParseUint(w.StartIndex[2:], 16, 64)
+		startIndex, _ := new(big.Int).SetString(w.StartIndex[2:], 16)
 		if err != nil {
 			return
 		}
-		fmt.Println("官方注入", startIndex, w.Number, w.Royalty, w.Creator, w.Dir)
-		return
+		fmt.Println("官方注入:", startIndex, w.Number, w.Royalty, w.Creator, w.Dir)
+		database.InjectSNFT(startIndex, w.Number, w.Royalty, w.Dir, w.Creator, blockNumber, timestamp)
+		if err != nil {
+			return
+		}
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
 		nftTx := database.NFTTx{
@@ -551,49 +577,6 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 			return
 		}
 	}
-}
-
-func decodeValidators(extra []byte) ([]string, error) {
-	var istanbulExtra *IstanbulExtra
-	err := rlp.DecodeBytes(extra[32:], &istanbulExtra)
-	if err != nil {
-		return nil, err
-	}
-	ret := make([]string, 0, len(istanbulExtra.Validators))
-	for _, validator := range istanbulExtra.Validators {
-		ret = append(ret, strings.ToLower(validator.Hex()))
-	}
-	return ret, nil
-}
-
-// IstanbulExtra represents the legacy IBFT header extradata
-type IstanbulExtra struct {
-	Validators    []common.Address
-	Seal          []byte
-	CommittedSeal [][]byte
-}
-
-// EncodeRLP serializes ist into the Ethereum RLP format.
-func (ist *IstanbulExtra) EncodeRLP(w io.Writer) error {
-	return rlp.Encode(w, []interface{}{
-		ist.Validators,
-		ist.Seal,
-		ist.CommittedSeal,
-	})
-}
-
-// DecodeRLP implements rlp.Decoder, and load the istanbul fields from a RLP stream.
-func (ist *IstanbulExtra) DecodeRLP(s *rlp.Stream) error {
-	var istanbulExtra struct {
-		Validators    []common.Address
-		Seal          []byte
-		CommittedSeal [][]byte
-	}
-	if err := s.Decode(&istanbulExtra); err != nil {
-		return err
-	}
-	ist.Validators, ist.Seal, ist.CommittedSeal = istanbulExtra.Validators, istanbulExtra.Seal, istanbulExtra.CommittedSeal
-	return nil
 }
 
 // hashMsg Wormholes链代码复制 go-ethereum/core/evm.go 330行

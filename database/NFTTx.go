@@ -31,13 +31,23 @@ func (nt NFTTx) Insert() error {
 	return DB.Create(&nt).Error
 }
 
-func FetchNFTTxs(exchanger string, page, size uint64) (data []NFTTx, count int64, err error) {
-	if exchanger != "" {
-		err = DB.Where("exchanger_addr=?", exchanger).Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
+func FetchNFTTxs(exchanger, account string, page, size uint64) (data []NFTTx, count int64, err error) {
+	if exchanger != "" || account != "" {
+		where := ""
+		if exchanger != "" {
+			where += "exchanger_addr='" + exchanger + "'"
+		}
+		if account != "" {
+			if exchanger != "" {
+				where += " AND "
+			}
+			where += "`from`='" + account + "' OR `to`='" + account + "'"
+		}
+		err = DB.Where(where).Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
-		err = DB.Where("exchanger_addr=?", exchanger).Model(&NFTTx{}).Count(&count).Error
+		err = DB.Where(where).Model(&NFTTx{}).Count(&count).Error
 	} else {
 		err = DB.Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
 		if err != nil {
