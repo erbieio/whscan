@@ -582,7 +582,7 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 
 	if nft != nil {
 		// 后台解析
-		go SaveNFTMeta(nft.BlockNumber, nft.Address, nft.Creator, nft.MetaUrl)
+		go SaveNFTMeta(nft.BlockNumber, nft.Address, nft.MetaUrl)
 	}
 }
 
@@ -603,11 +603,11 @@ func realMeatUrl(meta string) string {
 }
 
 // SaveNFTMeta 解析存储NFT元信息
-func SaveNFTMeta(blockNumber uint64, nftAddr, creator, metaUrl string) {
+func SaveNFTMeta(blockNumber uint64, nftAddr, metaUrl string) {
 	var err error
 	defer func() {
 		if err != nil {
-			fmt.Println("解析存储NFT元信息失败", nftAddr, creator, metaUrl)
+			fmt.Println("解析存储NFT元信息失败", nftAddr, metaUrl)
 		}
 	}()
 	nftMeta, err := GetNFTMeta(metaUrl)
@@ -616,11 +616,15 @@ func SaveNFTMeta(blockNumber uint64, nftAddr, creator, metaUrl string) {
 	}
 
 	//合集名称+合集创建者+合集所在交易所的哈希
-	collectionId := crypto.Keccak256Hash(
-		[]byte(nftMeta.Name),
-		[]byte(creator),
-		[]byte(creator),
-	).Hex()
+	var collectionId *string
+	if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
+		hash := crypto.Keccak256Hash(
+			[]byte(nftMeta.CollectionsName),
+			[]byte(nftMeta.CollectionsCreator),
+			[]byte(nftMeta.CollectionsExchanger),
+		).Hex()
+		collectionId = &hash
+	}
 
 	meta := &database.NFTMeta{
 		NFTAddr:      nftAddr,
@@ -635,18 +639,20 @@ func SaveNFTMeta(blockNumber uint64, nftAddr, creator, metaUrl string) {
 		return
 	}
 
-	collection := &database.Collection{
-		Id:          collectionId,
-		Name:        nftMeta.CollectionsName,
-		Creator:     nftMeta.CollectionsCreator,
-		Category:    nftMeta.CollectionsCategory,
-		Desc:        nftMeta.CollectionsDesc,
-		ImgUrl:      nftMeta.CollectionsImgUrl,
-		BlockNumber: blockNumber,
-		Exchanger:   nftMeta.CollectionsExchanger,
+	if collectionId != nil {
+		collection := &database.Collection{
+			Id:          *collectionId,
+			Name:        nftMeta.CollectionsName,
+			Creator:     nftMeta.CollectionsCreator,
+			Category:    nftMeta.CollectionsCategory,
+			Desc:        nftMeta.CollectionsDesc,
+			ImgUrl:      nftMeta.CollectionsImgUrl,
+			BlockNumber: blockNumber,
+			Exchanger:   nftMeta.CollectionsExchanger,
+		}
+		collection.Save()
 	}
-	collection.Save()
-	fmt.Println("解析存储NFT元信息成功", nftAddr, creator, metaUrl)
+	fmt.Println("解析存储NFT元信息成功", nftAddr, metaUrl)
 }
 
 // hashMsg Wormholes链代码复制 go-ethereum/core/evm.go 330行

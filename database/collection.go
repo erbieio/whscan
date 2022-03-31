@@ -20,7 +20,7 @@ func FetchCollections(exchanger, creator string, page, size uint64) (data []Coll
 	if exchanger != "" || creator != "" {
 		where := ""
 		if exchanger != "" {
-			where += "exchanger_addr='" + exchanger + "'"
+			where += "exchanger='" + exchanger + "'"
 		}
 		if creator != "" {
 			if exchanger != "" {
