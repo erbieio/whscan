@@ -5,6 +5,7 @@ import (
 	"server/handlers/NFT"
 	"server/handlers/SNFT"
 	"server/handlers/block"
+	"server/handlers/collection"
 	"server/handlers/exchanger"
 	"server/handlers/extra"
 	"server/middleware"
@@ -16,6 +17,7 @@ func init() {
 	include(exchanger.Routers)
 	include(NFT.Routers)
 	include(SNFT.Routers)
+	include(collection.Routers)
 }
 
 type Option func(*gin.Engine)

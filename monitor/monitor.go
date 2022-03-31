@@ -131,6 +131,7 @@ func HandleBlock(number uint64) {
 	// handleWHBlock(b.Number, b.Ts)
 }
 
+// 导入创世区块注入的SNFT元信息
 func handleGensisSNFT(timestamp uint64) error {
 	SNFTAddr := big.NewInt(0)
 	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
@@ -236,6 +237,7 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 		Version string `json:"version"`
 	}
 	var w Wormholes
+	var nft *database.UserNFT
 	var err error
 	defer func() {
 		if err != nil {
@@ -266,10 +268,10 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 		if err != nil {
 			return
 		}
-		nft := database.UserNFT{
+		nft = &database.UserNFT{
 			Address:       nftAddr,
 			RoyaltyRatio:  w.Royalty, //单位万分之一
-			MetaUrl:       w.MetaURL,
+			MetaUrl:       realMeatUrl(w.MetaURL),
 			ExchangerAddr: w.Exchanger,
 			Creator:       to,
 			Timestamp:     timestamp,
@@ -397,10 +399,10 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 		if err != nil {
 			return
 		}
-		nft := database.UserNFT{
+		nft = &database.UserNFT{
 			Address:       nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
-			MetaUrl:       w.Seller2.MetaURL,
+			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			ExchangerAddr: w.Seller2.Exchanger,
 			Creator:       creator,
 			Timestamp:     timestamp,
@@ -444,10 +446,10 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 		if err != nil {
 			return
 		}
-		nft := database.UserNFT{
+		nft = &database.UserNFT{
 			Address:       nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
-			MetaUrl:       w.Seller2.MetaURL,
+			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			ExchangerAddr: from, //交易发起者即交易所地址
 			Creator:       creator,
 			Timestamp:     timestamp,
@@ -519,10 +521,10 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 		if err != nil {
 			return
 		}
-		nft := database.UserNFT{
+		nft = &database.UserNFT{
 			Address:       nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
-			MetaUrl:       w.Seller2.MetaURL,
+			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			ExchangerAddr: exchangerAddr, //交易发起者即交易所地址
 			Creator:       creator,
 			Timestamp:     timestamp,
@@ -577,6 +579,74 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 			return
 		}
 	}
+
+	if nft != nil {
+		// 后台解析
+		go SaveNFTMeta(nft.BlockNumber, nft.Address, nft.Creator, nft.MetaUrl)
+	}
+}
+
+// realMeatUrl 解析真正的metaUrl
+func realMeatUrl(meta string) string {
+	data, err := hexutil.Decode("0x" + meta)
+	if err != nil {
+		return ""
+	}
+	real := struct {
+		Meta string `json:"meta"`
+	}{}
+	err = json.Unmarshal(data, &real)
+	if err != nil {
+		return ""
+	}
+	return real.Meta
+}
+
+// SaveNFTMeta 解析存储NFT元信息
+func SaveNFTMeta(blockNumber uint64, nftAddr, creator, metaUrl string) {
+	var err error
+	defer func() {
+		if err != nil {
+			fmt.Println("解析存储NFT元信息失败", nftAddr, creator, metaUrl)
+		}
+	}()
+	nftMeta, err := GetNFTMeta(metaUrl)
+	if err != nil {
+		return
+	}
+
+	//合集名称+合集创建者+合集所在交易所的哈希
+	collectionId := crypto.Keccak256Hash(
+		[]byte(nftMeta.Name),
+		[]byte(creator),
+		[]byte(creator),
+	).Hex()
+
+	meta := &database.NFTMeta{
+		NFTAddr:      nftAddr,
+		Name:         nftMeta.Name,
+		Desc:         nftMeta.Desc,
+		Category:     nftMeta.Category,
+		SourceUrl:    nftMeta.SourceUrl,
+		CollectionId: collectionId,
+	}
+	err = meta.Insert()
+	if err != nil {
+		return
+	}
+
+	collection := &database.Collection{
+		Id:          collectionId,
+		Name:        nftMeta.CollectionsName,
+		Creator:     nftMeta.CollectionsCreator,
+		Category:    nftMeta.CollectionsCategory,
+		Desc:        nftMeta.CollectionsDesc,
+		ImgUrl:      nftMeta.CollectionsImgUrl,
+		BlockNumber: blockNumber,
+		Exchanger:   nftMeta.CollectionsExchanger,
+	}
+	collection.Save()
+	fmt.Println("解析存储NFT元信息成功", nftAddr, creator, metaUrl)
 }
 
 // hashMsg Wormholes链代码复制 go-ethereum/core/evm.go 330行

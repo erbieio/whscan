@@ -29,8 +29,7 @@ type RequestErbTestReq struct {
 }
 
 // RequestErbTestRes  返回
-type  RequestErbTestRes struct {
-	Code int64            `json:"code"` //0 成功  1 地址有误 其他失败
-	Msg  string           `json:"msg"`
+type RequestErbTestRes struct {
+	Code int64  `json:"code"` //0 成功  1 地址有误 其他失败
+	Msg  string `json:"msg"`
 }
-

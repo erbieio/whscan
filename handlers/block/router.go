@@ -55,7 +55,7 @@ func viewTransactions(c *gin.Context) {
 		return
 	}
 
-	txs, count, err := database.FetchTxs(req.Page, req.PageSize, req.Address, req.TxType,req.BlockNumber)
+	txs, count, err := database.FetchTxs(req.Page, req.PageSize, req.Address, req.TxType, req.BlockNumber)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, GetBlockRes{Code: -1, Msg: err.Error()})
 	}

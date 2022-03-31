@@ -103,7 +103,6 @@ func NewConnector(addr string) *Connector {
 	}
 }
 
-
 func SyncNftFromChain(num string, isFetch bool, buyResultCh chan<- []*database.NftTx, transferCh chan<- *WethTransfer, approveCh chan<- *WethTransfer, endCh chan<- bool) {
 	var (
 		tmp    big.Int

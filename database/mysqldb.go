@@ -28,6 +28,8 @@ func migrate(db *gorm.DB) error {
 		&ConsensusPledge{},
 		&ExchangerPledge{},
 		&SNFT{},
+		&Collection{},
+		&NFTMeta{},
 	).Error
 }
 
@@ -69,6 +71,8 @@ func NewMysqlDb() {
 			&ConsensusPledge{},
 			&ExchangerPledge{},
 			&SNFT{},
+			&Collection{},
+			&NFTMeta{},
 		).Error
 		if err != nil {
 			panic(err)

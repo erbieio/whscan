@@ -38,7 +38,7 @@ func FetchUserNFTs(exchanger, owner string, page, size uint64) (data []UserNFT, 
 			where += "exchanger_addr='" + exchanger + "'"
 		}
 		if owner != "" {
-			if exchanger != "" {
+			if where != "" {
 				where += " AND "
 			}
 			where += "owner='" + owner + "'"

@@ -72,13 +72,13 @@ type CallLog struct {
 	GasLimit string `json:"gasLimit"`
 }
 
-func TraceTxInternalCall(txHash,from,to string) []CallLog {
+func TraceTxInternalCall(txHash, from, to string) []CallLog {
 	client, err := Dial(common2.MainPoint)
 	if err != nil {
 		log.Infof(err.Error())
 	}
 
-	ret, err := client.TraceTransactionCall(context.Background(), common.HexToHash(txHash),from,to )
+	ret, err := client.TraceTransactionCall(context.Background(), common.HexToHash(txHash), from, to)
 	if err != nil {
 		log.Infof(err.Error())
 	}
@@ -86,7 +86,7 @@ func TraceTxInternalCall(txHash,from,to string) []CallLog {
 }
 
 // TraceTransactionCall 获取交易内部调用详情
-func (ec *EthClient) TraceTransactionCall(ctx context.Context, txHash common.Hash,from,toAddr string) ([]CallLog, error) {
+func (ec *EthClient) TraceTransactionCall(ctx context.Context, txHash common.Hash, from, toAddr string) ([]CallLog, error) {
 	executionResult, err := ec.TraceTransaction(ctx, txHash)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (ec *EthClient) TraceTransactionCall(ctx context.Context, txHash common.Has
 	if err != nil {
 		return nil, err
 	}
-	ret := []CallLog{{Op: "CALL",From: from, To: toAddr, Value: toDecimal(tx.Value().String(), 18), GasLimit: fmt.Sprintf("%v", tx.Gas())}}
+	ret := []CallLog{{Op: "CALL", From: from, To: toAddr, Value: toDecimal(tx.Value().String(), 18), GasLimit: fmt.Sprintf("%v", tx.Gas())}}
 	for _, log := range executionResult.StructLogs {
 		stack := *log.Stack
 		switch log.Op {

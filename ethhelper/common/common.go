@@ -33,7 +33,6 @@ func BalanceOf(addr string) (Balance int64, err error) {
 	return Balance, nil
 }
 
-
 func GetBlock(number string) (Balance Block, err error) {
 	var block Block
 	err = client.Call(&block, "eth_getBlockByNumber", number, true)
@@ -42,7 +41,6 @@ func GetBlock(number string) (Balance Block, err error) {
 	}
 	return block, nil
 }
-
 
 func TransactionCount(addr string) (count int64, err error) {
 	var c string
@@ -54,7 +52,6 @@ func TransactionCount(addr string) (count int64, err error) {
 	return count, nil
 }
 
-
 func TransactionReceipt(txHash string) (ret Receipt, err error) {
 	err = client.Call(&ret, "eth_getTransactionReceipt", txHash)
 	if err != nil {
@@ -62,7 +59,6 @@ func TransactionReceipt(txHash string) (ret Receipt, err error) {
 	}
 	return ret, nil
 }
-
 
 func ETHCall(params CallParamTemp) (ret string, err error) {
 	err = client.Call(&ret, "eth_call", params, "latest")
@@ -79,7 +75,6 @@ func GetLogs(filter LogFilter) (ret []Log, err error) {
 	}
 	return ret, nil
 }
-
 
 func ValidateSign(signHash, originData string) bool {
 	return true

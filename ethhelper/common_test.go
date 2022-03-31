@@ -8,8 +8,8 @@ import (
 )
 
 func TestTxCount(t *testing.T) {
-  b,e:=BalanceOf("0x10CEc672c6BB2f6782BEED65987E020902B7bD15")
-  fmt.Println(b,e)
+	b, e := BalanceOf("0x10CEc672c6BB2f6782BEED65987E020902B7bD15")
+	fmt.Println(b, e)
 }
 
 func TestTransactionReceipt(t *testing.T) {
@@ -31,6 +31,7 @@ func TestGetBlock(t *testing.T) {
 }
 
 var httpUrl = "http://192.168.1.235:8561"
+
 /*
 	以太坊交易发送
 */

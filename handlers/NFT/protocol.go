@@ -13,6 +13,12 @@ type PageRes struct {
 	NFTs  []database.UserNFT `json:"nfts"`  //NFT列表
 }
 
+// PageMetaRes NFT和元信息分页返回参数
+type PageMetaRes struct {
+	Total int64                 `json:"total"` //NFT总数
+	NFTs  []database.NFTAndMeta `json:"nfts"`  //NFT列表
+}
+
 // PageTxRes NFT交易分页返回参数
 type PageTxRes struct {
 	Total  int64            `json:"total"`   //NFT总数

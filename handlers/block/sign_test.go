@@ -12,14 +12,14 @@ import (
 )
 
 func TestSign(t *testing.T) {
-	sigTime := fmt.Sprintf("%v",time.Now().Unix())
+	sigTime := fmt.Sprintf("%v", time.Now().Unix())
 	_, d := GenMintBNBSign("0x5B38Da6a701c568545dCfcB03FcB875f56beddC4", "100000000000000000", "1", sigTime)
 	fmt.Println(d)
 	_, d = GenMintNFTSign("0x5B38Da6a701c568545dCfcB03FcB875f56beddC4", "1", "13", "12", "123456", sigTime)
 	fmt.Println(d)
 
 	_, d = genConsumeFSK("0xB04cC2abA7e5626a1216A1C9C60255e06cAC0e04", "2000", "1646882647")
-	fmt.Println(d,sigTime)
+	fmt.Println(d, sigTime)
 }
 
 const VerifyPrivateKey = "864b5cd0869d4a8c0e432a2d8d05d2f95fbe6572104228d16aeaa85b2a3edc8c"

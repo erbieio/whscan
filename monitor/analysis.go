@@ -108,5 +108,5 @@ func analysisTokenTransfer(txHash string) (string, string, []TokenTransfer) {
 			data = append(data, item)
 		}
 	}
-	return receipts.Status,ty, data
+	return receipts.Status, ty, data
 }

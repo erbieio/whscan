@@ -223,6 +223,99 @@ var doc = `{
                 }
             }
         },
+        "/collection/page": {
+            "get": {
+                "description": "按创建区块高度逆序查询NFT合集列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT合集"
+                ],
+                "summary": "查询NFT合集列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "交易所，空则查询所有交易所",
+                        "name": "exchanger",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "创建者,空则查询所有",
+                        "name": "creator",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/collection.PageRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/collection.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/collection/{id}": {
+            "get": {
+                "description": "指定ID查询NFT合集信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT合集"
+                ],
+                "summary": "查询NFT合集",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "合集ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/database.Collection"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/collection.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/exchanger/get": {
             "get": {
                 "description": "按地址查询交易所",
@@ -461,6 +554,12 @@ var doc = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "指定NFT地址,空则查询所有地址的",
+                        "name": "address",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "交易所，空则查询所有交易所",
                         "name": "exchanger",
                         "in": "query"
@@ -489,6 +588,61 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/NFT.PageTxRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/NFT.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/nft_meta/page": {
+            "get": {
+                "description": "按创建时间逆序查询包含元信息NFT列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "查询包含元信息NFT列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "交易所，空则查询所有交易所",
+                        "name": "exchanger",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "所有者,空则查询所有",
+                        "name": "owner",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/NFT.PageMetaRes"
                         }
                     },
                     "400": {
@@ -589,6 +743,55 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/snft_meta/page": {
+            "get": {
+                "description": "按创建时间逆序查询有元信息SNFT列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SNFT"
+                ],
+                "summary": "查询有元信息SNFT列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "所有者,空则查询所有",
+                        "name": "owner",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SNFT.PageMetaRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/SNFT.ErrRes"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -598,6 +801,22 @@ var doc = `{
                 "err_str": {
                     "description": "错误字符串",
                     "type": "string"
+                }
+            }
+        },
+        "NFT.PageMetaRes": {
+            "type": "object",
+            "properties": {
+                "nfts": {
+                    "description": "NFT列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.NFTAndMeta"
+                    }
+                },
+                "total": {
+                    "description": "NFT总数",
+                    "type": "integer"
                 }
             }
         },
@@ -639,6 +858,22 @@ var doc = `{
                 "err_str": {
                     "description": "错误字符串",
                     "type": "string"
+                }
+            }
+        },
+        "SNFT.PageMetaRes": {
+            "type": "object",
+            "properties": {
+                "nfts": {
+                    "description": "SNFT列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.SNFTAndMeta"
+                    }
+                },
+                "total": {
+                    "description": "SNFT总数",
+                    "type": "integer"
                 }
             }
         },
@@ -808,6 +1043,31 @@ var doc = `{
                 }
             }
         },
+        "collection.ErrRes": {
+            "type": "object",
+            "properties": {
+                "err_str": {
+                    "description": "错误字符串",
+                    "type": "string"
+                }
+            }
+        },
+        "collection.PageRes": {
+            "type": "object",
+            "properties": {
+                "collections": {
+                    "description": "NFT合集列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/database.Collection"
+                    }
+                },
+                "total": {
+                    "description": "NFT合集总数",
+                    "type": "integer"
+                }
+            }
+        },
         "database.Block": {
             "type": "object",
             "properties": {
@@ -858,6 +1118,43 @@ var doc = `{
                 }
             }
         },
+        "database.Collection": {
+            "type": "object",
+            "properties": {
+                "block_number": {
+                    "description": "创建区块高度，等于合集第一个NFT的",
+                    "type": "integer"
+                },
+                "category": {
+                    "description": "分类",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "创建者，唯一标识合集",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "描述",
+                    "type": "string"
+                },
+                "exchanger": {
+                    "description": "所属交易所，唯一标识合集",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "名称+创建者+所属交易所的哈希",
+                    "type": "string"
+                },
+                "img_url": {
+                    "description": "图片链接",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "名称，唯一标识合集",
+                    "type": "string"
+                }
+            }
+        },
         "database.Exchanger": {
             "type": "object",
             "properties": {
@@ -899,6 +1196,71 @@ var doc = `{
                 },
                 "url": {
                     "description": "交易所URL",
+                    "type": "string"
+                }
+            }
+        },
+        "database.NFTAndMeta": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "NFT地址",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "创建的区块高度",
+                    "type": "integer"
+                },
+                "category": {
+                    "description": "分类",
+                    "type": "string"
+                },
+                "collection_id": {
+                    "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "创建者地址",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "描述",
+                    "type": "string"
+                },
+                "exchanger_addr": {
+                    "description": "所在交易所地址,没有的可以在任意交易所交易",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "元信息URL",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "名称",
+                    "type": "string"
+                },
+                "nft_addr": {
+                    "description": "NFT地址",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "所有者",
+                    "type": "string"
+                },
+                "royalty_ratio": {
+                    "description": "版税费率,单位万分之一",
+                    "type": "integer"
+                },
+                "source_url": {
+                    "description": "资源链接，图片或视频等文件链接",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "创建时间戳",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "创建的交易哈希",
                     "type": "string"
                 }
             }
@@ -982,6 +1344,75 @@ var doc = `{
                 "royalty_ratio": {
                     "description": "版税费率,单位万分之一",
                     "type": "integer"
+                }
+            }
+        },
+        "database.SNFTAndMeta": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "SNFT地址",
+                    "type": "string"
+                },
+                "awardee": {
+                    "description": "被奖励的矿工获地址",
+                    "type": "string"
+                },
+                "category": {
+                    "description": "分类",
+                    "type": "string"
+                },
+                "collection_id": {
+                    "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
+                    "type": "string"
+                },
+                "create_at": {
+                    "description": "创建时间戳",
+                    "type": "integer"
+                },
+                "create_number": {
+                    "description": "创建的区块高度",
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "创建者地址",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "描述",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "元信息链接",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "名称",
+                    "type": "string"
+                },
+                "nft_addr": {
+                    "description": "NFT地址",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "所有者,未分配和回收的为null",
+                    "type": "string"
+                },
+                "reward_at": {
+                    "description": "奖励时间戳,矿工被奖励这个SNFT的时间",
+                    "type": "integer"
+                },
+                "reward_number": {
+                    "description": "奖励区块高度,矿工被奖励这个SNFT的区块高度",
+                    "type": "integer"
+                },
+                "royalty_ratio": {
+                    "description": "版税费率,单位万分之一",
+                    "type": "integer"
+                },
+                "source_url": {
+                    "description": "资源链接，图片或视频等文件链接",
+                    "type": "string"
                 }
             }
         },

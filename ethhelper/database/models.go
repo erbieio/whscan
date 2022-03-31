@@ -3,12 +3,12 @@ package database
 import (
 	"bytes"
 	"encoding/json"
-	"server/ethhelper/common"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
+	"server/ethhelper/common"
 	"strconv"
 	"time"
 )
@@ -46,7 +46,6 @@ type NftTx struct {
 	BlockNumber      string `gorm:"column:blockNumber;type:varchar(50) " json:"blockNumber"`
 	TransactionIndex string `gorm:"column:transactionIndex;type:varchar(30) " json:"transactionIndex"`
 }
-
 
 func (c *Collection) Insert() {
 	db.Insert(c)

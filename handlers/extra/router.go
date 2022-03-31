@@ -37,7 +37,7 @@ func requestErbTest(c *gin.Context) {
 		return
 	}
 
-	if !common.IsHexAddress(req.Address){
+	if !common.IsHexAddress(req.Address) {
 		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: 1, Msg: "address invalid"})
 		return
 	}
@@ -68,7 +68,7 @@ func checkAuth(c *gin.Context) {
 		return
 	}
 
-	if !common.IsHexAddress(req.Address){
+	if !common.IsHexAddress(req.Address) {
 		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: 1, Msg: err.Error()})
 		return
 	}
@@ -112,7 +112,7 @@ func getAccountInfoFromGeth(addr string) (bool, string, error) {
 	contentType := "application/json"
 	client := &http.Client{Timeout: 10 * time.Second}
 	jsonStr, _ := json.Marshal(p)
-	req, err := http.NewRequest("POST",  common2.MainPoint, bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", common2.MainPoint, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		log.Info("GetAccountInfoFromGeth http.NewRequest err:", err)
 		return false, "", err

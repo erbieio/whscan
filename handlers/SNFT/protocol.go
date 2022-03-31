@@ -12,3 +12,9 @@ type PageRes struct {
 	Total int64           `json:"total"` //SNFT总数
 	NFTs  []database.SNFT `json:"nfts"`  //SNFT列表
 }
+
+// PageMetaRes SNFT和元信息分页返回参数
+type PageMetaRes struct {
+	Total int64                  `json:"total"` //SNFT总数
+	NFTs  []database.SNFTAndMeta `json:"nfts"`  //SNFT列表
+}

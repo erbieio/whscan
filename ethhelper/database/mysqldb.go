@@ -12,7 +12,9 @@ import (
 type MysqlDb struct {
 	db *gorm.DB
 }
+
 var db *MysqlDb
+
 type Config struct {
 	User     string `json:"user"`
 	Password string `json:"password"`

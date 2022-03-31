@@ -46,14 +46,14 @@ func pageExchanger(c *gin.Context) {
 		return
 	}
 	var total int64
-	if req.Name==""{
-		total,err=database.YesterdayExchangerTotal()
+	if req.Name == "" {
+		total, err = database.YesterdayExchangerTotal()
 		if err != nil {
 			c.JSON(http.StatusBadRequest, ErrRes{ErrStr: err.Error()})
 			return
 		}
 	}
-	c.JSON(http.StatusOK, PageRes{Total: count,YesterdayTotal: total, Exchangers: data})
+	c.JSON(http.StatusOK, PageRes{Total: count, YesterdayTotal: total, Exchangers: data})
 
 }
 
