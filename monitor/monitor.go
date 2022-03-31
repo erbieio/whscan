@@ -128,7 +128,7 @@ func HandleBlock(number uint64) {
 		}
 	}
 
-	// handleWHBlock(b.Number, b.Ts)
+	handleWHBlock(b.Number, b.Ts)
 }
 
 // 导入创世区块注入的SNFT元信息
