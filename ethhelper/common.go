@@ -57,8 +57,13 @@ func GetBlockNumber() (num uint64, err error) {
 	return b.Uint64(), nil
 }
 
-func GetSNFT(addr string) (snft SNFT, err error) {
+func GetGenesisSNFT(addr string) (snft SNFT, err error) {
 	err = client.Call(&snft, "eth_getAccountInfo", addr, "0x1")
+	return
+}
+
+func GetSNFT(addr string, number string) (snft SNFT, err error) {
+	err = client.Call(&snft, "eth_getAccountInfo", addr, number)
 	return
 }
 

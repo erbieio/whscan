@@ -30,14 +30,17 @@ func RecycleSNFT(addr string) error {
 }
 
 // InjectSNFT 官方批量注入SNFT
-func InjectSNFT(startIndex *big.Int, count uint64, royalty uint32, dir, creator string, number, timestamp uint64) error {
-	return DB.Transaction(func(tx *gorm.DB) error {
+func InjectSNFT(startIndex *big.Int, count uint64, royalty uint32, dir, creator string, number, timestamp uint64) (snfts, urls []string, err error) {
+	err = DB.Transaction(func(tx *gorm.DB) error {
 		SNFTAddr := big.NewInt(0)
 		SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
 		SNFTAddr = SNFTAddr.Add(SNFTAddr, startIndex)
 		for i := uint64(0); i < count; i++ {
 			addr := common.BigToAddress(SNFTAddr).String()
-			metaUrl := dir + addr
+			// 取地址倒数3-4位作为文件名
+			metaUrl := dir + addr[39:40]
+			snfts = append(snfts, addr)
+			urls = append(urls, metaUrl)
 			err := injectSNFT(tx, strings.ToLower(addr), royalty, metaUrl, creator, number, timestamp)
 			if err != nil {
 				return err
@@ -46,6 +49,7 @@ func InjectSNFT(startIndex *big.Int, count uint64, royalty uint32, dir, creator 
 		}
 		return nil
 	})
+	return
 }
 
 // ImportSNFT 单个导入SNFT，主要用于创世预设的SNFT
@@ -64,20 +68,14 @@ func injectSNFT(tx *gorm.DB, addr string, royalty uint32, metaUrl, creator strin
 	}).Error
 }
 
-func DispatchSNFT(validators, snfts []string, number, timestamp uint64) error {
-	for i, validator := range validators {
-		err := DB.Select("owner", "awardee", "reward_number", "reward_at").Save(&SNFT{
-			Address:      snfts[i],
-			Owner:        &validator,
-			Awardee:      &validator,
-			RewardNumber: &number,
-			RewardAt:     &timestamp,
-		}).Error
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func DispatchSNFT(validator, snft string, number, timestamp uint64) error {
+	return DB.Select("owner", "awardee", "reward_number", "reward_at").Save(&SNFT{
+		Address:      snft,
+		Owner:        &validator,
+		Awardee:      &validator,
+		RewardNumber: &number,
+		RewardAt:     &timestamp,
+	}).Error
 }
 
 func FetchSNFTs(owner string, page, size uint64) (data []SNFT, count int64, err error) {

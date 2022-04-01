@@ -82,7 +82,6 @@ type Receipt struct {
 }
 
 type SNFT struct {
-	Address string
 	Creator string
 	Royalty uint32
 	MetaURL string

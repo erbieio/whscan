@@ -132,17 +132,19 @@ func HandleBlock(number uint64) {
 }
 
 // 导入创世区块注入的SNFT元信息
-func handleGensisSNFT(timestamp uint64) error {
+func handleGenesisSNFT(timestamp uint64) error {
 	SNFTAddr := big.NewInt(0)
 	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
 lo:
 	addr := strings.ToLower(common.BigToAddress(SNFTAddr).String())
-	snft, err := ethhelper.GetSNFT(addr)
+	snft, err := ethhelper.GetGenesisSNFT(addr)
 	if err != nil {
 		return err
 	}
 	if snft.MetaURL != "" {
 		err = database.ImportSNFT(addr, snft.Royalty, snft.MetaURL, snft.Creator, 0, timestamp)
+		// 后台解析meta
+		go SaveNFTMeta(0, addr, snft.MetaURL)
 		if err != nil {
 			return err
 		}
@@ -170,21 +172,31 @@ func handleWHBlock(number, time string) {
 	}
 	// 创世区块到入预设SNFT
 	if blockNumber == 0 {
-		handleGensisSNFT(timestamp)
+		handleGenesisSNFT(timestamp)
 		return
 	}
 	rewards, err := ethhelper.GetReward(number)
 	if err != nil {
 		return
 	}
-	var validators, snfts []string
-	for _, reward := range rewards {
-		validators = append(validators, reward.Address)
-		snfts = append(snfts, reward.NfTAddress)
-	}
-	err = database.DispatchSNFT(validators, snfts, blockNumber, timestamp)
-	if err != nil {
-		return
+	for _, rewards := range rewards {
+		err = database.DispatchSNFT(rewards.Address, rewards.NfTAddress, blockNumber, timestamp)
+		if err != nil {
+			return
+		}
+
+		//---临时解决NFT元信息等没有注入问题，正常应该解析官方注入InjectSNFT的交易来填写SNFT元信息----
+		snft, err := ethhelper.GetSNFT(rewards.NfTAddress, number)
+		if err != nil {
+			return
+		}
+		err = database.ImportSNFT(rewards.NfTAddress, snft.Royalty, snft.MetaURL, snft.Creator, blockNumber, timestamp)
+		if err != nil {
+			return
+		}
+		// 后台解析meta
+		go SaveNFTMeta(blockNumber, rewards.NfTAddress, snft.MetaURL)
+		//---临时解决-----------------------------------------------------------------------
 	}
 }
 
@@ -345,9 +357,13 @@ func HandleWHTx(input []byte, number, time, txHash, from, to, value string, stat
 			return
 		}
 		fmt.Println("官方注入:", startIndex, w.Number, w.Royalty, w.Creator, w.Dir)
-		database.InjectSNFT(startIndex, w.Number, w.Royalty, w.Dir, w.Creator, blockNumber, timestamp)
+		snfts, urls, err := database.InjectSNFT(startIndex, w.Number, w.Royalty, w.Dir, w.Creator, blockNumber, timestamp)
 		if err != nil {
 			return
+		}
+		for i, url := range urls {
+			//后台解析保存NFT元信息
+			go SaveNFTMeta(blockNumber, snfts[i], url)
 		}
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
