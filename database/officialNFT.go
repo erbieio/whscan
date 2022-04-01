@@ -92,13 +92,13 @@ func DispatchSNFT(validator, snft string, number, timestamp uint64) error {
 
 func FetchSNFTs(owner string, page, size uint64) (data []SNFT, count int64, err error) {
 	if owner != "" {
-		err = DB.Where("owner=?", owner).Order("create_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Where("owner=?", owner).Order("create_number DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
 		err = DB.Where("owner=?", owner).Model(&SNFT{}).Count(&count).Error
 	} else {
-		err = DB.Order("create_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Order("create_number DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}

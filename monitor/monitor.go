@@ -30,7 +30,8 @@ func SyncBlock() {
 		if err != nil || currentNumber < number {
 			fmt.Printf("最新区块高度%v：在%v区块休眠, 错误：%v\n", currentNumber, number, err)
 			time.Sleep(5 * time.Second)
-		} else {
+		}
+		if err == nil {
 			number++
 		}
 	}
@@ -668,9 +669,8 @@ func SaveNFTMeta(blockNumber uint64, nftAddr, metaUrl string) {
 			BlockNumber: blockNumber,
 			Exchanger:   nftMeta.CollectionsExchanger,
 		}
-		collection.Save()
+		err = collection.Save()
 	}
-	fmt.Println("解析存储NFT元信息成功", nftAddr, metaUrl)
 }
 
 // hashMsg Wormholes链代码复制 go-ethereum/core/evm.go 330行

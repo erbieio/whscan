@@ -12,8 +12,12 @@ type Collection struct {
 	Exchanger   string `json:"exchanger" gorm:"type:CHAR(42);index"` //所属交易所，唯一标识合集
 }
 
-func (c Collection) Save() {
-	DB.Create(&c)
+func (c Collection) Save() error {
+	result := DB.Where("id=?", c.Id).First(&c)
+	if result.Error != nil && result.RecordNotFound() {
+		return DB.Create(&c).Error
+	}
+	return result.Error
 }
 
 func FetchCollections(exchanger, creator string, page, size uint64) (data []Collection, count int64, err error) {
@@ -28,13 +32,13 @@ func FetchCollections(exchanger, creator string, page, size uint64) (data []Coll
 			}
 			where += "creator='" + creator + "'"
 		}
-		err = DB.Where(where).Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Where(where).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
 		err = DB.Where(where).Model(&Collection{}).Count(&count).Error
 	} else {
-		err = DB.Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}

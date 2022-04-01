@@ -43,13 +43,13 @@ func FetchUserNFTs(exchanger, owner string, page, size uint64) (data []UserNFT, 
 			}
 			where += "owner='" + owner + "'"
 		}
-		err = DB.Where(where).Order("address DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Where(where).Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
 		err = DB.Where(where).Model(&UserNFT{}).Count(&count).Error
 	} else {
-		err = DB.Order("address DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}

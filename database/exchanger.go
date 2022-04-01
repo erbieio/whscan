@@ -38,13 +38,13 @@ func CloseExchange(addr string) error {
 
 func FetchExchangers(name string, page, size uint64) (data []Exchanger, count int64, err error) {
 	if name != "" {
-		err = DB.Where("name=?", name).Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Where("name=?", name).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
 		err = DB.Where("name=?", name).Model(&Exchanger{}).Count(&count).Error
 	} else {
-		err = DB.Order("block_number DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}

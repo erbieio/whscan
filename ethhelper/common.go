@@ -41,10 +41,10 @@ func BalanceOf(addr string) (balance string, err error) {
 
 func GetBlock(number string) (block Block, err error) {
 	err = client.Call(&block, "eth_getBlockByNumber", number, true)
-	if err != nil {
-		return block, err
+	if err == nil && block.Number == "" {
+		err = errors.New("区块查找结果为空")
 	}
-	return block, nil
+	return
 }
 
 func GetBlockNumber() (num uint64, err error) {

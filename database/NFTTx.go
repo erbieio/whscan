@@ -49,13 +49,13 @@ func FetchNFTTxs(address, exchanger, account string, page, size uint64) (data []
 			}
 			where += "nft_addr='" + address + "'"
 		}
-		err = DB.Where(where).Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Where(where).Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}
 		err = DB.Where(where).Model(&NFTTx{}).Count(&count).Error
 	} else {
-		err = DB.Order("timestamp DESC").Offset(page - 1).Limit(size).Find(&data).Error
+		err = DB.Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&data).Error
 		if err != nil {
 			return
 		}

@@ -32,14 +32,14 @@ func FetchUserNFTsAndMeta(exchanger, owner string, page, size uint64) (data []NF
 			}
 			where += "owner='" + owner + "'"
 		}
-		err = DB.Order("address DESC").Offset(page - 1).Limit(size).
+		err = DB.Order("address DESC").Offset((page - 1) * size).Limit(size).
 			Raw("SELECT * FROM user_nfts LEFT JOIN nft_meta ON user_nfts.address=nft_meta.nft_addr WHERE " + where).Scan(&data).Error
 		if err != nil {
 			return
 		}
 		err = DB.Where(where).Model(&UserNFT{}).Count(&count).Error
 	} else {
-		err = DB.Order("address DESC").Offset(page - 1).Limit(size).
+		err = DB.Order("address DESC").Offset((page - 1) * size).Limit(size).
 			Raw("SELECT * FROM user_nfts LEFT JOIN nft_meta ON user_nfts.address=nft_meta.nft_addr").Scan(&data).Error
 		if err != nil {
 			return
@@ -57,14 +57,14 @@ type SNFTAndMeta struct {
 
 func FetchSNFTsAndMeta(owner string, page, size uint64) (data []SNFTAndMeta, count int64, err error) {
 	if owner != "" {
-		err = DB.Order("create_number DESC").Offset(page-1).Limit(size).Find(&data).
+		err = DB.Order("create_number DESC").Offset((page-1)*size).Limit(size).Find(&data).
 			Raw("SELECT * FROM snfts LEFT JOIN nft_meta ON snfts.address=nft_meta.nft_addr WHERE owner=?", owner).Scan(&data).Error
 		if err != nil {
 			return
 		}
 		err = DB.Where("owner=?", owner).Model(&SNFT{}).Count(&count).Error
 	} else {
-		err = DB.Order("create_number DESC").Offset(page - 1).Limit(size).
+		err = DB.Order("create_number DESC").Offset((page - 1) * size).Limit(size).
 			Raw("SELECT * FROM snfts LEFT JOIN nft_meta ON snfts.address=nft_meta.nft_addr").Scan(&data).Error
 		if err != nil {
 			return
