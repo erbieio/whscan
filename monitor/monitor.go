@@ -142,9 +142,9 @@ lo:
 		return err
 	}
 	if snft.MetaURL != "" {
-		err = database.ImportSNFT(addr, snft.Royalty, snft.MetaURL, snft.Creator, 0, timestamp)
+		err = database.ImportSNFT(addr, snft.Royalty, "/ipfs/QmeCPcX3rYguWqJYDmJ6D4qTQqd5asr8gYpwRcgw44WsS7/00", snft.Creator, 0, timestamp)
 		// 后台解析meta
-		go SaveNFTMeta(0, addr, snft.MetaURL)
+		go SaveNFTMeta(0, addr, "/ipfs/QmeCPcX3rYguWqJYDmJ6D4qTQqd5asr8gYpwRcgw44WsS7/00")
 		if err != nil {
 			return err
 		}
@@ -190,12 +190,12 @@ func handleWHBlock(number, time string) {
 		if err != nil {
 			return
 		}
-		err = database.ImportSNFT(rewards.NfTAddress, snft.Royalty, snft.MetaURL, snft.Creator, blockNumber, timestamp)
+		err = database.ImportSNFT(rewards.NfTAddress, snft.Royalty, "/ipfs/QmeCPcX3rYguWqJYDmJ6D4qTQqd5asr8gYpwRcgw44WsS7/00", snft.Creator, blockNumber, timestamp)
 		if err != nil {
 			return
 		}
 		// 后台解析meta
-		go SaveNFTMeta(blockNumber, rewards.NfTAddress, snft.MetaURL)
+		go SaveNFTMeta(blockNumber, rewards.NfTAddress, "/ipfs/QmeCPcX3rYguWqJYDmJ6D4qTQqd5asr8gYpwRcgw44WsS7/00")
 		//---临时解决-----------------------------------------------------------------------
 	}
 }
