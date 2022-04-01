@@ -57,6 +57,18 @@ func ImportSNFT(addr string, royalty uint32, metaUrl, creator string, number, ti
 	return injectSNFT(DB, addr, royalty, metaUrl, creator, number, timestamp)
 }
 
+// SaveSNFT 更新SNFT信息
+func SaveSNFT(addr string, royalty uint32, metaUrl, creator string, number, timestamp uint64) error {
+	return DB.Select("address", "create_at", "create_number", "creator", "royalty_ratio", "meta_url").Save(&SNFT{
+		Address:      addr,
+		CreateAt:     timestamp,
+		CreateNumber: number,
+		Creator:      creator,
+		RoyaltyRatio: royalty,
+		MetaUrl:      metaUrl,
+	}).Error
+}
+
 func injectSNFT(tx *gorm.DB, addr string, royalty uint32, metaUrl, creator string, number, timestamp uint64) error {
 	return DB.Create(&SNFT{
 		Address:      addr,

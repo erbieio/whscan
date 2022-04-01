@@ -25,24 +25,25 @@ func SyncBlock() {
 	}
 	fmt.Printf("从%v区块开始数据分析\n", number)
 	for {
-		currentNumber, err := ethhelper.GetBlockNumber()
+		currentNumber, _ := ethhelper.GetBlockNumber()
+		err := HandleBlock(number)
 		if err != nil || currentNumber < number {
 			fmt.Printf("最新区块高度%v：在%v区块休眠, 错误：%v\n", currentNumber, number, err)
 			time.Sleep(5 * time.Second)
 		} else {
-			HandleBlock(number)
 			number++
 		}
 	}
 }
 
-func HandleBlock(number uint64) {
+func HandleBlock(number uint64) error {
 	var tmp big.Int
 	tmp.SetUint64(number)
 
 	b, err := ethhelper.GetBlock("0x" + tmp.Text(16))
 	if err != nil {
 		log.Infof(err.Error())
+		return err
 	}
 	var block database.Block
 	hexTo10 := func(v string) string {
@@ -129,6 +130,7 @@ func HandleBlock(number uint64) {
 	}
 
 	handleWHBlock(b.Number, b.Ts)
+	return nil
 }
 
 // 导入创世区块注入的SNFT元信息
@@ -190,7 +192,7 @@ func handleWHBlock(number, time string) {
 		if err != nil {
 			return
 		}
-		err = database.ImportSNFT(rewards.NfTAddress, snft.Royalty, "/ipfs/QmeCPcX3rYguWqJYDmJ6D4qTQqd5asr8gYpwRcgw44WsS7/00", snft.Creator, blockNumber, timestamp)
+		err = database.SaveSNFT(rewards.NfTAddress, snft.Royalty, "/ipfs/QmeCPcX3rYguWqJYDmJ6D4qTQqd5asr8gYpwRcgw44WsS7/00", snft.Creator, blockNumber, timestamp)
 		if err != nil {
 			return
 		}
