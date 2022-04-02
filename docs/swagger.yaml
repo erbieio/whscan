@@ -581,8 +581,8 @@ definitions:
     type: object
 info:
   contact: {}
-  description: 区块链监控程序后端
-  title: Gin swagger
+  description: 区块浏览器后端接口，从区块链解析数据，提供区块、交易、NFT、SNFT、NFT合集、交易所的信息检索服务
+  title: 区块浏览器API
   version: "1.0"
 paths:
   /block/getBlock:
@@ -776,11 +776,37 @@ paths:
       summary: 查询NFT合集列表
       tags:
       - NFT合集
-  /exchanger/get:
+  /exchanger/{addr}:
     get:
       consumes:
       - application/json
       description: 按地址查询交易所
+      parameters:
+      - description: 交易所地址
+        in: path
+        name: addr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Exchanger'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/exchanger.ErrRes'
+      summary: 查询交易所
+      tags:
+      - 交易所
+  /exchanger/get:
+    get:
+      consumes:
+      - application/json
+      deprecated: true
+      description: 按地址查询交易所，使用/exchanger/{addr}替代
       parameters:
       - description: 交易所地址
         in: query
@@ -975,6 +1001,10 @@ paths:
         in: query
         name: owner
         type: string
+      - description: 合集id,空则查询所有
+        in: query
+        name: collection_id
+        type: string
       - description: 页,默认1
         in: query
         name: page
@@ -1062,6 +1092,10 @@ paths:
       - application/json
       description: 按创建时间逆序查询有元信息SNFT列表
       parameters:
+      - description: 合集id,空则查询所有
+        in: query
+        name: collection_id
+        type: string
       - description: 所有者,空则查询所有
         in: query
         name: owner

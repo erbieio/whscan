@@ -14,15 +14,15 @@ func Routers(e *gin.Engine) {
 	e.GET("/block/viewTransactions", viewTransactions)
 }
 
-// @Tags  区块查询
-// @Summary 查询区块列表
-// @Description 查询区块列表
-// @Accept json
-// @Produce json
-// @Param body body PageReq true "body"
-// @Success 200 {object} ViewBlocksRes
-// @Failure 400 {object} ErrRes
-// @Router /block/viewBlocks [get]
+// @Tags         区块查询
+// @Summary      查询区块列表
+// @Description  查询区块列表
+// @Accept       json
+// @Produce      json
+// @Param        body  body      PageReq  true  "body"
+// @Success      200   {object}  ViewBlocksRes
+// @Failure      400   {object}  ErrRes
+// @Router       /block/viewBlocks [get]
 func viewBlocks(c *gin.Context) {
 	var req PageReq
 	err := c.BindQuery(&req)
@@ -38,15 +38,15 @@ func viewBlocks(c *gin.Context) {
 	c.JSON(http.StatusOK, ViewBlocksRes{Code: 0, Msg: "ok", Data: blocks, Total: count})
 }
 
-// @Tags  区块查询
-// @Summary 查询交易列表
-// @Description 查询交易列表
-// @Accept json
-// @Produce json
-// @Param body body TxPageReq true "body"
-// @Success 200 {object} ViewTxsRes
-// @Failure 400 {object} ErrRes
-// @Router /block/viewTransactions [get]
+// @Tags         区块查询
+// @Summary      查询交易列表
+// @Description  查询交易列表
+// @Accept       json
+// @Produce      json
+// @Param        body  body      TxPageReq  true  "body"
+// @Success      200   {object}  ViewTxsRes
+// @Failure      400   {object}  ErrRes
+// @Router       /block/viewTransactions [get]
 func viewTransactions(c *gin.Context) {
 	var req TxPageReq
 	err := c.BindQuery(&req)
@@ -62,15 +62,15 @@ func viewTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, ViewTxsRes{Code: 0, Msg: "ok", Data: txs, Total: count})
 }
 
-// @Tags  区块查询
-// @Summary 查询区块
-// @Description 查询区块
-// @Accept json
-// @Produce json
-// @Param body body GetBlockReq true "body"
-// @Success 200 {object} GetBlockRes
-// @Failure 400 {object} ErrRes
-// @Router /block/getBlock [get]
+// @Tags         区块查询
+// @Summary      查询区块
+// @Description  查询区块
+// @Accept       json
+// @Produce      json
+// @Param        body  body      GetBlockReq  true  "body"
+// @Success      200   {object}  GetBlockRes
+// @Failure      400   {object}  ErrRes
+// @Router       /block/getBlock [get]
 func getBlock(c *gin.Context) {
 	var req GetBlockReq
 	err := c.BindQuery(&req)
@@ -86,15 +86,15 @@ func getBlock(c *gin.Context) {
 	c.JSON(http.StatusOK, GetBlockRes{Code: 0, Msg: "ok", Data: block})
 }
 
-// @Tags  区块查询
-// @Summary 查询交易
-// @Description 查询交易
-// @Accept json
-// @Produce json
-// @Param body body GetTxReq true "body"
-// @Success 200 {object} GetTxRes
-// @Failure 400 {object} ErrRes
-// @Router /block/getTransaction [get]
+// @Tags         区块查询
+// @Summary      查询交易
+// @Description  查询交易
+// @Accept       json
+// @Produce      json
+// @Param        body  body      GetTxReq  true  "body"
+// @Success      200   {object}  GetTxRes
+// @Failure      400   {object}  ErrRes
+// @Router       /block/getTransaction [get]
 func getTransaction(c *gin.Context) {
 	var req GetTxReq
 	err := c.BindQuery(&req)
@@ -110,15 +110,15 @@ func getTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, GetTxRes{Code: 0, Msg: "ok", Data: tx})
 }
 
-// @Tags  区块查询
-// @Summary 查询收据
-// @Description 查询收据
-// @Accept json
-// @Produce json
-// @Param body body GetTxReq true "body"
-// @Success 200 {object} GetReceiptsRes
-// @Failure 400 {object} ErrRes
-// @Router /block/getTransactionLogs [get]
+// @Tags         区块查询
+// @Summary      查询收据
+// @Description  查询收据
+// @Accept       json
+// @Produce      json
+// @Param        body  body      GetTxReq  true  "body"
+// @Success      200   {object}  GetReceiptsRes
+// @Failure      400   {object}  ErrRes
+// @Router       /block/getTransactionLogs [get]
 func getTransactionLogs(c *gin.Context) {
 	var req GetTxReq
 	err := c.BindQuery(&req)

@@ -9,9 +9,9 @@ import (
 	"server/routers"
 )
 
-// @title Gin swagger
-// @version 1.0
-// @description 区块链监控程序后端
+// @title        区块浏览器API
+// @version      1.0
+// @description  区块浏览器后端接口，从区块链解析数据，提供区块、交易、NFT、SNFT、NFT合集、交易所的信息检索服务
 func main() {
 	go monitor.SyncBlock()
 	r := routers.Init()

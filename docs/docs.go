@@ -318,7 +318,7 @@ var doc = `{
         },
         "/exchanger/get": {
             "get": {
-                "description": "按地址查询交易所",
+                "description": "按地址查询交易所，使用/exchanger/{addr}替代",
                 "consumes": [
                     "application/json"
                 ],
@@ -329,6 +329,7 @@ var doc = `{
                     "交易所"
                 ],
                 "summary": "查询交易所",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -392,6 +393,44 @@ var doc = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/exchanger.PageRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/exchanger.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/exchanger/{addr}": {
+            "get": {
+                "description": "按地址查询交易所",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "交易所"
+                ],
+                "summary": "查询交易所",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "交易所地址",
+                        "name": "addr",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/database.Exchanger"
                         }
                     },
                     "400": {
@@ -627,6 +666,12 @@ var doc = `{
                     },
                     {
                         "type": "string",
+                        "description": "合集id,空则查询所有",
+                        "name": "collection_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "页,默认1",
                         "name": "page",
                         "in": "query"
@@ -758,6 +803,12 @@ var doc = `{
                 ],
                 "summary": "查询有元信息SNFT列表",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "合集id,空则查询所有",
+                        "name": "collection_id",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "所有者,空则查询所有",
@@ -1646,8 +1697,8 @@ var SwaggerInfo = swaggerInfo{
 	Host:        "",
 	BasePath:    "",
 	Schemes:     []string{},
-	Title:       "Gin swagger",
-	Description: "区块链监控程序后端",
+	Title:       "区块浏览器API",
+	Description: "区块浏览器后端接口，从区块链解析数据，提供区块、交易、NFT、SNFT、NFT合集、交易所的信息检索服务",
 }
 
 type s struct{}

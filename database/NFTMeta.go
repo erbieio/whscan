@@ -20,11 +20,17 @@ type NFTAndMeta struct {
 	NFTMeta
 }
 
-func FetchUserNFTsAndMeta(exchanger, owner string, page, size uint64) (data []NFTAndMeta, count int64, err error) {
-	if exchanger != "" || owner != "" {
+func FetchUserNFTsAndMeta(exchanger, collectionId, owner string, page, size uint64) (data []NFTAndMeta, count int64, err error) {
+	if exchanger != "" || collectionId != "" || owner != "" {
 		where := ""
 		if exchanger != "" {
 			where += "exchanger_addr='" + exchanger + "'"
+		}
+		if collectionId != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "collection_id='" + collectionId + "'"
 		}
 		if owner != "" {
 			if where != "" {
@@ -55,14 +61,24 @@ type SNFTAndMeta struct {
 	NFTMeta
 }
 
-func FetchSNFTsAndMeta(owner string, page, size uint64) (data []SNFTAndMeta, count int64, err error) {
-	if owner != "" {
-		err = DB.Order("create_number DESC").Offset((page-1)*size).Limit(size).
-			Raw("SELECT * FROM snfts LEFT JOIN nft_meta ON snfts.address=nft_meta.nft_addr WHERE owner=?", owner).Scan(&data).Error
+func FetchSNFTsAndMeta(collectionId, owner string, page, size uint64) (data []SNFTAndMeta, count int64, err error) {
+	if collectionId != "" || owner != "" {
+		where := ""
+		if collectionId != "" {
+			where += "collection_id='" + collectionId + "'"
+		}
+		if owner != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "owner='" + owner + "'"
+		}
+		err = DB.Order("create_number DESC").Offset((page - 1) * size).Limit(size).
+			Raw("SELECT * FROM snfts LEFT JOIN nft_meta ON snfts.address=nft_meta.nft_addr WHERE " + where).Scan(&data).Error
 		if err != nil {
 			return
 		}
-		err = DB.Where("owner=?", owner).Model(&SNFT{}).Count(&count).Error
+		err = DB.Where(where).Model(&SNFT{}).Count(&count).Error
 	} else {
 		err = DB.Order("create_number DESC").Offset((page - 1) * size).Limit(size).
 			Raw("SELECT * FROM snfts LEFT JOIN nft_meta ON snfts.address=nft_meta.nft_addr").Scan(&data).Error

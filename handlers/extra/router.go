@@ -20,15 +20,15 @@ func Routers(e *gin.Engine) {
 	e.GET("/extra/requestErbTest", requestErbTest)
 }
 
-// @Tags  其他接口
-// @Summary 请求ERB测试币
-// @Description 请求ERB测试币
-// @Accept json
-// @Produce json
-// @Param body body RequestErbTestReq true "body"
-// @Success 200 {object} RequestErbTestRes
-// @Failure 400 {object} ErrRes
-// @Router /extra/requestErbTest [get]
+// @Tags         其他接口
+// @Summary      请求ERB测试币
+// @Description  请求ERB测试币
+// @Accept       json
+// @Produce      json
+// @Param        body  body      RequestErbTestReq  true  "body"
+// @Success      200   {object}  RequestErbTestRes
+// @Failure      400   {object}  ErrRes
+// @Router       /extra/requestErbTest [get]
 func requestErbTest(c *gin.Context) {
 	var req RequestErbTestReq
 	err := c.BindQuery(&req)
@@ -51,15 +51,15 @@ func requestErbTest(c *gin.Context) {
 	c.JSON(http.StatusOK, RequestErbTestRes{Code: 0, Msg: "ok"})
 }
 
-// @Tags  其他接口
-// @Summary 查询交易所状态
-// @Description 查询交易所状态
-// @Accept json
-// @Produce json
-// @Param body body CheckAuthReq true "body"
-// @Success 200 {object} CheckAuthRes
-// @Failure 400 {object} ErrRes
-// @Router /extra/checkAuth [get]
+// @Tags         其他接口
+// @Summary      查询交易所状态
+// @Description  查询交易所状态
+// @Accept       json
+// @Produce      json
+// @Param        body  body      CheckAuthReq  true  "body"
+// @Success      200   {object}  CheckAuthRes
+// @Failure      400   {object}  ErrRes
+// @Router       /extra/checkAuth [get]
 func checkAuth(c *gin.Context) {
 	var req CheckAuthReq
 	err := c.BindQuery(&req)
