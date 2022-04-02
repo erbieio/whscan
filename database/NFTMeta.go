@@ -57,7 +57,7 @@ type SNFTAndMeta struct {
 
 func FetchSNFTsAndMeta(owner string, page, size uint64) (data []SNFTAndMeta, count int64, err error) {
 	if owner != "" {
-		err = DB.Order("create_number DESC").Offset((page-1)*size).Limit(size).Find(&data).
+		err = DB.Order("create_number DESC").Offset((page-1)*size).Limit(size).
 			Raw("SELECT * FROM snfts LEFT JOIN nft_meta ON snfts.address=nft_meta.nft_addr WHERE owner=?", owner).Scan(&data).Error
 		if err != nil {
 			return
