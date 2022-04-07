@@ -14,6 +14,7 @@ type SNFT struct {
 	CreateAt     uint64  `json:"create_at"`                                //创建时间戳
 	CreateNumber uint64  `json:"create_number" gorm:"index"`               //创建的区块高度
 	Creator      string  `json:"creator" gorm:"type:CHAR(44)"`             //创建者地址
+	LastPrice    *string `json:"last_price"`                               //最后成交价格(未成交为null)，单位wei
 	Awardee      *string `json:"awardee"`                                  //被奖励的矿工获地址
 	RewardAt     *uint64 `json:"reward_at"`                                //奖励时间戳,矿工被奖励这个SNFT的时间
 	RewardNumber *uint64 `json:"reward_number"`                            //奖励区块高度,矿工被奖励这个SNFT的区块高度

@@ -14,14 +14,25 @@ type NFTTx struct {
 }
 
 func (nt NFTTx) Insert() error {
+	// todo 处理合成的SNFT碎片地址
 	nft, err := FindUserNFT(nt.NFTAddr)
 	if err != nil {
 		return err
 	}
-	// 更新NFT所有者
-	err = DB.Model(&UserNFT{}).Where("address=?", nft.Address).UpdateColumn(map[string]interface{}{
-		"owner": nt.To,
-	}).Error
+	// 更新NFT所有者和最新价格
+	if nt.NFTAddr[2] != '8' {
+		// 用户NFT
+		err = DB.Model(&UserNFT{}).Where("address=?", nft.Address).UpdateColumn(map[string]interface{}{
+			"last_price": nt.Price,
+			"owner":      nt.To,
+		}).Error
+	} else {
+		// 官方NFT
+		err = DB.Model(&SNFT{}).Where("address=?", nft.Address).UpdateColumn(map[string]interface{}{
+			"last_price": nt.Price,
+			"owner":      nt.To,
+		}).Error
+	}
 
 	// 填充卖家字段（如果没有）
 	if nt.From == "" {

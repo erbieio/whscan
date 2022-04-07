@@ -1282,6 +1282,10 @@ var doc = `{
                     "description": "所在交易所地址,没有的可以在任意交易所交易",
                     "type": "string"
                 },
+                "last_price": {
+                    "description": "最后成交价格(未成交为null)，单位wei",
+                    "type": "string"
+                },
                 "meta_url": {
                     "description": "元信息URL",
                     "type": "string"
@@ -1376,6 +1380,10 @@ var doc = `{
                     "description": "创建者地址",
                     "type": "string"
                 },
+                "last_price": {
+                    "description": "最后成交价格(未成交为null)，单位wei",
+                    "type": "string"
+                },
                 "meta_url": {
                     "description": "元信息链接",
                     "type": "string"
@@ -1431,6 +1439,10 @@ var doc = `{
                 },
                 "desc": {
                     "description": "描述",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "最后成交价格(未成交为null)，单位wei",
                     "type": "string"
                 },
                 "meta_url": {
@@ -1557,6 +1569,10 @@ var doc = `{
                 },
                 "exchanger_addr": {
                     "description": "所在交易所地址,没有的可以在任意交易所交易",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "最后成交价格(未成交为null)，单位wei",
                     "type": "string"
                 },
                 "meta_url": {
