@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	"server/handlers/ERB"
 	"server/handlers/NFT"
 	"server/handlers/SNFT"
 	"server/handlers/block"
@@ -18,6 +19,7 @@ func init() {
 	include(NFT.Routers)
 	include(SNFT.Routers)
 	include(collection.Routers)
+	include(ERB.Routers)
 }
 
 type Option func(*gin.Engine)

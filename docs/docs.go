@@ -316,6 +316,29 @@ var doc = `{
                 }
             }
         },
+        "/erb_price": {
+            "get": {
+                "description": "查询一个ERB价格，1ERB=10^18wei，未能实现ERB价格定义，固定为1ERB=1USD",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ERB"
+                ],
+                "summary": "查询ERB价格",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ERB.Price"
+                        }
+                    }
+                }
+            }
+        },
         "/exchanger/get": {
             "get": {
                 "description": "按地址查询交易所，使用/exchanger/{addr}替代",
@@ -846,6 +869,19 @@ var doc = `{
         }
     },
     "definitions": {
+        "ERB.Price": {
+            "type": "object",
+            "properties": {
+                "CNY": {
+                    "description": "一个ERB人民币价格",
+                    "type": "number"
+                },
+                "USD": {
+                    "description": "一个ERB美元价格",
+                    "type": "number"
+                }
+            }
+        },
         "NFT.ErrRes": {
             "type": "object",
             "properties": {

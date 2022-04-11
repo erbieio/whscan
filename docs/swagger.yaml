@@ -1,4 +1,13 @@
 definitions:
+  ERB.Price:
+    properties:
+      CNY:
+        description: 一个ERB人民币价格
+        type: number
+      USD:
+        description: 一个ERB美元价格
+        type: number
+    type: object
   NFT.ErrRes:
     properties:
       err_str:
@@ -788,6 +797,21 @@ paths:
       summary: 查询NFT合集列表
       tags:
       - NFT合集
+  /erb_price:
+    get:
+      consumes:
+      - application/json
+      description: 查询一个ERB价格，1ERB=10^18wei，未能实现ERB价格定义，固定为1ERB=1USD
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ERB.Price'
+      summary: 查询ERB价格
+      tags:
+      - ERB
   /exchanger/{addr}:
     get:
       consumes:
