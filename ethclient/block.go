@@ -87,17 +87,17 @@ func (ec *Client) GetBlock(ctx context.Context, number uint64) (*Block, error) {
 			return nil, err
 		}
 		// 获取解析内部交易
-		for _, tx := range block.CacheTxs {
-			to := tx.To
-			if to == nil {
-				to = tx.ContractAddress
-			}
-			internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
-			if err != nil {
-				return nil, err
-			}
-			block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
-		}
+		//for _, tx := range block.CacheTxs {
+		//	to := tx.To
+		//	if to == nil {
+		//		to = tx.ContractAddress
+		//	}
+		//	internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
+		//	if err != nil {
+		//		return nil, err
+		//	}
+		//	block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
+		//}
 	}
 
 	// 获取叔块

@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"server/common/types"
 	"server/common/utils"
 	"server/ethclient"
@@ -306,36 +307,27 @@ func SaveNFTMeta(blockNumber uint64, nftAddr, metaUrl string) {
 		).Hex()
 		collectionId = &hash
 	}
-	err = DB.Transaction(func(tx *gorm.DB) error {
-		err := tx.Create(&model.NFTMeta{
-			NFTAddr:      nftAddr,
-			Name:         nftMeta.Name,
-			Desc:         nftMeta.Desc,
-			Category:     nftMeta.Category,
-			SourceUrl:    nftMeta.SourceUrl,
-			CollectionId: collectionId,
+
+	err = DB.Create(&model.NFTMeta{
+		NFTAddr:      nftAddr,
+		Name:         nftMeta.Name,
+		Desc:         nftMeta.Desc,
+		Category:     nftMeta.Category,
+		SourceUrl:    nftMeta.SourceUrl,
+		CollectionId: collectionId,
+	}).Error
+	if err == nil && collectionId != nil {
+		err = DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
+			Id:          *collectionId,
+			Name:        nftMeta.CollectionsName,
+			Creator:     nftMeta.CollectionsCreator,
+			Category:    nftMeta.CollectionsCategory,
+			Desc:        nftMeta.CollectionsDesc,
+			ImgUrl:      nftMeta.CollectionsImgUrl,
+			BlockNumber: blockNumber,
+			Exchanger:   nftMeta.CollectionsExchanger,
 		}).Error
-		if err != nil {
-			return err
-		}
-		if collectionId != nil {
-			result := tx.Where("id=?", collectionId).First(&model.Collection{})
-			if result.Error == gorm.ErrRecordNotFound {
-				return tx.Create(&model.Collection{
-					Id:          *collectionId,
-					Name:        nftMeta.CollectionsName,
-					Creator:     nftMeta.CollectionsCreator,
-					Category:    nftMeta.CollectionsCategory,
-					Desc:        nftMeta.CollectionsDesc,
-					ImgUrl:      nftMeta.CollectionsImgUrl,
-					BlockNumber: blockNumber,
-					Exchanger:   nftMeta.CollectionsExchanger,
-				}).Error
-			}
-			return result.Error
-		}
-		return nil
-	})
+	}
 }
 
 // SaveNFTTx 保存NFT交易记录
