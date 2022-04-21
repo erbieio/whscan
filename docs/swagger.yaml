@@ -1,5 +1,84 @@
 definitions:
-  ERB.Price:
+  api.CheckAuthRes:
+    properties:
+      code:
+        description: 0 成功  1 地址有误 其他失败
+        type: integer
+      data:
+        properties:
+          exchanger_balance:
+            type: string
+          exchanger_flag:
+            type: boolean
+          status:
+            description: 2 交易所付费状态正常  其他数字为欠费或者没交费
+            type: integer
+        type: object
+      msg:
+        type: string
+    type: object
+  api.ErrRes:
+    properties:
+      err:
+        description: 错误信息
+        type: string
+    type: object
+  api.GetBlockRes:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/service.Block'
+      msg:
+        type: string
+    type: object
+  api.GetReceiptsRes:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/service.Log'
+        type: array
+      msg:
+        type: string
+    type: object
+  api.GetTxRes:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/service.Transaction'
+      msg:
+        type: string
+    type: object
+  api.ViewBlocksRes:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/service.Block'
+        type: array
+      msg:
+        type: string
+      total:
+        type: integer
+    type: object
+  api.ViewTxsRes:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/service.Transaction'
+        type: array
+      msg:
+        type: string
+      total:
+        type: integer
+    type: object
+  api.price:
     properties:
       CNY:
         description: 一个ERB人民币价格
@@ -8,206 +87,34 @@ definitions:
         description: 一个ERB美元价格
         type: number
     type: object
-  NFT.ErrRes:
-    properties:
-      err_str:
-        description: 错误字符串
-        type: string
-    type: object
-  NFT.PageMetaRes:
-    properties:
-      nfts:
-        description: NFT列表
-        items:
-          $ref: '#/definitions/database.NFTAndMeta'
-        type: array
-      total:
-        description: NFT总数
-        type: integer
-    type: object
-  NFT.PageRes:
-    properties:
-      nfts:
-        description: NFT列表
-        items:
-          $ref: '#/definitions/database.UserNFT'
-        type: array
-      total:
-        description: NFT总数
-        type: integer
-    type: object
-  NFT.PageTxRes:
-    properties:
-      nft_txs:
-        description: NFT交易列表
-        items:
-          $ref: '#/definitions/database.NFTTx'
-        type: array
-      total:
-        description: NFT总数
-        type: integer
-    type: object
-  SNFT.ErrRes:
-    properties:
-      err_str:
-        description: 错误字符串
-        type: string
-    type: object
-  SNFT.PageMetaRes:
-    properties:
-      nfts:
-        description: SNFT列表
-        items:
-          $ref: '#/definitions/database.SNFTAndMeta'
-        type: array
-      total:
-        description: SNFT总数
-        type: integer
-    type: object
-  SNFT.PageRes:
-    properties:
-      nfts:
-        description: SNFT列表
-        items:
-          $ref: '#/definitions/database.SNFT'
-        type: array
-      total:
-        description: SNFT总数
-        type: integer
-    type: object
-  block.ErrRes:
-    properties:
-      err:
-        description: 错误信息
-        type: string
-    type: object
-  block.GetBlockReq:
-    properties:
-      block_number:
-        description: 区块号
-        type: string
-    type: object
-  block.GetBlockRes:
+  api.requestErbTestRes:
     properties:
       code:
+        description: 0 成功  1 地址有误 其他失败
         type: integer
-      data:
-        $ref: '#/definitions/database.Block'
       msg:
         type: string
     type: object
-  block.GetReceiptsRes:
-    properties:
-      code:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/database.TxLog'
-        type: array
-      msg:
-        type: string
-    type: object
-  block.GetTxReq:
-    properties:
-      tx_hash:
-        description: 交易hash
-        type: string
-    type: object
-  block.GetTxRes:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/database.Transaction'
-      msg:
-        type: string
-    type: object
-  block.PageReq:
-    properties:
-      page:
-        description: 页
-        type: integer
-      page_size:
-        description: 页码
-        type: integer
-    type: object
-  block.TxPageReq:
-    properties:
-      address:
-        description: 地址 不区分传 ""
-        type: string
-      block_number:
-        description: 区块号 不区分
-        type: string
-      page:
-        description: 页
-        type: integer
-      page_size:
-        description: 页码
-        type: integer
-      tx_type:
-        description: 交易类型  如ERC20  ERC1155 ERC721  internal  不区分传""
-        type: string
-    type: object
-  block.ViewBlocksRes:
-    properties:
-      code:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/database.Block'
-        type: array
-      msg:
-        type: string
-      total:
-        type: integer
-    type: object
-  block.ViewTxsRes:
-    properties:
-      code:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/database.Transaction'
-        type: array
-      msg:
-        type: string
-      total:
-        type: integer
-    type: object
-  collection.ErrRes:
-    properties:
-      err_str:
-        description: 错误字符串
-        type: string
-    type: object
-  collection.PageRes:
-    properties:
-      collections:
-        description: NFT合集列表
-        items:
-          $ref: '#/definitions/database.Collection'
-        type: array
-      total:
-        description: NFT合集总数
-        type: integer
-    type: object
-  database.Block:
+  model.Block:
     properties:
       difficulty:
-        type: string
+        type: integer
       extraData:
         type: string
       gasLimit:
-        type: string
+        type: integer
       gasUsed:
+        type: integer
+      hash:
         type: string
       miner:
         type: string
       mixHash:
         type: string
-      number:
+      nonce:
         type: string
+      number:
+        type: integer
       parentHash:
         type: string
       receiptsRoot:
@@ -215,17 +122,29 @@ definitions:
       sha3Uncles:
         type: string
       size:
-        type: string
+        type: integer
       stateRoot:
         type: string
       timestamp:
+        type: integer
+      totalDifficulty:
         type: string
+      totalTransaction:
+        type: integer
+      transactions:
+        items:
+          type: string
+        type: array
       transactionsRoot:
         type: string
-      tx_count:
+      uncles:
+        items:
+          type: string
+        type: array
+      unclesCount:
         type: integer
     type: object
-  database.Collection:
+  model.Collection:
     properties:
       block_number:
         description: 创建区块高度，等于合集第一个NFT的
@@ -252,7 +171,7 @@ definitions:
         description: 名称，唯一标识合集
         type: string
     type: object
-  database.Exchanger:
+  model.Exchanger:
     properties:
       address:
         description: 交易所地址
@@ -285,58 +204,26 @@ definitions:
         description: 交易所URL
         type: string
     type: object
-  database.NFTAndMeta:
+  model.Log:
     properties:
       address:
-        description: NFT地址
         type: string
-      block_number:
-        description: 创建的区块高度
+      data:
+        type: string
+      eventID:
+        type: string
+      logIndex:
         type: integer
-      category:
-        description: 分类
-        type: string
-      collection_id:
-        description: 所属合集id,合集名称+合集创建者+合集所在交易所的哈希
-        type: string
-      creator:
-        description: 创建者地址
-        type: string
-      desc:
-        description: 描述
-        type: string
-      exchanger_addr:
-        description: 所在交易所地址,没有的可以在任意交易所交易
-        type: string
-      last_price:
-        description: 最后成交价格(未成交为null)，单位wei
-        type: string
-      meta_url:
-        description: 元信息URL
-        type: string
-      name:
-        description: 名称
-        type: string
-      nft_addr:
-        description: NFT地址
-        type: string
-      owner:
-        description: 所有者
-        type: string
-      royalty_ratio:
-        description: 版税费率,单位万分之一
-        type: integer
-      source_url:
-        description: 资源链接，图片或视频等文件链接
-        type: string
-      timestamp:
-        description: 创建时间戳
-        type: integer
-      tx_hash:
-        description: 创建的交易哈希
+      removed:
+        type: boolean
+      topics:
+        items:
+          type: string
+        type: array
+      transactionHash:
         type: string
     type: object
-  database.NFTTx:
+  model.NFTTx:
     properties:
       exchanger_addr:
         description: 交易所地址
@@ -363,13 +250,13 @@ definitions:
         description: 交易类型,1：转移、2:出价成交、3:定价购买、4：惰性定价购买、5：惰性定价购买、6：出价成交、7：惰性出价成交、8：撮合交易
         type: integer
     type: object
-  database.SNFT:
+  model.OfficialNFT:
     properties:
       address:
-        description: SNFT地址
+        description: OfficialNFT地址
         type: string
       awardee:
-        description: 被奖励的矿工获地址
+        description: 被奖励的矿工地址
         type: string
       create_at:
         description: 创建时间戳
@@ -390,118 +277,53 @@ definitions:
         description: 所有者,未分配和回收的为null
         type: string
       reward_at:
-        description: 奖励时间戳,矿工被奖励这个SNFT的时间
+        description: 奖励时间戳,矿工被奖励这个OfficialNFT的时间
         type: integer
       reward_number:
-        description: 奖励区块高度,矿工被奖励这个SNFT的区块高度
+        description: 奖励区块高度,矿工被奖励这个OfficialNFT的区块高度
         type: integer
       royalty_ratio:
         description: 版税费率,单位万分之一
         type: integer
     type: object
-  database.SNFTAndMeta:
-    properties:
-      address:
-        description: SNFT地址
-        type: string
-      awardee:
-        description: 被奖励的矿工获地址
-        type: string
-      category:
-        description: 分类
-        type: string
-      collection_id:
-        description: 所属合集id,合集名称+合集创建者+合集所在交易所的哈希
-        type: string
-      create_at:
-        description: 创建时间戳
-        type: integer
-      create_number:
-        description: 创建的区块高度
-        type: integer
-      creator:
-        description: 创建者地址
-        type: string
-      desc:
-        description: 描述
-        type: string
-      last_price:
-        description: 最后成交价格(未成交为null)，单位wei
-        type: string
-      meta_url:
-        description: 元信息链接
-        type: string
-      name:
-        description: 名称
-        type: string
-      nft_addr:
-        description: NFT地址
-        type: string
-      owner:
-        description: 所有者,未分配和回收的为null
-        type: string
-      reward_at:
-        description: 奖励时间戳,矿工被奖励这个SNFT的时间
-        type: integer
-      reward_number:
-        description: 奖励区块高度,矿工被奖励这个SNFT的区块高度
-        type: integer
-      royalty_ratio:
-        description: 版税费率,单位万分之一
-        type: integer
-      source_url:
-        description: 资源链接，图片或视频等文件链接
-        type: string
-    type: object
-  database.Transaction:
+  model.Transaction:
     properties:
       blockHash:
         type: string
       blockNumber:
+        type: integer
+      contractAddress:
         type: string
+      cumulativeGasUsed:
+        type: integer
+      effectiveGasPrice:
+        type: integer
       from:
         type: string
       gas:
-        type: string
+        type: integer
       gasPrice:
-        type: string
+        type: integer
+      gasUsed:
+        type: integer
       hash:
         type: string
       input:
         type: string
-      internal_calls:
-        type: string
-      internal_value_transfer:
+      methodId:
         type: string
       nonce:
-        type: string
+        type: integer
       status:
-        type: string
-      timestamp:
-        type: string
+        type: integer
       to:
         type: string
-      token_transfer:
-        type: string
       transactionIndex:
-        type: string
-      tx_type:
-        type: string
+        type: integer
       value:
         type: string
     type: object
-  database.TxLog:
-    properties:
-      address:
-        type: string
-      data:
-        type: string
-      topics:
-        type: string
-      tx_hash:
-        type: string
-    type: object
-  database.UserNFT:
+  model.UserNFT:
     properties:
       address:
         description: NFT地址
@@ -534,71 +356,282 @@ definitions:
         description: 创建的交易哈希
         type: string
     type: object
-  exchanger.ErrRes:
-    properties:
-      err_str:
-        description: 错误字符串
-        type: string
-    type: object
-  exchanger.PageRes:
-    properties:
-      exchangers:
-        description: 交易所列表
-        items:
-          $ref: '#/definitions/database.Exchanger'
-        type: array
-      total:
-        description: 交易所总数
-        type: integer
-      yesterday_total:
-        description: 昨日新开交易所数量
-        type: integer
-    type: object
-  extra.CheckAuthReq:
-    properties:
-      address:
-        description: 地址
-        type: string
-    type: object
-  extra.CheckAuthRes:
-    properties:
-      code:
-        description: 0 成功  1 地址有误 其他失败
-        type: integer
-      data:
-        $ref: '#/definitions/extra.CheckAuthResData'
-      msg:
-        type: string
-    type: object
-  extra.CheckAuthResData:
+  service.AuthRes:
     properties:
       exchanger_balance:
         type: string
       exchanger_flag:
         type: boolean
       status:
-        description: 2 交易所付费状态正常  其他数字为欠费或者没交费
         type: integer
     type: object
-  extra.ErrRes:
+  service.Block:
     properties:
-      err:
+      difficulty:
+        type: string
+      extraData:
+        type: string
+      gasLimit:
+        type: string
+      gasUsed:
+        type: string
+      miner:
+        type: string
+      mixHash:
+        type: string
+      number:
+        type: string
+      parentHash:
+        type: string
+      receiptsRoot:
+        type: string
+      sha3Uncles:
+        type: string
+      size:
+        type: string
+      stateRoot:
+        type: string
+      timestamp:
+        type: string
+      transactionsRoot:
+        type: string
+      tx_count:
+        type: integer
+    type: object
+  service.BlocksRes:
+    properties:
+      blocks:
+        description: 区块列表
+        items:
+          $ref: '#/definitions/model.Block'
+        type: array
+      total:
+        description: 区块总数
+        type: integer
+    type: object
+  service.CollectionsRes:
+    properties:
+      collections:
+        description: NFT合集列表
+        items:
+          $ref: '#/definitions/model.Collection'
+        type: array
+      total:
+        description: NFT合集总数
+        type: integer
+    type: object
+  service.ErrRes:
+    properties:
+      err_str:
         description: 错误信息
         type: string
     type: object
-  extra.RequestErbTestReq:
+  service.Log:
     properties:
       address:
-        description: 地址
+        type: string
+      data:
+        type: string
+      topics:
+        type: string
+      tx_hash:
         type: string
     type: object
-  extra.RequestErbTestRes:
+  service.NFTTxsRes:
     properties:
-      code:
-        description: 0 成功  1 地址有误 其他失败
+      nft_txs:
+        description: NFT交易列表
+        items:
+          $ref: '#/definitions/model.NFTTx'
+        type: array
+      total:
+        description: NFT总数
         type: integer
-      msg:
+    type: object
+  service.SNFTsAndMetaRes:
+    properties:
+      nfts:
+        description: SNFT列表
+        items:
+          properties:
+            address:
+              description: OfficialNFT地址
+              type: string
+            awardee:
+              description: 被奖励的矿工地址
+              type: string
+            category:
+              description: 分类
+              type: string
+            collection_id:
+              description: 所属合集id,合集名称+合集创建者+合集所在交易所的哈希
+              type: string
+            create_at:
+              description: 创建时间戳
+              type: integer
+            create_number:
+              description: 创建的区块高度
+              type: integer
+            creator:
+              description: 创建者地址
+              type: string
+            desc:
+              description: 描述
+              type: string
+            last_price:
+              description: 最后成交价格(未成交为null)，单位wei
+              type: string
+            meta_url:
+              description: 元信息链接
+              type: string
+            name:
+              description: 名称
+              type: string
+            nft_addr:
+              description: NFT地址
+              type: string
+            owner:
+              description: 所有者,未分配和回收的为null
+              type: string
+            reward_at:
+              description: 奖励时间戳,矿工被奖励这个OfficialNFT的时间
+              type: integer
+            reward_number:
+              description: 奖励区块高度,矿工被奖励这个OfficialNFT的区块高度
+              type: integer
+            royalty_ratio:
+              description: 版税费率,单位万分之一
+              type: integer
+            source_url:
+              description: 资源链接，图片或视频等文件链接
+              type: string
+          type: object
+        type: array
+      total:
+        description: SNFT总数
+        type: integer
+    type: object
+  service.SNFTsRes:
+    properties:
+      nfts:
+        description: SNFT列表
+        items:
+          $ref: '#/definitions/model.OfficialNFT'
+        type: array
+      total:
+        description: SNFT总数
+        type: integer
+    type: object
+  service.Transaction:
+    properties:
+      blockHash:
         type: string
+      blockNumber:
+        type: string
+      from:
+        type: string
+      gas:
+        type: string
+      gasPrice:
+        type: string
+      hash:
+        type: string
+      input:
+        type: string
+      nonce:
+        type: string
+      status:
+        type: string
+      timestamp:
+        type: string
+      to:
+        type: string
+      transactionIndex:
+        type: string
+      value:
+        type: string
+    type: object
+  service.TransactionsRes:
+    properties:
+      total:
+        description: 交易总数
+        type: integer
+      transactions:
+        description: 交易列表
+        items:
+          $ref: '#/definitions/model.Transaction'
+        type: array
+    type: object
+  service.UserNFTsAndMetaRes:
+    properties:
+      nfts:
+        description: NFT列表
+        items:
+          properties:
+            address:
+              description: NFT地址
+              type: string
+            block_number:
+              description: 创建的区块高度
+              type: integer
+            category:
+              description: 分类
+              type: string
+            collection_id:
+              description: 所属合集id,合集名称+合集创建者+合集所在交易所的哈希
+              type: string
+            creator:
+              description: 创建者地址
+              type: string
+            desc:
+              description: 描述
+              type: string
+            exchanger_addr:
+              description: 所在交易所地址,没有的可以在任意交易所交易
+              type: string
+            last_price:
+              description: 最后成交价格(未成交为null)，单位wei
+              type: string
+            meta_url:
+              description: 元信息URL
+              type: string
+            name:
+              description: 名称
+              type: string
+            nft_addr:
+              description: NFT地址
+              type: string
+            owner:
+              description: 所有者
+              type: string
+            royalty_ratio:
+              description: 版税费率,单位万分之一
+              type: integer
+            source_url:
+              description: 资源链接，图片或视频等文件链接
+              type: string
+            timestamp:
+              description: 创建时间戳
+              type: integer
+            tx_hash:
+              description: 创建的交易哈希
+              type: string
+          type: object
+        type: array
+      total:
+        description: NFT总数
+        type: integer
+    type: object
+  service.UserNFTsRes:
+    properties:
+      nfts:
+        description: NFT列表
+        items:
+          $ref: '#/definitions/model.UserNFT'
+        type: array
+      total:
+        description: NFT总数
+        type: integer
     type: object
 info:
   contact: {}
@@ -606,136 +639,200 @@ info:
   title: 区块浏览器API
   version: "1.0"
 paths:
+  /block/{number}:
+    get:
+      consumes:
+      - application/json
+      description: 指定number查询区块
+      parameters:
+      - description: 区块号
+        in: path
+        name: number
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Block'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询区块
+      tags:
+      - 区块
   /block/getBlock:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 查询区块
       parameters:
-      - description: body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/block.GetBlockReq'
+      - description: 区块号
+        in: query
+        name: block_number
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/block.GetBlockRes'
+            $ref: '#/definitions/api.GetBlockRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/block.ErrRes'
-      summary: 查询区块
+            $ref: '#/definitions/api.ErrRes'
+      summary: 查询区块（新/block/{number}）
       tags:
-      - 区块查询
+      - 过时接口
   /block/getTransaction:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 查询交易
       parameters:
-      - description: body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/block.GetTxReq'
+      - description: 交易hash
+        in: query
+        name: tx_hash
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/block.GetTxRes'
+            $ref: '#/definitions/api.GetTxRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/block.ErrRes'
-      summary: 查询交易
+            $ref: '#/definitions/api.ErrRes'
+      summary: 查询交易（新/transaction/{hash}）
       tags:
-      - 区块查询
+      - 过时接口
   /block/getTransactionLogs:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 查询收据
       parameters:
-      - description: body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/block.GetTxReq'
+      - description: 交易hash
+        in: query
+        name: tx_hash
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/block.GetReceiptsRes'
+            $ref: '#/definitions/api.GetReceiptsRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/block.ErrRes'
-      summary: 查询收据
+            $ref: '#/definitions/api.ErrRes'
+      summary: 查询收据(新/transaction_logs/{hash})
       tags:
-      - 区块查询
+      - 过时接口
+  /block/page:
+    get:
+      consumes:
+      - application/json
+      description: 按高度逆序查询区块列表
+      parameters:
+      - description: 页,默认1
+        in: query
+        name: page
+        type: string
+      - description: 页大小,默认10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.BlocksRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询区块列表
+      tags:
+      - 区块
   /block/viewBlocks:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 查询区块列表
       parameters:
-      - description: body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/block.PageReq'
+      - description: 页
+        in: query
+        name: page
+        type: integer
+      - description: 页码
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/block.ViewBlocksRes'
+            $ref: '#/definitions/api.ViewBlocksRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/block.ErrRes'
-      summary: 查询区块列表
+            $ref: '#/definitions/api.ErrRes'
+      summary: 查询区块列表（新/block/page）
       tags:
-      - 区块查询
+      - 过时接口
   /block/viewTransactions:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 查询交易列表
       parameters:
-      - description: body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/block.TxPageReq'
+      - description: 地址 不区分传
+        in: query
+        name: address
+        type: string
+      - description: 区块号 不区分
+        in: query
+        name: block_number
+        type: string
+      - description: 页
+        in: query
+        name: page
+        type: integer
+      - description: 页码
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/block.ViewTxsRes'
+            $ref: '#/definitions/api.ViewTxsRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/block.ErrRes'
-      summary: 查询交易列表
+            $ref: '#/definitions/api.ErrRes'
+      summary: 查询交易列表（新/transaction/page）
       tags:
-      - 区块查询
+      - 过时接口
   /collection/{id}:
     get:
       consumes:
@@ -753,11 +850,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/database.Collection'
+            $ref: '#/definitions/model.Collection'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/collection.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询NFT合集
       tags:
       - NFT合集
@@ -789,14 +886,37 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/collection.PageRes'
+            $ref: '#/definitions/service.CollectionsRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/collection.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询NFT合集列表
       tags:
       - NFT合集
+  /erb_faucet:
+    get:
+      consumes:
+      - application/json
+      description: 请求ERB测试币
+      parameters:
+      - description: 地址
+        in: query
+        name: addr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 请求ERB测试币
+      tags:
+      - 其他接口
   /erb_price:
     get:
       consumes:
@@ -808,10 +928,10 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ERB.Price'
+            $ref: '#/definitions/api.price'
       summary: 查询ERB价格
       tags:
-      - ERB
+      - 其他接口
   /exchanger/{addr}:
     get:
       consumes:
@@ -829,11 +949,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/database.Exchanger'
+            $ref: '#/definitions/model.Exchanger'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/exchanger.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询交易所
       tags:
       - 交易所
@@ -842,7 +962,7 @@ paths:
       consumes:
       - application/json
       deprecated: true
-      description: 按地址查询交易所，使用/exchanger/{addr}替代
+      description: 按地址查询交易所
       parameters:
       - description: 交易所地址
         in: query
@@ -855,14 +975,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/database.Exchanger'
+            $ref: '#/definitions/model.Exchanger'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/exchanger.ErrRes'
-      summary: 查询交易所
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询交易所(新/exchanger/{addr})
       tags:
-      - 交易所
+      - 过时接口
   /exchanger/page:
     get:
       consumes:
@@ -887,66 +1007,89 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/exchanger.PageRes'
+            $ref: '#/definitions/service.CollectionsRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/exchanger.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询交易所列表
       tags:
       - 交易所
-  /extra/checkAuth:
+  /exchanger_auth:
     get:
       consumes:
       - application/json
       description: 查询交易所状态
       parameters:
-      - description: body
-        in: body
-        name: body
+      - description: 地址
+        in: query
+        name: addr
         required: true
-        schema:
-          $ref: '#/definitions/extra.CheckAuthReq'
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/extra.CheckAuthRes'
+            $ref: '#/definitions/service.AuthRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/extra.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询交易所状态
       tags:
       - 其他接口
+  /extra/checkAuth:
+    get:
+      consumes:
+      - application/json
+      deprecated: true
+      description: 查询交易所状态
+      parameters:
+      - description: 地址
+        in: query
+        name: address
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.CheckAuthRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrRes'
+      summary: 查询交易所状态(新/exchanger_auth)
+      tags:
+      - 过时接口
   /extra/requestErbTest:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: 请求ERB测试币
       parameters:
-      - description: body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/extra.RequestErbTestReq'
+      - description: 地址
+        in: query
+        name: address
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/extra.RequestErbTestRes'
+            $ref: '#/definitions/api.requestErbTestRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/extra.ErrRes'
-      summary: 请求ERB测试币
+            $ref: '#/definitions/api.requestErbTestRes'
+      summary: 请求ERB测试币(新/erb_faucet)
       tags:
-      - 其他接口
+      - 过时接口
   /nft/page:
     get:
       consumes:
@@ -975,11 +1118,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/NFT.PageRes'
+            $ref: '#/definitions/service.UserNFTsRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/NFT.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询NFT列表
       tags:
       - NFT
@@ -1015,11 +1158,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/NFT.PageTxRes'
+            $ref: '#/definitions/service.NFTTxsRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/NFT.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询NFT交易列表
       tags:
       - NFT
@@ -1055,11 +1198,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/NFT.PageMetaRes'
+            $ref: '#/definitions/service.UserNFTsAndMetaRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/NFT.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询包含元信息NFT列表
       tags:
       - NFT
@@ -1081,12 +1224,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/database.SNFT'
+              $ref: '#/definitions/model.OfficialNFT'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SNFT.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询区块SNFT列表
       tags:
       - SNFT
@@ -1114,11 +1257,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SNFT.PageRes'
+            $ref: '#/definitions/service.SNFTsRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SNFT.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询SNFT列表
       tags:
       - SNFT
@@ -1150,12 +1293,100 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/SNFT.PageMetaRes'
+            $ref: '#/definitions/service.SNFTsAndMetaRes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/SNFT.ErrRes'
+            $ref: '#/definitions/service.ErrRes'
       summary: 查询有元信息SNFT列表
       tags:
       - SNFT
+  /transaction/{hash}:
+    get:
+      consumes:
+      - application/json
+      description: 指定hash查询交易
+      parameters:
+      - description: 交易哈希
+        in: path
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Transaction'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询交易
+      tags:
+      - 交易
+  /transaction/page:
+    get:
+      consumes:
+      - application/json
+      description: 逆序查询交易列表
+      parameters:
+      - description: 页,默认1
+        in: query
+        name: page
+        type: string
+      - description: 页大小,默认10
+        in: query
+        name: page_size
+        type: string
+      - description: 区块号，空则查询所有
+        in: query
+        name: number
+        type: string
+      - description: 帐户地址，空则查询所有
+        in: query
+        name: addr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.TransactionsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询交易列表
+      tags:
+      - 交易
+  /transaction_logs/{hash}:
+    get:
+      consumes:
+      - application/json
+      description: 指定交易hash查询交易收据
+      parameters:
+      - description: 交易哈希
+        in: path
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Log'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询交易收据
+      tags:
+      - 交易
 swagger: "2.0"

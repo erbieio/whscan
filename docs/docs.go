@@ -33,31 +33,29 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块查询"
+                    "过时接口"
                 ],
-                "summary": "查询区块",
+                "summary": "查询区块（新/block/{number}）",
+                "deprecated": true,
                 "parameters": [
                     {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/block.GetBlockReq"
-                        }
+                        "type": "string",
+                        "description": "区块号",
+                        "name": "block_number",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/block.GetBlockRes"
+                            "$ref": "#/definitions/api.GetBlockRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/block.ErrRes"
+                            "$ref": "#/definitions/api.ErrRes"
                         }
                     }
                 }
@@ -73,31 +71,29 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块查询"
+                    "过时接口"
                 ],
-                "summary": "查询交易",
+                "summary": "查询交易（新/transaction/{hash}）",
+                "deprecated": true,
                 "parameters": [
                     {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/block.GetTxReq"
-                        }
+                        "type": "string",
+                        "description": "交易hash",
+                        "name": "tx_hash",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/block.GetTxRes"
+                            "$ref": "#/definitions/api.GetTxRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/block.ErrRes"
+                            "$ref": "#/definitions/api.ErrRes"
                         }
                     }
                 }
@@ -113,31 +109,72 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块查询"
+                    "过时接口"
                 ],
-                "summary": "查询收据",
+                "summary": "查询收据(新/transaction_logs/{hash})",
+                "deprecated": true,
                 "parameters": [
                     {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/block.GetTxReq"
-                        }
+                        "type": "string",
+                        "description": "交易hash",
+                        "name": "tx_hash",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/block.GetReceiptsRes"
+                            "$ref": "#/definitions/api.GetReceiptsRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/block.ErrRes"
+                            "$ref": "#/definitions/api.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/block/page": {
+            "get": {
+                "description": "按高度逆序查询区块列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "区块"
+                ],
+                "summary": "查询区块列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.BlocksRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -153,31 +190,35 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块查询"
+                    "过时接口"
                 ],
-                "summary": "查询区块列表",
+                "summary": "查询区块列表（新/block/page）",
+                "deprecated": true,
                 "parameters": [
                     {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/block.PageReq"
-                        }
+                        "type": "integer",
+                        "description": "页",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/block.ViewBlocksRes"
+                            "$ref": "#/definitions/api.ViewBlocksRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/block.ErrRes"
+                            "$ref": "#/definitions/api.ErrRes"
                         }
                     }
                 }
@@ -193,31 +234,85 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块查询"
+                    "过时接口"
                 ],
-                "summary": "查询交易列表",
+                "summary": "查询交易列表（新/transaction/page）",
+                "deprecated": true,
                 "parameters": [
                     {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/block.TxPageReq"
-                        }
+                        "type": "string",
+                        "description": "地址 不区分传",
+                        "name": "address",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "区块号 不区分",
+                        "name": "block_number",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/block.ViewTxsRes"
+                            "$ref": "#/definitions/api.ViewTxsRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/block.ErrRes"
+                            "$ref": "#/definitions/api.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/block/{number}": {
+            "get": {
+                "description": "指定number查询区块",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "区块"
+                ],
+                "summary": "查询区块",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "区块号",
+                        "name": "number",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Block"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -266,13 +361,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/collection.PageRes"
+                            "$ref": "#/definitions/service.CollectionsRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/collection.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -304,13 +399,48 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/database.Collection"
+                            "$ref": "#/definitions/model.Collection"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/collection.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/erb_faucet": {
+            "get": {
+                "description": "请求ERB测试币",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "其他接口"
+                ],
+                "summary": "请求ERB测试币",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "地址",
+                        "name": "addr",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -326,14 +456,14 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "ERB"
+                    "其他接口"
                 ],
                 "summary": "查询ERB价格",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ERB.Price"
+                            "$ref": "#/definitions/api.price"
                         }
                     }
                 }
@@ -341,7 +471,7 @@ var doc = `{
         },
         "/exchanger/get": {
             "get": {
-                "description": "按地址查询交易所，使用/exchanger/{addr}替代",
+                "description": "按地址查询交易所",
                 "consumes": [
                     "application/json"
                 ],
@@ -349,9 +479,9 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "交易所"
+                    "过时接口"
                 ],
-                "summary": "查询交易所",
+                "summary": "查询交易所(新/exchanger/{addr})",
                 "deprecated": true,
                 "parameters": [
                     {
@@ -366,13 +496,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/database.Exchanger"
+                            "$ref": "#/definitions/model.Exchanger"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/exchanger.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -415,13 +545,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/exchanger.PageRes"
+                            "$ref": "#/definitions/service.CollectionsRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/exchanger.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -453,13 +583,51 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/database.Exchanger"
+                            "$ref": "#/definitions/model.Exchanger"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/exchanger.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/exchanger_auth": {
+            "get": {
+                "description": "查询交易所状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "其他接口"
+                ],
+                "summary": "查询交易所状态",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "地址",
+                        "name": "addr",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.AuthRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -475,31 +643,29 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "其他接口"
+                    "过时接口"
                 ],
-                "summary": "查询交易所状态",
+                "summary": "查询交易所状态(新/exchanger_auth)",
+                "deprecated": true,
                 "parameters": [
                     {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/extra.CheckAuthReq"
-                        }
+                        "type": "string",
+                        "description": "地址",
+                        "name": "address",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/extra.CheckAuthRes"
+                            "$ref": "#/definitions/api.CheckAuthRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/extra.ErrRes"
+                            "$ref": "#/definitions/api.ErrRes"
                         }
                     }
                 }
@@ -515,31 +681,29 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "其他接口"
+                    "过时接口"
                 ],
-                "summary": "请求ERB测试币",
+                "summary": "请求ERB测试币(新/erb_faucet)",
+                "deprecated": true,
                 "parameters": [
                     {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/extra.RequestErbTestReq"
-                        }
+                        "type": "string",
+                        "description": "地址",
+                        "name": "address",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/extra.RequestErbTestRes"
+                            "$ref": "#/definitions/api.requestErbTestRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/extra.ErrRes"
+                            "$ref": "#/definitions/api.requestErbTestRes"
                         }
                     }
                 }
@@ -588,13 +752,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/NFT.PageRes"
+                            "$ref": "#/definitions/service.UserNFTsRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/NFT.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -649,13 +813,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/NFT.PageTxRes"
+                            "$ref": "#/definitions/service.NFTTxsRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/NFT.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -710,13 +874,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/NFT.PageMetaRes"
+                            "$ref": "#/definitions/service.UserNFTsAndMetaRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/NFT.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -750,14 +914,14 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/database.SNFT"
+                                "$ref": "#/definitions/model.OfficialNFT"
                             }
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/SNFT.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -800,13 +964,13 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/SNFT.PageRes"
+                            "$ref": "#/definitions/service.SNFTsRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/SNFT.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -855,13 +1019,147 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/SNFT.PageMetaRes"
+                            "$ref": "#/definitions/service.SNFTsAndMetaRes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/SNFT.ErrRes"
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaction/page": {
+            "get": {
+                "description": "逆序查询交易列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "交易"
+                ],
+                "summary": "查询交易列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "区块号，空则查询所有",
+                        "name": "number",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "帐户地址，空则查询所有",
+                        "name": "addr",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.TransactionsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaction/{hash}": {
+            "get": {
+                "description": "指定hash查询交易",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "交易"
+                ],
+                "summary": "查询交易",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "交易哈希",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Transaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaction_logs/{hash}": {
+            "get": {
+                "description": "指定交易hash查询交易收据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "交易"
+                ],
+                "summary": "查询交易收据",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "交易哈希",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Log"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -869,7 +1167,128 @@ var doc = `{
         }
     },
     "definitions": {
-        "ERB.Price": {
+        "api.CheckAuthRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "0 成功  1 地址有误 其他失败",
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "exchanger_balance": {
+                            "type": "string"
+                        },
+                        "exchanger_flag": {
+                            "type": "boolean"
+                        },
+                        "status": {
+                            "description": "2 交易所付费状态正常  其他数字为欠费或者没交费",
+                            "type": "integer"
+                        }
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.ErrRes": {
+            "type": "object",
+            "properties": {
+                "err": {
+                    "description": "错误信息",
+                    "type": "string"
+                }
+            }
+        },
+        "api.GetBlockRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/service.Block"
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GetReceiptsRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.Log"
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GetTxRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/service.Transaction"
+                },
+                "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.ViewBlocksRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.Block"
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.ViewTxsRes": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.Transaction"
+                    }
+                },
+                "msg": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.price": {
             "type": "object",
             "properties": {
                 "CNY": {
@@ -882,280 +1301,405 @@ var doc = `{
                 }
             }
         },
-        "NFT.ErrRes": {
+        "api.requestErbTestRes": {
             "type": "object",
             "properties": {
-                "err_str": {
-                    "description": "错误字符串",
+                "code": {
+                    "description": "0 成功  1 地址有误 其他失败",
+                    "type": "integer"
+                },
+                "msg": {
                     "type": "string"
                 }
             }
         },
-        "NFT.PageMetaRes": {
+        "model.Block": {
             "type": "object",
             "properties": {
-                "nfts": {
-                    "description": "NFT列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.NFTAndMeta"
-                    }
-                },
-                "total": {
-                    "description": "NFT总数",
+                "difficulty": {
                     "type": "integer"
-                }
-            }
-        },
-        "NFT.PageRes": {
-            "type": "object",
-            "properties": {
-                "nfts": {
-                    "description": "NFT列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.UserNFT"
-                    }
                 },
-                "total": {
-                    "description": "NFT总数",
-                    "type": "integer"
-                }
-            }
-        },
-        "NFT.PageTxRes": {
-            "type": "object",
-            "properties": {
-                "nft_txs": {
-                    "description": "NFT交易列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.NFTTx"
-                    }
-                },
-                "total": {
-                    "description": "NFT总数",
-                    "type": "integer"
-                }
-            }
-        },
-        "SNFT.ErrRes": {
-            "type": "object",
-            "properties": {
-                "err_str": {
-                    "description": "错误字符串",
+                "extraData": {
                     "type": "string"
-                }
-            }
-        },
-        "SNFT.PageMetaRes": {
-            "type": "object",
-            "properties": {
-                "nfts": {
-                    "description": "SNFT列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.SNFTAndMeta"
-                    }
                 },
-                "total": {
-                    "description": "SNFT总数",
+                "gasLimit": {
                     "type": "integer"
-                }
-            }
-        },
-        "SNFT.PageRes": {
-            "type": "object",
-            "properties": {
-                "nfts": {
-                    "description": "SNFT列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.SNFT"
-                    }
                 },
-                "total": {
-                    "description": "SNFT总数",
+                "gasUsed": {
                     "type": "integer"
-                }
-            }
-        },
-        "block.ErrRes": {
-            "type": "object",
-            "properties": {
-                "err": {
-                    "description": "错误信息",
+                },
+                "hash": {
                     "type": "string"
+                },
+                "miner": {
+                    "type": "string"
+                },
+                "mixHash": {
+                    "type": "string"
+                },
+                "nonce": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "parentHash": {
+                    "type": "string"
+                },
+                "receiptsRoot": {
+                    "type": "string"
+                },
+                "sha3Uncles": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "stateRoot": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "totalDifficulty": {
+                    "type": "string"
+                },
+                "totalTransaction": {
+                    "type": "integer"
+                },
+                "transactions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "transactionsRoot": {
+                    "type": "string"
+                },
+                "uncles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "unclesCount": {
+                    "type": "integer"
                 }
             }
         },
-        "block.GetBlockReq": {
+        "model.Collection": {
             "type": "object",
             "properties": {
                 "block_number": {
-                    "description": "区块号",
+                    "description": "创建区块高度，等于合集第一个NFT的",
+                    "type": "integer"
+                },
+                "category": {
+                    "description": "分类",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "创建者，唯一标识合集",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "描述",
+                    "type": "string"
+                },
+                "exchanger": {
+                    "description": "所属交易所，唯一标识合集",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "名称+创建者+所属交易所的哈希",
+                    "type": "string"
+                },
+                "img_url": {
+                    "description": "图片链接",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "名称，唯一标识合集",
                     "type": "string"
                 }
             }
         },
-        "block.GetBlockRes": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/database.Block"
-                },
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
-        "block.GetReceiptsRes": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.TxLog"
-                    }
-                },
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
-        "block.GetTxReq": {
-            "type": "object",
-            "properties": {
-                "tx_hash": {
-                    "description": "交易hash",
-                    "type": "string"
-                }
-            }
-        },
-        "block.GetTxRes": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/database.Transaction"
-                },
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
-        "block.PageReq": {
-            "type": "object",
-            "properties": {
-                "page": {
-                    "description": "页",
-                    "type": "integer"
-                },
-                "page_size": {
-                    "description": "页码",
-                    "type": "integer"
-                }
-            }
-        },
-        "block.TxPageReq": {
+        "model.Exchanger": {
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "地址 不区分传 \"\"",
+                    "description": "交易所地址",
                     "type": "string"
                 },
                 "block_number": {
-                    "description": "区块号 不区分",
+                    "description": "创建时的区块号",
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "创建者地址",
                     "type": "string"
                 },
-                "page": {
-                    "description": "页",
+                "fee_ratio": {
+                    "description": "手续费率,单位万分之一",
                     "type": "integer"
                 },
-                "page_size": {
-                    "description": "页码",
+                "is_open": {
+                    "description": "是否开启中",
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "交易所名称",
+                    "type": "string"
+                },
+                "nft_count": {
+                    "description": "NFT总数，批量查询的此字段无效",
                     "type": "integer"
+                },
+                "timestamp": {
+                    "description": "开启时间",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "创建的交易",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "交易所URL",
+                    "type": "string"
+                }
+            }
+        },
+        "model.Log": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "data": {
+                    "type": "string"
+                },
+                "eventID": {
+                    "type": "string"
+                },
+                "logIndex": {
+                    "type": "integer"
+                },
+                "removed": {
+                    "type": "boolean"
+                },
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "transactionHash": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.NFTTx": {
+            "type": "object",
+            "properties": {
+                "exchanger_addr": {
+                    "description": "交易所地址",
+                    "type": "string"
+                },
+                "from": {
+                    "description": "卖家",
+                    "type": "string"
+                },
+                "nft_addr": {
+                    "description": "交易的NFT地址",
+                    "type": "string"
+                },
+                "price": {
+                    "description": "价格,单位为wei",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "交易时间戳",
+                    "type": "integer"
+                },
+                "to": {
+                    "description": "买家",
+                    "type": "string"
+                },
+                "tx_hash": {
+                    "description": "交易哈希",
+                    "type": "string"
                 },
                 "tx_type": {
-                    "description": "交易类型  如ERC20  ERC1155 ERC721  internal  不区分传\"\"",
+                    "description": "交易类型,1：转移、2:出价成交、3:定价购买、4：惰性定价购买、5：惰性定价购买、6：出价成交、7：惰性出价成交、8：撮合交易",
+                    "type": "integer"
+                }
+            }
+        },
+        "model.OfficialNFT": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "OfficialNFT地址",
+                    "type": "string"
+                },
+                "awardee": {
+                    "description": "被奖励的矿工地址",
+                    "type": "string"
+                },
+                "create_at": {
+                    "description": "创建时间戳",
+                    "type": "integer"
+                },
+                "create_number": {
+                    "description": "创建的区块高度",
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "创建者地址",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "最后成交价格(未成交为null)，单位wei",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "元信息链接",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "所有者,未分配和回收的为null",
+                    "type": "string"
+                },
+                "reward_at": {
+                    "description": "奖励时间戳,矿工被奖励这个OfficialNFT的时间",
+                    "type": "integer"
+                },
+                "reward_number": {
+                    "description": "奖励区块高度,矿工被奖励这个OfficialNFT的区块高度",
+                    "type": "integer"
+                },
+                "royalty_ratio": {
+                    "description": "版税费率,单位万分之一",
+                    "type": "integer"
+                }
+            }
+        },
+        "model.Transaction": {
+            "type": "object",
+            "properties": {
+                "blockHash": {
+                    "type": "string"
+                },
+                "blockNumber": {
+                    "type": "integer"
+                },
+                "contractAddress": {
+                    "type": "string"
+                },
+                "cumulativeGasUsed": {
+                    "type": "integer"
+                },
+                "effectiveGasPrice": {
+                    "type": "integer"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "gas": {
+                    "type": "integer"
+                },
+                "gasPrice": {
+                    "type": "integer"
+                },
+                "gasUsed": {
+                    "type": "integer"
+                },
+                "hash": {
+                    "type": "string"
+                },
+                "input": {
+                    "type": "string"
+                },
+                "methodId": {
+                    "type": "string"
+                },
+                "nonce": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "transactionIndex": {
+                    "type": "integer"
+                },
+                "value": {
                     "type": "string"
                 }
             }
         },
-        "block.ViewBlocksRes": {
+        "model.UserNFT": {
             "type": "object",
             "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.Block"
-                    }
-                },
-                "msg": {
+                "address": {
+                    "description": "NFT地址",
                     "type": "string"
                 },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "block.ViewTxsRes": {
-            "type": "object",
-            "properties": {
-                "code": {
+                "block_number": {
+                    "description": "创建的区块高度",
                     "type": "integer"
                 },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.Transaction"
-                    }
-                },
-                "msg": {
+                "creator": {
+                    "description": "创建者地址",
                     "type": "string"
                 },
-                "total": {
+                "exchanger_addr": {
+                    "description": "所在交易所地址,没有的可以在任意交易所交易",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "最后成交价格(未成交为null)，单位wei",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "元信息URL",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "所有者",
+                    "type": "string"
+                },
+                "royalty_ratio": {
+                    "description": "版税费率,单位万分之一",
                     "type": "integer"
-                }
-            }
-        },
-        "collection.ErrRes": {
-            "type": "object",
-            "properties": {
-                "err_str": {
-                    "description": "错误字符串",
+                },
+                "timestamp": {
+                    "description": "创建时间戳",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "创建的交易哈希",
                     "type": "string"
                 }
             }
         },
-        "collection.PageRes": {
+        "service.AuthRes": {
             "type": "object",
             "properties": {
-                "collections": {
-                    "description": "NFT合集列表",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/database.Collection"
-                    }
+                "exchanger_balance": {
+                    "type": "string"
                 },
-                "total": {
-                    "description": "NFT合集总数",
+                "exchanger_flag": {
+                    "type": "boolean"
+                },
+                "status": {
                     "type": "integer"
                 }
             }
         },
-        "database.Block": {
+        "service.Block": {
             "type": "object",
             "properties": {
                 "difficulty": {
@@ -1205,317 +1749,183 @@ var doc = `{
                 }
             }
         },
-        "database.Collection": {
+        "service.BlocksRes": {
             "type": "object",
             "properties": {
-                "block_number": {
-                    "description": "创建区块高度，等于合集第一个NFT的",
+                "blocks": {
+                    "description": "区块列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Block"
+                    }
+                },
+                "total": {
+                    "description": "区块总数",
                     "type": "integer"
+                }
+            }
+        },
+        "service.CollectionsRes": {
+            "type": "object",
+            "properties": {
+                "collections": {
+                    "description": "NFT合集列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Collection"
+                    }
                 },
-                "category": {
-                    "description": "分类",
-                    "type": "string"
-                },
-                "creator": {
-                    "description": "创建者，唯一标识合集",
-                    "type": "string"
-                },
-                "desc": {
-                    "description": "描述",
-                    "type": "string"
-                },
-                "exchanger": {
-                    "description": "所属交易所，唯一标识合集",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "名称+创建者+所属交易所的哈希",
-                    "type": "string"
-                },
-                "img_url": {
-                    "description": "图片链接",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "名称，唯一标识合集",
+                "total": {
+                    "description": "NFT合集总数",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.ErrRes": {
+            "type": "object",
+            "properties": {
+                "err_str": {
+                    "description": "错误信息",
                     "type": "string"
                 }
             }
         },
-        "database.Exchanger": {
+        "service.Log": {
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "交易所地址",
                     "type": "string"
                 },
-                "block_number": {
-                    "description": "创建时的区块号",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "创建者地址",
+                "data": {
                     "type": "string"
                 },
-                "fee_ratio": {
-                    "description": "手续费率,单位万分之一",
-                    "type": "integer"
-                },
-                "is_open": {
-                    "description": "是否开启中",
-                    "type": "boolean"
-                },
-                "name": {
-                    "description": "交易所名称",
-                    "type": "string"
-                },
-                "nft_count": {
-                    "description": "NFT总数，批量查询的此字段无效",
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "description": "开启时间",
-                    "type": "integer"
-                },
-                "tx_hash": {
-                    "description": "创建的交易",
-                    "type": "string"
-                },
-                "url": {
-                    "description": "交易所URL",
-                    "type": "string"
-                }
-            }
-        },
-        "database.NFTAndMeta": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "NFT地址",
-                    "type": "string"
-                },
-                "block_number": {
-                    "description": "创建的区块高度",
-                    "type": "integer"
-                },
-                "category": {
-                    "description": "分类",
-                    "type": "string"
-                },
-                "collection_id": {
-                    "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
-                    "type": "string"
-                },
-                "creator": {
-                    "description": "创建者地址",
-                    "type": "string"
-                },
-                "desc": {
-                    "description": "描述",
-                    "type": "string"
-                },
-                "exchanger_addr": {
-                    "description": "所在交易所地址,没有的可以在任意交易所交易",
-                    "type": "string"
-                },
-                "last_price": {
-                    "description": "最后成交价格(未成交为null)，单位wei",
-                    "type": "string"
-                },
-                "meta_url": {
-                    "description": "元信息URL",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "名称",
-                    "type": "string"
-                },
-                "nft_addr": {
-                    "description": "NFT地址",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "所有者",
-                    "type": "string"
-                },
-                "royalty_ratio": {
-                    "description": "版税费率,单位万分之一",
-                    "type": "integer"
-                },
-                "source_url": {
-                    "description": "资源链接，图片或视频等文件链接",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "创建时间戳",
-                    "type": "integer"
-                },
-                "tx_hash": {
-                    "description": "创建的交易哈希",
-                    "type": "string"
-                }
-            }
-        },
-        "database.NFTTx": {
-            "type": "object",
-            "properties": {
-                "exchanger_addr": {
-                    "description": "交易所地址",
-                    "type": "string"
-                },
-                "from": {
-                    "description": "卖家",
-                    "type": "string"
-                },
-                "nft_addr": {
-                    "description": "交易的NFT地址",
-                    "type": "string"
-                },
-                "price": {
-                    "description": "价格,单位为wei",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "交易时间戳",
-                    "type": "integer"
-                },
-                "to": {
-                    "description": "买家",
+                "topics": {
                     "type": "string"
                 },
                 "tx_hash": {
-                    "description": "交易哈希",
                     "type": "string"
-                },
-                "tx_type": {
-                    "description": "交易类型,1：转移、2:出价成交、3:定价购买、4：惰性定价购买、5：惰性定价购买、6：出价成交、7：惰性出价成交、8：撮合交易",
-                    "type": "integer"
                 }
             }
         },
-        "database.SNFT": {
+        "service.NFTTxsRes": {
             "type": "object",
             "properties": {
-                "address": {
-                    "description": "SNFT地址",
-                    "type": "string"
+                "nft_txs": {
+                    "description": "NFT交易列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.NFTTx"
+                    }
                 },
-                "awardee": {
-                    "description": "被奖励的矿工获地址",
-                    "type": "string"
-                },
-                "create_at": {
-                    "description": "创建时间戳",
-                    "type": "integer"
-                },
-                "create_number": {
-                    "description": "创建的区块高度",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "创建者地址",
-                    "type": "string"
-                },
-                "last_price": {
-                    "description": "最后成交价格(未成交为null)，单位wei",
-                    "type": "string"
-                },
-                "meta_url": {
-                    "description": "元信息链接",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "所有者,未分配和回收的为null",
-                    "type": "string"
-                },
-                "reward_at": {
-                    "description": "奖励时间戳,矿工被奖励这个SNFT的时间",
-                    "type": "integer"
-                },
-                "reward_number": {
-                    "description": "奖励区块高度,矿工被奖励这个SNFT的区块高度",
-                    "type": "integer"
-                },
-                "royalty_ratio": {
-                    "description": "版税费率,单位万分之一",
+                "total": {
+                    "description": "NFT总数",
                     "type": "integer"
                 }
             }
         },
-        "database.SNFTAndMeta": {
+        "service.SNFTsAndMetaRes": {
             "type": "object",
             "properties": {
-                "address": {
-                    "description": "SNFT地址",
-                    "type": "string"
+                "nfts": {
+                    "description": "SNFT列表",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "OfficialNFT地址",
+                                "type": "string"
+                            },
+                            "awardee": {
+                                "description": "被奖励的矿工地址",
+                                "type": "string"
+                            },
+                            "category": {
+                                "description": "分类",
+                                "type": "string"
+                            },
+                            "collection_id": {
+                                "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
+                                "type": "string"
+                            },
+                            "create_at": {
+                                "description": "创建时间戳",
+                                "type": "integer"
+                            },
+                            "create_number": {
+                                "description": "创建的区块高度",
+                                "type": "integer"
+                            },
+                            "creator": {
+                                "description": "创建者地址",
+                                "type": "string"
+                            },
+                            "desc": {
+                                "description": "描述",
+                                "type": "string"
+                            },
+                            "last_price": {
+                                "description": "最后成交价格(未成交为null)，单位wei",
+                                "type": "string"
+                            },
+                            "meta_url": {
+                                "description": "元信息链接",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "名称",
+                                "type": "string"
+                            },
+                            "nft_addr": {
+                                "description": "NFT地址",
+                                "type": "string"
+                            },
+                            "owner": {
+                                "description": "所有者,未分配和回收的为null",
+                                "type": "string"
+                            },
+                            "reward_at": {
+                                "description": "奖励时间戳,矿工被奖励这个OfficialNFT的时间",
+                                "type": "integer"
+                            },
+                            "reward_number": {
+                                "description": "奖励区块高度,矿工被奖励这个OfficialNFT的区块高度",
+                                "type": "integer"
+                            },
+                            "royalty_ratio": {
+                                "description": "版税费率,单位万分之一",
+                                "type": "integer"
+                            },
+                            "source_url": {
+                                "description": "资源链接，图片或视频等文件链接",
+                                "type": "string"
+                            }
+                        }
+                    }
                 },
-                "awardee": {
-                    "description": "被奖励的矿工获地址",
-                    "type": "string"
-                },
-                "category": {
-                    "description": "分类",
-                    "type": "string"
-                },
-                "collection_id": {
-                    "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
-                    "type": "string"
-                },
-                "create_at": {
-                    "description": "创建时间戳",
+                "total": {
+                    "description": "SNFT总数",
                     "type": "integer"
-                },
-                "create_number": {
-                    "description": "创建的区块高度",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "创建者地址",
-                    "type": "string"
-                },
-                "desc": {
-                    "description": "描述",
-                    "type": "string"
-                },
-                "last_price": {
-                    "description": "最后成交价格(未成交为null)，单位wei",
-                    "type": "string"
-                },
-                "meta_url": {
-                    "description": "元信息链接",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "名称",
-                    "type": "string"
-                },
-                "nft_addr": {
-                    "description": "NFT地址",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "所有者,未分配和回收的为null",
-                    "type": "string"
-                },
-                "reward_at": {
-                    "description": "奖励时间戳,矿工被奖励这个SNFT的时间",
-                    "type": "integer"
-                },
-                "reward_number": {
-                    "description": "奖励区块高度,矿工被奖励这个SNFT的区块高度",
-                    "type": "integer"
-                },
-                "royalty_ratio": {
-                    "description": "版税费率,单位万分之一",
-                    "type": "integer"
-                },
-                "source_url": {
-                    "description": "资源链接，图片或视频等文件链接",
-                    "type": "string"
                 }
             }
         },
-        "database.Transaction": {
+        "service.SNFTsRes": {
+            "type": "object",
+            "properties": {
+                "nfts": {
+                    "description": "SNFT列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.OfficialNFT"
+                    }
+                },
+                "total": {
+                    "description": "SNFT总数",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.Transaction": {
             "type": "object",
             "properties": {
                 "blockHash": {
@@ -1539,12 +1949,6 @@ var doc = `{
                 "input": {
                     "type": "string"
                 },
-                "internal_calls": {
-                    "type": "string"
-                },
-                "internal_value_transfer": {
-                    "type": "string"
-                },
                 "nonce": {
                     "type": "string"
                 },
@@ -1557,13 +1961,7 @@ var doc = `{
                 "to": {
                     "type": "string"
                 },
-                "token_transfer": {
-                    "type": "string"
-                },
                 "transactionIndex": {
-                    "type": "string"
-                },
-                "tx_type": {
                     "type": "string"
                 },
                 "value": {
@@ -1571,163 +1969,117 @@ var doc = `{
                 }
             }
         },
-        "database.TxLog": {
+        "service.TransactionsRes": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "data": {
-                    "type": "string"
-                },
-                "topics": {
-                    "type": "string"
-                },
-                "tx_hash": {
-                    "type": "string"
-                }
-            }
-        },
-        "database.UserNFT": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "NFT地址",
-                    "type": "string"
-                },
-                "block_number": {
-                    "description": "创建的区块高度",
+                "total": {
+                    "description": "交易总数",
                     "type": "integer"
                 },
-                "creator": {
-                    "description": "创建者地址",
-                    "type": "string"
-                },
-                "exchanger_addr": {
-                    "description": "所在交易所地址,没有的可以在任意交易所交易",
-                    "type": "string"
-                },
-                "last_price": {
-                    "description": "最后成交价格(未成交为null)，单位wei",
-                    "type": "string"
-                },
-                "meta_url": {
-                    "description": "元信息URL",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "所有者",
-                    "type": "string"
-                },
-                "royalty_ratio": {
-                    "description": "版税费率,单位万分之一",
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "description": "创建时间戳",
-                    "type": "integer"
-                },
-                "tx_hash": {
-                    "description": "创建的交易哈希",
-                    "type": "string"
-                }
-            }
-        },
-        "exchanger.ErrRes": {
-            "type": "object",
-            "properties": {
-                "err_str": {
-                    "description": "错误字符串",
-                    "type": "string"
-                }
-            }
-        },
-        "exchanger.PageRes": {
-            "type": "object",
-            "properties": {
-                "exchangers": {
-                    "description": "交易所列表",
+                "transactions": {
+                    "description": "交易列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/database.Exchanger"
+                        "$ref": "#/definitions/model.Transaction"
+                    }
+                }
+            }
+        },
+        "service.UserNFTsAndMetaRes": {
+            "type": "object",
+            "properties": {
+                "nfts": {
+                    "description": "NFT列表",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "NFT地址",
+                                "type": "string"
+                            },
+                            "block_number": {
+                                "description": "创建的区块高度",
+                                "type": "integer"
+                            },
+                            "category": {
+                                "description": "分类",
+                                "type": "string"
+                            },
+                            "collection_id": {
+                                "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
+                                "type": "string"
+                            },
+                            "creator": {
+                                "description": "创建者地址",
+                                "type": "string"
+                            },
+                            "desc": {
+                                "description": "描述",
+                                "type": "string"
+                            },
+                            "exchanger_addr": {
+                                "description": "所在交易所地址,没有的可以在任意交易所交易",
+                                "type": "string"
+                            },
+                            "last_price": {
+                                "description": "最后成交价格(未成交为null)，单位wei",
+                                "type": "string"
+                            },
+                            "meta_url": {
+                                "description": "元信息URL",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "名称",
+                                "type": "string"
+                            },
+                            "nft_addr": {
+                                "description": "NFT地址",
+                                "type": "string"
+                            },
+                            "owner": {
+                                "description": "所有者",
+                                "type": "string"
+                            },
+                            "royalty_ratio": {
+                                "description": "版税费率,单位万分之一",
+                                "type": "integer"
+                            },
+                            "source_url": {
+                                "description": "资源链接，图片或视频等文件链接",
+                                "type": "string"
+                            },
+                            "timestamp": {
+                                "description": "创建时间戳",
+                                "type": "integer"
+                            },
+                            "tx_hash": {
+                                "description": "创建的交易哈希",
+                                "type": "string"
+                            }
+                        }
                     }
                 },
                 "total": {
-                    "description": "交易所总数",
-                    "type": "integer"
-                },
-                "yesterday_total": {
-                    "description": "昨日新开交易所数量",
+                    "description": "NFT总数",
                     "type": "integer"
                 }
             }
         },
-        "extra.CheckAuthReq": {
+        "service.UserNFTsRes": {
             "type": "object",
             "properties": {
-                "address": {
-                    "description": "地址",
-                    "type": "string"
-                }
-            }
-        },
-        "extra.CheckAuthRes": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "0 成功  1 地址有误 其他失败",
+                "nfts": {
+                    "description": "NFT列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.UserNFT"
+                    }
+                },
+                "total": {
+                    "description": "NFT总数",
                     "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/extra.CheckAuthResData"
-                },
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
-        "extra.CheckAuthResData": {
-            "type": "object",
-            "properties": {
-                "exchanger_balance": {
-                    "type": "string"
-                },
-                "exchanger_flag": {
-                    "type": "boolean"
-                },
-                "status": {
-                    "description": "2 交易所付费状态正常  其他数字为欠费或者没交费",
-                    "type": "integer"
-                }
-            }
-        },
-        "extra.ErrRes": {
-            "type": "object",
-            "properties": {
-                "err": {
-                    "description": "错误信息",
-                    "type": "string"
-                }
-            }
-        },
-        "extra.RequestErbTestReq": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "地址",
-                    "type": "string"
-                }
-            }
-        },
-        "extra.RequestErbTestRes": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "0 成功  1 地址有误 其他失败",
-                    "type": "integer"
-                },
-                "msg": {
-                    "type": "string"
                 }
             }
         }

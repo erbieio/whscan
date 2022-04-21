@@ -1,0 +1,187 @@
+package service
+
+import "server/model"
+
+// UserNFTsRes NFT分页返回参数
+type UserNFTsRes struct {
+	Total int64           `json:"total"` //NFT总数
+	NFTs  []model.UserNFT `json:"nfts"`  //NFT列表
+}
+
+func FetchUserNFTs(exchanger, owner string, page, size int) (res UserNFTsRes, err error) {
+	if exchanger != "" || owner != "" {
+		where := ""
+		if exchanger != "" {
+			where += "exchanger_addr='" + exchanger + "'"
+		}
+		if owner != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "owner='" + owner + "'"
+		}
+		err = DB.Where(where).Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Where(where).Model(&model.UserNFT{}).Count(&res.Total).Error
+	} else {
+		err = DB.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&model.UserNFT{}).Count(&res.Total).Error
+	}
+	return
+}
+
+// UserNFTsAndMetaRes NFT和元信息分页返回参数
+type UserNFTsAndMetaRes struct {
+	Total int64 `json:"total"` //NFT总数
+	NFTs  []struct {
+		model.UserNFT
+		model.NFTMeta
+	} `json:"nfts"` //NFT列表
+}
+
+func FetchUserNFTsAndMeta(exchanger, collectionId, owner string, page, size int) (res UserNFTsAndMetaRes, err error) {
+	if exchanger != "" || collectionId != "" || owner != "" {
+		where := ""
+		if exchanger != "" {
+			where += "exchanger_addr='" + exchanger + "'"
+		}
+		if collectionId != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "collection_id='" + collectionId + "'"
+		}
+		if owner != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "owner='" + owner + "'"
+		}
+		err = DB.Order("address DESC").Offset((page - 1) * size).Limit(size).Model(&model.UserNFT{}).Where(where).
+			Joins("LEFT JOIN nft_meta ON user_nfts.address=nft_meta.nft_addr").Scan(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&model.UserNFT{}).Where(where).
+			Joins("LEFT JOIN nft_meta ON user_nfts.address=nft_meta.nft_addr").Scan(&res.Total).Error
+	} else {
+		err = DB.Order("address DESC").Offset((page - 1) * size).Limit(size).Model(&model.UserNFT{}).
+			Joins("LEFT JOIN nft_meta ON user_nfts.address=nft_meta.nft_addr").Scan(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&model.UserNFT{}).Count(&res.Total).Error
+	}
+	return
+}
+
+// NFTTxsRes NFT交易分页返回参数
+type NFTTxsRes struct {
+	Total  int64         `json:"total"`   //NFT总数
+	NFTTxs []model.NFTTx `json:"nft_txs"` //NFT交易列表
+}
+
+func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxsRes, err error) {
+	if exchanger != "" || account != "" {
+		where := ""
+		if exchanger != "" {
+			where += "exchanger_addr='" + exchanger + "'"
+		}
+		if account != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "(`from`='" + account + "' OR `to`='" + account + "')"
+		}
+		if address != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "nft_addr='" + address + "'"
+		}
+		err = DB.Where(where).Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTTxs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Where(where).Model(&model.NFTTx{}).Count(&res.Total).Error
+	} else {
+		err = DB.Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTTxs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&model.NFTTx{}).Count(&res.Total).Error
+	}
+	return
+}
+
+// SNFTsRes SNFT分页返回参数
+type SNFTsRes struct {
+	Total int64               `json:"total"` //SNFT总数
+	NFTs  []model.OfficialNFT `json:"nfts"`  //SNFT列表
+}
+
+func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
+	if owner != "" {
+		err = DB.Where("owner=?", owner).Order("create_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Where("owner=?", owner).Model(&model.OfficialNFT{}).Count(&res.Total).Error
+	} else {
+		err = DB.Order("create_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&model.OfficialNFT{}).Count(&res.Total).Error
+	}
+	return
+}
+
+// SNFTsAndMetaRes SNFT和元信息分页返回参数
+type SNFTsAndMetaRes struct {
+	Total int64 `json:"total"` //SNFT总数
+	NFTs  []struct {
+		model.OfficialNFT
+		model.NFTMeta
+	} `json:"nfts"` //SNFT列表
+}
+
+func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
+	if collectionId != "" || owner != "" {
+		where := ""
+		if collectionId != "" {
+			where += "collection_id='" + collectionId + "'"
+		}
+		if owner != "" {
+			if where != "" {
+				where += " AND "
+			}
+			where += "owner='" + owner + "'"
+		}
+		err = DB.Order("create_number DESC").Offset((page - 1) * size).Limit(size).Model(&model.OfficialNFT{}).Where(where).
+			Joins("LEFT JOIN nft_meta ON official_nfts.address=nft_meta.nft_addr").Scan(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&model.OfficialNFT{}).Where(where).
+			Joins("LEFT JOIN nft_meta ON official_nfts.address=nft_meta.nft_addr").Count(&res.Total).Error
+	} else {
+		err = DB.Order("create_number DESC").Offset((page - 1) * size).Limit(size).Model(&model.OfficialNFT{}).
+			Joins("LEFT JOIN nft_meta ON official_nfts.address=nft_meta.nft_addr").Scan(&res.NFTs).Error
+		if err != nil {
+			return
+		}
+		err = DB.Model(&model.OfficialNFT{}).Count(&res.Total).Error
+	}
+	return
+}
+
+func BlockSNFTs(number uint64) (data []model.OfficialNFT, err error) {
+	err = DB.Where("reward_number=?", number).Find(&data).Error
+	return
+}
