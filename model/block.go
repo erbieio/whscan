@@ -37,12 +37,12 @@ type Block struct {
 	TotalTransaction types.Uint64 `json:"totalTransaction"`                        //交易数量
 }
 
-// Account 帐户信息
+// Account 账户信息
 type Account struct {
 	Name     *string       `json:"name" gorm:"type:VARCHAR(64)"`            //名称
 	Address  types.Address `json:"address" gorm:"type:CHAR(42);primaryKey"` //地址
 	Balance  types.BigInt  `json:"balance" gorm:"type:VARCHAR(128);index"`  //余额
-	Nonce    types.Uint64  `json:"transactionCount"`                        //交易随机数
+	Nonce    types.Uint64  `json:"transactionCount"`                        //交易随机数，交易量
 	CodeHash *types.Hash   `json:"codeHash" gorm:"type:CHAR(66)"`           //合约字节码哈希，普通账户为空
 }
 

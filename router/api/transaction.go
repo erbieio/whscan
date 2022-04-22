@@ -23,7 +23,7 @@ func Transaction(e *gin.Engine) {
 // @Param        page       query     string  false  "页,默认1"
 // @Param        page_size  query     string  false  "页大小,默认10"
 // @Param        number     query     string  false  "区块号，空则查询所有"
-// @Param        addr       query     string  false  "帐户地址，空则查询所有"
+// @Param        addr       query     string  false  "账户地址，空则查询所有"
 // @Success      200        {object}  service.TransactionsRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /transaction/page [get]

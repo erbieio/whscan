@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
 )
 
 var (
@@ -83,38 +82,17 @@ func UnpackLog(a abi.ABI, out interface{}, event string, log Log) error {
 	return abi.ParseTopics(out, indexed, log.Topics[1:])
 }
 
+// FilterContractErr 过滤掉除网络连接外的错误
 func FilterContractErr(err error) error {
 	if err != nil {
-		switch err.Error() {
-		case vm.ErrOutOfGas.Error(),
-			vm.ErrCodeStoreOutOfGas.Error(),
-			vm.ErrDepth.Error(),
-			vm.ErrInsufficientBalance.Error(),
-			vm.ErrContractAddressCollision.Error(),
-			vm.ErrExecutionReverted.Error(),
-			vm.ErrMaxCodeSizeExceeded.Error(),
-			vm.ErrInvalidJump.Error(),
-			vm.ErrWriteProtection.Error(),
-			vm.ErrReturnDataOutOfBounds.Error(),
-			vm.ErrGasUintOverflow.Error(),
-			vm.ErrInvalidCode.Error(),
-			vm.ErrNonceUintOverflow.Error():
-			return nil
+		if strings.Index(err.Error(), "connection") > 0 {
+			return err
 		}
-		if strings.Index(err.Error(), "stack underflow") == 0 {
-			return nil
-		}
-		if strings.Index(err.Error(), "stack limit reached") == 0 {
-			return nil
-		}
-		if strings.Index(err.Error(), "invalid opcode:") == 0 {
-			return nil
-		}
-		if strings.Index(err.Error(), "abi:") == 0 {
-			return nil
+		if strings.Index(err.Error(), "unexpected EOF") > 0 {
+			return err
 		}
 	}
-	return err
+	return nil
 }
 
 // ensureContext is a helper method to ensure a context is not nil, even if the

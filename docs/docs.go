@@ -23,6 +23,49 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/account/page": {
+            "get": {
+                "description": "按持有币多少来设置账户排行",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "区块"
+                ],
+                "summary": "查询顶尖账户",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.AccountsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/block/getBlock": {
             "get": {
                 "description": "查询区块",
@@ -792,7 +835,7 @@ var doc = `{
                     },
                     {
                         "type": "string",
-                        "description": "指定帐户,空则查询所有帐户的",
+                        "description": "指定账户,空则查询所有账户的",
                         "name": "account",
                         "in": "query"
                     },
@@ -1065,7 +1108,7 @@ var doc = `{
                     },
                     {
                         "type": "string",
-                        "description": "帐户地址，空则查询所有",
+                        "description": "账户地址，空则查询所有",
                         "name": "addr",
                         "in": "query"
                     }
@@ -1310,6 +1353,31 @@ var doc = `{
                 },
                 "msg": {
                     "type": "string"
+                }
+            }
+        },
+        "model.Account": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "地址",
+                    "type": "string"
+                },
+                "balance": {
+                    "description": "余额",
+                    "type": "string"
+                },
+                "codeHash": {
+                    "description": "合约字节码哈希，普通账户为空",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "名称",
+                    "type": "string"
+                },
+                "transactionCount": {
+                    "description": "交易随机数，交易量",
+                    "type": "integer"
                 }
             }
         },
@@ -1716,6 +1784,26 @@ var doc = `{
                 "tx_hash": {
                     "description": "创建的交易哈希",
                     "type": "string"
+                }
+            }
+        },
+        "service.AccountsRes": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "description": "链的币总额",
+                    "type": "string"
+                },
+                "blocks": {
+                    "description": "账户列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Account"
+                    }
+                },
+                "total": {
+                    "description": "账户总数",
+                    "type": "integer"
                 }
             }
         },

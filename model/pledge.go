@@ -1,8 +1,8 @@
 package model
 
-// Pledge 帐户质押金额
+// Pledge 账户质押金额
 type Pledge struct {
-	Address string `json:"address" gorm:"type:CHAR(44);primary_key"` //质押帐户
+	Address string `json:"address" gorm:"type:CHAR(44);primary_key"` //质押账户
 	Amount  string `json:"amount" gorm:"type:CHAR(64)"`              //质押金额
 	Count   uint64 `json:"count"`                                    //质押次数，PledgeAdd和PledgeSub都加一次
 }

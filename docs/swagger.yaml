@@ -95,6 +95,24 @@ definitions:
       msg:
         type: string
     type: object
+  model.Account:
+    properties:
+      address:
+        description: 地址
+        type: string
+      balance:
+        description: 余额
+        type: string
+      codeHash:
+        description: 合约字节码哈希，普通账户为空
+        type: string
+      name:
+        description: 名称
+        type: string
+      transactionCount:
+        description: 交易随机数，交易量
+        type: integer
+    type: object
   model.Block:
     properties:
       difficulty:
@@ -393,6 +411,20 @@ definitions:
         description: 创建的交易哈希
         type: string
     type: object
+  service.AccountsRes:
+    properties:
+      balance:
+        description: 链的币总额
+        type: string
+      blocks:
+        description: 账户列表
+        items:
+          $ref: '#/definitions/model.Account'
+        type: array
+      total:
+        description: 账户总数
+        type: integer
+    type: object
   service.AuthRes:
     properties:
       exchanger_balance:
@@ -682,6 +714,34 @@ info:
   title: 区块浏览器API
   version: "1.0"
 paths:
+  /account/page:
+    get:
+      consumes:
+      - application/json
+      description: 按持有币多少来设置账户排行
+      parameters:
+      - description: 页,默认1
+        in: query
+        name: page
+        type: string
+      - description: 页大小,默认10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.AccountsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询顶尖账户
+      tags:
+      - 区块
   /block/{number}:
     get:
       consumes:
@@ -1183,7 +1243,7 @@ paths:
         in: query
         name: exchanger
         type: string
-      - description: 指定帐户,空则查询所有帐户的
+      - description: 指定账户,空则查询所有账户的
         in: query
         name: account
         type: string
@@ -1387,7 +1447,7 @@ paths:
         in: query
         name: number
         type: string
-      - description: 帐户地址，空则查询所有
+      - description: 账户地址，空则查询所有
         in: query
         name: addr
         type: string

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -15,10 +16,12 @@ import (
 
 // cache 缓存一些数据库查询，加速查询
 var cache = struct {
-	TotalBlock       uint64 //总区块数量
-	TotalTransaction uint64 //总交易数量
-	TotalUncle       uint64 //总叔块数量
-	TotalUserNFT     uint64 //用户NFT总数
+	TotalBlock       uint64       //总区块数量
+	TotalTransaction uint64       //总交易数量
+	TotalUncle       uint64       //总叔块数量
+	TotalAccount     uint64       //总账户数量
+	TotalBalance     types.BigInt //链的币总额
+	TotalUserNFT     uint64       //用户NFT总数
 }{}
 
 // InitCache 从数据库初始化查询缓存
@@ -36,6 +39,12 @@ func initCache() (err error) {
 		return err
 	}
 	cache.TotalUncle = number
+	if err = DB.Model(&model.Account{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
+		return err
+	}
+	cache.TotalAccount = number
+	// todo 计算和缓存币总额
+	cache.TotalBalance = "1000000000000000000000000000000000000000000000000000000000000000"
 	if err = DB.Model(&model.UserNFT{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
 		return err
 	}
@@ -49,6 +58,22 @@ func TotalBlock() uint64 {
 
 func TotalTransaction() uint64 {
 	return cache.TotalTransaction
+}
+
+var lastAccount = time.Now()
+
+func TotalAccount() uint64 {
+	if time.Now().Sub(lastAccount).Seconds() > 60 {
+		var number uint64
+		if err := DB.Model(&model.Account{}).Select("COUNT(*)").Scan(&number).Error; err == nil {
+			cache.TotalAccount = number
+		}
+	}
+	return cache.TotalAccount
+}
+
+func TotalBalance() types.BigInt {
+	return cache.TotalBalance
 }
 
 // getNFTAddr 获取NFT地址

@@ -103,7 +103,7 @@ func pageNFTAndMeta(c *gin.Context) {
 // @Produce      json
 // @Param        address    query     string  false  "指定NFT地址,空则查询所有地址的"
 // @Param        exchanger  query     string  false  "交易所，空则查询所有交易所"
-// @Param        account    query     string  false  "指定帐户,空则查询所有帐户的"
+// @Param        account    query     string  false  "指定账户,空则查询所有账户的"
 // @Param        page       query     string  false  "页,默认1"
 // @Param        page_size  query     string  false  "页大小,默认10"
 // @Success      200        {object}  service.NFTTxsRes

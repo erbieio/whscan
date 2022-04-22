@@ -12,6 +12,7 @@ import (
 func Block(e *gin.Engine) {
 	e.GET("/block/page", pageBlock)
 	e.GET("/block/:number", getBlock)
+	e.GET("/account/page", pageAccount)
 }
 
 // @Tags         区块
@@ -66,4 +67,40 @@ func getBlock(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, data)
+}
+
+// @Tags         区块
+// @Summary      查询顶尖账户
+// @Description  按持有币多少来设置账户排行
+// @Accept       json
+// @Produce      json
+// @Param        page       query     string  false  "页,默认1"
+// @Param        page_size  query     string  false  "页大小,默认10"
+// @Success      200        {object}  service.AccountsRes
+// @Failure      400        {object}  service.ErrRes
+// @Router       /account/page [get]
+func pageAccount(c *gin.Context) {
+	req := struct {
+		Page     *int `form:"page"`
+		PageSize *int `form:"page_size"`
+	}{}
+	err := c.BindQuery(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	page, size, err := utils.ParsePage(req.Page, req.PageSize)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	res, err := service.FetchAccounts(page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+
 }
