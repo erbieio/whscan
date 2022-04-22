@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"server/common/types"
 )
 
 // Sign 签名数据
@@ -57,6 +58,12 @@ func ToBytes(v string) []byte {
 	var bigTemp big.Int
 	bigTemp.SetString(v, 0)
 	return bigTemp.Bytes()
+}
+
+func HexToBigInt(hex string) types.BigInt {
+	b := new(big.Int)
+	b.UnmarshalText([]byte(hex))
+	return types.BigInt(b.String())
 }
 
 // ParsePage 解析分页参数，默认值是第一页10条记录

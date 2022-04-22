@@ -10,10 +10,8 @@ type BlocksRes struct {
 
 func FetchBlocks(page, size int) (res BlocksRes, err error) {
 	err = DB.Order("number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Blocks).Error
-	if err != nil {
-		return
-	}
-	err = DB.Model(&model.Block{}).Count(&res.Total).Error
+	// 使用缓存加速查询
+	res.Total = int64(TotalBlock())
 	return
 }
 

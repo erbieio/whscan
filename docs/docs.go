@@ -1317,72 +1317,86 @@ var doc = `{
             "type": "object",
             "properties": {
                 "difficulty": {
+                    "description": "难度",
                     "type": "integer"
                 },
                 "extraData": {
+                    "description": "额外数据",
                     "type": "string"
                 },
                 "gasLimit": {
+                    "description": "燃料上限",
                     "type": "integer"
                 },
                 "gasUsed": {
+                    "description": "燃料消耗",
                     "type": "integer"
                 },
                 "hash": {
+                    "description": "哈希",
                     "type": "string"
                 },
                 "miner": {
+                    "description": "矿工",
                     "type": "string"
                 },
                 "mixHash": {
+                    "description": "混合哈希",
                     "type": "string"
                 },
                 "nonce": {
+                    "description": "难度随机数",
                     "type": "string"
                 },
                 "number": {
+                    "description": "区块号",
                     "type": "integer"
                 },
                 "parentHash": {
+                    "description": "父区块哈希",
                     "type": "string"
                 },
                 "receiptsRoot": {
+                    "description": "交易收据根哈希",
                     "type": "string"
                 },
                 "sha3Uncles": {
+                    "description": "叔块根哈希",
                     "type": "string"
                 },
                 "size": {
+                    "description": "大小",
                     "type": "integer"
                 },
                 "stateRoot": {
+                    "description": "世界树根哈希",
                     "type": "string"
                 },
                 "timestamp": {
+                    "description": "时间戳",
                     "type": "integer"
                 },
                 "totalDifficulty": {
+                    "description": "总难度",
                     "type": "string"
                 },
                 "totalTransaction": {
+                    "description": "交易数量",
                     "type": "integer"
                 },
-                "transactions": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
                 "transactionsRoot": {
+                    "description": "交易根哈希",
                     "type": "string"
                 },
                 "uncles": {
+                    "description": "叔块哈希",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "unclesCount": {
+                    "description": "叔块数量",
                     "type": "integer"
                 }
             }
@@ -1473,27 +1487,34 @@ var doc = `{
             "type": "object",
             "properties": {
                 "address": {
+                    "description": "所属合约地址",
                     "type": "string"
                 },
                 "data": {
+                    "description": "数据",
                     "type": "string"
                 },
                 "eventID": {
+                    "description": "事件ID",
                     "type": "string"
                 },
                 "logIndex": {
+                    "description": "在交易内的序号",
                     "type": "integer"
                 },
                 "removed": {
+                    "description": "是否移除",
                     "type": "boolean"
                 },
                 "topics": {
+                    "description": "主题",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "transactionHash": {
+                    "description": "所属交易哈希",
                     "type": "string"
                 }
             }
@@ -1588,54 +1609,67 @@ var doc = `{
             "type": "object",
             "properties": {
                 "blockHash": {
+                    "description": "区块哈希",
                     "type": "string"
                 },
                 "blockNumber": {
+                    "description": "区块号",
                     "type": "integer"
                 },
                 "contractAddress": {
+                    "description": "创建的合约地址",
                     "type": "string"
                 },
                 "cumulativeGasUsed": {
-                    "type": "integer"
-                },
-                "effectiveGasPrice": {
+                    "description": "累计燃料消耗",
                     "type": "integer"
                 },
                 "from": {
+                    "description": "发送地址",
                     "type": "string"
                 },
                 "gas": {
+                    "description": "燃料",
                     "type": "integer"
                 },
                 "gasPrice": {
+                    "description": "燃料价格",
                     "type": "integer"
                 },
                 "gasUsed": {
+                    "description": "燃料消耗",
                     "type": "integer"
                 },
                 "hash": {
+                    "description": "哈希",
                     "type": "string"
                 },
                 "input": {
+                    "description": "额外输入数据，合约调用编码数据",
                     "type": "string"
                 },
                 "methodId": {
+                    "description": "方法ID，普通交易为空",
                     "type": "string"
                 },
                 "nonce": {
+                    "description": "随机数，发起账户的交易次数",
                     "type": "integer"
                 },
                 "status": {
+                    "description": "状态，1：成功；0：失败",
                     "type": "integer"
                 },
                 "to": {
+                    "description": "接收地址",
                     "type": "string"
                 },
                 "transactionIndex": {
+                    "description": "在区块内的序号",
                     "type": "integer"
                 },
                 "value": {
+                    "description": "金额，单位wei",
                     "type": "string"
                 }
             }

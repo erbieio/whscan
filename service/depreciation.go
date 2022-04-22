@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 	"server/conf"
 	"server/ethclient"
@@ -119,7 +118,6 @@ func checkAuth(client *ethclient.Client, addr string) (uint64, error) {
 	if err != nil {
 		return 0, errors.New("Umarshal failed:" + err.Error() + string(jsonData))
 	}
-	fmt.Println(string(jsonData))
 	var ret string
 	if err = client.Call(&ret, "eth_call", params, "latest"); err != nil {
 		return 0, errors.New("Call failed:" + err.Error())

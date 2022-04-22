@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"server/common/types"
 	. "server/conf"
 	"server/ethclient"
 	"server/service"
@@ -37,17 +38,9 @@ func Loop(ec *ethclient.Client, interval time.Duration) {
 }
 
 func HandleBlock(ec *ethclient.Client, number uint64) error {
-	block, err := ec.GetBlock(context.Background(), number)
+	ret, err := ec.DecodeBlock(context.Background(), types.Uint64(number))
 	if err != nil {
 		return err
 	}
-	err = service.BlockInsert(block)
-	if err != nil {
-		return err
-	}
-	wh, err := ec.DecodeWH(block.Block)
-	if err != nil {
-		return err
-	}
-	return service.WHInsert(block.Number, &wh)
+	return service.BlockInsert(ret)
 }

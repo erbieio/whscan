@@ -1,19 +1,34 @@
 package ethclient
 
 import (
+	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/big"
 	"strconv"
 	"strings"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rpc"
+	. "server/common/types"
 	"server/model"
 )
 
-type WH struct {
+// DecodeRet 区块解析结果
+type DecodeRet struct {
+	*model.Block
+	CacheTxs         []*model.Transaction `json:"transactions"`
+	CacheInternalTxs []*model.InternalTx
+	CacheUncles      []*model.Uncle
+	CacheLogs        []*model.Log
+	CacheAccounts    map[Bytes20]*model.Account
+	CacheContracts   map[Bytes20]*model.Contract
+
+	// wormholes
 	CreateSNFTs      []*model.OfficialNFT     //SNFT的创建信息
 	RewardSNFTs      []*model.OfficialNFT     //SNFT的奖励信息
 	CreateNFTs       []*model.UserNFT         //新创建的NFT
@@ -25,6 +40,172 @@ type WH struct {
 	ConsensusPledges []*model.ConsensusPledge //共识质押
 }
 
+// DecodeBlock 解析区块
+func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, error) {
+	var raw json.RawMessage
+	// 获取区块及其交易
+	err := ec.c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
+	if err != nil {
+		return nil, err
+	} else if len(raw) == 0 {
+		return nil, ethereum.NotFound
+	}
+
+	var block DecodeRet
+	if err := json.Unmarshal(raw, &block); err != nil {
+		return nil, err
+	}
+
+	// Quick-verify transaction and uncle lists. This mostly helps with debugging the server.
+	if string(block.Sha3Uncles) == types.EmptyUncleHash.String() && len(block.UncleHashes) > 0 {
+		return nil, fmt.Errorf("server returned non-empty uncle list but block header indicates no uncles")
+	}
+	if string(block.Sha3Uncles) != types.EmptyUncleHash.String() && len(block.UncleHashes) == 0 {
+		return nil, fmt.Errorf("server returned empty uncle list but block header indicates uncles")
+	}
+	if string(block.TransactionsRoot) == types.EmptyRootHash.String() && len(block.CacheTxs) > 0 {
+		return nil, fmt.Errorf("server returned non-empty transaction list but block header indicates no transactions")
+	}
+	if string(block.TransactionsRoot) != types.EmptyRootHash.String() && len(block.CacheTxs) == 0 {
+		return nil, fmt.Errorf("server returned empty transaction list but block header indicates transactions")
+	}
+
+	if totalTransaction := len(block.CacheTxs); totalTransaction > 0 {
+		block.TotalTransaction = Uint64(totalTransaction)
+		// 获取交易收据
+		reqs := make([]rpc.BatchElem, totalTransaction)
+		for i, tx := range block.CacheTxs {
+			reqs[i] = rpc.BatchElem{
+				Method: "eth_getTransactionReceipt",
+				Args:   []interface{}{tx.Hash},
+				Result: &block.CacheTxs[i].Receipt,
+			}
+		}
+		if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+			return nil, err
+		}
+		for i := range reqs {
+			if reqs[i].Error != nil {
+				return nil, reqs[i].Error
+			}
+		}
+		// 获取收据logs,只能根据区块哈希查，区块高度会查到
+		err := ec.c.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
+		if err != nil {
+			return nil, err
+		}
+		// 获取解析内部交易
+		//for _, tx := range block.CacheTxs {
+		//	to := tx.To
+		//	if to == nil {
+		//		to = tx.ContractAddress
+		//	}
+		//	internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
+		//	if err != nil {
+		//		return nil, err
+		//	}
+		//	block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
+		//}
+	}
+
+	// 获取叔块
+	block.UnclesCount = Uint64(len(block.UncleHashes))
+	if block.UnclesCount > 0 {
+		block.CacheUncles = make([]*model.Uncle, block.UnclesCount)
+		reqs := make([]rpc.BatchElem, block.UnclesCount)
+		for i := range reqs {
+			reqs[i] = rpc.BatchElem{
+				Method: "eth_getUncleByBlockHashAndIndex",
+				Args:   []interface{}{block.Hash, Uint64(i)},
+				Result: &block.CacheUncles[i],
+			}
+		}
+		if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+			return nil, err
+		}
+		for i := range reqs {
+			if reqs[i].Error != nil {
+				return nil, reqs[i].Error
+			}
+		}
+	}
+
+	// 解析相关账户和创建的合约
+	block.CacheAccounts = make(map[Bytes20]*model.Account)
+	block.CacheContracts = make(map[Bytes20]*model.Contract)
+	block.CacheAccounts[block.Miner] = &model.Account{Address: block.Miner}
+	if len(block.CacheTxs) > 0 {
+		for _, tx := range block.CacheTxs {
+			block.CacheAccounts[tx.From] = &model.Account{Address: tx.From}
+			if tx.To != nil {
+				block.CacheAccounts[*tx.To] = &model.Account{Address: *tx.To}
+			}
+			if tx.ContractAddress != nil {
+				block.CacheAccounts[*tx.ContractAddress] = &model.Account{Address: *tx.ContractAddress}
+				block.CacheContracts[*tx.ContractAddress] = &model.Contract{Address: *tx.ContractAddress, Creator: tx.From, CreatedTx: tx.Hash}
+			}
+		}
+	}
+
+	// 获取账户属性
+	reqs := make([]rpc.BatchElem, 0, 2*len(block.CacheAccounts))
+	for _, account := range block.CacheAccounts {
+		reqs = append(reqs, rpc.BatchElem{
+			Method: "eth_getBalance",
+			Args:   []interface{}{account.Address, toBlockNumArg(nil)},
+			Result: &account.Balance,
+		})
+		reqs = append(reqs, rpc.BatchElem{
+			Method: "eth_getTransactionCount",
+			Args:   []interface{}{account.Address, toBlockNumArg(nil)},
+			Result: &account.Nonce,
+		})
+	}
+	if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+		return nil, err
+	}
+	for i := range reqs {
+		if reqs[i].Error != nil {
+			return nil, reqs[i].Error
+		}
+	}
+
+	// 获取合约属性
+	if len(block.CacheContracts) > 0 {
+		reqs := make([]rpc.BatchElem, 0, len(block.CacheContracts))
+		for _, contract := range block.CacheContracts {
+			reqs = append(reqs, rpc.BatchElem{
+				Method: "eth_getCode",
+				Args:   []interface{}{contract.Address, toBlockNumArg(nil)},
+				Result: &contract.Code,
+			})
+		}
+		if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+			return nil, err
+		}
+		for i := range reqs {
+			if reqs[i].Error != nil {
+				return nil, reqs[i].Error
+			}
+		}
+
+		for _, contract := range block.CacheContracts {
+			code, _ := hex.DecodeString(contract.Code[2:])
+			hash := crypto.Keccak256Hash(code).String()
+			block.CacheAccounts[contract.Address].CodeHash = (*Bytes32)(&hash)
+			if len(contract.Code) > 2 {
+				contract.ERC, err = ec.GetERC(common.HexToAddress(string(contract.Address)))
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
+	err = ec.decodeWH(&block)
+	return &block, err
+}
+
 type InjectSNFT struct {
 	StartIndex        *big.Int
 	Count             uint64
@@ -33,20 +214,17 @@ type InjectSNFT struct {
 	Number, Timestamp uint64
 }
 
-// DecodeWH 解析wormholes链独有的东西
-func (ec *Client) DecodeWH(block *model.Block) (wh WH, err error) {
-	// 创世区块到入预设SNFT
-	if block.Number == 0 {
-		wh.CreateSNFTs, err = ec.DecodeGenesisSNFT(block)
-		log.Println(wh.CreateSNFTs, err)
+// decodeWH 解析wormholes链独有的东西
+func (ec *Client) decodeWH(wh *DecodeRet) (err error) {
+	if wh.Block.Number == 0 {
+		return ec.decodeWHGenesis(wh)
 	} else {
-		wh.RewardSNFTs, wh.CreateSNFTs, err = ec.DecodeBlockSNFT(block)
+		return ec.decodeWHBlock(wh)
 	}
-	return
 }
 
-// DecodeGenesisSNFT 导入创世区块注入的SNFT元信息
-func (ec *Client) DecodeGenesisSNFT(block *model.Block) (snfts []*model.OfficialNFT, err error) {
+// decodeWHGenesis 导入创世区块注入的SNFT元信息
+func (ec *Client) decodeWHGenesis(wh *DecodeRet) (err error) {
 	SNFTAddr := big.NewInt(0)
 	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
 lo:
@@ -56,9 +234,9 @@ lo:
 		return
 	}
 	if snft.MetaURL != "" {
-		snfts = append(snfts, &model.OfficialNFT{
+		wh.CreateSNFTs = append(wh.CreateSNFTs, &model.OfficialNFT{
 			Address:      addr,
-			CreateAt:     uint64(block.Timestamp),
+			CreateAt:     uint64(wh.Block.Timestamp),
 			CreateNumber: 0,
 			Creator:      snft.Creator,
 			RoyaltyRatio: snft.Royalty,
@@ -70,41 +248,49 @@ lo:
 	return
 }
 
-// DecodeBlockSNFT 导入区块分发的SNFT元信息
-func (ec *Client) DecodeBlockSNFT(block *model.Block) (rewardSNFTs, createSNFTs []*model.OfficialNFT, err error) {
-	rewards, err := ec.GetReward(block.Number.String())
+// decodeWHBlock 导入区块分发的SNFT元信息底层NFT交易
+func (ec *Client) decodeWHBlock(wh *DecodeRet) (err error) {
+	// 矿工奖励SNFT处理
+	rewards, err := ec.GetReward(wh.Block.Number.Hex())
 	if err != nil {
 		return
 	}
 	for i := range rewards {
-		rewardSNFTs = append(rewardSNFTs, &model.OfficialNFT{
+		wh.RewardSNFTs = append(wh.RewardSNFTs, &model.OfficialNFT{
 			Address:      rewards[i].NfTAddress,
 			Awardee:      &rewards[i].Address,
-			RewardAt:     (*uint64)(&block.Timestamp),
-			RewardNumber: (*uint64)(&block.Number),
+			RewardAt:     (*uint64)(&wh.Block.Timestamp),
+			RewardNumber: (*uint64)(&wh.Block.Number),
 			Owner:        &rewards[i].Address,
 		})
 		//---todo 临时解决NFT元信息等没有注入问题，正常应该解析官方注入InjectSNFT的交易来填写SNFT元信息----
 		var snft SNFT
-		snft, err = ec.GetSNFT(rewards[i].NfTAddress, block.Number.String())
+		snft, err = ec.GetSNFT(rewards[i].NfTAddress, wh.Block.Number.Hex())
 		if err != nil {
 			return
 		}
-		createSNFTs = append(createSNFTs, &model.OfficialNFT{
+		wh.CreateSNFTs = append(wh.CreateSNFTs, &model.OfficialNFT{
 			Address:      rewards[i].NfTAddress,
-			CreateAt:     uint64(block.Timestamp),
-			CreateNumber: uint64(block.Number),
+			CreateAt:     uint64(wh.Block.Timestamp),
+			CreateNumber: uint64(wh.Block.Number),
 			Creator:      snft.Creator,
 			RoyaltyRatio: snft.Royalty,
 			MetaUrl:      snft.MetaURL,
 		})
 	}
+	// wormholes交易处理
+	for _, tx := range wh.CacheTxs {
+		err = ec.decodeWHTx(wh.Block, tx, wh)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
-// DecodeWHTx 解析wormholes区块链的特殊交易
-func (ec *Client) DecodeWHTx(block *model.Block, tx *model.Transaction, wh *WH) (err error) {
-	input, _ := hexutil.Decode(tx.Input)
+// decodeWHTx 解析wormholes区块链的特殊交易
+func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *DecodeRet) (err error) {
+	input, _ := hex.DecodeString(tx.Input[2:])
 	// 非wormholes类型和失败的交易不解析
 	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
 		return
@@ -165,7 +351,7 @@ func (ec *Client) DecodeWHTx(block *model.Block, tx *model.Transaction, wh *WH) 
 	txHash := string(tx.Hash)
 	from := string(tx.From)
 	to := string(*tx.To)
-	value := tx.Value
+	value := string(tx.Value)
 	switch w.Type {
 	case 0: //用户自行铸造NFT
 		nftAddr := "" //插入数据库时实时计算填充

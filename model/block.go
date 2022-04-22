@@ -2,120 +2,130 @@ package model
 
 import "server/common/types"
 
+// Header 区块头信息
 type Header struct {
-	Difficulty       types.Uint64   `json:"difficulty"`
-	ExtraData        string         `json:"extraData"`
-	GasLimit         types.Uint64   `json:"gasLimit"`
-	GasUsed          types.Uint64   `json:"gasUsed"`
-	Hash             types.Bytes32  `json:"hash" gorm:"type:CHAR(66);primaryKey"`
-	Miner            types.Bytes20  `json:"miner" gorm:"type:CHAR(42)"`
-	MixHash          types.Bytes32  `json:"mixHash" gorm:"type:CHAR(66)"`
-	Nonce            types.Bytes8   `json:"nonce" gorm:"type:CHAR(18)"`
-	ParentHash       types.Bytes32  `json:"parentHash" gorm:"type:CHAR(66)"`
-	ReceiptsRoot     types.Bytes32  `json:"receiptsRoot" gorm:"type:CHAR(66)"`
-	Sha3Uncles       types.Bytes32  `json:"sha3Uncles" gorm:"type:CHAR(66)"`
-	Size             types.Uint64   `json:"size"`
-	StateRoot        types.Bytes32  `json:"stateRoot" gorm:"type:CHAR(66)"`
-	Timestamp        types.Uint64   `json:"timestamp"`
-	TransactionsRoot types.Bytes32  `json:"transactionsRoot" gorm:"type:CHAR(66)"`
-	UncleHashes      types.StrArray `json:"uncles" gorm:"type:TEXT"`
-	UnclesCount      types.Uint64   `json:"unclesCount"`
+	Difficulty       types.Uint64   `json:"difficulty"`                            //难度
+	ExtraData        string         `json:"extraData"`                             //额外数据
+	GasLimit         types.Uint64   `json:"gasLimit"`                              //燃料上限
+	GasUsed          types.Uint64   `json:"gasUsed"`                               //燃料消耗
+	Hash             types.Bytes32  `json:"hash" gorm:"type:CHAR(66);primaryKey"`  //哈希
+	Miner            types.Bytes20  `json:"miner" gorm:"type:CHAR(42)"`            //矿工
+	MixHash          types.Bytes32  `json:"mixHash" gorm:"type:CHAR(66)"`          //混合哈希
+	Nonce            types.Bytes8   `json:"nonce" gorm:"type:CHAR(18)"`            //难度随机数
+	ParentHash       types.Bytes32  `json:"parentHash" gorm:"type:CHAR(66)"`       //父区块哈希
+	ReceiptsRoot     types.Bytes32  `json:"receiptsRoot" gorm:"type:CHAR(66)"`     //交易收据根哈希
+	Sha3Uncles       types.Bytes32  `json:"sha3Uncles" gorm:"type:CHAR(66)"`       //叔块根哈希
+	Size             types.Uint64   `json:"size"`                                  //大小
+	StateRoot        types.Bytes32  `json:"stateRoot" gorm:"type:CHAR(66)"`        //世界树根哈希
+	Timestamp        types.Uint64   `json:"timestamp"`                             //时间戳
+	TransactionsRoot types.Bytes32  `json:"transactionsRoot" gorm:"type:CHAR(66)"` //交易根哈希
+	UncleHashes      types.StrArray `json:"uncles" gorm:"type:TEXT"`               //叔块哈希
+	UnclesCount      types.Uint64   `json:"unclesCount"`                           //叔块数量
 }
 
+// Uncle 叔块信息
 type Uncle struct {
 	Header
-	Number types.Uint64
+	Number types.Uint64 `json:"number"` //叔块号
 }
 
+// Block 区块信息
 type Block struct {
 	Header
-	Number           types.Uint64   `json:"number" gorm:"uniqueIndex"`
-	TotalDifficulty  string         `json:"totalDifficulty" gorm:"type:VARCHAR(64)"`
-	TotalTransaction types.Uint64   `json:"totalTransaction"`
-	Transactions     types.StrArray `json:"transactions"`
+	Number           types.Uint64 `json:"number" gorm:"uniqueIndex"`               //区块号
+	TotalDifficulty  types.BigInt `json:"totalDifficulty" gorm:"type:VARCHAR(64)"` //总难度
+	TotalTransaction types.Uint64 `json:"totalTransaction"`                        //交易数量
 }
 
+// Account 帐户信息
 type Account struct {
-	Name     *string        `gorm:"type:VARCHAR(64)"`
-	Address  types.Bytes20  `gorm:"type:CHAR(42);primaryKey"`
-	Balance  string         `gorm:"type:VARCHAR(128)"`
-	Nonce    types.Uint64   `json:"transactionCount"`
-	CodeHash *types.Bytes32 `gorm:"type:CHAR(66)"`
+	Name     *string        `json:"name" gorm:"type:VARCHAR(64)"`            //名称
+	Address  types.Bytes20  `json:"address" gorm:"type:CHAR(42);primaryKey"` //地址
+	Balance  types.BigInt   `json:"balance" gorm:"type:VARCHAR(128);index"`  //余额
+	Nonce    types.Uint64   `json:"transactionCount"`                        //交易随机数
+	CodeHash *types.Bytes32 `json:"codeHash" gorm:"type:CHAR(66)"`           //合约字节码哈希，普通账户为空
 }
 
+// Contract 合约信息
 type Contract struct {
-	Address   types.Bytes20 `gorm:"type:CHAR(42);primaryKey"`
-	Code      string
-	ERC       types.ERC
-	Creator   types.Bytes20 `gorm:"type:CHAR(42)"`
-	CreatedTx types.Bytes32 `gorm:"type:CHAR(66)"`
+	Address   types.Bytes20 `json:"address" gorm:"type:CHAR(42);primaryKey"` //合约地址
+	Code      string        `json:"code"`                                    //字节码
+	ERC       types.ERC     `json:"ERC"`                                     //ERC类型，ERC20,ERC721,ERC1155
+	Creator   types.Bytes20 `json:"creator" gorm:"type:CHAR(42)"`            //创建者
+	CreatedTx types.Bytes32 `json:"createdTx" gorm:"type:CHAR(66)"`          //创建交易
 }
 
+// Transaction 交易信息
 type Transaction struct {
-	BlockHash   types.Bytes32  `json:"blockHash" gorm:"type:CHAR(66)"`
-	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:,sort:DESC"`
-	From        types.Bytes20  `json:"from" gorm:"type:CHAR(42);index"`
-	To          *types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`
-	Input       string         `json:"input"`
-	MethodId    *types.Bytes8  `json:"methodId,omitempty" gorm:"type:CHAR(18)"`
-	Value       string         `json:"value" gorm:"type:VARCHAR(128)"`
-	Nonce       types.Uint64   `json:"nonce"`
-	Gas         types.Uint64   `json:"gas"`
-	GasPrice    types.Uint64   `json:"gasPrice"`
-	Hash        types.Bytes32  `json:"hash" gorm:"type:CHAR(66);primaryKey"`
+	BlockHash   types.Bytes32  `json:"blockHash" gorm:"type:CHAR(66)"`          //区块哈希
+	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:,sort:DESC"`     //区块号
+	From        types.Bytes20  `json:"from" gorm:"type:CHAR(42);index"`         //发送地址
+	To          *types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`           //接收地址
+	Input       string         `json:"input"`                                   //额外输入数据，合约调用编码数据
+	MethodId    *types.Bytes8  `json:"methodId,omitempty" gorm:"type:CHAR(18)"` //方法ID，普通交易为空
+	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //金额，单位wei
+	Nonce       types.Uint64   `json:"nonce"`                                   //随机数，发起账户的交易次数
+	Gas         types.Uint64   `json:"gas"`                                     //燃料
+	GasPrice    types.Uint64   `json:"gasPrice"`                                //燃料价格
+	Hash        types.Bytes32  `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //哈希
 	Receipt
 }
 
+// Receipt 交易收据
 type Receipt struct {
-	Status            *types.Uint64  `json:"status,omitempty"`
-	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`
-	ContractAddress   *types.Bytes20 `json:"contractAddress" gorm:"type:CHAR(42)"`
-	EffectiveGasPrice types.Uint64   `json:"effectiveGasPrice"`
-	GasUsed           types.Uint64   `json:"gasUsed"`
-	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index:,sort:DESC"`
+	Status            *types.Uint64  `json:"status,omitempty"`                         //状态，1：成功；0：失败
+	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`                        //累计燃料消耗
+	ContractAddress   *types.Bytes20 `json:"contractAddress" gorm:"type:CHAR(42)"`     //创建的合约地址
+	GasUsed           types.Uint64   `json:"gasUsed"`                                  //燃料消耗
+	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index:,sort:DESC"` //在区块内的序号
 }
 
+// Log 交易日志
 type Log struct {
-	Address types.Bytes20  `json:"address" gorm:"type:CHAR(42)"`
-	EventID *types.Bytes32 `json:"eventID" gorm:"type:CHAR(66)"`
-	Topics  types.StrArray `json:"topics" gorm:"type:VARCHAR(277)"`
-	Data    string         `json:"data"`
-	Removed bool           `json:"removed"`
-	TxHash  types.Bytes32  `json:"transactionHash" gorm:"type:CHAR(66);primaryKey;index"`
-	Index   types.Uint64   `json:"logIndex" gorm:"primaryKey"`
+	Address types.Bytes20  `json:"address" gorm:"type:CHAR(42)"`                          //所属合约地址
+	EventID *types.Bytes32 `json:"eventID" gorm:"type:CHAR(66)"`                          //事件ID
+	Topics  types.StrArray `json:"topics" gorm:"type:VARCHAR(277)"`                       //主题
+	Data    string         `json:"data"`                                                  //数据
+	Removed bool           `json:"removed"`                                               //是否移除
+	TxHash  types.Bytes32  `json:"transactionHash" gorm:"type:CHAR(66);primaryKey;index"` //所属交易哈希
+	Index   types.Uint64   `json:"logIndex" gorm:"primaryKey"`                            //在交易内的序号
 }
 
+// InternalTx 内部交易
 type InternalTx struct {
-	ParentTxHash types.Bytes32  `json:"parentTxHash" gorm:"type:CHAR(66);index"`
-	Depth        types.Uint64   `json:"depth"`
-	Op           string         `json:"op" gorm:"type:VARCHAR(16)"`
-	From         *types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`
-	To           *types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`
-	Value        string         `json:"value" gorm:"type:VARCHAR(128)"`
-	GasLimit     types.Uint64   `json:"gasLimit"`
+	ParentTxHash types.Bytes32  `json:"parentTxHash" gorm:"type:CHAR(66);index"` //所属交易
+	Depth        types.Uint64   `json:"depth"`                                   //调用深度
+	Op           string         `json:"op" gorm:"type:VARCHAR(16)"`              //操作
+	From         *types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`         //发起地址
+	To           *types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`           //接收地址
+	Value        types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //金额，单位wei
+	GasLimit     types.Uint64   `json:"gasLimit"`                                //燃料上限
 }
 
+// ERC20Transfer ERC20合约转移事件
 type ERC20Transfer struct {
-	TxHash  types.Bytes32 `gorm:"type:CHAR(66);index"`
-	Address types.Bytes20 `gorm:"type:CHAR(42);index"`
-	From    types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`
-	To      types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`
-	Value   string        `gorm:"type:VARCHAR(66)"`
+	TxHash  types.Bytes32 `json:"txHash" gorm:"type:CHAR(66);index"`  //所属交易哈希
+	Address types.Bytes20 `json:"address" gorm:"type:CHAR(42);index"` //合约地址
+	From    types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`    //发起地址
+	To      types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`      //接收地址
+	Value   types.BigInt  `json:"value" gorm:"type:VARCHAR(80)"`      //金额
 }
 
+// ERC721Transfer ERC721合约转移事件
 type ERC721Transfer struct {
-	TxHash  types.Bytes32 `gorm:"type:CHAR(66);index"`
-	Address types.Bytes20 `gorm:"type:CHAR(42)"`
-	From    types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`
-	To      types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`
-	TokenId string        `gorm:"type:VARCHAR(66)"`
+	TxHash  types.Bytes32 `json:"txHash" gorm:"type:CHAR(66);index"` //所属交易哈希
+	Address types.Bytes20 `json:"address" gorm:"type:CHAR(42)"`      //合约地址
+	From    types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`   //发起地址
+	To      types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`     //接收地址
+	TokenId types.BigInt  `json:"tokenId" gorm:"type:VARCHAR(80)"`   //代币ID
 }
 
+// ERC1155Transfer ERC1155合约转移事件
 type ERC1155Transfer struct {
-	TxHash  types.Bytes32 `gorm:"type:CHAR(66);index"`
-	Address types.Bytes20 `gorm:"type:CHAR(42)"`
-	From    types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`
-	To      types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`
-	TokenId string        `gorm:"type:VARCHAR(66)"`
-	Value   string        `gorm:"type:VARCHAR(66)"`
+	TxHash  types.Bytes32 `json:"txHash" gorm:"type:CHAR(66);index"` //所属交易哈希
+	Address types.Bytes20 `json:"address" gorm:"type:CHAR(42)"`      //合约地址
+	From    types.Bytes20 `json:"from" gorm:"type:CHAR(42);index"`   //发起地址
+	To      types.Bytes20 `json:"to" gorm:"type:CHAR(42);index"`     //接收地址
+	TokenId types.BigInt  `json:"tokenId" gorm:"type:VARCHAR(80)"`   //代币ID
+	Value   types.BigInt  `json:"value" gorm:"type:VARCHAR(80)"`     //代币金额
 }

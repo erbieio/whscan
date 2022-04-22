@@ -9,29 +9,19 @@ type CollectionsRes struct {
 }
 
 func FetchCollections(exchanger, creator string, page, size int) (res CollectionsRes, err error) {
-	if exchanger != "" || creator != "" {
-		where := ""
-		if exchanger != "" {
-			where += "exchanger='" + exchanger + "'"
-		}
-		if creator != "" {
-			if exchanger != "" {
-				where += " AND "
-			}
-			where += "creator='" + creator + "'"
-		}
-		err = DB.Where(where).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Collections).Error
-		if err != nil {
-			return
-		}
-		err = DB.Where(where).Model(&model.Collection{}).Count(&res.Total).Error
-	} else {
-		err = DB.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Collections).Error
-		if err != nil {
-			return
-		}
-		err = DB.Model(&model.Collection{}).Count(&res.Total).Error
+	db := DB
+	if exchanger != "" {
+		db = db.Where("exchanger=?", exchanger)
 	}
+	if creator != "" {
+		db = db.Where("creator=?", creator)
+	}
+
+	err = db.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Collections).Error
+	if err != nil {
+		return
+	}
+	err = db.Model(&model.Collection{}).Count(&res.Total).Error
 	return
 }
 

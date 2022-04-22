@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -54,16 +53,12 @@ func TotalTransaction() uint64 {
 	return cache.TotalTransaction
 }
 
-func TotalUncle() uint64 {
-	return cache.TotalUncle
-}
-
 // getNFTAddr 获取NFT地址
 func getNFTAddr(next *big.Int) string {
 	return strings.ToLower(common.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalUserNFT+1)))).String())
 }
 
-func BlockInsert(block *ethclient.Block) error {
+func BlockInsert(block *ethclient.DecodeRet) error {
 	err := DB.Transaction(func(t *gorm.DB) error {
 		for _, log := range block.CacheLogs {
 			if len(log.Topics) > 0 {
@@ -84,9 +79,9 @@ func BlockInsert(block *ethclient.Block) error {
 					err = t.Create(&model.ERC20Transfer{
 						TxHash:  log.TxHash,
 						Address: log.Address,
-						From:    types.Bytes20(transferLog.From.Hex()),
-						To:      types.Bytes20(transferLog.To.Hex()),
-						Value:   transferLog.Value.Text(16),
+						From:    types.Bytes20(strings.ToLower(transferLog.From.Hex())),
+						To:      types.Bytes20(strings.ToLower(transferLog.To.Hex())),
+						Value:   types.BigInt(transferLog.Value.String()),
 					}).Error
 					if err != nil {
 						return err
@@ -97,9 +92,9 @@ func BlockInsert(block *ethclient.Block) error {
 					err = t.Create(&model.ERC721Transfer{
 						TxHash:  log.TxHash,
 						Address: log.Address,
-						From:    types.Bytes20(transferLog.From.Hex()),
-						To:      types.Bytes20(transferLog.To.Hex()),
-						TokenId: transferLog.TokenId.Text(16),
+						From:    types.Bytes20(strings.ToLower(transferLog.From.Hex())),
+						To:      types.Bytes20(strings.ToLower(transferLog.To.Hex())),
+						TokenId: types.BigInt(transferLog.TokenId.String()),
 					}).Error
 					if err != nil {
 						return err
@@ -110,26 +105,26 @@ func BlockInsert(block *ethclient.Block) error {
 					err = t.Create(&model.ERC1155Transfer{
 						TxHash:  log.TxHash,
 						Address: log.Address,
-						From:    types.Bytes20(transferLog.From.Hex()),
-						To:      types.Bytes20(transferLog.To.Hex()),
-						TokenId: transferLog.Id.Text(16),
-						Value:   transferLog.Value.Text(16),
+						From:    types.Bytes20(strings.ToLower(transferLog.From.Hex())),
+						To:      types.Bytes20(strings.ToLower(transferLog.To.Hex())),
+						TokenId: types.BigInt(transferLog.Id.String()),
+						Value:   types.BigInt(transferLog.Value.String()),
 					}).Error
 					if err != nil {
 						return err
 					}
 				} else {
 					if transferBatchLog, err := utils.Unpack1155TransferBatchLog(parseLog(log)); err == nil {
-						from := types.Bytes20(transferBatchLog.From.Hex())
-						to := types.Bytes20(transferBatchLog.To.Hex())
+						from := types.Bytes20(strings.ToLower(transferBatchLog.From.Hex()))
+						to := types.Bytes20(strings.ToLower(transferBatchLog.To.Hex()))
 						for i := range transferBatchLog.Ids {
 							err = t.Create(&model.ERC1155Transfer{
 								TxHash:  log.TxHash,
 								Address: log.Address,
 								From:    from,
 								To:      to,
-								TokenId: transferBatchLog.Ids[i].Text(16),
-								Value:   transferBatchLog.Values[i].Text(16),
+								TokenId: types.BigInt(transferBatchLog.Ids[i].String()),
+								Value:   types.BigInt(transferBatchLog.Values[i].String()),
 							}).Error
 							if err != nil {
 								return err
@@ -146,7 +141,7 @@ func BlockInsert(block *ethclient.Block) error {
 				MethodId := tx.Input[:10]
 				tx.MethodId = (*types.Bytes8)(&MethodId)
 			}
-			if err := t.Create(&tx).Error; err != nil {
+			if err := t.Create(tx).Error; err != nil {
 				return err
 			}
 		}
@@ -167,20 +162,25 @@ func BlockInsert(block *ethclient.Block) error {
 
 		for _, account := range block.CacheAccounts {
 			// 写入账户信息
-			if err := t.Save(account).Error; err != nil {
+			if err := t.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "code_hash"}),
+			}).Create(account).Error; err != nil {
 				return err
 			}
 		}
 
 		for _, contract := range block.CacheContracts {
 			// 写入合约信息
-			if err := t.Save(contract).Error; err != nil {
+			if err := t.Clauses(clause.OnConflict{UpdateAll: true}).Create(contract).Error; err != nil {
 				return err
 			}
 		}
 
 		// 写入区块
-		return t.Create(block.Block).Error
+		if err := t.Create(block.Block).Error; err != nil {
+			return err
+		}
+		return WHInsert(t, block)
 	})
 
 	// 如果写入数据库成功，则更新查询缓存
@@ -188,6 +188,7 @@ func BlockInsert(block *ethclient.Block) error {
 		cache.TotalBlock++
 		cache.TotalTransaction += uint64(block.TotalTransaction)
 		cache.TotalUncle += uint64(block.UnclesCount)
+		cache.TotalUserNFT += uint64(len(block.CreateNFTs))
 	}
 	return err
 }
@@ -199,89 +200,74 @@ func erc(addr types.Bytes20) (erc types.ERC, err error) {
 	return
 }
 
-func parseLog(l *model.Log) (log utils.Log) {
-	log.Data = hexutil.MustDecode(l.Data)
-	for _, topic := range l.Topics {
-		log.Topics = append(log.Topics, common.HexToHash(topic))
+func WHInsert(tx *gorm.DB, wh *ethclient.DecodeRet) (err error) {
+	// SNFT创建
+	for _, snft := range wh.CreateSNFTs {
+		err = tx.Create(snft).Error
+		if err != nil {
+			return
+		}
+		go SaveNFTMeta(uint64(wh.Number), snft.Address, snft.MetaUrl)
+	}
+	// SNFT奖励
+	for _, snft := range wh.RewardSNFTs {
+		err = tx.Select("owner", "awardee", "reward_number", "reward_at").Save(snft).Error
+		if err != nil {
+			return
+		}
+	}
+	// UserNFT创建
+	for i, nft := range wh.CreateNFTs {
+		*nft.Address = getNFTAddr(big.NewInt(int64(i)))
+		err = tx.Create(nft).Error
+		if err != nil {
+			return
+		}
+		go SaveNFTMeta(uint64(wh.Number), *nft.Address, nft.MetaUrl)
+	}
+	// NFT交易，包含用户和官方类型的NFT
+	for _, nftTx := range wh.NFTTxs {
+		err = SaveNFTTx(tx, nftTx)
+		if err != nil {
+			return
+		}
+	}
+	// 交易所创建或者关闭
+	for _, exchanger := range wh.Exchanger {
+		err = SaveExchanger(tx, exchanger)
+		if err != nil {
+			return
+		}
+	}
+	// 回收SNFT
+	for _, snft := range wh.RecycleSNFTs {
+		err = RecycleSNFT(tx, snft)
+		if err != nil {
+			return
+		}
+	}
+	// 官方注入SNFT元信息
+	for _, snft := range wh.InjectSNFTs {
+		err = InjectSNFT(tx, snft.StartIndex, snft.Count, snft.Royalty, snft.Dir, snft.Creator, snft.Number, snft.Timestamp)
+		if err != nil {
+			return
+		}
+	}
+	// 交易所质押
+	for _, pledge := range wh.ExchangerPledges {
+		err = ExchangerPledgeAdd(tx, pledge.Address, pledge.Amount)
+		if err != nil {
+			return
+		}
+	}
+	// 共识质押
+	for _, pledge := range wh.ConsensusPledges {
+		err = ConsensusPledgeAdd(tx, pledge.Address, pledge.Amount)
+		if err != nil {
+			return
+		}
 	}
 	return
-}
-
-func WHInsert(number types.Uint64, wh *ethclient.WH) error {
-	err := DB.Transaction(func(tx *gorm.DB) (err error) {
-		// SNFT创建
-		for _, snft := range wh.CreateSNFTs {
-			err = tx.Create(snft).Error
-			if err != nil {
-				return
-			}
-			go SaveNFTMeta(uint64(number), snft.Address, snft.MetaUrl)
-		}
-		// SNFT奖励
-		for _, snft := range wh.RewardSNFTs {
-			err = tx.Select("owner", "awardee", "reward_number", "reward_at").Save(snft).Error
-			if err != nil {
-				return
-			}
-		}
-		// UserNFT创建
-		for i, nft := range wh.CreateNFTs {
-			*nft.Address = getNFTAddr(big.NewInt(int64(i)))
-			err = tx.Create(nft).Error
-			if err != nil {
-				return
-			}
-			go SaveNFTMeta(uint64(number), *nft.Address, nft.MetaUrl)
-		}
-		// NFT交易，包含用户和官方类型的NFT
-		for _, nftTx := range wh.NFTTxs {
-			err = SaveNFTTx(tx, nftTx)
-			if err != nil {
-				return
-			}
-		}
-		// 交易所创建或者关闭
-		for _, exchanger := range wh.Exchanger {
-			err = SaveExchanger(tx, exchanger)
-			if err != nil {
-				return
-			}
-		}
-		// 回收SNFT
-		for _, snft := range wh.RecycleSNFTs {
-			err = RecycleSNFT(tx, snft)
-			if err != nil {
-				return
-			}
-		}
-		// 官方注入SNFT元信息
-		for _, snft := range wh.InjectSNFTs {
-			err = InjectSNFT(tx, snft.StartIndex, snft.Count, snft.Royalty, snft.Dir, snft.Creator, snft.Number, snft.Timestamp)
-			if err != nil {
-				return
-			}
-		}
-		// 交易所质押
-		for _, pledge := range wh.ExchangerPledges {
-			err = ExchangerPledgeAdd(tx, pledge.Address, pledge.Amount)
-			if err != nil {
-				return
-			}
-		}
-		// 共识质押
-		for _, pledge := range wh.ConsensusPledges {
-			err = ConsensusPledgeAdd(tx, pledge.Address, pledge.Amount)
-			if err != nil {
-				return
-			}
-		}
-		return nil
-	})
-	// 如果写入数据库成功，则更新userNFTCount
-	if err == nil {
-		cache.TotalUserNFT += uint64(len(wh.CreateNFTs))
-	}
-	return err
 }
 
 // SaveNFTMeta 解析存储NFT元信息
@@ -332,32 +318,37 @@ func SaveNFTMeta(blockNumber uint64, nftAddr, metaUrl string) {
 
 // SaveNFTTx 保存NFT交易记录
 func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
-	// todo 处理合成的SNFT碎片地址
-	var nft model.UserNFT
-	err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
-	if err != nil {
-		return err
-	}
 	// 更新NFT所有者和最新价格
 	if (*nt.NFTAddr)[2] != '8' {
-		// 用户NFT
+		var nft model.UserNFT
+		err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
+		if err != nil {
+			return err
+		}
+		// 填充卖家字段（如果没有）
+		if nt.From == "" {
+			nt.From = nft.Owner
+		}
 		err = tx.Model(&model.UserNFT{}).Where("address=?", nft.Address).UpdateColumns(map[string]interface{}{
 			"last_price": nt.Price,
 			"owner":      nt.To,
 		}).Error
 	} else {
-		// 官方NFT
+		// todo 处理合成的SNFT碎片地址
+		var nft model.OfficialNFT
+		err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
+		if err != nil {
+			return err
+		}
+		// 填充卖家字段（如果没有）
+		if nt.From == "" {
+			nt.From = *nft.Owner
+		}
 		err = tx.Model(&model.OfficialNFT{}).Where("address=?", nft.Address).UpdateColumns(map[string]interface{}{
 			"last_price": nt.Price,
 			"owner":      nt.To,
 		}).Error
 	}
-
-	// 填充卖家字段（如果没有）
-	if nt.From == "" {
-		nt.From = nft.Owner
-	}
-
 	return tx.Create(&nt).Error
 }
 
@@ -436,7 +427,7 @@ func ExchangerPledgeAdd(tx *gorm.DB, addr, amount string) error {
 	if pledge.Amount == "" {
 		pledge.Amount = "0x0"
 	}
-	pledge.Amount = AddAndPadding(pledge.Amount, amount)
+	pledge.Amount = BigIntAdd(pledge.Amount, amount)
 	return tx.Create(&pledge).Error
 }
 
@@ -452,26 +443,6 @@ func ConsensusPledgeAdd(tx *gorm.DB, addr, amount string) error {
 	if pledge.Amount == "" {
 		pledge.Amount = "0x0"
 	}
-	pledge.Amount = AddAndPadding(pledge.Amount, amount)
+	pledge.Amount = BigIntAdd(pledge.Amount, amount)
 	return tx.Create(&pledge).Error
-}
-
-var padding = "00000000000000000000000000000000000000000000000000000000000000"
-
-// AddAndPadding 两个16进制大数字符串相加，并左0到64位
-func AddAndPadding(a, b string) string {
-	aa, ok := new(big.Int).SetString(a, 16)
-	if !ok {
-		panic(nil)
-	}
-	bb, ok := new(big.Int).SetString(b, 16)
-	if !ok {
-		panic(nil)
-	}
-	cc := aa.Add(aa, bb)
-	if cc.Sign() == -1 {
-		panic(nil)
-	}
-	ccStr := cc.Text(16)
-	return "0x" + padding[0:64-len(ccStr)] + ccStr[2:len(ccStr)-2]
 }

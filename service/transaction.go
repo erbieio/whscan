@@ -20,7 +20,12 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 	if err != nil {
 		return
 	}
-	err = db.Model(&model.Transaction{}).Count(&res.Total).Error
+	if number != nil || addr != nil {
+		err = db.Model(&model.Transaction{}).Count(&res.Total).Error
+	} else {
+		// 使用缓存加速查询
+		res.Total = int64(TotalTransaction())
+	}
 	return
 }
 

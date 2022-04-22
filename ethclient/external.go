@@ -12,6 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"golang.org/x/crypto/sha3"
+	. "server/common/types"
+	"server/common/utils"
+	"server/model"
 )
 
 type ExecutionResult struct {
@@ -51,6 +54,118 @@ func (ec *Client) TraceBlockByNumber(ctx context.Context, blockNumber uint64, op
 		return nil, ethereum.NotFound
 	}
 	return r, err
+}
+
+// GetERC 获取合约类型，合约调用的错误将不会返回且合约将视为无类型的合约
+func (ec *Client) GetERC(address common.Address) (ERC, error) {
+	ok, err := utils.IsERC165(ec, address)
+	if err != nil {
+		return NONE, err
+	}
+	if !ok {
+		ok, err = utils.IsERC20(ec, address)
+		if ok && err == nil {
+			return ERC20, nil
+		} else {
+			return NONE, err
+		}
+	}
+	ok, err = utils.IsERC721(ec, address)
+	if err != nil {
+		return NONE, err
+	}
+	if ok {
+		return ERC721, nil
+	}
+	ok, err = utils.IsERC1155(ec, address)
+	if err != nil {
+		return NONE, err
+	}
+	if ok {
+		return ERC1155, nil
+	}
+	return ERC165, nil
+}
+
+// GetInternalTx 获取交易内部调用详情
+func (ec *Client) GetInternalTx(ctx context.Context, number uint64, txHash Bytes32, to Bytes20) (itx []*model.InternalTx, err error) {
+	execRet, err := ec.TraceTransaction(ctx, string(txHash), map[string]interface{}{
+		"disableStorage": true,
+		"disableMemory":  true,
+	})
+	if err != nil {
+		return
+	}
+
+	return ec.decodeInternalTxs(ctx, execRet.StructLogs, number, txHash, &to)
+}
+
+// GetInternalTx 获取交易内部调用详情
+func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, number uint64, txHash Bytes32, to *Bytes20) (itx []*model.InternalTx, err error) {
+	callers, createLogs := []*Bytes20{to}, make([]*model.InternalTx, 0)
+	checkDepth := func(callers *[]*Bytes20, depth int, to *Bytes20) {
+		if depth > len(*callers) {
+			*callers = append(*callers, to)
+		} else if depth < len(*callers) {
+			*callers = (*callers)[:len(*callers)-1]
+		}
+	}
+	setCreateAddr := func(i int) {
+		if len(createLogs) > 0 {
+			nextLog := logs[i+1]
+			createLog := createLogs[len(createLogs)-1]
+			if int(createLog.Depth) == nextLog.Depth {
+				*createLog.To = Bytes20((*nextLog.Stack)[len(*nextLog.Stack)-1])
+				createLogs = createLogs[:len(createLogs)-1]
+			}
+		}
+	}
+
+	for i, log := range logs {
+		stack, op, value := *log.Stack, strings.ToLower(log.Op), BigInt("0")
+		switch op {
+		case "call", "callcode":
+			checkDepth(&callers, log.Depth, to)
+			to, value = (*Bytes20)(&stack[len(stack)-2]), utils.HexToBigInt(stack[len(stack)-3])
+		case "delegatecall":
+			callers = append(callers, callers[len(callers)-1])
+			to, value = (*Bytes20)(&stack[len(stack)-2]), "0x0"
+		case "staticcall":
+			checkDepth(&callers, log.Depth, to)
+			to, value = (*Bytes20)(&stack[len(stack)-2]), "0x0"
+		case "selfdestruct":
+			checkDepth(&callers, log.Depth, to)
+			to = (*Bytes20)(&stack[len(stack)-1])
+			setCreateAddr(i)
+			err = ec.c.CallContext(ctx, &value, "eth_getBalance", common.HexToAddress(string(*callers[log.Depth-1])), hexutil.EncodeUint64(number))
+			if err != nil {
+				return nil, err
+			}
+		case "create", "create2":
+			checkDepth(&callers, log.Depth, to)
+			value, to = utils.HexToBigInt(stack[len(stack)-1]), new(Bytes20)
+			// 创建的地址需要等到创建return之后的第一个命令栈里面获取
+			createLogs = append(createLogs, &model.InternalTx{
+				Depth: Uint64(log.Depth),
+				To:    to,
+			})
+		case "return", "revert":
+			setCreateAddr(i)
+			continue
+		default:
+			continue
+		}
+		itx = append(itx, &model.InternalTx{
+			ParentTxHash: txHash,
+			Depth:        Uint64(log.Depth),
+			Op:           op,
+			From:         callers[log.Depth-1],
+			To:           to,
+			Value:        value,
+			GasLimit:     Uint64(log.Gas),
+		})
+	}
+	return
 }
 
 func (ec *Client) Call(result interface{}, method string, args ...interface{}) error {

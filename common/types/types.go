@@ -4,10 +4,10 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"math/big"
+	"strconv"
 )
 
-// Uint64 实现graphql和json相关接口
 type Uint64 uint64
 
 // ImplementsGraphQLType returns true if Long implements the provided GraphQL type.
@@ -37,21 +37,22 @@ func (b *Uint64) UnmarshalJSON(input []byte) error {
 
 // UnmarshalText implements encoding.TextUnmarshaler
 func (b *Uint64) UnmarshalText(input []byte) error {
-	value, err := hexutil.DecodeUint64(string(input))
+	value, err := strconv.ParseUint(string(input), 0, 64)
 	*b = Uint64(value)
 	return err
 }
 
-func (b *Uint64) String() string {
-	if b == nil {
-		return ""
-	}
-	return hexutil.EncodeUint64(uint64(*b))
+func (b Uint64) String() string {
+	return b.Hex()
+}
+
+func (b Uint64) Hex() string {
+	return "0x" + strconv.FormatUint(uint64(b), 16)
 }
 
 type Bytes8 string
 
-// ImplementsGraphQLType returns true if Long implements the provided GraphQL type.
+// ImplementsGraphQLType returns true if Bytes8 implements the provided GraphQL type.
 func (a Bytes8) ImplementsGraphQLType(name string) bool { return name == "Bytes8" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
@@ -79,7 +80,7 @@ func (a *Bytes8) UnmarshalText(input []byte) error {
 
 type Bytes20 string
 
-// ImplementsGraphQLType returns true if Long implements the provided GraphQL type.
+// ImplementsGraphQLType returns true if Bytes20 implements the provided GraphQL type.
 func (a Bytes20) ImplementsGraphQLType(name string) bool { return name == "Bytes20" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
@@ -107,7 +108,7 @@ func (a *Bytes20) UnmarshalText(input []byte) error {
 
 type Bytes32 string
 
-// ImplementsGraphQLType returns true if Long implements the provided GraphQL type.
+// ImplementsGraphQLType returns true if Bytes32 implements the provided GraphQL type.
 func (b Bytes32) ImplementsGraphQLType(name string) bool { return name == "Bytes32" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
@@ -130,6 +131,44 @@ func (b *Bytes32) UnmarshalJSON(input []byte) error {
 // UnmarshalText implements encoding.TextUnmarshaler
 func (b *Bytes32) UnmarshalText(input []byte) error {
 	*b = Bytes32(input)
+	return nil
+}
+
+type BigInt string
+
+// ImplementsGraphQLType returns true if BigInt implements the provided GraphQL type.
+func (a BigInt) ImplementsGraphQLType(name string) bool { return name == "BigInt" }
+
+// UnmarshalGraphQL unmarshals the provided GraphQL query data.
+func (a *BigInt) UnmarshalGraphQL(input interface{}) error {
+	var err error
+	switch input := input.(type) {
+	case string:
+		return a.UnmarshalText([]byte(input))
+	default:
+		err = fmt.Errorf("unexpected type %T for BigInt", input)
+	}
+	return err
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (a *BigInt) UnmarshalJSON(input []byte) error {
+	return a.UnmarshalText(input[1 : len(input)-1])
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler
+func (a *BigInt) UnmarshalText(input []byte) error {
+	if input[0] == '0' && input[1] == 'x' || input[1] == 'X' {
+		// 16进制转10进制
+		b := new(big.Int)
+		err := b.UnmarshalText(input)
+		if err != nil {
+			return err
+		}
+		*a = BigInt(b.String())
+	} else {
+		*a = BigInt(input)
+	}
 	return nil
 }
 
