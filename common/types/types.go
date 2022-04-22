@@ -78,59 +78,59 @@ func (a *Bytes8) UnmarshalText(input []byte) error {
 	return nil
 }
 
-type Bytes20 string
+type Address string
 
-// ImplementsGraphQLType returns true if Bytes20 implements the provided GraphQL type.
-func (a Bytes20) ImplementsGraphQLType(name string) bool { return name == "Bytes20" }
+// ImplementsGraphQLType returns true if Address implements the provided GraphQL type.
+func (a Address) ImplementsGraphQLType(name string) bool { return name == "Address" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
-func (a *Bytes20) UnmarshalGraphQL(input interface{}) error {
+func (a *Address) UnmarshalGraphQL(input interface{}) error {
 	var err error
 	switch input := input.(type) {
 	case string:
 		return a.UnmarshalText([]byte(input))
 	default:
-		err = fmt.Errorf("unexpected type %T for Bytes20", input)
+		err = fmt.Errorf("unexpected type %T for Address", input)
 	}
 	return err
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (a *Bytes20) UnmarshalJSON(input []byte) error {
+func (a *Address) UnmarshalJSON(input []byte) error {
 	return a.UnmarshalText(input[1 : len(input)-1])
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler
-func (a *Bytes20) UnmarshalText(input []byte) error {
-	*a = Bytes20(input)
+func (a *Address) UnmarshalText(input []byte) error {
+	*a = Address(input)
 	return nil
 }
 
-type Bytes32 string
+type Hash string
 
-// ImplementsGraphQLType returns true if Bytes32 implements the provided GraphQL type.
-func (b Bytes32) ImplementsGraphQLType(name string) bool { return name == "Bytes32" }
+// ImplementsGraphQLType returns true if Hash implements the provided GraphQL type.
+func (b Hash) ImplementsGraphQLType(name string) bool { return name == "Hash" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
-func (b *Bytes32) UnmarshalGraphQL(input interface{}) error {
+func (b *Hash) UnmarshalGraphQL(input interface{}) error {
 	var err error
 	switch input := input.(type) {
 	case string:
 		return b.UnmarshalText([]byte(input))
 	default:
-		err = fmt.Errorf("unexpected type %T for Bytes20", input)
+		err = fmt.Errorf("unexpected type %T for Address", input)
 	}
 	return err
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (b *Bytes32) UnmarshalJSON(input []byte) error {
+func (b *Hash) UnmarshalJSON(input []byte) error {
 	return b.UnmarshalText(input[1 : len(input)-1])
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler
-func (b *Bytes32) UnmarshalText(input []byte) error {
-	*b = Bytes32(input)
+func (b *Hash) UnmarshalText(input []byte) error {
+	*b = Hash(input)
 	return nil
 }
 

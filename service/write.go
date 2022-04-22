@@ -5,8 +5,6 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"server/common/types"
@@ -55,14 +53,14 @@ func TotalTransaction() uint64 {
 
 // getNFTAddr 获取NFT地址
 func getNFTAddr(next *big.Int) string {
-	return strings.ToLower(common.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalUserNFT+1)))).String())
+	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalUserNFT+1)))))
 }
 
 func BlockInsert(block *ethclient.DecodeRet) error {
 	err := DB.Transaction(func(t *gorm.DB) error {
 		for _, log := range block.CacheLogs {
 			if len(log.Topics) > 0 {
-				log.EventID = (*types.Bytes32)(&log.Topics[0])
+				log.EventID = (*types.Hash)(&log.Topics[0])
 			}
 			// 写入交易日志
 			if err := t.Create(log).Error; err != nil {
@@ -79,8 +77,8 @@ func BlockInsert(block *ethclient.DecodeRet) error {
 					err = t.Create(&model.ERC20Transfer{
 						TxHash:  log.TxHash,
 						Address: log.Address,
-						From:    types.Bytes20(strings.ToLower(transferLog.From.Hex())),
-						To:      types.Bytes20(strings.ToLower(transferLog.To.Hex())),
+						From:    types.Address(strings.ToLower(transferLog.From.Hex())),
+						To:      types.Address(strings.ToLower(transferLog.To.Hex())),
 						Value:   types.BigInt(transferLog.Value.String()),
 					}).Error
 					if err != nil {
@@ -92,8 +90,8 @@ func BlockInsert(block *ethclient.DecodeRet) error {
 					err = t.Create(&model.ERC721Transfer{
 						TxHash:  log.TxHash,
 						Address: log.Address,
-						From:    types.Bytes20(strings.ToLower(transferLog.From.Hex())),
-						To:      types.Bytes20(strings.ToLower(transferLog.To.Hex())),
+						From:    types.Address(strings.ToLower(transferLog.From.Hex())),
+						To:      types.Address(strings.ToLower(transferLog.To.Hex())),
 						TokenId: types.BigInt(transferLog.TokenId.String()),
 					}).Error
 					if err != nil {
@@ -105,8 +103,8 @@ func BlockInsert(block *ethclient.DecodeRet) error {
 					err = t.Create(&model.ERC1155Transfer{
 						TxHash:  log.TxHash,
 						Address: log.Address,
-						From:    types.Bytes20(strings.ToLower(transferLog.From.Hex())),
-						To:      types.Bytes20(strings.ToLower(transferLog.To.Hex())),
+						From:    types.Address(strings.ToLower(transferLog.From.Hex())),
+						To:      types.Address(strings.ToLower(transferLog.To.Hex())),
 						TokenId: types.BigInt(transferLog.Id.String()),
 						Value:   types.BigInt(transferLog.Value.String()),
 					}).Error
@@ -115,8 +113,8 @@ func BlockInsert(block *ethclient.DecodeRet) error {
 					}
 				} else {
 					if transferBatchLog, err := utils.Unpack1155TransferBatchLog(parseLog(log)); err == nil {
-						from := types.Bytes20(strings.ToLower(transferBatchLog.From.Hex()))
-						to := types.Bytes20(strings.ToLower(transferBatchLog.To.Hex()))
+						from := types.Address(strings.ToLower(transferBatchLog.From.Hex()))
+						to := types.Address(strings.ToLower(transferBatchLog.To.Hex()))
 						for i := range transferBatchLog.Ids {
 							err = t.Create(&model.ERC1155Transfer{
 								TxHash:  log.TxHash,
@@ -193,7 +191,7 @@ func BlockInsert(block *ethclient.DecodeRet) error {
 	return err
 }
 
-func erc(addr types.Bytes20) (erc types.ERC, err error) {
+func erc(addr types.Address) (erc types.ERC, err error) {
 	contract := model.Contract{Address: addr}
 	err = DB.Find(&contract).Error
 	erc = contract.ERC
@@ -286,11 +284,11 @@ func SaveNFTMeta(blockNumber uint64, nftAddr, metaUrl string) {
 	//合集名称+合集创建者+合集所在交易所的哈希
 	var collectionId *string
 	if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
-		hash := crypto.Keccak256Hash(
+		hash := string(utils.Keccak256Hash(
 			[]byte(nftMeta.CollectionsName),
 			[]byte(nftMeta.CollectionsCreator),
 			[]byte(nftMeta.CollectionsExchanger),
-		).Hex()
+		))
 		collectionId = &hash
 	}
 
@@ -393,10 +391,11 @@ func RecycleSNFT(tx *gorm.DB, addr string) error {
 // InjectSNFT 官方批量注入SNFT
 func InjectSNFT(tx *gorm.DB, startIndex *big.Int, count uint64, royalty uint32, dir, creator string, number, timestamp uint64) (err error) {
 	SNFTAddr := big.NewInt(0)
+	Big1 := big.NewInt(1)
 	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
 	SNFTAddr = SNFTAddr.Add(SNFTAddr, startIndex)
 	for i := uint64(0); i < count; i++ {
-		addr := common.BigToAddress(SNFTAddr).String()
+		addr := string(utils.BigToAddress(SNFTAddr))
 		// 取地址倒数3-4位作为文件名
 		metaUrl := dir + addr[39:40]
 		err = tx.Create(&model.OfficialNFT{
@@ -410,7 +409,7 @@ func InjectSNFT(tx *gorm.DB, startIndex *big.Int, count uint64, royalty uint32, 
 		if err != nil {
 			return err
 		}
-		SNFTAddr = SNFTAddr.Add(SNFTAddr, common.Big1)
+		SNFTAddr = SNFTAddr.Add(SNFTAddr, Big1)
 	}
 	return
 }

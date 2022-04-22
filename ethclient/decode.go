@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -25,8 +25,8 @@ type DecodeRet struct {
 	CacheInternalTxs []*model.InternalTx
 	CacheUncles      []*model.Uncle
 	CacheLogs        []*model.Log
-	CacheAccounts    map[Bytes20]*model.Account
-	CacheContracts   map[Bytes20]*model.Contract
+	CacheAccounts    map[Address]*model.Account
+	CacheContracts   map[Address]*model.Contract
 
 	// wormholes
 	CreateSNFTs      []*model.OfficialNFT     //SNFT的创建信息
@@ -40,6 +40,8 @@ type DecodeRet struct {
 	ConsensusPledges []*model.ConsensusPledge //共识质押
 }
 
+var NotFound = errors.New("not found")
+
 // DecodeBlock 解析区块
 func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, error) {
 	var raw json.RawMessage
@@ -48,7 +50,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 	if err != nil {
 		return nil, err
 	} else if len(raw) == 0 {
-		return nil, ethereum.NotFound
+		return nil, NotFound
 	}
 
 	var block DecodeRet
@@ -131,8 +133,8 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 	}
 
 	// 解析相关账户和创建的合约
-	block.CacheAccounts = make(map[Bytes20]*model.Account)
-	block.CacheContracts = make(map[Bytes20]*model.Contract)
+	block.CacheAccounts = make(map[Address]*model.Account)
+	block.CacheContracts = make(map[Address]*model.Contract)
 	block.CacheAccounts[block.Miner] = &model.Account{Address: block.Miner}
 	if len(block.CacheTxs) > 0 {
 		for _, tx := range block.CacheTxs {
@@ -192,7 +194,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 		for _, contract := range block.CacheContracts {
 			code, _ := hex.DecodeString(contract.Code[2:])
 			hash := crypto.Keccak256Hash(code).String()
-			block.CacheAccounts[contract.Address].CodeHash = (*Bytes32)(&hash)
+			block.CacheAccounts[contract.Address].CodeHash = (*Hash)(&hash)
 			if len(contract.Code) > 2 {
 				contract.ERC, err = ec.GetERC(common.HexToAddress(string(contract.Address)))
 				if err != nil {

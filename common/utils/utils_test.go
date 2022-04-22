@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math/big"
 	"testing"
 	"time"
 
@@ -17,4 +18,16 @@ func Test(t *testing.T) {
 	if !VerifyDateSig(sig, addr) {
 		t.Error("签名生成与验证错误")
 	}
+}
+
+func TestBigToAddress(t *testing.T) {
+	a := big.NewInt(1)
+	t.Log(BigToAddress(a))
+	t.Log(BigToAddress(nil))
+	a.SetString("bbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaa", 16)
+	t.Log(BigToAddress(a))
+}
+
+func TestKeccak256Hash(t *testing.T) {
+	t.Log(Keccak256Hash([]byte("hello")))
 }

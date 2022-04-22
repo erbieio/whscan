@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
 	"server/common/types"
 	. "server/conf"
 	"server/ethclient"
@@ -27,7 +26,7 @@ func Loop(ec *ethclient.Client, interval time.Duration) {
 	for {
 		err := HandleBlock(ec, number)
 		if err != nil {
-			if err != ethereum.NotFound {
+			if err != ethclient.NotFound {
 				log.Printf("在%v区块休眠, 错误：%v", number, err)
 			}
 			time.Sleep(interval)

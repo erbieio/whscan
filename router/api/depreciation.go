@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"server/common/utils"
 	"server/service"
 )
 
@@ -61,12 +61,13 @@ func requestErbTest(c *gin.Context) {
 		return
 	}
 
-	if !common.IsHexAddress(req.Address) {
-		c.JSON(http.StatusBadRequest, requestErbTestRes{Code: 1, Msg: "address invalid"})
+	addr, err := utils.HexToAddress(req.Address)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
 
-	err = service.SendErbForFaucet(common.HexToAddress(req.Address))
+	err = service.SendErbForFaucet(string(addr))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, requestErbTestRes{Code: -1, Msg: err.Error()})
 		return
@@ -159,12 +160,13 @@ func checkAuth(c *gin.Context) {
 		return
 	}
 
-	if !common.IsHexAddress(req.Address) {
-		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: 1, Msg: err.Error()})
+	addr, err := utils.HexToAddress(req.Address)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
 
-	flag, balance, status, err := service.ExchangerCheck(req.Address)
+	flag, balance, status, err := service.ExchangerCheck(string(addr))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: -1, Msg: err.Error()})
 		return

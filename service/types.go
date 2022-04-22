@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"math/big"
@@ -8,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"server/common/utils"
 	"server/conf"
 	"server/model"
@@ -22,7 +22,7 @@ type ErrRes struct {
 }
 
 func parseLog(l *model.Log) (log utils.Log) {
-	log.Data = hexutil.MustDecode(l.Data)
+	log.Data, _ = hex.DecodeString(l.Data[2:])
 	for _, topic := range l.Topics {
 		log.Topics = append(log.Topics, common.HexToHash(topic))
 	}

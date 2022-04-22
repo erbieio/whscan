@@ -2,57 +2,16 @@ package utils
 
 import (
 	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
-	"time"
+	"strings"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"golang.org/x/crypto/sha3"
 	"server/common/types"
 )
-
-// Sign 签名数据
-func Sign(data []byte, key *ecdsa.PrivateKey) (string, error) {
-	sig, err := crypto.Sign(accounts.TextHash(data), key)
-	if err != nil {
-		return "", err
-	}
-	sig[64] += 27
-	return hexutil.Encode(sig), err
-}
-
-// VerifyDateSig 验证对当前和昨天UTC日期（如：20220404）签名
-func VerifyDateSig(hexSig, addr string) bool {
-	// todo 每次请求都要计算nowHash和oldHash，可优化为后台定时计算
-	now := time.Now()
-	nowHash := accounts.TextHash([]byte(now.UTC().Format("20060102")))
-	oldHash := accounts.TextHash([]byte(now.Add(-24 * time.Hour).UTC().Format("20060102")))
-	sig, err := hexutil.Decode(hexSig)
-	if err != nil {
-		return false
-	}
-	if len(sig) != 65 {
-		return false
-	}
-	if sig[64] >= 27 {
-		sig[64] -= 27
-	}
-	address := common.HexToAddress(addr)
-	rpk, err := crypto.SigToPub(nowHash, sig)
-	if err != nil {
-		return false
-	}
-	if crypto.PubkeyToAddress(*rpk) == address {
-		return true
-	}
-	rpk, err = crypto.SigToPub(oldHash, sig)
-	if err != nil {
-		return false
-	}
-	return crypto.PubkeyToAddress(*rpk) == address
-}
 
 func ToBytes(v string) []byte {
 	var bigTemp big.Int
@@ -64,6 +23,48 @@ func HexToBigInt(hex string) types.BigInt {
 	b := new(big.Int)
 	b.UnmarshalText([]byte(hex))
 	return types.BigInt(b.String())
+}
+
+func HexToAddress(hex string) (types.Address, error) {
+	if len(hex) != 42 {
+		return "", errors.New("长度不是42")
+	}
+	if hex[0] != '0' || (hex[1] != 'x' && hex[1] != 'X') {
+		return "", errors.New("前缀不是0x")
+	}
+	for _, c := range hex[2:] {
+		if ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') {
+			continue
+		}
+		return "", errors.New("非法字符:" + string(c))
+	}
+	return types.Address(strings.ToLower(hex)), nil
+}
+
+func BigToAddress(big *big.Int) types.Address {
+	addr := "0000000000000000000000000000000000000000"
+	if big != nil {
+		addr += big.Text(16)
+	}
+	return types.Address("0x" + addr[len(addr)-40:])
+}
+
+func Keccak256Hash(data ...[]byte) (h types.Hash) {
+	d := sha3.NewLegacyKeccak256()
+	for _, b := range data {
+		d.Write(b)
+	}
+
+	return types.Hash("0x" + hex.EncodeToString(d.Sum(nil)))
+}
+func HexToECDSA(key string) (*ecdsa.PrivateKey, error) {
+	b, err := hex.DecodeString(key)
+	if byteErr, ok := err.(hex.InvalidByteError); ok {
+		return nil, fmt.Errorf("invalid hex character %q in private key", byte(byteErr))
+	} else if err != nil {
+		return nil, errors.New("invalid hex data for private key")
+	}
+	return secp256k1.PrivKeyFromBytes(b).ToECDSA(), nil
 }
 
 // ParsePage 解析分页参数，默认值是第一页10条记录

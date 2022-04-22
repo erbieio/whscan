@@ -88,7 +88,7 @@ func (ec *Client) GetERC(address common.Address) (ERC, error) {
 }
 
 // GetInternalTx 获取交易内部调用详情
-func (ec *Client) GetInternalTx(ctx context.Context, number uint64, txHash Bytes32, to Bytes20) (itx []*model.InternalTx, err error) {
+func (ec *Client) GetInternalTx(ctx context.Context, number uint64, txHash Hash, to Address) (itx []*model.InternalTx, err error) {
 	execRet, err := ec.TraceTransaction(ctx, string(txHash), map[string]interface{}{
 		"disableStorage": true,
 		"disableMemory":  true,
@@ -101,9 +101,9 @@ func (ec *Client) GetInternalTx(ctx context.Context, number uint64, txHash Bytes
 }
 
 // GetInternalTx 获取交易内部调用详情
-func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, number uint64, txHash Bytes32, to *Bytes20) (itx []*model.InternalTx, err error) {
-	callers, createLogs := []*Bytes20{to}, make([]*model.InternalTx, 0)
-	checkDepth := func(callers *[]*Bytes20, depth int, to *Bytes20) {
+func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, number uint64, txHash Hash, to *Address) (itx []*model.InternalTx, err error) {
+	callers, createLogs := []*Address{to}, make([]*model.InternalTx, 0)
+	checkDepth := func(callers *[]*Address, depth int, to *Address) {
 		if depth > len(*callers) {
 			*callers = append(*callers, to)
 		} else if depth < len(*callers) {
@@ -115,7 +115,7 @@ func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, nu
 			nextLog := logs[i+1]
 			createLog := createLogs[len(createLogs)-1]
 			if int(createLog.Depth) == nextLog.Depth {
-				*createLog.To = Bytes20((*nextLog.Stack)[len(*nextLog.Stack)-1])
+				*createLog.To = Address((*nextLog.Stack)[len(*nextLog.Stack)-1])
 				createLogs = createLogs[:len(createLogs)-1]
 			}
 		}
@@ -126,16 +126,16 @@ func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, nu
 		switch op {
 		case "call", "callcode":
 			checkDepth(&callers, log.Depth, to)
-			to, value = (*Bytes20)(&stack[len(stack)-2]), utils.HexToBigInt(stack[len(stack)-3])
+			to, value = (*Address)(&stack[len(stack)-2]), utils.HexToBigInt(stack[len(stack)-3])
 		case "delegatecall":
 			callers = append(callers, callers[len(callers)-1])
-			to, value = (*Bytes20)(&stack[len(stack)-2]), "0x0"
+			to, value = (*Address)(&stack[len(stack)-2]), "0x0"
 		case "staticcall":
 			checkDepth(&callers, log.Depth, to)
-			to, value = (*Bytes20)(&stack[len(stack)-2]), "0x0"
+			to, value = (*Address)(&stack[len(stack)-2]), "0x0"
 		case "selfdestruct":
 			checkDepth(&callers, log.Depth, to)
-			to = (*Bytes20)(&stack[len(stack)-1])
+			to = (*Address)(&stack[len(stack)-1])
 			setCreateAddr(i)
 			err = ec.c.CallContext(ctx, &value, "eth_getBalance", common.HexToAddress(string(*callers[log.Depth-1])), hexutil.EncodeUint64(number))
 			if err != nil {
@@ -143,7 +143,7 @@ func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, nu
 			}
 		case "create", "create2":
 			checkDepth(&callers, log.Depth, to)
-			value, to = utils.HexToBigInt(stack[len(stack)-1]), new(Bytes20)
+			value, to = utils.HexToBigInt(stack[len(stack)-1]), new(Address)
 			// 创建的地址需要等到创建return之后的第一个命令栈里面获取
 			createLogs = append(createLogs, &model.InternalTx{
 				Depth: Uint64(log.Depth),

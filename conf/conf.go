@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/joho/godotenv"
+	"server/common/utils"
 )
 
 // 默认配置
@@ -51,7 +51,7 @@ func init() {
 	}
 
 	// 区块链账户私钥和RPC客户端配置
-	PrivateKey, err = crypto.HexToECDSA(HexKey)
+	PrivateKey, err = utils.HexToECDSA(HexKey)
 	if err != nil {
 		panic(err)
 	}

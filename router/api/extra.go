@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
+	"server/common/utils"
 	"server/service"
 )
 
@@ -40,13 +40,13 @@ func erbPrice(c *gin.Context) {
 // @Failure      400  {object}  service.ErrRes
 // @Router       /erb_faucet [get]
 func erbFaucet(c *gin.Context) {
-	addr := c.Query("addr")
-	if !common.IsHexAddress(addr) {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: "请求地址无效"})
+	addr, err := utils.HexToAddress(c.Query("addr"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
 
-	err := service.SendErbForFaucet(common.HexToAddress(addr))
+	err = service.SendErbForFaucet(string(addr))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -65,13 +65,13 @@ func erbFaucet(c *gin.Context) {
 // @Failure      400   {object}  service.ErrRes
 // @Router       /exchanger_auth [get]
 func exchangerAuth(c *gin.Context) {
-	addr := c.Query("addr")
-	if !common.IsHexAddress(addr) {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: "请求地址无效"})
+	addr, err := utils.HexToAddress(c.Query("addr"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
 
-	res, err := service.ExchangerAuth(addr)
+	res, err := service.ExchangerAuth(string(addr))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

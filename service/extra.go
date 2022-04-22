@@ -10,7 +10,7 @@ import (
 	"server/ethclient"
 )
 
-func SendErbForFaucet(to common.Address) error {
+func SendErbForFaucet(to string) error {
 	client, err := ethclient.Dial(conf.ChainUrl)
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func SendErbForFaucet(to common.Address) error {
 	if err != nil {
 		return err
 	}
-	tx := types.NewTransaction(nonce, to, conf.Amount, 21000, gasPrice, nil)
+	tx := types.NewTransaction(nonce, common.HexToAddress(to), conf.Amount, 21000, gasPrice, nil)
 
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(conf.ChainId)), conf.PrivateKey)
 	if err != nil {
