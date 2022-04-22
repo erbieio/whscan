@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"math/big"
+	"server/common/utils"
 	"server/conf"
 	"server/ethclient"
 )
@@ -15,8 +16,7 @@ func SendErbForFaucet(to string) error {
 	if err != nil {
 		return err
 	}
-
-	from := crypto.PubkeyToAddress(conf.PrivateKey.PublicKey)
+	from := utils.PubkeyToAddress(conf.PrivateKey.PublicKey)
 	nonce, err := client.PendingNonceAt(context.Background(), from)
 	if err != nil {
 		return err

@@ -575,6 +575,10 @@ definitions:
         type: string
       input:
         type: string
+      internal_calls:
+        type: string
+      internal_value_transfer:
+        type: string
       nonce:
         type: string
       status:
@@ -582,6 +586,8 @@ definitions:
       timestamp:
         type: string
       to:
+        type: string
+      token_transfer:
         type: string
       transactionIndex:
         type: string

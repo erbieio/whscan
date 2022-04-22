@@ -1983,6 +1983,12 @@ var doc = `{
                 "input": {
                     "type": "string"
                 },
+                "internal_calls": {
+                    "type": "string"
+                },
+                "internal_value_transfer": {
+                    "type": "string"
+                },
                 "nonce": {
                     "type": "string"
                 },
@@ -1993,6 +1999,9 @@ var doc = `{
                     "type": "string"
                 },
                 "to": {
+                    "type": "string"
+                },
+                "token_transfer": {
                     "type": "string"
                 },
                 "transactionIndex": {

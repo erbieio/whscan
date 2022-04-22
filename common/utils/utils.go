@@ -2,6 +2,7 @@ package utils
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -49,14 +50,24 @@ func BigToAddress(big *big.Int) types.Address {
 	return types.Address("0x" + addr[len(addr)-40:])
 }
 
+func PubkeyToAddress(p ecdsa.PublicKey) types.Address {
+	data := elliptic.Marshal(secp256k1.S256(), p.X, p.Y)
+	return types.Address("0x" + Keccak256(data[1:])[26:])
+}
+
 func Keccak256Hash(data ...[]byte) (h types.Hash) {
+	return types.Hash(Keccak256(data...))
+}
+
+func Keccak256(data ...[]byte) (h string) {
 	d := sha3.NewLegacyKeccak256()
 	for _, b := range data {
 		d.Write(b)
 	}
 
-	return types.Hash("0x" + hex.EncodeToString(d.Sum(nil)))
+	return "0x" + hex.EncodeToString(d.Sum(nil))
 }
+
 func HexToECDSA(key string) (*ecdsa.PrivateKey, error) {
 	b, err := hex.DecodeString(key)
 	if byteErr, ok := err.(hex.InvalidByteError); ok {

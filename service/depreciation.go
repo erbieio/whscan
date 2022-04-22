@@ -40,19 +40,28 @@ func FindBlock(num string) (data Block, err error) {
 }
 
 type Transaction struct {
-	Hash        string `json:"hash"`
-	BlockHash   string `json:"blockHash"`
-	BlockNumber string `json:"blockNumber"`
-	Timestamp   string `json:"timestamp"`
-	From        string `json:"from"`
-	To          string `json:"to"`
-	Value       string `json:"value"`
-	Gas         string `json:"gas"`
-	GasPrice    string `json:"gasPrice"`
-	TxIndex     string `json:"transactionIndex"`
-	Nonce       string `json:"nonce"`
-	Input       string `json:"input"`
-	Status      string `json:"status"`
+	Hash                  string   `json:"hash"`
+	BlockHash             string   `json:"blockHash"`
+	BlockNumber           string   `json:"blockNumber"`
+	Timestamp             string   `json:"timestamp"`
+	From                  string   `json:"from"`
+	To                    string   `json:"to"`
+	Value                 string   `json:"value"`
+	Gas                   string   `json:"gas"`
+	GasPrice              string   `json:"gasPrice"`
+	TxIndex               string   `json:"transactionIndex"`
+	Nonce                 string   `json:"nonce"`
+	Input                 string   `json:"input"`
+	Status                string   `json:"status"`
+	InternalValueTransfer StrArray `json:"internal_value_transfer"`
+	InternalCalls         StrArray `json:"internal_calls"`
+	TokenTransfer         StrArray `json:"token_transfer"`
+}
+
+type StrArray string
+
+func (t StrArray) MarshalJSON() ([]byte, error) {
+	return []byte("\"[]\""), nil
 }
 
 func FetchTxs(page, size int, addr, block string) (data []Transaction, count int64, err error) {
