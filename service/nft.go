@@ -1,6 +1,6 @@
 package service
 
-import "server/model"
+import "server/common/model"
 
 // UserNFTsRes NFT分页返回参数
 type UserNFTsRes struct {

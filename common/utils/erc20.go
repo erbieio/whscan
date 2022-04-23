@@ -16,17 +16,6 @@ func init() {
 	ERC20ABI, _ = abi.JSON(strings.NewReader(erc20))
 }
 
-type ERC20Transfer struct {
-	From  common.Address
-	To    common.Address
-	Value *big.Int
-}
-
-func Unpack20TransferLog(log Log) (out ERC20Transfer, err error) {
-	err = UnpackLog(ERC20ABI, &out, "Transfer", log)
-	return
-}
-
 // Name 查询给定ERC20合约的代币名称（可选接口）
 func Name(caller bind.ContractCaller, address common.Address) (string, error) {
 	var out []interface{}

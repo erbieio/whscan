@@ -1,8 +1,8 @@
 package service
 
 import (
+	"server/common/model"
 	"server/common/types"
-	"server/model"
 )
 
 // BlocksRes 区块分页返回参数

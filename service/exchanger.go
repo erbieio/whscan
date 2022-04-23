@@ -1,7 +1,7 @@
 package service
 
 import (
-	"server/model"
+	"server/common/model"
 	"time"
 )
 

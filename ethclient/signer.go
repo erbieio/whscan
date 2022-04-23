@@ -17,7 +17,7 @@
 package ethclient
 
 import (
-	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -32,7 +32,7 @@ type senderFromServer struct {
 	blockhash common.Hash
 }
 
-var errNotCached = errors.New("sender not cached")
+var errNotCached = fmt.Errorf("sender not cached")
 
 func setSenderFromServer(tx *types.Transaction, addr common.Address, block common.Hash) {
 	// Use types.Sender for side-effect to store our signer into the cache.

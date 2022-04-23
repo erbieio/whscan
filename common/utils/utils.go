@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -14,30 +13,34 @@ import (
 	"server/common/types"
 )
 
-func ToBytes(v string) []byte {
-	var bigTemp big.Int
-	bigTemp.SetString(v, 0)
-	return bigTemp.Bytes()
-}
-
 func HexToBigInt(hex string) types.BigInt {
 	b := new(big.Int)
 	b.UnmarshalText([]byte(hex))
 	return types.BigInt(b.String())
 }
 
+// HexToUint256 将不带0x前缀的16进制字符串转换为uint256的大数
+func HexToUint256(hex string) types.BigInt {
+	if len(hex) > 64 {
+		hex = hex[:64]
+	}
+	b := new(big.Int)
+	b.SetString(hex, 16)
+	return types.BigInt(b.String())
+}
+
 func HexToAddress(hex string) (types.Address, error) {
 	if len(hex) != 42 {
-		return "", errors.New("长度不是42")
+		return "", fmt.Errorf("长度不是42")
 	}
 	if hex[0] != '0' || (hex[1] != 'x' && hex[1] != 'X') {
-		return "", errors.New("前缀不是0x")
+		return "", fmt.Errorf("前缀不是0x")
 	}
 	for _, c := range hex[2:] {
 		if ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') {
 			continue
 		}
-		return "", errors.New("非法字符:" + string(c))
+		return "", fmt.Errorf("非法字符:%v", c)
 	}
 	return types.Address(strings.ToLower(hex)), nil
 }
@@ -73,7 +76,7 @@ func HexToECDSA(key string) (*ecdsa.PrivateKey, error) {
 	if byteErr, ok := err.(hex.InvalidByteError); ok {
 		return nil, fmt.Errorf("invalid hex character %q in private key", byte(byteErr))
 	} else if err != nil {
-		return nil, errors.New("invalid hex data for private key")
+		return nil, fmt.Errorf("invalid hex data for private key")
 	}
 	return secp256k1.PrivKeyFromBytes(b).ToECDSA(), nil
 }
@@ -83,13 +86,13 @@ func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
 	page, size := 1, 10
 	if pagePtr != nil {
 		if *pagePtr <= 0 {
-			return 0, 0, errors.New("分页页数小于1")
+			return 0, 0, fmt.Errorf("分页页数小于1")
 		}
 		page = *pagePtr
 	}
 	if sizePtr != nil {
 		if *sizePtr <= 0 {
-			return 0, 0, errors.New("分页大小小于1")
+			return 0, 0, fmt.Errorf("分页大小小于1")
 		}
 		size = *sizePtr
 	}

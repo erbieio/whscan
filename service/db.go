@@ -3,8 +3,8 @@ package service
 import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"server/common/model"
 	. "server/conf"
-	"server/model"
 )
 
 var DB *gorm.DB

@@ -1,32 +1,18 @@
 package service
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"math/big"
 	"net/http"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
-	"server/common/utils"
 	"server/conf"
-	"server/model"
 )
-
-const ZeroAddress = "0x0000000000000000000000000000000000000000"
 
 // ErrRes 接口错误信息返回
 type ErrRes struct {
 	ErrStr string `json:"err_str"` //错误信息
-}
-
-func parseLog(l *model.Log) (log utils.Log) {
-	log.Data, _ = hex.DecodeString(l.Data[2:])
-	for _, topic := range l.Topics {
-		log.Topics = append(log.Topics, common.HexToHash(topic))
-	}
-	return
 }
 
 // BigIntAdd 两个大数字符串相加,返回十进制大数字符串

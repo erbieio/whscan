@@ -3,7 +3,7 @@ package service
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"math/big"
 	"server/conf"
 	"server/ethclient"
@@ -125,11 +125,11 @@ func checkAuth(client *ethclient.Client, addr string) (uint64, error) {
 	params := CallParamTemp{To: conf.ERBPay, Data: "0x" + hex.EncodeToString(payload)}
 	jsonData, err := json.Marshal(params)
 	if err != nil {
-		return 0, errors.New("Umarshal failed:" + err.Error() + string(jsonData))
+		return 0, fmt.Errorf("Umarshal failed:" + err.Error() + string(jsonData))
 	}
 	var ret string
 	if err = client.Call(&ret, "eth_call", params, "latest"); err != nil {
-		return 0, errors.New("Call failed:" + err.Error())
+		return 0, fmt.Errorf("Call failed:" + err.Error())
 	} else {
 		tmp.SetString(ret, 0)
 		return tmp.Uint64(), nil

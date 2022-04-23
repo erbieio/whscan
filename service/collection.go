@@ -1,6 +1,6 @@
 package service
 
-import "server/model"
+import "server/common/model"
 
 // CollectionsRes 合集分页返回参数
 type CollectionsRes struct {

@@ -8,10 +8,10 @@ import (
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"server/common/model"
 	"server/common/types"
 	"server/common/utils"
 	"server/ethclient"
-	"server/model"
 )
 
 // cache 缓存一些数据库查询，加速查询
@@ -98,61 +98,24 @@ func BlockInsert(block *ethclient.DecodeRet) error {
 			}
 			switch erc {
 			case types.ERC20:
-				if transferLog, err := utils.Unpack20TransferLog(parseLog(log)); err == nil {
-					err = t.Create(&model.ERC20Transfer{
-						TxHash:  log.TxHash,
-						Address: log.Address,
-						From:    types.Address(strings.ToLower(transferLog.From.Hex())),
-						To:      types.Address(strings.ToLower(transferLog.To.Hex())),
-						Value:   types.BigInt(transferLog.Value.String()),
-					}).Error
+				if transferLog, err := utils.Unpack20TransferLog(log); err == nil {
+					err = t.Create(transferLog).Error
 					if err != nil {
 						return err
 					}
 				}
 			case types.ERC721:
-				if transferLog, err := utils.Unpack721TransferLog(parseLog(log)); err == nil {
-					err = t.Create(&model.ERC721Transfer{
-						TxHash:  log.TxHash,
-						Address: log.Address,
-						From:    types.Address(strings.ToLower(transferLog.From.Hex())),
-						To:      types.Address(strings.ToLower(transferLog.To.Hex())),
-						TokenId: types.BigInt(transferLog.TokenId.String()),
-					}).Error
+				if transferLog, err := utils.Unpack721TransferLog(log); err == nil {
+					err = t.Create(transferLog).Error
 					if err != nil {
 						return err
 					}
 				}
 			case types.ERC1155:
-				if transferLog, err := utils.Unpack1155TransferSingleLog(parseLog(log)); err == nil {
-					err = t.Create(&model.ERC1155Transfer{
-						TxHash:  log.TxHash,
-						Address: log.Address,
-						From:    types.Address(strings.ToLower(transferLog.From.Hex())),
-						To:      types.Address(strings.ToLower(transferLog.To.Hex())),
-						TokenId: types.BigInt(transferLog.Id.String()),
-						Value:   types.BigInt(transferLog.Value.String()),
-					}).Error
+				if transferLogs, err := utils.Unpack1155TransferLog(log); err == nil {
+					err = t.Create(transferLogs).Error
 					if err != nil {
 						return err
-					}
-				} else {
-					if transferBatchLog, err := utils.Unpack1155TransferBatchLog(parseLog(log)); err == nil {
-						from := types.Address(strings.ToLower(transferBatchLog.From.Hex()))
-						to := types.Address(strings.ToLower(transferBatchLog.To.Hex()))
-						for i := range transferBatchLog.Ids {
-							err = t.Create(&model.ERC1155Transfer{
-								TxHash:  log.TxHash,
-								Address: log.Address,
-								From:    from,
-								To:      to,
-								TokenId: types.BigInt(transferBatchLog.Ids[i].String()),
-								Value:   types.BigInt(transferBatchLog.Values[i].String()),
-							}).Error
-							if err != nil {
-								return err
-							}
-						}
 					}
 				}
 			}

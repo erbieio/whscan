@@ -1,6 +1,6 @@
 package service
 
-import "server/model"
+import "server/common/model"
 
 // TransactionsRes 交易分页返回参数
 type TransactionsRes struct {

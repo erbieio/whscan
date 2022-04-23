@@ -12,9 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"golang.org/x/crypto/sha3"
+	"server/common/model"
 	. "server/common/types"
 	"server/common/utils"
-	"server/model"
 )
 
 type ExecutionResult struct {

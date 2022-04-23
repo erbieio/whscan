@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -14,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rpc"
+	"server/common/model"
 	. "server/common/types"
-	"server/model"
 )
 
 // DecodeRet 区块解析结果
@@ -40,7 +39,7 @@ type DecodeRet struct {
 	ConsensusPledges []*model.ConsensusPledge //共识质押
 }
 
-var NotFound = errors.New("not found")
+var NotFound = fmt.Errorf("not found")
 
 // DecodeBlock 解析区块
 func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, error) {

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -13,7 +12,7 @@ import (
 )
 
 var (
-	ErrNoCode   = errors.New("no contract code at given address")
+	ErrNoCode   = fmt.Errorf("no contract code at given address")
 	DefaultOpts = &bind.CallOpts{}
 )
 
@@ -57,29 +56,6 @@ func Call(abi abi.ABI, address common.Address, caller bind.ContractCaller, opts 
 	}
 	res := *results
 	return abi.UnpackIntoInterface(res[0], method, output)
-}
-
-type Log struct {
-	Topics []common.Hash
-	Data   []byte
-}
-
-func UnpackLog(a abi.ABI, out interface{}, event string, log Log) error {
-	if log.Topics[0] != a.Events[event].ID {
-		return fmt.Errorf("event signature mismatch")
-	}
-	if len(log.Data) > 0 {
-		if err := a.UnpackIntoInterface(out, event, log.Data); err != nil {
-			return err
-		}
-	}
-	var indexed abi.Arguments
-	for _, arg := range a.Events[event].Inputs {
-		if arg.Indexed {
-			indexed = append(indexed, arg)
-		}
-	}
-	return abi.ParseTopics(out, indexed, log.Topics[1:])
 }
 
 // FilterContractErr 过滤掉除网络连接外的错误
