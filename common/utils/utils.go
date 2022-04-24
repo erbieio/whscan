@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -97,4 +98,47 @@ func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
 		size = *sizePtr
 	}
 	return page, size, nil
+}
+
+// ABIDecodeString 从合约返回值只有一个的返回数据里解析字符串
+func ABIDecodeString(hexStr string) (string, error) {
+	hexLen := len(hexStr)
+	if hexLen < 130 || (hexLen-2)%64 != 0 || hexStr[64:66] != "20" {
+		return "", fmt.Errorf("返回数据格式错误")
+	}
+	strLen := new(big.Int)
+	strLen.SetString(hexStr[66:130], 16)
+	if (hexLen-130)/64 != int(strLen.Int64())/32 {
+		return "", fmt.Errorf("返回数据字符串长度错误")
+	}
+	data, err := hex.DecodeString(hexStr[130:int(strLen.Int64()*2)])
+	return string(data), err
+}
+
+// ABIDecodeUint8 从合约返回值只有一个的返回数据里解析uint8
+func ABIDecodeUint8(hexStr string) (uint8, error) {
+	hexLen := len(hexStr)
+	if hexLen != 66 || hexStr[:50] != "0x000000000000000000000000000000000000000000000000" {
+		return 0, fmt.Errorf("返回数据格式错误")
+	}
+	data, err := strconv.ParseUint(hexStr[50:], 16, 8)
+	return uint8(data), err
+}
+
+// ABIDecodeUint256 从合约返回值只有一个的返回数据里解析uint256
+func ABIDecodeUint256(hexStr string) (types.Uint256, error) {
+	if len(hexStr) != 66 {
+		return "", fmt.Errorf("返回数据格式错误")
+	}
+
+	return types.Uint256(hexStr), nil
+}
+
+// ABIDecodeBool 从合约返回值只有一个的返回数据里解析bool
+func ABIDecodeBool(hexStr string) (bool, error) {
+	hexLen := len(hexStr)
+	if hexLen != 66 || hexStr[:65] != "0x000000000000000000000000000000000000000000000000000000000000000" {
+		return false, fmt.Errorf("返回数据格式错误")
+	}
+	return hexStr[65] == '1', nil
 }

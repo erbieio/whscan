@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"server/common/model"
 	. "server/common/types"
+	"server/common/utils"
 )
 
 // DecodeRet 区块解析结果
@@ -195,7 +196,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 			hash := crypto.Keccak256Hash(code).String()
 			block.CacheAccounts[contract.Address].CodeHash = (*Hash)(&hash)
 			if len(contract.Code) > 2 {
-				contract.ERC, err = ec.GetERC(common.HexToAddress(string(contract.Address)))
+				contract.ERC, err = utils.GetERC(ec, contract.Address)
 				if err != nil {
 					return nil, err
 				}
@@ -203,7 +204,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 		}
 	}
 
-	err = ec.decodeWH(&block)
+	//err = ec.decodeWH(&block)
 	return &block, err
 }
 

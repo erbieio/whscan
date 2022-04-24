@@ -20,6 +20,18 @@ func TestKeccak256Hash(t *testing.T) {
 	t.Log(Keccak256Hash([]byte("Transfer(address,address,uint256)")))
 	t.Log(Keccak256Hash([]byte("TransferSingle(address,address,address,uint256,uint256)")))
 	t.Log(Keccak256Hash([]byte("TransferBatch(address,address,address,uint256[],uint256[])")))
+
+	t.Log(Keccak256Hash([]byte("name()"))[:10])
+	t.Log(Keccak256Hash([]byte("symbol()"))[:10])
+	t.Log(Keccak256Hash([]byte("decimals()"))[:10])
+	t.Log(Keccak256Hash([]byte("totalSupply()"))[:10])
+
+	t.Log(Keccak256Hash([]byte("allowance(address,address)"))[:10])
+	t.Log(Keccak256Hash([]byte("balanceOf(address)"))[:10])
+
+	t.Log(Keccak256Hash([]byte("transfer(address,uint256)"))[:10])
+	t.Log(Keccak256Hash([]byte("transferFrom(address,address,uint256)"))[:10])
+	t.Log(Keccak256Hash([]byte("approve(address,uint256)"))[:10])
 }
 
 func TestPubkeyToAddress(t *testing.T) {

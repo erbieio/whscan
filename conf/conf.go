@@ -8,7 +8,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/joho/godotenv"
 	"server/common/utils"
 )
@@ -28,10 +27,9 @@ var (
 
 // 从配置实例化的全局可用对象
 var (
-	ChainUrl   string             //链节点地址
-	PrivateKey *ecdsa.PrivateKey  //私钥
-	Transactor *bind.TransactOpts //智能合约调用者，由私钥创建
-	Amount     *big.Int           //币数量（单位：wei）
+	ChainUrl   string            //链节点地址
+	PrivateKey *ecdsa.PrivateKey //私钥
+	Amount     *big.Int          //币数量（单位：wei）
 )
 
 func init() {
@@ -52,13 +50,6 @@ func init() {
 
 	// 区块链账户私钥和RPC客户端配置
 	PrivateKey, err = utils.HexToECDSA(HexKey)
-	if err != nil {
-		panic(err)
-	}
-	if err != nil {
-		panic(err)
-	}
-	Transactor, err = bind.NewKeyedTransactorWithChainID(PrivateKey, big.NewInt(ChainId))
 	if err != nil {
 		panic(err)
 	}

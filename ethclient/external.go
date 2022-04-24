@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
@@ -54,37 +53,6 @@ func (ec *Client) TraceBlockByNumber(ctx context.Context, blockNumber uint64, op
 		return nil, ethereum.NotFound
 	}
 	return r, err
-}
-
-// GetERC 获取合约类型，合约调用的错误将不会返回且合约将视为无类型的合约
-func (ec *Client) GetERC(address common.Address) (ERC, error) {
-	ok, err := utils.IsERC165(ec, address)
-	if err != nil {
-		return NONE, err
-	}
-	if !ok {
-		ok, err = utils.IsERC20(ec, address)
-		if ok && err == nil {
-			return ERC20, nil
-		} else {
-			return NONE, err
-		}
-	}
-	ok, err = utils.IsERC721(ec, address)
-	if err != nil {
-		return NONE, err
-	}
-	if ok {
-		return ERC721, nil
-	}
-	ok, err = utils.IsERC1155(ec, address)
-	if err != nil {
-		return NONE, err
-	}
-	if ok {
-		return ERC1155, nil
-	}
-	return ERC165, nil
 }
 
 // GetInternalTx 获取交易内部调用详情
@@ -168,11 +136,6 @@ func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, nu
 	return
 }
 
-func (ec *Client) Call(result interface{}, method string, args ...interface{}) error {
-	ctx := context.Background()
-	return ec.c.CallContext(ctx, result, method, args...)
-}
-
 type Reward struct {
 	Address    string
 	NfTAddress string
@@ -180,16 +143,6 @@ type Reward struct {
 
 func (ec *Client) GetReward(number string) (rewards []Reward, err error) {
 	err = ec.c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", number, true)
-	return
-}
-
-type Exchanger struct {
-	ExchangerFlag    bool
-	ExchangerBalance big.Int
-}
-
-func (ec *Client) GetExchanger(addr string) (e Exchanger, err error) {
-	err = ec.c.Call(&e, "eth_getAccountInfo", addr, "latest")
 	return
 }
 

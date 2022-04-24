@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"server/common/utils"
+	"server/extra"
 	"server/service"
 )
 
@@ -46,7 +48,7 @@ func erbFaucet(c *gin.Context) {
 		return
 	}
 
-	err = service.SendErbForFaucet(string(addr))
+	err = extra.SendErb(string(addr), context.Background())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -55,13 +57,19 @@ func erbFaucet(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+type AuthRes struct {
+	Status           uint64 `json:"status"` //2 交易所付费状态正常  其他数字为欠费或者没交费
+	ExchangerFlag    bool   `json:"exchanger_flag"`
+	ExchangerBalance string `json:"exchanger_balance"`
+}
+
 // @Tags         其他接口
 // @Summary      查询交易所状态
 // @Description  查询交易所状态
 // @Accept       json
 // @Produce      json
 // @Param        addr  query  string  true  "地址"
-// @Success      200   {object}  service.AuthRes
+// @Success      200   {object}  AuthRes
 // @Failure      400   {object}  service.ErrRes
 // @Router       /exchanger_auth [get]
 func exchangerAuth(c *gin.Context) {
@@ -71,11 +79,18 @@ func exchangerAuth(c *gin.Context) {
 		return
 	}
 
-	res, err := service.ExchangerAuth(string(addr))
+	status, flag, balance, err := extra.ExchangerAuth(string(addr))
+	if err != nil {
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, &AuthRes{
+		Status:           status,
+		ExchangerFlag:    flag,
+		ExchangerBalance: balance,
+	})
 }

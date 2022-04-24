@@ -1,19 +1,21 @@
 definitions:
+  api.AuthRes:
+    properties:
+      exchanger_balance:
+        type: string
+      exchanger_flag:
+        type: boolean
+      status:
+        description: 2 交易所付费状态正常  其他数字为欠费或者没交费
+        type: integer
+    type: object
   api.CheckAuthRes:
     properties:
       code:
         description: 0 成功  1 地址有误 其他失败
         type: integer
       data:
-        properties:
-          exchanger_balance:
-            type: string
-          exchanger_flag:
-            type: boolean
-          status:
-            description: 2 交易所付费状态正常  其他数字为欠费或者没交费
-            type: integer
-        type: object
+        $ref: '#/definitions/api.AuthRes'
       msg:
         type: string
     type: object
@@ -423,15 +425,6 @@ definitions:
         type: array
       total:
         description: 账户总数
-        type: integer
-    type: object
-  service.AuthRes:
-    properties:
-      exchanger_balance:
-        type: string
-      exchanger_flag:
-        type: boolean
-      status:
         type: integer
     type: object
   service.Block:
@@ -1135,7 +1128,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.AuthRes'
+            $ref: '#/definitions/api.AuthRes'
         "400":
           description: Bad Request
           schema:

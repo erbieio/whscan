@@ -1,138 +1,148 @@
 package utils
 
 import (
-	"math/big"
-	"strings"
-
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
+	"context"
+	"server/common/types"
 )
 
-var ERC20ABI abi.ABI
-
-func init() {
-	erc20 := "[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Approval\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Transfer\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"}],\"name\":\"allowance\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"approve\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"subtractedValue\",\"type\":\"uint256\"}],\"name\":\"decreaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"addedValue\",\"type\":\"uint256\"}],\"name\":\"increaseAllowance\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"transferFrom\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
-	ERC20ABI, _ = abi.JSON(strings.NewReader(erc20))
-}
+var (
+	nameSelector         = "0x06fdde03"
+	symbolSelector       = "0x95d89b41"
+	decimalsSelector     = "0x313ce567"
+	totalSupplySelector  = "0x18160ddd"
+	allowanceSelector    = "0xdd62ed3e"
+	balanceOfSelector    = "0x70a08231"
+	transferSelector     = "0xa9059cbb"
+	transferFromSelector = "0x23b872dd"
+	approveSelector      = "0x095ea7b3"
+)
 
 // Name 查询给定ERC20合约的代币名称（可选接口）
-func Name(caller bind.ContractCaller, address common.Address) (string, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, DefaultOpts, &out, "name")
-
+func Name(client ContractClient, address types.Address) (string, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": nameSelector,
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
 		return *new(string), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(string)).(*string)
-
-	return out0, err
+	return ABIDecodeString(string(out))
 }
 
 // Symbol 查询给定ERC20合约的代币符号（可选接口）
-func Symbol(caller bind.ContractCaller, address common.Address) (string, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, DefaultOpts, &out, "symbol")
-
+func Symbol(client ContractClient, address types.Address) (string, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": symbolSelector,
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
 		return *new(string), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(string)).(*string)
-
-	return out0, err
+	return ABIDecodeString(string(out))
 }
 
 // Decimals 查询给定ERC20合约的代币符号（可选接口）
-func Decimals(caller bind.ContractCaller, address common.Address) (uint8, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, DefaultOpts, &out, "decimals")
-
+func Decimals(client ContractClient, address types.Address) (uint8, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": decimalsSelector,
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		return *new(uint8), err
+		return 0, err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
-
-	return out0, err
+	return ABIDecodeUint8(string(out))
 }
 
 // TotalSupply 查询给定ERC20合约的代币发行总量（必须接口）
-func TotalSupply(caller bind.ContractCaller, address common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, DefaultOpts, &out, "totalSupply")
-
+func TotalSupply(client ContractClient, address types.Address) (types.Uint256, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": totalSupplySelector,
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		return *new(*big.Int), err
+		return "", err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
+	return ABIDecodeUint256(string(out))
 }
 
-func Allowance(caller bind.ContractCaller, address, owner, spender common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, DefaultOpts, &out, "allowance", owner, spender)
-
+func Allowance(client ContractClient, address, owner, spender types.Address) (types.Uint256, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": allowanceSelector + "000000000000000000000000" + string(owner[2:]) + "000000000000000000000000" + string(spender[2:]),
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		return *new(*big.Int), err
+		return "", err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
+	return ABIDecodeUint256(string(out))
 }
 
-func BalanceOf(caller bind.ContractCaller, address, account common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, DefaultOpts, &out, "balanceOf", account)
-
+func BalanceOf(client ContractClient, address, account types.Address) (types.Uint256, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": balanceOfSelector + "000000000000000000000000" + string(account[2:]),
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		return *new(*big.Int), err
+		return "", err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
+	return ABIDecodeUint256(string(out))
 }
 
-func Transfer(caller bind.ContractCaller, callOpts *bind.CallOpts, address, to common.Address, amount *big.Int) (bool, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, callOpts, &out, "transfer", to, amount)
-
+func Transfer(client ContractClient, address, to types.Address, amount types.Uint256, caller *types.Address) (bool, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": transferSelector + "000000000000000000000000" + string(to[2:]) + string(amount[2:]),
+	}
+	if caller != nil {
+		msg["from"] = *caller
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		return *new(bool), err
+		return false, err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
+	return ABIDecodeBool(string(out))
 }
 
-func TransferFrom(caller bind.ContractCaller, callOpts *bind.CallOpts, address, from, to common.Address, amount *big.Int) (bool, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, callOpts, &out, "transferFrom", from, to, amount)
-
+func TransferFrom(client ContractClient, address, from, to types.Address, amount types.Uint256, caller *types.Address) (bool, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": transferFromSelector + "000000000000000000000000" + string(from[2:]) + "000000000000000000000000" + string(to[2:]) + string(amount[2:]),
+	}
+	if caller != nil {
+		msg["from"] = *caller
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		return *new(bool), err
+		return false, err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
+	return ABIDecodeBool(string(out))
 }
 
-func Approve(caller bind.ContractCaller, callOpts *bind.CallOpts, address, spender common.Address, amount *big.Int) (bool, error) {
-	var out []interface{}
-	err := Call(ERC20ABI, address, caller, callOpts, &out, "approve", spender, amount)
-
+func Approve(client ContractClient, address, spender types.Address, amount types.Uint256, caller *types.Address) (bool, error) {
+	msg := map[string]interface{}{
+		"to":   address,
+		"data": approveSelector + "000000000000000000000000" + string(spender[2:]) + string(amount[2:]),
+	}
+	if caller != nil {
+		msg["from"] = *caller
+	}
+	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		return *new(bool), err
+		return false, err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
+	return ABIDecodeBool(string(out))
 }

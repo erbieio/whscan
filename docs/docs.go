@@ -664,7 +664,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.AuthRes"
+                            "$ref": "#/definitions/api.AuthRes"
                         }
                     },
                     "400": {
@@ -1210,6 +1210,21 @@ var doc = `{
         }
     },
     "definitions": {
+        "api.AuthRes": {
+            "type": "object",
+            "properties": {
+                "exchanger_balance": {
+                    "type": "string"
+                },
+                "exchanger_flag": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "2 交易所付费状态正常  其他数字为欠费或者没交费",
+                    "type": "integer"
+                }
+            }
+        },
         "api.CheckAuthRes": {
             "type": "object",
             "properties": {
@@ -1218,19 +1233,7 @@ var doc = `{
                     "type": "integer"
                 },
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "exchanger_balance": {
-                            "type": "string"
-                        },
-                        "exchanger_flag": {
-                            "type": "boolean"
-                        },
-                        "status": {
-                            "description": "2 交易所付费状态正常  其他数字为欠费或者没交费",
-                            "type": "integer"
-                        }
-                    }
+                    "$ref": "#/definitions/api.AuthRes"
                 },
                 "msg": {
                     "type": "string"
@@ -1803,20 +1806,6 @@ var doc = `{
                 },
                 "total": {
                     "description": "账户总数",
-                    "type": "integer"
-                }
-            }
-        },
-        "service.AuthRes": {
-            "type": "object",
-            "properties": {
-                "exchanger_balance": {
-                    "type": "string"
-                },
-                "exchanger_flag": {
-                    "type": "boolean"
-                },
-                "status": {
                     "type": "integer"
                 }
             }
