@@ -36,7 +36,7 @@ func TestKeccak256Hash(t *testing.T) {
 
 func TestPubkeyToAddress(t *testing.T) {
 	key, _ := HexToECDSA("7bbfec284ee43e328438d46ec803863c8e1367ab46072f7864c07e0a03ba61fd")
-	t.Log(PubkeyToAddress(key.PublicKey))
+	t.Log(PubkeyToAddress(&key.PublicKey))
 	// 0x394586580ff4170c8a0244837202cbabe9070f66
 }
 

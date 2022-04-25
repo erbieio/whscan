@@ -5,22 +5,22 @@ import (
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
-	"math/big"
-	"strconv"
-	"strings"
-
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	. "github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"golang.org/x/crypto/sha3"
+	"math/big"
 	"server/common/types"
+	"strconv"
 )
 
+// HexToBigInt 将不带0x前缀的16进制字符串转换成大数BigInt（非法输入会返回0）
 func HexToBigInt(hex string) types.BigInt {
 	b := new(big.Int)
-	b.UnmarshalText([]byte(hex))
+	b.SetString(hex, 16)
 	return types.BigInt(b.String())
 }
 
-// HexToUint256 将不带0x前缀的16进制字符串转换为uint256的大数
+// HexToUint256 将不带0x前缀的16进制字符串转换为256位BigInt（大于截断后面的，非法输入会返回0）
 func HexToUint256(hex string) types.BigInt {
 	if len(hex) > 64 {
 		hex = hex[:64]
@@ -30,22 +30,43 @@ func HexToUint256(hex string) types.BigInt {
 	return types.BigInt(b.String())
 }
 
-func HexToAddress(hex string) (types.Address, error) {
+// HexToAddress 将不带0x前缀的16进制字符串转换为Address（大于截断前面的）
+func HexToAddress(hex string) types.Address {
+	if len(hex) < 40 {
+		hex = "0000000000000000000000000000000000000000" + hex
+	}
+	return types.Address("0x" + hex[len(hex)-40:])
+}
+
+// ParseAddress 将带前缀0x的16进制的字符串转换成地址
+func ParseAddress(hex string) (types.Address, error) {
 	if len(hex) != 42 {
 		return "", fmt.Errorf("长度不是42")
 	}
 	if hex[0] != '0' || (hex[1] != 'x' && hex[1] != 'X') {
 		return "", fmt.Errorf("前缀不是0x")
 	}
-	for _, c := range hex[2:] {
-		if ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F') {
+	for i, c := range []byte(hex) {
+		if '0' <= c && c <= '9' {
+			continue
+		}
+		if 'a' <= c && c <= 'f' {
+			continue
+		}
+		if 'A' <= c && c <= 'F' {
+			[]byte(hex)[i] = c - 27
+			continue
+		}
+		if 'X' == c || 'x' == c {
+			[]byte(hex)[i] = 'x'
 			continue
 		}
 		return "", fmt.Errorf("非法字符:%v", c)
 	}
-	return types.Address(strings.ToLower(hex)), nil
+	return types.Address(hex), nil
 }
 
+// BigToAddress 大数转换成地址（数太大会截断前面的）
 func BigToAddress(big *big.Int) types.Address {
 	addr := "0000000000000000000000000000000000000000"
 	if big != nil {
@@ -54,22 +75,31 @@ func BigToAddress(big *big.Int) types.Address {
 	return types.Address("0x" + addr[len(addr)-40:])
 }
 
-func PubkeyToAddress(p ecdsa.PublicKey) types.Address {
+func PubkeyToAddress(p *ecdsa.PublicKey) types.Address {
 	data := elliptic.Marshal(secp256k1.S256(), p.X, p.Y)
-	return types.Address("0x" + Keccak256(data[1:])[26:])
+	return types.Address("0x" + hex.EncodeToString(Keccak256(data[1:])[12:]))
+}
+
+func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
+	s, _, err := RecoverCompact(hash, sig)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.ToECDSA(), nil
 }
 
 func Keccak256Hash(data ...[]byte) (h types.Hash) {
-	return types.Hash(Keccak256(data...))
+	return types.Hash(hex.EncodeToString(Keccak256(data...)))
 }
 
-func Keccak256(data ...[]byte) (h string) {
+func Keccak256(data ...[]byte) (h []byte) {
 	d := sha3.NewLegacyKeccak256()
 	for _, b := range data {
 		d.Write(b)
 	}
 
-	return "0x" + hex.EncodeToString(d.Sum(nil))
+	return d.Sum(nil)
 }
 
 func HexToECDSA(key string) (*ecdsa.PrivateKey, error) {
@@ -80,6 +110,24 @@ func HexToECDSA(key string) (*ecdsa.PrivateKey, error) {
 		return nil, fmt.Errorf("invalid hex data for private key")
 	}
 	return secp256k1.PrivKeyFromBytes(b).ToECDSA(), nil
+}
+
+func RecoverAddress(msg string, hexSig string) (types.Address, error) {
+	sig, _ := hex.DecodeString(hexSig[2:])
+	if len(sig) != 65 {
+		return "", fmt.Errorf("signature must be 65 bytes long")
+	}
+	if sig[64] != 27 && sig[64] != 28 {
+		return "", fmt.Errorf("invalid Ethereum signature (V is not 27 or 28)")
+	}
+	sig[64] -= 27
+	msg = fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(msg), msg)
+	hash := Keccak256([]byte(msg))
+	rpk, err := SigToPub(hash, sig)
+	if err != nil {
+		return "", err
+	}
+	return PubkeyToAddress(rpk), nil
 }
 
 // ParsePage 解析分页参数，默认值是第一页10条记录

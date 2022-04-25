@@ -7,12 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
-	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rpc"
 	"server/common/model"
 	. "server/common/types"
 	"server/common/utils"
@@ -46,7 +41,7 @@ var NotFound = fmt.Errorf("not found")
 func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, error) {
 	var raw json.RawMessage
 	// 获取区块及其交易
-	err := ec.c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
+	err := ec.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
 	if err != nil {
 		return nil, err
 	} else if len(raw) == 0 {
@@ -58,32 +53,18 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 		return nil, err
 	}
 
-	// Quick-verify transaction and uncle lists. This mostly helps with debugging the server.
-	if string(block.Sha3Uncles) == types.EmptyUncleHash.String() && len(block.UncleHashes) > 0 {
-		return nil, fmt.Errorf("server returned non-empty uncle list but block header indicates no uncles")
-	}
-	if string(block.Sha3Uncles) != types.EmptyUncleHash.String() && len(block.UncleHashes) == 0 {
-		return nil, fmt.Errorf("server returned empty uncle list but block header indicates uncles")
-	}
-	if string(block.TransactionsRoot) == types.EmptyRootHash.String() && len(block.CacheTxs) > 0 {
-		return nil, fmt.Errorf("server returned non-empty transaction list but block header indicates no transactions")
-	}
-	if string(block.TransactionsRoot) != types.EmptyRootHash.String() && len(block.CacheTxs) == 0 {
-		return nil, fmt.Errorf("server returned empty transaction list but block header indicates transactions")
-	}
-
 	if totalTransaction := len(block.CacheTxs); totalTransaction > 0 {
 		block.TotalTransaction = Uint64(totalTransaction)
 		// 获取交易收据
-		reqs := make([]rpc.BatchElem, totalTransaction)
+		reqs := make([]BatchElem, totalTransaction)
 		for i, tx := range block.CacheTxs {
-			reqs[i] = rpc.BatchElem{
+			reqs[i] = BatchElem{
 				Method: "eth_getTransactionReceipt",
 				Args:   []interface{}{tx.Hash},
 				Result: &block.CacheTxs[i].Receipt,
 			}
 		}
-		if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+		if err := ec.BatchCallContext(ctx, reqs); err != nil {
 			return nil, err
 		}
 		for i := range reqs {
@@ -92,37 +73,37 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 			}
 		}
 		// 获取收据logs,只能根据区块哈希查，区块高度会查到
-		err := ec.c.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
+		err := ec.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
 		if err != nil {
 			return nil, err
 		}
 		// 获取解析内部交易
-		//for _, tx := range block.CacheTxs {
-		//	to := tx.To
-		//	if to == nil {
-		//		to = tx.ContractAddress
-		//	}
-		//	internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
-		//	if err != nil {
-		//		return nil, err
-		//	}
-		//	block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
-		//}
+		for _, tx := range block.CacheTxs {
+			to := tx.To
+			if to == nil {
+				to = tx.ContractAddress
+			}
+			internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
+			if err != nil {
+				return nil, err
+			}
+			block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
+		}
 	}
 
 	// 获取叔块
 	block.UnclesCount = Uint64(len(block.UncleHashes))
 	if block.UnclesCount > 0 {
 		block.CacheUncles = make([]*model.Uncle, block.UnclesCount)
-		reqs := make([]rpc.BatchElem, block.UnclesCount)
+		reqs := make([]BatchElem, block.UnclesCount)
 		for i := range reqs {
-			reqs[i] = rpc.BatchElem{
+			reqs[i] = BatchElem{
 				Method: "eth_getUncleByBlockHashAndIndex",
 				Args:   []interface{}{block.Hash, Uint64(i)},
 				Result: &block.CacheUncles[i],
 			}
 		}
-		if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+		if err := ec.BatchCallContext(ctx, reqs); err != nil {
 			return nil, err
 		}
 		for i := range reqs {
@@ -150,20 +131,20 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 	}
 
 	// 获取账户属性
-	reqs := make([]rpc.BatchElem, 0, 2*len(block.CacheAccounts))
+	reqs := make([]BatchElem, 0, 2*len(block.CacheAccounts))
 	for _, account := range block.CacheAccounts {
-		reqs = append(reqs, rpc.BatchElem{
+		reqs = append(reqs, BatchElem{
 			Method: "eth_getBalance",
 			Args:   []interface{}{account.Address, toBlockNumArg(nil)},
 			Result: &account.Balance,
 		})
-		reqs = append(reqs, rpc.BatchElem{
+		reqs = append(reqs, BatchElem{
 			Method: "eth_getTransactionCount",
 			Args:   []interface{}{account.Address, toBlockNumArg(nil)},
 			Result: &account.Nonce,
 		})
 	}
-	if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+	if err := ec.BatchCallContext(ctx, reqs); err != nil {
 		return nil, err
 	}
 	for i := range reqs {
@@ -174,15 +155,15 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 
 	// 获取合约属性
 	if len(block.CacheContracts) > 0 {
-		reqs := make([]rpc.BatchElem, 0, len(block.CacheContracts))
+		reqs := make([]BatchElem, 0, len(block.CacheContracts))
 		for _, contract := range block.CacheContracts {
-			reqs = append(reqs, rpc.BatchElem{
+			reqs = append(reqs, BatchElem{
 				Method: "eth_getCode",
 				Args:   []interface{}{contract.Address, toBlockNumArg(nil)},
 				Result: &contract.Code,
 			})
 		}
-		if err := ec.c.BatchCallContext(ctx, reqs); err != nil {
+		if err := ec.BatchCallContext(ctx, reqs); err != nil {
 			return nil, err
 		}
 		for i := range reqs {
@@ -193,8 +174,8 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 
 		for _, contract := range block.CacheContracts {
 			code, _ := hex.DecodeString(contract.Code[2:])
-			hash := crypto.Keccak256Hash(code).String()
-			block.CacheAccounts[contract.Address].CodeHash = (*Hash)(&hash)
+			hash := utils.Keccak256Hash(code)
+			block.CacheAccounts[contract.Address].CodeHash = &hash
 			if len(contract.Code) > 2 {
 				contract.ERC, err = utils.GetERC(ec, contract.Address)
 				if err != nil {
@@ -228,23 +209,24 @@ func (ec *Client) decodeWH(wh *DecodeRet) (err error) {
 // decodeWHGenesis 导入创世区块注入的SNFT元信息
 func (ec *Client) decodeWHGenesis(wh *DecodeRet) (err error) {
 	SNFTAddr := big.NewInt(0)
+	big1 := big.NewInt(1)
 	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
 lo:
-	addr := strings.ToLower(common.BigToAddress(SNFTAddr).String())
-	snft, err := ec.GetSNFT(addr, "0x0")
+	addr := utils.BigToAddress(SNFTAddr)
+	snft, err := ec.GetSNFT(string(addr), "0x0")
 	if err != nil {
 		return
 	}
 	if snft.MetaURL != "" {
 		wh.CreateSNFTs = append(wh.CreateSNFTs, &model.OfficialNFT{
-			Address:      addr,
+			Address:      string(addr),
 			CreateAt:     uint64(wh.Block.Timestamp),
 			CreateNumber: 0,
 			Creator:      snft.Creator,
 			RoyaltyRatio: snft.Royalty,
 			MetaUrl:      snft.MetaURL,
 		})
-		SNFTAddr = SNFTAddr.Add(SNFTAddr, common.Big1)
+		SNFTAddr = SNFTAddr.Add(SNFTAddr, big1)
 		goto lo
 	}
 	return
@@ -451,7 +433,7 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 	case 16: //NFT惰性定价购买交易，买家发起（先铸造NFT，卖家给价格签名）
 		// 从签名恢复NFT创建者地址（也是卖家地址）
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := recoverAddress(msg, w.Seller2.Sig)
+		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
@@ -466,17 +448,17 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			ExchangerAddr: w.Seller2.Exchanger,
-			Creator:       creator,
+			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
 			TxHash:        txHash,
-			Owner:         creator,
+			Owner:         string(creator),
 		})
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        4,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: &w.Seller2.Exchanger,
-			From:          creator,
+			From:          string(creator),
 			To:            from,   //交易发起者即买家
 			Price:         &value, //单位为wei
 			Timestamp:     timestamp,
@@ -486,7 +468,7 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 	case 17: //NFT惰性定价购买交易，交易所发起（先铸造NFT，卖家给价格签名）
 		// 从签名恢复NFT创建者地址（也是卖家地址）
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := recoverAddress(msg, w.Seller2.Sig)
+		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
@@ -501,17 +483,17 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			ExchangerAddr: from, //交易发起者即交易所地址
-			Creator:       creator,
+			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
 			TxHash:        txHash,
-			Owner:         creator,
+			Owner:         string(creator),
 		})
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        5,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: &from, //交易发起者即交易所地址
-			From:          creator,
+			From:          string(creator),
 			To:            to,
 			Price:         &value, //单位为wei
 			Timestamp:     timestamp,
@@ -521,14 +503,14 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 	case 18: //NFT出价成交交易，由交易所授权的地址发起（买家给价格签名）
 		// 从授权签名恢复交易所地址
 		msg := w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
-		exchangerAddr, err := recoverAddress(msg, w.ExchangerAuth.Sig)
+		exchangerAddr, err := utils.RecoverAddress(msg, w.ExchangerAuth.Sig)
 		if err != nil {
 			return err
 		}
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        6,
 			NFTAddr:       &w.Buyer.NFTAddress,
-			ExchangerAddr: &exchangerAddr,
+			ExchangerAddr: (*string)(&exchangerAddr),
 			From:          "", //插入数据库时实时填充原拥有者
 			To:            to,
 			Price:         &value, //单位为wei
@@ -539,13 +521,13 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 	case 19: //NFT惰性出价成交交易，由交易所授权的地址发起（买家给价格签名）
 		// 从签名恢复NFT创建者地址（也是卖家地址）
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := recoverAddress(msg, w.Seller2.Sig)
+		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
 		// 从授权签名恢复交易所地址
 		msg = w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
-		exchangerAddr, err := recoverAddress(msg, w.ExchangerAuth.Sig)
+		exchangerAddr, err := utils.RecoverAddress(msg, w.ExchangerAuth.Sig)
 		if err != nil {
 			return err
 		}
@@ -559,18 +541,18 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
-			ExchangerAddr: exchangerAddr, //交易发起者即交易所地址
-			Creator:       creator,
+			ExchangerAddr: string(exchangerAddr), //交易发起者即交易所地址
+			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
 			TxHash:        txHash,
-			Owner:         creator,
+			Owner:         string(creator),
 		})
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        7,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: &exchangerAddr,
-			From:          creator,
+			ExchangerAddr: (*string)(&exchangerAddr),
+			From:          string(creator),
 			To:            to,
 			Price:         &value, //单位为wei
 			Timestamp:     timestamp,

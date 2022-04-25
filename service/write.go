@@ -22,6 +22,7 @@ var cache = struct {
 	TotalAccount     uint64       //总账户数量
 	TotalBalance     types.BigInt //链的币总额
 	TotalUserNFT     uint64       //用户NFT总数
+	TotalOfficialNFT uint64       //官方NFT总数
 }{}
 
 // InitCache 从数据库初始化查询缓存
@@ -49,6 +50,10 @@ func initCache() (err error) {
 		return err
 	}
 	cache.TotalUserNFT = number
+	if err = DB.Model(&model.OfficialNFT{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
+		return err
+	}
+	cache.TotalOfficialNFT = number
 	return err
 }
 
@@ -58,6 +63,10 @@ func TotalBlock() uint64 {
 
 func TotalTransaction() uint64 {
 	return cache.TotalTransaction
+}
+
+func TotalOfficialNFT() uint64 {
+	return cache.TotalOfficialNFT
 }
 
 var lastAccount = time.Now()
@@ -175,6 +184,7 @@ func BlockInsert(block *ethclient.DecodeRet) error {
 		cache.TotalTransaction += uint64(block.TotalTransaction)
 		cache.TotalUncle += uint64(block.UnclesCount)
 		cache.TotalUserNFT += uint64(len(block.CreateNFTs))
+		cache.TotalOfficialNFT += uint64(len(block.CreateSNFTs))
 	}
 	return err
 }

@@ -120,7 +120,11 @@ func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAnd
 	if err != nil {
 		return
 	}
-	err = db.Count(&res.Total).Error
+	if owner == "" && collectionId == "" {
+		res.Total = int64(TotalOfficialNFT())
+	} else {
+		err = db.Count(&res.Total).Error
+	}
 	return
 }
 
