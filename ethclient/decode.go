@@ -78,17 +78,17 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 			return nil, err
 		}
 		// 获取解析内部交易
-		for _, tx := range block.CacheTxs {
-			to := tx.To
-			if to == nil {
-				to = tx.ContractAddress
-			}
-			internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
-			if err != nil {
-				return nil, err
-			}
-			block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
-		}
+		//for _, tx := range block.CacheTxs {
+		//	to := tx.To
+		//	if to == nil {
+		//		to = tx.ContractAddress
+		//	}
+		//	internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
+		//	if err != nil {
+		//		return nil, err
+		//	}
+		//	block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
+		//}
 	}
 
 	// 获取叔块
@@ -185,7 +185,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 		}
 	}
 
-	//err = ec.decodeWH(&block)
+	err = ec.decodeWH(&block)
 	return &block, err
 }
 

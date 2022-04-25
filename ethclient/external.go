@@ -89,19 +89,19 @@ func (ec *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, tx
 		switch op {
 		case "call", "callcode":
 			checkDepth(&callers, log.Depth, to)
-			tmp := utils.HexToAddress(stack[len(stack)-2])
+			tmp := utils.HexToAddress(stack[len(stack)-2][2:])
 			to, value = &tmp, utils.HexToBigInt(stack[len(stack)-3][2:])
 		case "delegatecall":
 			callers = append(callers, callers[len(callers)-1])
-			tmp := utils.HexToAddress(stack[len(stack)-2])
+			tmp := utils.HexToAddress(stack[len(stack)-2][2:])
 			to = &tmp
 		case "staticcall":
 			checkDepth(&callers, log.Depth, to)
-			tmp := utils.HexToAddress(stack[len(stack)-2])
+			tmp := utils.HexToAddress(stack[len(stack)-2][2:])
 			to = &tmp
 		case "selfdestruct":
 			checkDepth(&callers, log.Depth, to)
-			tmp := utils.HexToAddress(stack[len(stack)-1])
+			tmp := utils.HexToAddress(stack[len(stack)-1][2:])
 			to = &tmp
 			setCreateAddr(i)
 		case "create", "create2":

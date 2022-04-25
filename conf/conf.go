@@ -1,13 +1,13 @@
 package conf
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"math/big"
 	"os"
 	"strconv"
 
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/joho/godotenv"
 	"server/common/utils"
 )
@@ -28,7 +28,7 @@ var (
 // 从配置实例化的全局可用对象
 var (
 	ChainUrl   string            //链节点地址
-	PrivateKey *ecdsa.PrivateKey //私钥
+	PrivateKey *btcec.PrivateKey //私钥
 	Amount     *big.Int          //币数量（单位：wei）
 )
 

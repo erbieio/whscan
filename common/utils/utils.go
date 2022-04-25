@@ -1,16 +1,12 @@
 package utils
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	. "github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
-	"golang.org/x/crypto/sha3"
 	"math/big"
-	"server/common/types"
 	"strconv"
+
+	"server/common/types"
 )
 
 // HexToBigInt 将不带0x前缀的16进制字符串转换成大数BigInt（非法输入会返回0）
@@ -73,61 +69,6 @@ func BigToAddress(big *big.Int) types.Address {
 		addr += big.Text(16)
 	}
 	return types.Address("0x" + addr[len(addr)-40:])
-}
-
-func PubkeyToAddress(p *ecdsa.PublicKey) types.Address {
-	data := elliptic.Marshal(secp256k1.S256(), p.X, p.Y)
-	return types.Address("0x" + hex.EncodeToString(Keccak256(data[1:])[12:]))
-}
-
-func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
-	s, _, err := RecoverCompact(hash, sig)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.ToECDSA(), nil
-}
-
-func Keccak256Hash(data ...[]byte) (h types.Hash) {
-	return types.Hash(hex.EncodeToString(Keccak256(data...)))
-}
-
-func Keccak256(data ...[]byte) (h []byte) {
-	d := sha3.NewLegacyKeccak256()
-	for _, b := range data {
-		d.Write(b)
-	}
-
-	return d.Sum(nil)
-}
-
-func HexToECDSA(key string) (*ecdsa.PrivateKey, error) {
-	b, err := hex.DecodeString(key)
-	if byteErr, ok := err.(hex.InvalidByteError); ok {
-		return nil, fmt.Errorf("invalid hex character %q in private key", byte(byteErr))
-	} else if err != nil {
-		return nil, fmt.Errorf("invalid hex data for private key")
-	}
-	return secp256k1.PrivKeyFromBytes(b).ToECDSA(), nil
-}
-
-func RecoverAddress(msg string, hexSig string) (types.Address, error) {
-	sig, _ := hex.DecodeString(hexSig[2:])
-	if len(sig) != 65 {
-		return "", fmt.Errorf("signature must be 65 bytes long")
-	}
-	if sig[64] != 27 && sig[64] != 28 {
-		return "", fmt.Errorf("invalid Ethereum signature (V is not 27 or 28)")
-	}
-	sig[64] -= 27
-	msg = fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(msg), msg)
-	hash := Keccak256([]byte(msg))
-	rpk, err := SigToPub(hash, sig)
-	if err != nil {
-		return "", err
-	}
-	return PubkeyToAddress(rpk), nil
 }
 
 // ParsePage 解析分页参数，默认值是第一页10条记录
