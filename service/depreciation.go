@@ -19,7 +19,7 @@ type Block struct {
 }
 
 func FetchBlocks_(page, size int) (data []Block, count int64, err error) {
-	err = DB.Model(&Block{}).Count(&count).Error
+	count = int64(TotalBlock())
 	err = DB.Model(&Block{}).Limit(size).Offset((page - 1) * size).Order("number DESC").Find(&data).Error
 	return data, count, err
 }
@@ -63,7 +63,14 @@ func FetchTxs(page, size int, addr, block string) (data []Transaction, count int
 	if block != "" {
 		db = db.Where("block_number=?", block)
 	}
-	err = db.Count(&count).Error
+	if addr == "" && block == "" {
+		count = int64(TotalTransaction())
+	} else {
+		err = db.Count(&count).Error
+	}
+	if err != nil {
+		return nil, 0, nil
+	}
 	err = db.Limit(size).Offset((page - 1) * size).Joins("LEFT JOIN blocks ON transactions.block_hash=blocks.hash").
 		Select("transactions.*, blocks.timestamp AS timestamp").Order("block_number DESC, tx_index DESC").Scan(&data).Error
 	return data, count, err

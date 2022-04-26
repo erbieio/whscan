@@ -1,4 +1,4 @@
-package ethclient
+package node
 
 import (
 	"testing"

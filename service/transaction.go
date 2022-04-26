@@ -16,16 +16,16 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 	if addr != nil {
 		db = db.Where("`from`=? OR `to`=?", *addr, *addr)
 	}
-	err = db.Order("block_number DESC, tx_index DESC").Offset((page - 1) * size).Limit(size).Find(&res.Transactions).Error
-	if err != nil {
-		return
-	}
 	if number != nil || addr != nil {
 		err = db.Model(&model.Transaction{}).Count(&res.Total).Error
 	} else {
 		// 使用缓存加速查询
 		res.Total = int64(TotalTransaction())
 	}
+	if err != nil {
+		return
+	}
+	err = db.Order("block_number DESC, tx_index DESC").Offset((page - 1) * size).Limit(size).Find(&res.Transactions).Error
 	return
 }
 

@@ -2,47 +2,40 @@ package extra
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"math/big"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"server/common/types"
+	"server/common/utils"
 	"server/conf"
+	"server/node"
 )
 
 var (
-	client     *rpc.Client        //以太坊RPC客户端
-	prv        *ecdsa.PrivateKey  //私钥对象
-	addr       common.Address     //私钥对应地址，持有大量测试ERB
-	signer     types.EIP155Signer //交易签名对象
-	amount     *big.Int           //发送测试币的数量
-	erbPayAddr string             //erbPay合约地址
+	client     *node.Client          //以太坊RPC客户端
+	prv        *secp256k1.PrivateKey //私钥对象
+	addr       types.Address         //私钥对应地址，持有大量测试ERB
+	chainId    *big.Int              //链ID
+	amount     *big.Int              //发送测试币的数量
+	erbPayAddr string                //erbPay合约地址
 )
 
 func init() {
 	var err error
-	client, err = rpc.Dial(conf.ChainUrl)
+	client, err = node.Dial(conf.ChainUrl)
 	if err != nil {
 		panic(err)
 	}
-	prv, err = crypto.HexToECDSA(conf.HexKey)
-	if err != nil {
-		panic(err)
-	}
-	addr = crypto.PubkeyToAddress(prv.PublicKey)
-	signer = types.NewEIP155Signer(big.NewInt(conf.ChainId))
-	amount = new(big.Int)
-	amount.SetString(conf.AmountStr, 0)
+	prv = conf.PrivateKey
+	addr = utils.PubkeyToAddress(prv.PubKey())
+	chainId = big.NewInt(conf.ChainId)
+	amount = conf.Amount
 	erbPayAddr = conf.ERBPay
 }
 
 // SendErb 发送测试ERB
 func SendErb(to string, ctx context.Context) error {
-	client := ethclient.NewClient(client)
 	nonce, err := client.PendingNonceAt(ctx, addr)
 	if err != nil {
 		return err
@@ -51,12 +44,13 @@ func SendErb(to string, ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	tx := types.NewTransaction(nonce, common.HexToAddress(to), amount, 21000, gasPrice, nil)
-	signedTx, err := types.SignTx(tx, signer, prv)
+	tx := utils.NewTx(nonce, types.Address(to), amount, 21000, gasPrice, nil)
+	rawTx, err := utils.SignTx(tx, chainId, prv)
 	if err != nil {
 		return err
 	}
-	return client.SendTransaction(ctx, signedTx)
+
+	return client.CallContext(ctx, nil, "eth_sendRawTransaction", rawTx)
 }
 
 func ExchangerAuth(addr string) (status uint64, flag bool, balance string, err error) {

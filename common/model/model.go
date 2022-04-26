@@ -90,27 +90,27 @@ type Contract struct {
 
 // Transaction 交易信息
 type Transaction struct {
-	BlockHash   types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //区块哈希
-	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:,sort:DESC"`     //区块号
-	From        types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //发送地址
-	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //接收地址
-	Input       string         `json:"input"`                                   //额外输入数据，合约调用编码数据
-	MethodId    *types.Bytes8  `json:"methodId,omitempty" gorm:"type:CHAR(18)"` //方法ID，普通交易为空
-	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //金额，单位wei
-	Nonce       types.Uint64   `json:"nonce"`                                   //随机数，发起账户的交易次数
-	Gas         types.Uint64   `json:"gas"`                                     //燃料
-	GasPrice    types.Uint64   `json:"gasPrice"`                                //燃料价格
-	Hash        types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //哈希
+	BlockHash   types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`              //区块哈希
+	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:idx_desc,sort:DESC"` //区块号
+	From        types.Address  `json:"from" gorm:"type:CHAR(42);index"`             //发送地址
+	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`               //接收地址
+	Input       string         `json:"input"`                                       //额外输入数据，合约调用编码数据
+	MethodId    *types.Bytes8  `json:"methodId,omitempty" gorm:"type:CHAR(18)"`     //方法ID，普通交易为空
+	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`              //金额，单位wei
+	Nonce       types.Uint64   `json:"nonce"`                                       //随机数，发起账户的交易次数
+	Gas         types.Uint64   `json:"gas"`                                         //燃料
+	GasPrice    types.Uint64   `json:"gasPrice"`                                    //燃料价格
+	Hash        types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`        //哈希
 	Receipt
 }
 
 // Receipt 交易收据
 type Receipt struct {
-	Status            *types.Uint64  `json:"status,omitempty"`                         //状态，1：成功；0：失败
-	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`                        //累计燃料消耗
-	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"`     //创建的合约地址
-	GasUsed           types.Uint64   `json:"gasUsed"`                                  //燃料消耗
-	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index:,sort:DESC"` //在区块内的序号
+	Status            *types.Uint64  `json:"status,omitempty"`                                 //状态，1：成功；0：失败
+	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`                                //累计燃料消耗
+	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"`             //创建的合约地址
+	GasUsed           types.Uint64   `json:"gasUsed"`                                          //燃料消耗
+	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index:idx_desc,sort:DESC"` //在区块内的序号
 }
 
 // Log 交易日志
@@ -188,7 +188,7 @@ type OfficialNFT struct {
 	Awardee      *string `json:"awardee"`                                  //被奖励的矿工地址
 	RewardAt     *uint64 `json:"reward_at"`                                //奖励时间戳,矿工被奖励这个OfficialNFT的时间
 	RewardNumber *uint64 `json:"reward_number"`                            //奖励区块高度,矿工被奖励这个OfficialNFT的区块高度
-	Owner        *string `json:"owner" gorm:"type:CHAR(44)"`               //所有者,未分配和回收的为null
+	Owner        *string `json:"owner" gorm:"type:CHAR(44);index"`         //所有者,未分配和回收的为null
 	RoyaltyRatio uint32  `json:"royalty_ratio"`                            //版税费率,单位万分之一
 	MetaUrl      string  `json:"meta_url"`                                 //元信息链接
 }

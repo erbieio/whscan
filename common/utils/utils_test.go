@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"server/common/model"
-
+	"fmt"
 	"math/big"
 	"testing"
+
+	"server/common/model"
 )
 
 func TestBigToAddress(t *testing.T) {
@@ -13,6 +14,9 @@ func TestBigToAddress(t *testing.T) {
 	t.Log(BigToAddress(nil))
 	a.SetString("bbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaa", 16)
 	t.Log(BigToAddress(a))
+	t.Log(a.SetString("0aabbb", 16))
+	t.Log(fmt.Sprintf("%s%x", "0x1234", 0))
+	t.Log(fmt.Sprintf("%s%x", "0x1234", 13))
 }
 
 func TestKeccak256Hash(t *testing.T) {
@@ -36,8 +40,23 @@ func TestKeccak256Hash(t *testing.T) {
 
 func TestPubkeyToAddress(t *testing.T) {
 	key, _ := HexToECDSA("7bbfec284ee43e328438d46ec803863c8e1367ab46072f7864c07e0a03ba61fd")
-	t.Log(PubkeyToAddress(&key.PublicKey))
+	t.Log(PubkeyToAddress(key.PubKey()))
 	// 0x394586580ff4170c8a0244837202cbabe9070f66
+	msg := "hello"
+	hash := Keccak256([]byte(msg))
+	sig, err := Sign(hash[:], key)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	t.Logf("%x", sig)
+	pub, err := SigToPub(hash, sig)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	t.Log(PubkeyToAddress(pub))
 }
 
 func TestUnpack1155TransferLog(t *testing.T) {

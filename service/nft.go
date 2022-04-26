@@ -17,11 +17,11 @@ func FetchUserNFTs(exchanger, owner string, page, size int) (res UserNFTsRes, er
 		db = db.Where("owner=?", owner)
 	}
 
-	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+	err = db.Model(&model.UserNFT{}).Count(&res.Total).Error
 	if err != nil {
 		return
 	}
-	err = db.Model(&model.UserNFT{}).Count(&res.Total).Error
+	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
 	return
 }
 
@@ -45,11 +45,12 @@ func FetchUserNFTsAndMeta(exchanger, collectionId, owner string, page, size int)
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
-	err = db.Select("user_nfts.*,nft_meta.*").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+
+	err = db.Count(&res.Total).Error
 	if err != nil {
 		return
 	}
-	err = db.Count(&res.Total).Error
+	err = db.Select("user_nfts.*,nft_meta.*").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 
@@ -71,11 +72,11 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 		db = db.Where("nft_addr=?", address)
 	}
 
-	err = db.Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTTxs).Error
+	err = db.Model(&model.NFTTx{}).Count(&res.Total).Error
 	if err != nil {
 		return
 	}
-	err = db.Model(&model.NFTTx{}).Count(&res.Total).Error
+	err = db.Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTTxs).Error
 	return
 }
 
@@ -90,11 +91,15 @@ func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
-	err = db.Order("create_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+	if owner == "" {
+		res.Total = int64(TotalOfficialNFT())
+	} else {
+		err = db.Count(&res.Total).Error
+	}
 	if err != nil {
 		return
 	}
-	err = db.Model(&model.OfficialNFT{}).Count(&res.Total).Error
+	err = db.Order("create_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
 	return
 }
 
@@ -115,16 +120,19 @@ func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAnd
 	if collectionId != "" {
 		db = db.Where("collection_id=?", collectionId)
 	}
-
-	err = db.Select("official_nfts.*,nft_meta.*").Order("create_number DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
-	if err != nil {
-		return
-	}
 	if owner == "" && collectionId == "" {
 		res.Total = int64(TotalOfficialNFT())
 	} else {
-		err = db.Count(&res.Total).Error
+		if collectionId == "" {
+			err = DB.Model(&model.OfficialNFT{}).Where("owner=?", owner).Count(&res.Total).Error
+		} else {
+			err = db.Count(&res.Total).Error
+		}
 	}
+	if err != nil {
+		return
+	}
+	err = db.Select("official_nfts.*,nft_meta.*").Order("create_number DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 

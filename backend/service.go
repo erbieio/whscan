@@ -7,26 +7,26 @@ import (
 
 	"server/common/types"
 	. "server/conf"
-	"server/ethclient"
+	"server/node"
 	"server/service"
 )
 
 func Run() {
 	interval := time.Duration(Interval) * time.Second
-	ethClient, err := ethclient.Dial(ChainUrl)
+	ethClient, err := node.Dial(ChainUrl)
 	if err != nil {
 		panic(err)
 	}
 	go Loop(ethClient, interval)
 }
 
-func Loop(ec *ethclient.Client, interval time.Duration) {
+func Loop(ec *node.Client, interval time.Duration) {
 	number := service.TotalBlock()
 	log.Printf("查询缓存初始化成功, 从%v区块开始数据分析", number)
 	for {
 		err := HandleBlock(ec, number)
 		if err != nil {
-			if err != ethclient.NotFound {
+			if err != node.NotFound {
 				log.Printf("在%v区块休眠, 错误：%v", number, err)
 			}
 			time.Sleep(interval)
@@ -36,7 +36,7 @@ func Loop(ec *ethclient.Client, interval time.Duration) {
 	}
 }
 
-func HandleBlock(ec *ethclient.Client, number uint64) error {
+func HandleBlock(ec *node.Client, number uint64) error {
 	ret, err := ec.DecodeBlock(context.Background(), types.Uint64(number))
 	if err != nil {
 		return err

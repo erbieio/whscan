@@ -1,10 +1,11 @@
-package ethclient
+package node
 
 import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/big"
 	"strconv"
 
@@ -38,10 +39,10 @@ type DecodeRet struct {
 var NotFound = fmt.Errorf("not found")
 
 // DecodeBlock 解析区块
-func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, error) {
+func (c *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, error) {
 	var raw json.RawMessage
 	// 获取区块及其交易
-	err := ec.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
+	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
 	if err != nil {
 		return nil, err
 	} else if len(raw) == 0 {
@@ -64,7 +65,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 				Result: &block.CacheTxs[i].Receipt,
 			}
 		}
-		if err := ec.BatchCallContext(ctx, reqs); err != nil {
+		if err := c.BatchCallContext(ctx, reqs); err != nil {
 			return nil, err
 		}
 		for i := range reqs {
@@ -73,7 +74,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 			}
 		}
 		// 获取收据logs,只能根据区块哈希查，区块高度会查到
-		err := ec.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
+		err := c.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
 		if err != nil {
 			return nil, err
 		}
@@ -83,7 +84,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 		//	if to == nil {
 		//		to = tx.ContractAddress
 		//	}
-		//	internalTxs, err := ec.GetInternalTx(ctx, number, tx.Hash, *to)
+		//	internalTxs, err := c.GetInternalTx(ctx, number, tx.Hash, *to)
 		//	if err != nil {
 		//		return nil, err
 		//	}
@@ -103,7 +104,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 				Result: &block.CacheUncles[i],
 			}
 		}
-		if err := ec.BatchCallContext(ctx, reqs); err != nil {
+		if err := c.BatchCallContext(ctx, reqs); err != nil {
 			return nil, err
 		}
 		for i := range reqs {
@@ -144,7 +145,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 			Result: &account.Nonce,
 		})
 	}
-	if err := ec.BatchCallContext(ctx, reqs); err != nil {
+	if err := c.BatchCallContext(ctx, reqs); err != nil {
 		return nil, err
 	}
 	for i := range reqs {
@@ -163,7 +164,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 				Result: &contract.Code,
 			})
 		}
-		if err := ec.BatchCallContext(ctx, reqs); err != nil {
+		if err := c.BatchCallContext(ctx, reqs); err != nil {
 			return nil, err
 		}
 		for i := range reqs {
@@ -177,7 +178,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 			hash := utils.Keccak256Hash(code)
 			block.CacheAccounts[contract.Address].CodeHash = &hash
 			if len(contract.Code) > 2 {
-				contract.ERC, err = utils.GetERC(ec, contract.Address)
+				contract.ERC, err = utils.GetERC(c, contract.Address)
 				if err != nil {
 					return nil, err
 				}
@@ -185,7 +186,7 @@ func (ec *Client) DecodeBlock(ctx context.Context, number Uint64) (*DecodeRet, e
 		}
 	}
 
-	err = ec.decodeWH(&block)
+	err = c.decodeWH(&block)
 	return &block, err
 }
 
@@ -198,22 +199,22 @@ type InjectSNFT struct {
 }
 
 // decodeWH 解析wormholes链独有的东西
-func (ec *Client) decodeWH(wh *DecodeRet) (err error) {
+func (c *Client) decodeWH(wh *DecodeRet) (err error) {
 	if wh.Block.Number == 0 {
-		return ec.decodeWHGenesis(wh)
+		return c.decodeWHGenesis(wh)
 	} else {
-		return ec.decodeWHBlock(wh)
+		return c.decodeWHBlock(wh)
 	}
 }
 
 // decodeWHGenesis 导入创世区块注入的SNFT元信息
-func (ec *Client) decodeWHGenesis(wh *DecodeRet) (err error) {
-	SNFTAddr := big.NewInt(0)
+func (c *Client) decodeWHGenesis(wh *DecodeRet) (err error) {
 	big1 := big.NewInt(1)
+	SNFTAddr := big.NewInt(0)
 	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
 lo:
 	addr := utils.BigToAddress(SNFTAddr)
-	snft, err := ec.GetSNFT(string(addr), "0x0")
+	snft, err := c.GetSNFT(string(addr), "0x0")
 	if err != nil {
 		return
 	}
@@ -233,9 +234,9 @@ lo:
 }
 
 // decodeWHBlock 导入区块分发的SNFT元信息底层NFT交易
-func (ec *Client) decodeWHBlock(wh *DecodeRet) (err error) {
+func (c *Client) decodeWHBlock(wh *DecodeRet) (err error) {
 	// 矿工奖励SNFT处理
-	rewards, err := ec.GetReward(wh.Block.Number.Hex())
+	rewards, err := c.GetReward(wh.Block.Number.Hex())
 	if err != nil {
 		return
 	}
@@ -249,7 +250,7 @@ func (ec *Client) decodeWHBlock(wh *DecodeRet) (err error) {
 		})
 		//---todo 临时解决NFT元信息等没有注入问题，正常应该解析官方注入InjectSNFT的交易来填写SNFT元信息----
 		var snft SNFT
-		snft, err = ec.GetSNFT(rewards[i].NfTAddress, wh.Block.Number.Hex())
+		snft, err = c.GetSNFT(rewards[i].NfTAddress, wh.Block.Number.Hex())
 		if err != nil {
 			return
 		}
@@ -264,7 +265,7 @@ func (ec *Client) decodeWHBlock(wh *DecodeRet) (err error) {
 	}
 	// wormholes交易处理
 	for _, tx := range wh.CacheTxs {
-		err = ec.decodeWHTx(wh.Block, tx, wh)
+		err = c.decodeWHTx(wh.Block, tx, wh)
 		if err != nil {
 			return
 		}
@@ -273,7 +274,7 @@ func (ec *Client) decodeWHBlock(wh *DecodeRet) (err error) {
 }
 
 // decodeWHTx 解析wormholes区块链的特殊交易
-func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *DecodeRet) (err error) {
+func (c *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *DecodeRet) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
 	// 非wormholes类型和失败的交易不解析
 	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
@@ -403,7 +404,7 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 		if err != nil {
 			return
 		}
-		fmt.Println("官方注入:", startIndex, w.Number, w.Royalty, w.Creator, w.Dir)
+		log.Println("官方注入:", startIndex, w.Number, w.Royalty, w.Creator, w.Dir)
 		wh.InjectSNFTs = append(wh.InjectSNFTs, &InjectSNFT{startIndex, w.Number, w.Royalty, w.Dir, w.Creator, blockNumber, timestamp})
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
@@ -584,4 +585,20 @@ func (ec *Client) decodeWHTx(block *model.Block, tx *model.Transaction, wh *Deco
 		})
 	}
 	return
+}
+
+// realMeatUrl 解析真正的metaUrl
+func realMeatUrl(meta string) string {
+	data, err := hex.DecodeString(meta)
+	if err != nil {
+		return ""
+	}
+	r := struct {
+		Meta string `json:"meta"`
+	}{}
+	err = json.Unmarshal(data, &r)
+	if err != nil {
+		return ""
+	}
+	return r.Meta
 }

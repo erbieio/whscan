@@ -263,7 +263,7 @@ func (a *BigInt) UnmarshalText(input []byte) error {
 func (a BigInt) Hex() string {
 	b := new(big.Int)
 	b.SetString(string(a), 10)
-	return b.Text(16)
+	return "0x" + b.Text(16)
 }
 
 type StrArray []string

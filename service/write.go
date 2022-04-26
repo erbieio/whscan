@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -11,7 +12,7 @@ import (
 	"server/common/model"
 	"server/common/types"
 	"server/common/utils"
-	"server/ethclient"
+	"server/node"
 )
 
 // cache 缓存一些数据库查询，加速查询
@@ -90,7 +91,7 @@ func getNFTAddr(next *big.Int) string {
 	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalUserNFT+1)))))
 }
 
-func BlockInsert(block *ethclient.DecodeRet) error {
+func BlockInsert(block *node.DecodeRet) error {
 	err := DB.Transaction(func(t *gorm.DB) error {
 		for _, log := range block.CacheLogs {
 			if len(log.Topics) > 0 {
@@ -196,10 +197,17 @@ func erc(addr types.Address) (erc types.ERC, err error) {
 	return
 }
 
-func WHInsert(tx *gorm.DB, wh *ethclient.DecodeRet) (err error) {
+func WHInsert(tx *gorm.DB, wh *node.DecodeRet) (err error) {
+	// 回收SNFT
+	for _, snft := range wh.RecycleSNFTs {
+		err = RecycleSNFT(tx, snft)
+		if err != nil {
+			return
+		}
+	}
 	// SNFT创建
 	for _, snft := range wh.CreateSNFTs {
-		err = tx.Create(snft).Error
+		err = tx.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(snft).Error
 		if err != nil {
 			return
 		}
@@ -207,7 +215,7 @@ func WHInsert(tx *gorm.DB, wh *ethclient.DecodeRet) (err error) {
 	}
 	// SNFT奖励
 	for _, snft := range wh.RewardSNFTs {
-		err = tx.Select("owner", "awardee", "reward_number", "reward_at").Save(snft).Error
+		err = tx.Select("owner", "awardee", "reward_number", "reward_at").Updates(snft).Error
 		if err != nil {
 			return
 		}
@@ -231,13 +239,6 @@ func WHInsert(tx *gorm.DB, wh *ethclient.DecodeRet) (err error) {
 	// 交易所创建或者关闭
 	for _, exchanger := range wh.Exchanger {
 		err = SaveExchanger(tx, exchanger)
-		if err != nil {
-			return
-		}
-	}
-	// 回收SNFT
-	for _, snft := range wh.RecycleSNFTs {
-		err = RecycleSNFT(tx, snft)
 		if err != nil {
 			return
 		}
@@ -271,7 +272,7 @@ func SaveNFTMeta(blockNumber uint64, nftAddr, metaUrl string) {
 	var err error
 	defer func() {
 		if err != nil {
-			fmt.Println("解析存储NFT元信息失败", nftAddr, metaUrl, err)
+			log.Println("解析存储NFT元信息失败", nftAddr, metaUrl, err)
 		}
 	}()
 	nftMeta, err := GetNFTMeta(metaUrl)
@@ -325,7 +326,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		if nt.From == "" {
 			nt.From = nft.Owner
 		}
-		err = tx.Model(&model.UserNFT{}).Where("address=?", nft.Address).UpdateColumns(map[string]interface{}{
+		err = tx.Model(&model.UserNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
 			"last_price": nt.Price,
 			"owner":      nt.To,
 		}).Error
@@ -340,7 +341,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		if nt.From == "" {
 			nt.From = *nft.Owner
 		}
-		err = tx.Model(&model.OfficialNFT{}).Where("address=?", nft.Address).UpdateColumns(map[string]interface{}{
+		err = tx.Model(&model.OfficialNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
 			"last_price": nt.Price,
 			"owner":      nt.To,
 		}).Error
@@ -355,7 +356,7 @@ func SaveExchanger(tx *gorm.DB, e *model.Exchanger) error {
 		if err == gorm.ErrRecordNotFound {
 			return tx.Create(e).Error
 		}
-		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).UpdateColumns(map[string]interface{}{
+		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Updates(map[string]interface{}{
 			"is_open":   true,
 			"name":      e.Name,
 			"url":       e.URL,
@@ -369,9 +370,9 @@ func SaveExchanger(tx *gorm.DB, e *model.Exchanger) error {
 // RecycleSNFT SNFT回收,清空所有者
 func RecycleSNFT(tx *gorm.DB, addr string) error {
 	if len(addr) == 42 {
-		return tx.Model(&model.OfficialNFT{}).Where("address=?", addr).UpdateColumns(map[string]interface{}{
+		return tx.Model(&model.OfficialNFT{}).Where("address=?", addr).Updates(map[string]interface{}{
 			"owner":         nil,
-			"Awardee":       nil,
+			"awardee":       nil,
 			"reward_at":     nil,
 			"reward_number": nil,
 		}).Error

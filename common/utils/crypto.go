@@ -1,43 +1,94 @@
 package utils
 
 import (
-	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/INFURA/go-ethlibs/rlp"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa"
 	"golang.org/x/crypto/sha3"
 	"server/common/types"
 )
 
 // PubkeyToAddress 公钥转地址
-func PubkeyToAddress(p *ecdsa.PublicKey) types.Address {
-	data := elliptic.Marshal(btcec.S256(), p.X, p.Y)
+func PubkeyToAddress(p *secp256k1.PublicKey) types.Address {
+	data := elliptic.Marshal(secp256k1.S256(), p.X(), p.Y())
 	return types.Address("0x" + hex.EncodeToString(Keccak256(data[1:])[12:]))
 }
 
-// Sign 用私钥签名
-func Sign(digestHash []byte, prv *btcec.PrivateKey) (sig []byte, err error) {
+// NewTx 创建交易，nonce：带前缀16进制字符串，gasPrice：10进制字符串
+func NewTx(nonce uint64, to types.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) map[string]string {
+	tx := map[string]string{}
+	tx["nonce"] = "0x" + hex.EncodeToString(big.NewInt(int64(nonce)).Bytes())
+	tx["gasPrice"] = "0x" + hex.EncodeToString(gasPrice.Bytes())
+	tx["gas"] = "0x" + hex.EncodeToString(big.NewInt(int64(gasLimit)).Bytes())
+	tx["to"] = string(to)
+	tx["value"] = "0x" + hex.EncodeToString(amount.Bytes())
+	tx["data"] = "0x" + hex.EncodeToString(data)
+	return tx
+}
+
+// SignTx 签名交易
+func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (types.Bytes, error) {
+	msg := rlp.Value{
+		List: []rlp.Value{
+			{String: tx["nonce"]},    //0,nonce
+			{String: tx["gasPrice"]}, //1,gasPrice
+			{String: tx["gas"]},      //2,gas
+			{String: tx["to"]},       //3,to
+			{String: tx["value"]},    //4,value
+			{String: tx["data"]},     //5,data
+			{String: "0x" + hex.EncodeToString(chainId.Bytes())}, //6,V,未签名之前等于ChainId
+			{String: "0x"}, //7,R
+			{String: "0x"}, //8,V
+		},
+	}
+	hash, err := msg.HashToBytes()
+	if err != nil {
+		return "", err
+	}
+	sig, err := Sign(hash, prv)
+	if err != nil {
+		return "", err
+	}
+
+	if tx["chainId"] == "0x" {
+		// v + 27
+		msg.List[6] = rlp.Value{String: "0x" + hex.EncodeToString([]byte{sig[64] + 27})}
+	} else {
+		// v + chainId * 2 + 35
+		v := new(big.Int).Set(chainId)
+		v = v.Lsh(v, 1)
+		v = v.Add(v, big.NewInt(int64(sig[64]+35)))
+		msg.List[6] = rlp.Value{String: "0x" + hex.EncodeToString(v.Bytes())}
+	}
+	msg.List[7] = rlp.Value{String: "0x" + hex.EncodeToString(sig[0:32])}
+	msg.List[8] = rlp.Value{String: "0x" + hex.EncodeToString(sig[32:64])}
+	raw, err := msg.Encode()
+	return types.Bytes(raw), err
+}
+
+// Sign 用私钥签名，结果最后一位是v，值为0或1
+func Sign(digestHash []byte, prv *secp256k1.PrivateKey) ([]byte, error) {
 	if len(digestHash) != 32 {
 		return nil, fmt.Errorf("哈希需要32字节：%d", len(digestHash))
 	}
-	s, err := prv.Sign(digestHash)
-	if err != nil {
-		return nil, err
-	}
-	// todo check
-	return s.Serialize(), err
+	sig := ecdsa.SignCompact(prv, digestHash, false)
+	// 将v减去27并放到最后
+	return append(sig[1:65], sig[0]-27), nil
 }
 
 // SigToPub 签名恢复公钥
-func SigToPub(hash, sig []byte) (*ecdsa.PublicKey, error) {
-	s, _, err := btcec.RecoverCompact(btcec.S256(), sig, hash)
+func SigToPub(hash, sig []byte) (*secp256k1.PublicKey, error) {
+	s, _, err := ecdsa.RecoverCompact(append([]byte{sig[64] + 27}, sig[:64]...), hash)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.ToECDSA(), nil
+	return s, nil
 }
 
 // Keccak256Hash 计算Keccak256，返回哈希
@@ -56,15 +107,14 @@ func Keccak256(data ...[]byte) (h []byte) {
 }
 
 // HexToECDSA 16进制字符串还原私钥对象
-func HexToECDSA(key string) (*btcec.PrivateKey, error) {
+func HexToECDSA(key string) (*secp256k1.PrivateKey, error) {
 	b, err := hex.DecodeString(key)
 	if byteErr, ok := err.(hex.InvalidByteError); ok {
 		return nil, fmt.Errorf("invalid hex character %q in private key", byte(byteErr))
 	} else if err != nil {
 		return nil, fmt.Errorf("invalid hex data for private key")
 	}
-	prv, _ := btcec.PrivKeyFromBytes(btcec.S256(), b)
-	return prv, nil
+	return secp256k1.PrivKeyFromBytes(b), nil
 }
 
 // RecoverAddress 从签名恢复地址
