@@ -37,7 +37,7 @@ func Loop(ec *node.Client, interval time.Duration) {
 }
 
 func HandleBlock(ec *node.Client, number uint64) error {
-	ret, err := ec.DecodeBlock(context.Background(), types.Uint64(number))
+	ret, err := DecodeBlock(ec, context.Background(), types.Uint64(number))
 	if err != nil {
 		return err
 	}

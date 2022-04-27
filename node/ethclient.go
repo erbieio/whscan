@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
@@ -10,6 +11,8 @@ import (
 	"server/common/types"
 	"server/common/utils"
 )
+
+var NotFound = fmt.Errorf("not found")
 
 // Client defines typed wrappers for the Ethereum RPC API.
 type Client struct {

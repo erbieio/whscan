@@ -116,7 +116,6 @@ type Receipt struct {
 // Log 交易日志
 type Log struct {
 	Address types.Address  `json:"address" gorm:"type:CHAR(42)"`                          //所属合约地址
-	EventID *types.Hash    `json:"eventID" gorm:"type:CHAR(66)"`                          //事件ID
 	Topics  types.StrArray `json:"topics" gorm:"type:VARCHAR(277)"`                       //主题
 	Data    string         `json:"data"`                                                  //数据
 	Removed bool           `json:"removed"`                                               //是否移除
@@ -166,7 +165,7 @@ type ERC1155Transfer struct {
 
 // UserNFT 用户NFT属性信息
 type UserNFT struct {
-	Address       *string `json:"address" gorm:"type:CHAR(44);primary_key"`  //NFT地址
+	Address       *string `json:"address" gorm:"type:CHAR(44);primary_key"`  //NFT地址,从0x1自动增长
 	RoyaltyRatio  uint32  `json:"royalty_ratio"`                             //版税费率,单位万分之一
 	MetaUrl       string  `json:"meta_url"`                                  //元信息URL
 	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(44);index"` //所在交易所地址,没有的可以在任意交易所交易
@@ -204,6 +203,8 @@ type NFTTx struct {
 	Price         *string `json:"price"`                                    //价格,单位为wei
 	Timestamp     uint64  `json:"timestamp"`                                //交易时间戳
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"` //交易哈希
+	BlockNumber   uint64  `json:"block_number"`                             //区块号
+	Fee           *string `json:"fee"`                                      //交易手续费，单位wei（有交易所和价格的才有手续费）
 }
 
 // NFTMeta NFT元信息
@@ -230,16 +231,19 @@ type Collection struct {
 
 // Exchanger 交易所属性信息
 type Exchanger struct {
-	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //交易所地址
-	Name        string `json:"name" gorm:"type:VARCHAR(256)"`            //交易所名称
-	URL         string `json:"url"`                                      //交易所URL
-	FeeRatio    uint32 `json:"fee_ratio"`                                //手续费率,单位万分之一
-	Creator     string `json:"creator" gorm:"type:CHAR(42)"`             //创建者地址
-	Timestamp   uint64 `json:"timestamp" gorm:"index"`                   //开启时间
-	IsOpen      bool   `json:"is_open"`                                  //是否开启中
-	BlockNumber uint64 `json:"block_number" gorm:"index"`                //创建时的区块号
-	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //创建的交易
-	NFTCount    uint64 `json:"nft_count" gorm:"-"`                       //NFT总数，批量查询的此字段无效
+	Address         string `json:"address" gorm:"type:CHAR(42);primary_key"` //交易所地址
+	Name            string `json:"name" gorm:"type:VARCHAR(256)"`            //交易所名称
+	URL             string `json:"url"`                                      //交易所URL
+	FeeRatio        uint32 `json:"fee_ratio"`                                //手续费率,单位万分之一
+	Creator         string `json:"creator" gorm:"type:CHAR(42)"`             //创建者地址
+	Timestamp       uint64 `json:"timestamp" gorm:"index"`                   //开启时间
+	IsOpen          bool   `json:"is_open"`                                  //是否开启中
+	BlockNumber     uint64 `json:"block_number" gorm:"index"`                //创建时的区块号
+	TxHash          string `json:"tx_hash" gorm:"type:CHAR(66)"`             //创建的交易
+	TxCount         uint64 `json:"tx_count"`                                 //总交易数，转移不计算在内
+	BalanceCount    string `json:"balance_count" gorm:"type:VARCHAR(128)"`   //总交易额，单位wei
+	CollectionCount uint64 `json:"collection_count" gorm:"-"`                //总合集数,批量查询此字段无效
+	NFTCount        uint64 `json:"nft_count"`                                //总NFT数
 }
 
 // Pledge 账户质押金额

@@ -1516,8 +1516,16 @@ var doc = `{
                     "description": "交易所地址",
                     "type": "string"
                 },
+                "balance_count": {
+                    "description": "总交易额，单位wei",
+                    "type": "string"
+                },
                 "block_number": {
                     "description": "创建时的区块号",
+                    "type": "integer"
+                },
+                "collection_count": {
+                    "description": "总合集数,批量查询此字段无效",
                     "type": "integer"
                 },
                 "creator": {
@@ -1537,11 +1545,15 @@ var doc = `{
                     "type": "string"
                 },
                 "nft_count": {
-                    "description": "NFT总数，批量查询的此字段无效",
+                    "description": "总NFT数",
                     "type": "integer"
                 },
                 "timestamp": {
                     "description": "开启时间",
+                    "type": "integer"
+                },
+                "tx_count": {
+                    "description": "总交易数，转移不计算在内",
                     "type": "integer"
                 },
                 "tx_hash": {
@@ -1563,10 +1575,6 @@ var doc = `{
                 },
                 "data": {
                     "description": "数据",
-                    "type": "string"
-                },
-                "eventID": {
-                    "description": "事件ID",
                     "type": "string"
                 },
                 "logIndex": {
@@ -1593,8 +1601,16 @@ var doc = `{
         "model.NFTTx": {
             "type": "object",
             "properties": {
+                "block_number": {
+                    "description": "区块号",
+                    "type": "integer"
+                },
                 "exchanger_addr": {
                     "description": "交易所地址",
+                    "type": "string"
+                },
+                "fee": {
+                    "description": "交易手续费，单位wei（有交易所和价格的才有手续费）",
                     "type": "string"
                 },
                 "from": {
@@ -1749,7 +1765,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "NFT地址",
+                    "description": "NFT地址,从0x1自动增长",
                     "type": "string"
                 },
                 "block_number": {
@@ -2115,7 +2131,7 @@ var doc = `{
                         "type": "object",
                         "properties": {
                             "address": {
-                                "description": "NFT地址",
+                                "description": "NFT地址,从0x1自动增长",
                                 "type": "string"
                             },
                             "block_number": {

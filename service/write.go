@@ -12,7 +12,6 @@ import (
 	"server/common/model"
 	"server/common/types"
 	"server/common/utils"
-	"server/node"
 )
 
 // cache 缓存一些数据库查询，加速查询
@@ -91,52 +90,40 @@ func getNFTAddr(next *big.Int) string {
 	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalUserNFT+1)))))
 }
 
-func BlockInsert(block *node.DecodeRet) error {
-	err := DB.Transaction(func(t *gorm.DB) error {
-		for _, log := range block.CacheLogs {
-			if len(log.Topics) > 0 {
-				log.EventID = (*types.Hash)(&log.Topics[0])
-			}
-			// 写入交易日志
-			if err := t.Create(log).Error; err != nil {
-				return err
-			}
-			// 解析写入ERC合约转移事件
-			erc, err := erc(log.Address)
-			if err != nil {
-				return err
-			}
-			switch erc {
-			case types.ERC20:
-				if transferLog, err := utils.Unpack20TransferLog(log); err == nil {
-					err = t.Create(transferLog).Error
-					if err != nil {
-						return err
-					}
-				}
-			case types.ERC721:
-				if transferLog, err := utils.Unpack721TransferLog(log); err == nil {
-					err = t.Create(transferLog).Error
-					if err != nil {
-						return err
-					}
-				}
-			case types.ERC1155:
-				if transferLogs, err := utils.Unpack1155TransferLog(log); err == nil {
-					err = t.Create(transferLogs).Error
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
+// DecodeRet 区块解析结果
+type DecodeRet struct {
+	*model.Block
+	CacheTxs         []*model.Transaction `json:"transactions"`
+	CacheInternalTxs []*model.InternalTx
+	CacheUncles      []*model.Uncle
+	CacheAccounts    map[types.Address]*model.Account
+	CacheContracts   map[types.Address]*model.Contract
+	CacheLogs        []*model.Log //在CacheContracts之后插入
 
+	// wormholes，需要按优先级插入数据库（后面的数据可能会查询先前数据）
+	Exchangers       []*model.Exchanger       //交易所,优先级：1
+	InjectSNFTs      []*Inject                //官方注入SNFT,优先级：1
+	RecycleSNFTs     []string                 //回收的SNFT,优先级：1
+	CreateSNFTs      []*model.OfficialNFT     //SNFT的创建信息,优先级：2
+	CreateNFTs       []*model.UserNFT         //新创建的NFT,优先级：2
+	RewardSNFTs      []*model.OfficialNFT     //SNFT的奖励信息,优先级：3
+	NFTTxs           []*model.NFTTx           //NFT交易记录,优先级：4
+	ExchangerPledges []*model.ExchangerPledge //交易所质押,优先级：无
+	ConsensusPledges []*model.ConsensusPledge //共识质押,优先级：无
+}
+
+type Inject struct {
+	StartIndex        *big.Int
+	Count             uint64
+	Royalty           uint32
+	Dir, Creator      string
+	Number, Timestamp uint64
+}
+
+func BlockInsert(block *DecodeRet) error {
+	err := DB.Transaction(func(t *gorm.DB) error {
 		for _, tx := range block.CacheTxs {
 			// 写入区块交易
-			if len(tx.Input) > 10 {
-				MethodId := tx.Input[:10]
-				tx.MethodId = (*types.Bytes8)(&MethodId)
-			}
 			if err := t.Create(tx).Error; err != nil {
 				return err
 			}
@@ -172,10 +159,17 @@ func BlockInsert(block *node.DecodeRet) error {
 			}
 		}
 
+		// 写入交易日志
+		err := SaveTxLog(t, block.CacheLogs)
+		if err != nil {
+			return err
+		}
+
 		// 写入区块
 		if err := t.Create(block.Block).Error; err != nil {
 			return err
 		}
+		// wormholes独有数据写入
 		return WHInsert(t, block)
 	})
 
@@ -185,19 +179,66 @@ func BlockInsert(block *node.DecodeRet) error {
 		cache.TotalTransaction += uint64(block.TotalTransaction)
 		cache.TotalUncle += uint64(block.UnclesCount)
 		cache.TotalUserNFT += uint64(len(block.CreateNFTs))
-		cache.TotalOfficialNFT += uint64(len(block.CreateSNFTs))
+		cache.TotalOfficialNFT += uint64(len(block.CreateSNFTs)) //todo 可能存在误差，注入和销毁的情况
 	}
 	return err
 }
 
-func erc(addr types.Address) (erc types.ERC, err error) {
-	contract := model.Contract{Address: addr}
-	err = DB.Find(&contract).Error
-	erc = contract.ERC
-	return
+// SaveTxLog 写入区块交易日志，并分析存储ERC代币交易
+func SaveTxLog(tx *gorm.DB, cacheLog []*model.Log) error {
+	for _, cacheLog := range cacheLog {
+		// 写入交易日志
+		if err := tx.Create(cacheLog).Error; err != nil {
+			return err
+		}
+		// 解析写入ERC合约转移事件
+		contract := model.Contract{Address: cacheLog.Address}
+		err := DB.Find(&contract).Error
+		if err != nil {
+			return err
+		}
+		switch contract.ERC {
+		case types.ERC20:
+			if transferLog, err := utils.Unpack20TransferLog(cacheLog); err == nil {
+				err = tx.Create(transferLog).Error
+				if err != nil {
+					return err
+				}
+			}
+		case types.ERC721:
+			if transferLog, err := utils.Unpack721TransferLog(cacheLog); err == nil {
+				err = tx.Create(transferLog).Error
+				if err != nil {
+					return err
+				}
+			}
+		case types.ERC1155:
+			if transferLogs, err := utils.Unpack1155TransferLog(cacheLog); err == nil {
+				err = tx.Create(transferLogs).Error
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 
-func WHInsert(tx *gorm.DB, wh *node.DecodeRet) (err error) {
+func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
+	// 交易所创建或者关闭
+	for _, exchanger := range wh.Exchangers {
+		err = SaveExchanger(tx, exchanger)
+		if err != nil {
+			return
+		}
+	}
+	// 官方注入SNFT元信息
+	for _, snft := range wh.InjectSNFTs {
+		err = InjectSNFT(tx, snft.StartIndex, snft.Count, snft.Royalty, snft.Dir, snft.Creator, snft.Number, snft.Timestamp)
+		if err != nil {
+			return
+		}
+	}
 	// 回收SNFT
 	for _, snft := range wh.RecycleSNFTs {
 		err = RecycleSNFT(tx, snft)
@@ -211,7 +252,7 @@ func WHInsert(tx *gorm.DB, wh *node.DecodeRet) (err error) {
 		if err != nil {
 			return
 		}
-		go SaveNFTMeta(uint64(wh.Number), snft.Address, snft.MetaUrl)
+		go SaveNFTMeta(wh.Number, snft.Address, snft.MetaUrl)
 	}
 	// SNFT奖励
 	for _, snft := range wh.RewardSNFTs {
@@ -221,31 +262,13 @@ func WHInsert(tx *gorm.DB, wh *node.DecodeRet) (err error) {
 		}
 	}
 	// UserNFT创建
-	for i, nft := range wh.CreateNFTs {
-		*nft.Address = getNFTAddr(big.NewInt(int64(i)))
-		err = tx.Create(nft).Error
-		if err != nil {
-			return
-		}
-		go SaveNFTMeta(uint64(wh.Number), *nft.Address, nft.MetaUrl)
+	err = SaveUserNFT(tx, wh.Number, wh.CreateNFTs)
+	if err != nil {
+		return
 	}
 	// NFT交易，包含用户和官方类型的NFT
 	for _, nftTx := range wh.NFTTxs {
 		err = SaveNFTTx(tx, nftTx)
-		if err != nil {
-			return
-		}
-	}
-	// 交易所创建或者关闭
-	for _, exchanger := range wh.Exchanger {
-		err = SaveExchanger(tx, exchanger)
-		if err != nil {
-			return
-		}
-	}
-	// 官方注入SNFT元信息
-	for _, snft := range wh.InjectSNFTs {
-		err = InjectSNFT(tx, snft.StartIndex, snft.Count, snft.Royalty, snft.Dir, snft.Creator, snft.Number, snft.Timestamp)
 		if err != nil {
 			return
 		}
@@ -267,50 +290,48 @@ func WHInsert(tx *gorm.DB, wh *node.DecodeRet) (err error) {
 	return
 }
 
-// SaveNFTMeta 解析存储NFT元信息
-func SaveNFTMeta(blockNumber uint64, nftAddr, metaUrl string) {
-	var err error
-	defer func() {
-		if err != nil {
-			log.Println("解析存储NFT元信息失败", nftAddr, metaUrl, err)
+// SaveExchanger 更新交易所信息
+func SaveExchanger(tx *gorm.DB, e *model.Exchanger) error {
+	if e.IsOpen {
+		err := tx.Where("address=?", e.Address).First(&model.Exchanger{}).Error
+		if err == gorm.ErrRecordNotFound {
+			return tx.Create(e).Error
 		}
-	}()
-	nftMeta, err := GetNFTMeta(metaUrl)
-	if err != nil {
-		return
-	}
-
-	//合集名称+合集创建者+合集所在交易所的哈希
-	var collectionId *string
-	if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
-		hash := string(utils.Keccak256Hash(
-			[]byte(nftMeta.CollectionsName),
-			[]byte(nftMeta.CollectionsCreator),
-			[]byte(nftMeta.CollectionsExchanger),
-		))
-		collectionId = &hash
-	}
-
-	err = DB.Create(&model.NFTMeta{
-		NFTAddr:      nftAddr,
-		Name:         nftMeta.Name,
-		Desc:         nftMeta.Desc,
-		Category:     nftMeta.Category,
-		SourceUrl:    nftMeta.SourceUrl,
-		CollectionId: collectionId,
-	}).Error
-	if err == nil && collectionId != nil {
-		err = DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
-			Id:          *collectionId,
-			Name:        nftMeta.CollectionsName,
-			Creator:     nftMeta.CollectionsCreator,
-			Category:    nftMeta.CollectionsCategory,
-			Desc:        nftMeta.CollectionsDesc,
-			ImgUrl:      nftMeta.CollectionsImgUrl,
-			BlockNumber: blockNumber,
-			Exchanger:   nftMeta.CollectionsExchanger,
+		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Updates(map[string]interface{}{
+			"is_open":   true,
+			"name":      e.Name,
+			"url":       e.URL,
+			"fee_ratio": e.FeeRatio,
 		}).Error
+	} else {
+		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Update("is_open", false).Error
 	}
+}
+
+// SaveUserNFT 保存用户创建的NFT
+func SaveUserNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UserNFT) error {
+	for i, nft := range nfts {
+		*nft.Address = getNFTAddr(big.NewInt(int64(i)))
+		err := tx.Create(nft).Error
+		if err != nil {
+			return err
+		}
+		// 更新指定交易所的总NFT数
+		if nft.ExchangerAddr != "" {
+			var exchanger model.Exchanger
+			err := tx.First(&exchanger, "address=?", nft.ExchangerAddr).Error
+			if err != nil {
+				return err
+			}
+			exchanger.NFTCount++
+			err = tx.Select("nft_count").Updates(&exchanger).Error
+			if err != nil {
+				return err
+			}
+		}
+		go SaveNFTMeta(number, *nft.Address, nft.MetaUrl)
+	}
+	return nil
 }
 
 // SaveNFTTx 保存NFT交易记录
@@ -346,25 +367,28 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			"owner":      nt.To,
 		}).Error
 	}
-	return tx.Create(&nt).Error
-}
-
-// SaveExchanger 更新交易所信息
-func SaveExchanger(tx *gorm.DB, e *model.Exchanger) error {
-	if e.IsOpen {
-		err := tx.Where("address=?", e.Address).First(&model.Exchanger{}).Error
-		if err == gorm.ErrRecordNotFound {
-			return tx.Create(e).Error
+	// 计算填充NFT交易手续费和保存交易所的总交易数和总交易额
+	if nt.ExchangerAddr != nil && nt.Price != nil {
+		var exchanger model.Exchanger
+		err := tx.First(&exchanger, "address=?", nt.ExchangerAddr).Error
+		if err != nil {
+			return err
 		}
-		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Updates(map[string]interface{}{
-			"is_open":   true,
-			"name":      e.Name,
-			"url":       e.URL,
-			"fee_ratio": e.FeeRatio,
-		}).Error
-	} else {
-		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Update("is_open", false).Error
+		price, _ := new(big.Int).SetString(*nt.Price, 10)
+		fee := big.NewInt(10000)
+		fee = fee.Mul(fee, price)
+		feeStr := fee.Div(fee, big.NewInt(int64(exchanger.FeeRatio))).Text(10)
+		nt.Fee = &feeStr
+		exchanger.TxCount++
+		balanceCount, _ := new(big.Int).SetString(exchanger.BalanceCount, 10)
+		balanceCount = balanceCount.Add(balanceCount, price)
+		exchanger.BalanceCount = balanceCount.Text(10)
+		err = tx.Select("tx_count", "balance_count").Updates(&exchanger).Error
+		if err != nil {
+			return err
+		}
 	}
+	return tx.Create(&nt).Error
 }
 
 // RecycleSNFT SNFT回收,清空所有者
@@ -443,4 +467,50 @@ func ConsensusPledgeAdd(tx *gorm.DB, addr, amount string) error {
 	}
 	pledge.Amount = BigIntAdd(pledge.Amount, amount)
 	return tx.Create(&pledge).Error
+}
+
+// SaveNFTMeta 解析存储NFT元信息
+func SaveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.Println("解析存储NFT元信息失败", nftAddr, metaUrl, err)
+		}
+	}()
+	nftMeta, err := GetNFTMeta(metaUrl)
+	if err != nil {
+		return
+	}
+
+	//合集名称+合集创建者+合集所在交易所的哈希
+	var collectionId *string
+	if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
+		hash := string(utils.Keccak256Hash(
+			[]byte(nftMeta.CollectionsName),
+			[]byte(nftMeta.CollectionsCreator),
+			[]byte(nftMeta.CollectionsExchanger),
+		))
+		collectionId = &hash
+	}
+
+	err = DB.Create(&model.NFTMeta{
+		NFTAddr:      nftAddr,
+		Name:         nftMeta.Name,
+		Desc:         nftMeta.Desc,
+		Category:     nftMeta.Category,
+		SourceUrl:    nftMeta.SourceUrl,
+		CollectionId: collectionId,
+	}).Error
+	if err == nil && collectionId != nil {
+		err = DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
+			Id:          *collectionId,
+			Name:        nftMeta.CollectionsName,
+			Creator:     nftMeta.CollectionsCreator,
+			Category:    nftMeta.CollectionsCategory,
+			Desc:        nftMeta.CollectionsDesc,
+			ImgUrl:      nftMeta.CollectionsImgUrl,
+			BlockNumber: uint64(blockNumber),
+			Exchanger:   nftMeta.CollectionsExchanger,
+		}).Error
+	}
 }

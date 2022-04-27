@@ -49,6 +49,6 @@ func FindExchanger(addr string) (res model.Exchanger, err error) {
 	if err != nil {
 		return
 	}
-	err = DB.Where("exchanger_addr=?", addr).Model(&model.UserNFT{}).Select("COUNT(*)").Scan(&res.NFTCount).Error
+	err = DB.Where("exchanger=?", addr).Model(&model.Collection{}).Select("COUNT(*)").Scan(&res.CollectionCount).Error
 	return
 }
