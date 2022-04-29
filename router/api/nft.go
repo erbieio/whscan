@@ -12,7 +12,6 @@ func NFT(e *gin.Engine) {
 	e.GET("/nft/page", pageNFT)
 	e.GET("/nft_meta/page", pageNFTAndMeta)
 	e.GET("/nft/tx/page", pageNFTTx)
-
 	e.GET("/snft/page", pageSNFT)
 	e.GET("/snft/block", blockSNFT)
 	e.GET("/snft_meta/page", pageSNFTAndMeta)
@@ -136,7 +135,7 @@ func pageNFTTx(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags         SNFT
+// @Tags         NFT
 // @Summary      查询SNFT列表
 // @Description  按创建时间逆序查询SNFT列表
 // @Accept       json
@@ -172,7 +171,7 @@ func pageSNFT(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags         SNFT
+// @Tags         NFT
 // @Summary      查询有元信息SNFT列表
 // @Description  按创建时间逆序查询有元信息SNFT列表
 // @Accept       json
@@ -210,7 +209,7 @@ func pageSNFTAndMeta(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags         SNFT
+// @Tags         NFT
 // @Summary      查询区块SNFT列表
 // @Description  查询指定区块的SNFT奖励列表
 // @Accept       json

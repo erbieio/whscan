@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/big"
 	"strconv"
+	"strings"
 
 	"server/common/model"
 	. "server/common/types"
@@ -313,7 +314,8 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			Address:       &nftAddr,
 			RoyaltyRatio:  w.Royalty, //单位万分之一
 			MetaUrl:       realMeatUrl(w.MetaURL),
-			ExchangerAddr: w.Exchanger,
+			RawMetaUrl:    w.MetaURL,
+			ExchangerAddr: strings.ToLower(w.Exchanger),
 			Creator:       to,
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
@@ -322,6 +324,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		})
 
 	case 1: //NFT自行转移
+		w.NFTAddress = strings.ToLower(w.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        1,
 			NFTAddr:       &w.NFTAddress,
@@ -378,6 +381,8 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.InjectSNFTs = append(wh.InjectSNFTs, &service.Inject{startIndex, w.Number, w.Royalty, w.Dir, w.Creator, blockNumber, timestamp})
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
+		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
+		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        2,
 			NFTAddr:       &w.Buyer.NFTAddress,
@@ -391,6 +396,8 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		})
 
 	case 15: //NFT定价购买交易（买家发起，卖家给价格签名）
+		w.Seller1.NFTAddress = strings.ToLower(w.Seller1.NFTAddress)
+		w.Seller1.Exchanger = strings.ToLower(w.Seller1.Exchanger)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        3,
 			NFTAddr:       &w.Seller1.NFTAddress,
@@ -415,11 +422,13 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		if err != nil {
 			return err
 		}
+		w.Seller2.Exchanger = strings.ToLower(w.Seller2.Exchanger)
 		nftAddr := "" //插入数据库时计算填充
 		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
+			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: w.Seller2.Exchanger,
 			Creator:       string(creator),
 			Timestamp:     timestamp,
@@ -456,6 +465,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
+			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: from, //交易发起者即交易所地址
 			Creator:       string(creator),
 			Timestamp:     timestamp,
@@ -482,6 +492,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		if err != nil {
 			return err
 		}
+		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        6,
 			NFTAddr:       &w.Buyer.NFTAddress,
@@ -517,6 +528,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
+			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: string(exchangerAddr), //交易发起者即交易所地址
 			Creator:       string(creator),
 			Timestamp:     timestamp,
@@ -537,6 +549,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		})
 
 	case 20: //NFT撮合交易，交易所发起
+		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        8,
 			NFTAddr:       &w.Buyer.NFTAddress,

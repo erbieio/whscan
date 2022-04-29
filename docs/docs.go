@@ -588,7 +588,7 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.CollectionsRes"
+                            "$ref": "#/definitions/service.ExchangersRes"
                         }
                     },
                     "400": {
@@ -939,7 +939,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SNFT"
+                    "NFT"
                 ],
                 "summary": "查询区块SNFT列表",
                 "parameters": [
@@ -980,7 +980,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SNFT"
+                    "NFT"
                 ],
                 "summary": "查询SNFT列表",
                 "parameters": [
@@ -1029,7 +1029,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "SNFT"
+                    "NFT"
                 ],
                 "summary": "查询有元信息SNFT列表",
                 "parameters": [
@@ -1785,11 +1785,15 @@ var doc = `{
                     "type": "string"
                 },
                 "meta_url": {
-                    "description": "元信息URL",
+                    "description": "真实的元信息URL",
                     "type": "string"
                 },
                 "owner": {
                     "description": "所有者",
+                    "type": "string"
+                },
+                "raw_meta_url": {
+                    "description": "链上原始的元信息URL",
                     "type": "string"
                 },
                 "royalty_ratio": {
@@ -1914,6 +1918,34 @@ var doc = `{
                 "err_str": {
                     "description": "错误信息",
                     "type": "string"
+                }
+            }
+        },
+        "service.ExchangersRes": {
+            "type": "object",
+            "properties": {
+                "exchangers": {
+                    "description": "交易所列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Exchanger"
+                    }
+                },
+                "last_0_total": {
+                    "description": "最新0天（今日）新开交易所数量，实时计算",
+                    "type": "integer"
+                },
+                "last_1_total": {
+                    "description": "最新1天（昨日）新开交易所数量，缓存",
+                    "type": "integer"
+                },
+                "last_7_total": {
+                    "description": "最新7天新开交易所数量，缓存",
+                    "type": "integer"
+                },
+                "total": {
+                    "description": "交易所总数",
+                    "type": "integer"
                 }
             }
         },
@@ -2163,7 +2195,7 @@ var doc = `{
                                 "type": "string"
                             },
                             "meta_url": {
-                                "description": "元信息URL",
+                                "description": "真实的元信息URL",
                                 "type": "string"
                             },
                             "name": {
@@ -2176,6 +2208,10 @@ var doc = `{
                             },
                             "owner": {
                                 "description": "所有者",
+                                "type": "string"
+                            },
+                            "raw_meta_url": {
+                                "description": "链上原始的元信息URL",
                                 "type": "string"
                             },
                             "royalty_ratio": {

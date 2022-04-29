@@ -319,14 +319,17 @@ func SaveUserNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UserNFT) error 
 		// 更新指定交易所的总NFT数
 		if nft.ExchangerAddr != "" {
 			var exchanger model.Exchanger
-			err := tx.First(&exchanger, "address=?", nft.ExchangerAddr).Error
+			err := tx.Find(&exchanger, "address=?", nft.ExchangerAddr).Error
 			if err != nil {
 				return err
 			}
-			exchanger.NFTCount++
-			err = tx.Select("nft_count").Updates(&exchanger).Error
-			if err != nil {
-				return err
+			// todo 可能交易所不存在
+			if exchanger.Address == nft.ExchangerAddr {
+				exchanger.NFTCount++
+				err = tx.Select("nft_count").Updates(&exchanger).Error
+				if err != nil {
+					return err
+				}
 			}
 		}
 		go SaveNFTMeta(number, *nft.Address, nft.MetaUrl)
@@ -370,22 +373,26 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 	// 计算填充NFT交易手续费和保存交易所的总交易数和总交易额
 	if nt.ExchangerAddr != nil && nt.Price != nil {
 		var exchanger model.Exchanger
-		err := tx.First(&exchanger, "address=?", nt.ExchangerAddr).Error
+		err := tx.Find(&exchanger, "address=?", nt.ExchangerAddr).Error
 		if err != nil {
 			return err
 		}
-		price, _ := new(big.Int).SetString(*nt.Price, 10)
-		fee := big.NewInt(10000)
-		fee = fee.Mul(fee, price)
-		feeStr := fee.Div(fee, big.NewInt(int64(exchanger.FeeRatio))).Text(10)
-		nt.Fee = &feeStr
-		exchanger.TxCount++
-		balanceCount, _ := new(big.Int).SetString(exchanger.BalanceCount, 10)
-		balanceCount = balanceCount.Add(balanceCount, price)
-		exchanger.BalanceCount = balanceCount.Text(10)
-		err = tx.Select("tx_count", "balance_count").Updates(&exchanger).Error
-		if err != nil {
-			return err
+		// todo 可能交易所不存在
+		if exchanger.Address == *nt.ExchangerAddr {
+			price, _ := new(big.Int).SetString(*nt.Price, 10)
+			fee := big.NewInt(10000)
+			fee = fee.Mul(fee, price)
+			feeStr := fee.Div(fee, big.NewInt(int64(exchanger.FeeRatio))).Text(10)
+			nt.Fee = &feeStr
+			exchanger.TxCount++
+			balanceCount := new(big.Int)
+			balanceCount.SetString(exchanger.BalanceCount, 10)
+			balanceCount = balanceCount.Add(balanceCount, price)
+			exchanger.BalanceCount = balanceCount.Text(10)
+			err = tx.Select("tx_count", "balance_count").Updates(&exchanger).Error
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return tx.Create(&nt).Error

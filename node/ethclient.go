@@ -206,9 +206,9 @@ type SNFT struct {
 
 func (c *Client) GetSNFT(addr, number string) (snft SNFT, err error) {
 	err = c.Call(&snft, "eth_getAccountInfo", addr, number)
-	// todo 因为链错误，固定SNFT的MetaURL
-	if len(snft.MetaURL) > 0 {
-		snft.MetaURL = "/ipfs/QmeCPcX3rYguWqJYDmJ6D4qTQqd5asr8gYpwRcgw44WsS7/00"
+	// todo 因为链错误，转换一下MetaURL
+	if len(snft.MetaURL) == 95 {
+		snft.MetaURL = snft.MetaURL[0:53] + strings.ToLower(snft.MetaURL[91:93])
 	}
 	return
 }

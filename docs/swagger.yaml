@@ -410,10 +410,13 @@ definitions:
         description: 最后成交价格(未成交为null)，单位wei
         type: string
       meta_url:
-        description: 元信息URL
+        description: 真实的元信息URL
         type: string
       owner:
         description: 所有者
+        type: string
+      raw_meta_url:
+        description: 链上原始的元信息URL
         type: string
       royalty_ratio:
         description: 版税费率,单位万分之一
@@ -499,6 +502,26 @@ definitions:
       err_str:
         description: 错误信息
         type: string
+    type: object
+  service.ExchangersRes:
+    properties:
+      exchangers:
+        description: 交易所列表
+        items:
+          $ref: '#/definitions/model.Exchanger'
+        type: array
+      last_0_total:
+        description: 最新0天（今日）新开交易所数量，实时计算
+        type: integer
+      last_1_total:
+        description: 最新1天（昨日）新开交易所数量，缓存
+        type: integer
+      last_7_total:
+        description: 最新7天新开交易所数量，缓存
+        type: integer
+      total:
+        description: 交易所总数
+        type: integer
     type: object
   service.Log:
     properties:
@@ -673,7 +696,7 @@ definitions:
               description: 最后成交价格(未成交为null)，单位wei
               type: string
             meta_url:
-              description: 元信息URL
+              description: 真实的元信息URL
               type: string
             name:
               description: 名称
@@ -683,6 +706,9 @@ definitions:
               type: string
             owner:
               description: 所有者
+              type: string
+            raw_meta_url:
+              description: 链上原始的元信息URL
               type: string
             royalty_ratio:
               description: 版税费率,单位万分之一
@@ -1115,7 +1141,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.CollectionsRes'
+            $ref: '#/definitions/service.ExchangersRes'
         "400":
           description: Bad Request
           schema:
@@ -1340,7 +1366,7 @@ paths:
             $ref: '#/definitions/service.ErrRes'
       summary: 查询区块SNFT列表
       tags:
-      - SNFT
+      - NFT
   /snft/page:
     get:
       consumes:
@@ -1372,7 +1398,7 @@ paths:
             $ref: '#/definitions/service.ErrRes'
       summary: 查询SNFT列表
       tags:
-      - SNFT
+      - NFT
   /snft_meta/page:
     get:
       consumes:
@@ -1408,7 +1434,7 @@ paths:
             $ref: '#/definitions/service.ErrRes'
       summary: 查询有元信息SNFT列表
       tags:
-      - SNFT
+      - NFT
   /transaction/{hash}:
     get:
       consumes:

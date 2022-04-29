@@ -167,7 +167,8 @@ type ERC1155Transfer struct {
 type UserNFT struct {
 	Address       *string `json:"address" gorm:"type:CHAR(44);primary_key"`  //NFT地址,从0x1自动增长
 	RoyaltyRatio  uint32  `json:"royalty_ratio"`                             //版税费率,单位万分之一
-	MetaUrl       string  `json:"meta_url"`                                  //元信息URL
+	MetaUrl       string  `json:"meta_url"`                                  //真实的元信息URL
+	RawMetaUrl    string  `json:"raw_meta_url"`                              //链上原始的元信息URL
 	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(44);index"` //所在交易所地址,没有的可以在任意交易所交易
 	LastPrice     *string `json:"last_price"`                                //最后成交价格(未成交为null)，单位wei
 	Creator       string  `json:"creator" gorm:"type:CHAR(44)"`              //创建者地址

@@ -21,7 +21,7 @@ func Exchanger(e *gin.Engine) {
 // @Param        name       query     string  false  "交易所名称,空则查询所有交易所"
 // @Param        page       query     string  false  "页,默认1"
 // @Param        page_size  query     string  false  "页大小,默认10"
-// @Success      200        {object}  service.CollectionsRes
+// @Success      200        {object}  service.ExchangersRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /exchanger/page [get]
 func pageExchanger(c *gin.Context) {
@@ -65,11 +65,12 @@ func getExchanger(c *gin.Context) {
 	if address == "" {
 		address = c.Query("addr")
 	}
-	if len(address) != 42 {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: "地址不是42个字符"})
+	addr, err := utils.ParseAddress(address)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
-	data, err := service.FindExchanger(address)
+	data, err := service.FindExchanger(addr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
