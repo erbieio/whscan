@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/big"
 	"strconv"
@@ -22,14 +23,14 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 	// 获取区块及其交易
 	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	} else if len(raw) == 0 {
-		return nil, node.NotFound
+		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", node.NotFound)
 	}
 
 	var block service.DecodeRet
 	if err := json.Unmarshal(raw, &block); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	}
 
 	if totalTransaction := len(block.CacheTxs); totalTransaction > 0 {
@@ -44,17 +45,17 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 			}
 		}
 		if err := c.BatchCallContext(ctx, reqs); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", err)
 		}
 		for i := range reqs {
 			if reqs[i].Error != nil {
-				return nil, reqs[i].Error
+				return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", reqs[i].Error)
 			}
 		}
 		// 获取收据logs,只能根据区块哈希查，区块高度会查到
 		err := c.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("eth_getLogs err:%v", err)
 		}
 		// 获取解析内部交易
 		//for _, tx := range block.CacheTxs {
@@ -83,11 +84,11 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 			}
 		}
 		if err := c.BatchCallContext(ctx, reqs); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("eth_getUncleByBlockHashAndIndex err:%v", err)
 		}
 		for i := range reqs {
 			if reqs[i].Error != nil {
-				return nil, reqs[i].Error
+				return nil, fmt.Errorf("eth_getUncleByBlockHashAndIndex err:%v", reqs[i].Error)
 			}
 		}
 	}
@@ -124,11 +125,11 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 		})
 	}
 	if err := c.BatchCallContext(ctx, reqs); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", err)
 	}
 	for i := range reqs {
 		if reqs[i].Error != nil {
-			return nil, reqs[i].Error
+			return nil, fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", reqs[i].Error)
 		}
 	}
 
@@ -143,11 +144,11 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 			})
 		}
 		if err := c.BatchCallContext(ctx, reqs); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("eth_getCode err:%v", err)
 		}
 		for i := range reqs {
 			if reqs[i].Error != nil {
-				return nil, reqs[i].Error
+				return nil, fmt.Errorf("eth_getCode err:%v", reqs[i].Error)
 			}
 		}
 
@@ -158,7 +159,7 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 			if len(contract.Code) > 2 {
 				contract.ERC, err = utils.GetERC(c, contract.Address)
 				if err != nil {
-					return nil, err
+					return nil, fmt.Errorf("GetERC() err:%v", err)
 				}
 			}
 		}
@@ -208,7 +209,7 @@ func decodeWHBlock(c *node.Client, wh *service.DecodeRet) (err error) {
 	// 矿工奖励SNFT处理
 	rewards, err := c.GetReward(wh.Block.Number.Hex())
 	if err != nil {
-		return
+		return fmt.Errorf("GetReward() err:%v", err)
 	}
 	for i := range rewards {
 		wh.RewardSNFTs = append(wh.RewardSNFTs, &model.OfficialNFT{
@@ -222,7 +223,7 @@ func decodeWHBlock(c *node.Client, wh *service.DecodeRet) (err error) {
 		var snft node.SNFT
 		snft, err = c.GetSNFT(rewards[i].NfTAddress, wh.Block.Number.Hex())
 		if err != nil {
-			return
+			return fmt.Errorf("GetSNFT() err:%v", err)
 		}
 		wh.CreateSNFTs = append(wh.CreateSNFTs, &model.OfficialNFT{
 			Address:      rewards[i].NfTAddress,
