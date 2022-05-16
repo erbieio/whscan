@@ -15,14 +15,14 @@ import (
 // 默认配置
 var (
 	ChainId    int64 = 51888
-	HexKey           = "7bbfec284ee43e328438d46ec803863c8e1367ab46072f7864c07e0a03ba61fd"
+	HexKey           = "7b2546a5d4e658d079c6b2755c6d7495edd01a686fddae010830e9c93b23e398"
 	ServerAddr       = ":3000"
 	Interval   int64 = 10
 	MysqlDsn         = "root:123456@tcp(127.0.0.1:3306)/scan"
 	ResetDB          = false
 	IpfsServer       = "http://localhost:8080"
 	AmountStr        = "100000000000000000000"
-	ERBPay           = "0x0E699BFe34B3Fc9DA920607DCB32eeeC53E7f420" //ERBPay合约地址
+	ERBPay           = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay合约地址
 )
 
 // 从配置实例化的全局可用对象

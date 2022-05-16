@@ -25,7 +25,7 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 	if err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	} else if len(raw) == 0 {
-		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", node.NotFound)
+		return nil, node.NotFound
 	}
 
 	var block service.DecodeRet
@@ -329,8 +329,8 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        1,
 			NFTAddr:       &w.NFTAddress,
-			ExchangerAddr: nil, //自行转移没有交易所
-			From:          "",  //插入数据库时实时填充原拥有者
+			ExchangerAddr: "", //自行转移没有交易所
+			From:          "", //插入数据库时实时填充原拥有者
 			To:            to,
 			Price:         nil,
 			Timestamp:     timestamp,
@@ -387,7 +387,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        2,
 			NFTAddr:       &w.Buyer.NFTAddress,
-			ExchangerAddr: &w.Buyer.Exchanger,
+			ExchangerAddr: w.Buyer.Exchanger,
 			From:          "", //插入数据库时实时填充原拥有者
 			To:            to,
 			Price:         &value, //单位为wei
@@ -402,7 +402,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        3,
 			NFTAddr:       &w.Seller1.NFTAddress,
-			ExchangerAddr: &w.Seller1.Exchanger,
+			ExchangerAddr: w.Seller1.Exchanger,
 			From:          "",     //插入数据库时实时填充原拥有者
 			To:            from,   //交易发起者即买家
 			Price:         &value, //单位为wei
@@ -440,7 +440,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        4,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: &w.Seller2.Exchanger,
+			ExchangerAddr: w.Seller2.Exchanger,
 			From:          string(creator),
 			To:            from,   //交易发起者即买家
 			Price:         &value, //单位为wei
@@ -477,7 +477,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        5,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: &from, //交易发起者即交易所地址
+			ExchangerAddr: from, //交易发起者即交易所地址
 			From:          string(creator),
 			To:            to,
 			Price:         &value, //单位为wei
@@ -497,7 +497,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        6,
 			NFTAddr:       &w.Buyer.NFTAddress,
-			ExchangerAddr: (*string)(&exchangerAddr),
+			ExchangerAddr: string(exchangerAddr),
 			From:          "", //插入数据库时实时填充原拥有者
 			To:            to,
 			Price:         &value, //单位为wei
@@ -540,7 +540,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        7,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: (*string)(&exchangerAddr),
+			ExchangerAddr: string(exchangerAddr),
 			From:          string(creator),
 			To:            to,
 			Price:         &value, //单位为wei
@@ -554,7 +554,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        8,
 			NFTAddr:       &w.Buyer.NFTAddress,
-			ExchangerAddr: &from,
+			ExchangerAddr: from,
 			From:          "", //插入数据库时实时填充原拥有者
 			To:            to,
 			Price:         &value, //单位为wei

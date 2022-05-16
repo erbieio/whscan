@@ -371,18 +371,18 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		}).Error
 	}
 	// 计算填充NFT交易手续费和保存交易所的总交易数和总交易额
-	if nt.ExchangerAddr != nil && nt.Price != nil {
+	if nt.ExchangerAddr != "" && nt.Price != nil && *nt.Price != "0" {
 		var exchanger model.Exchanger
 		err := tx.Find(&exchanger, "address=?", nt.ExchangerAddr).Error
 		if err != nil {
 			return err
 		}
 		// todo 可能交易所不存在
-		if exchanger.Address == *nt.ExchangerAddr {
+		if exchanger.Address == nt.ExchangerAddr && exchanger.FeeRatio > 0 {
 			price, _ := new(big.Int).SetString(*nt.Price, 10)
-			fee := big.NewInt(10000)
+			fee := big.NewInt(int64(exchanger.FeeRatio))
 			fee = fee.Mul(fee, price)
-			feeStr := fee.Div(fee, big.NewInt(int64(exchanger.FeeRatio))).Text(10)
+			feeStr := fee.Div(fee, big.NewInt(10000)).Text(10)
 			nt.Fee = &feeStr
 			exchanger.TxCount++
 			balanceCount := new(big.Int)
@@ -457,7 +457,9 @@ func ExchangerPledgeAdd(tx *gorm.DB, addr, amount string) error {
 		pledge.Amount = "0x0"
 	}
 	pledge.Amount = BigIntAdd(pledge.Amount, amount)
-	return tx.Create(&pledge).Error
+	return tx.Clauses(clause.OnConflict{
+		DoUpdates: clause.AssignmentColumns([]string{"amount", "count"}),
+	}).Create(&pledge).Error
 }
 
 // ConsensusPledgeAdd 增加质押金额(amount为负数则减少)
@@ -473,7 +475,9 @@ func ConsensusPledgeAdd(tx *gorm.DB, addr, amount string) error {
 		pledge.Amount = "0x0"
 	}
 	pledge.Amount = BigIntAdd(pledge.Amount, amount)
-	return tx.Create(&pledge).Error
+	return tx.Clauses(clause.OnConflict{
+		DoUpdates: clause.AssignmentColumns([]string{"amount", "count"}),
+	}).Create(&pledge).Error
 }
 
 // SaveNFTMeta 解析存储NFT元信息

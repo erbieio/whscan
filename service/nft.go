@@ -94,7 +94,7 @@ func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 	if owner == "" {
 		res.Total = int64(TotalOfficialNFT())
 	} else {
-		err = db.Count(&res.Total).Error
+		err = db.Model(&model.OfficialNFT{}).Count(&res.Total).Error
 	}
 	if err != nil {
 		return
