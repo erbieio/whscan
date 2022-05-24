@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/big"
 	"strconv"
 	"strings"
 
@@ -169,71 +168,38 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 	return &block, err
 }
 
-// decodeWH 解析wormholes链独有的东西
+// decodeWH 导入区块分发的SNFT元信息底层NFT交易
 func decodeWH(c *node.Client, wh *service.DecodeRet) (err error) {
-	if wh.Block.Number == 0 {
-		return decodeWHGenesis(c, wh)
-	} else {
-		return decodeWHBlock(c, wh)
-	}
-}
-
-// decodeWHGenesis 导入创世区块注入的SNFT元信息
-func decodeWHGenesis(c *node.Client, wh *service.DecodeRet) (err error) {
-	big1 := big.NewInt(1)
-	SNFTAddr := big.NewInt(0)
-	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
-lo:
-	addr := utils.BigToAddress(SNFTAddr)
-	snft, err := c.GetSNFT(string(addr), "0x0")
-	if err != nil {
+	if wh.Number == 0 {
 		return
 	}
-	if snft.MetaURL != "" {
-		wh.CreateSNFTs = append(wh.CreateSNFTs, &model.OfficialNFT{
-			Address:      string(addr),
-			CreateAt:     uint64(wh.Block.Timestamp),
-			CreateNumber: 0,
-			Creator:      snft.Creator,
-			RoyaltyRatio: snft.Royalty,
-			MetaUrl:      snft.MetaURL,
-		})
-		SNFTAddr = SNFTAddr.Add(SNFTAddr, big1)
-		goto lo
-	}
-	return
-}
-
-// decodeWHBlock 导入区块分发的SNFT元信息底层NFT交易
-func decodeWHBlock(c *node.Client, wh *service.DecodeRet) (err error) {
 	// 矿工奖励SNFT处理
 	rewards, err := c.GetReward(wh.Block.Number.Hex())
 	if err != nil {
 		return fmt.Errorf("GetReward() err:%v", err)
 	}
 	for i := range rewards {
-		wh.RewardSNFTs = append(wh.RewardSNFTs, &model.OfficialNFT{
+		wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
 			Address:      rewards[i].NfTAddress,
 			Awardee:      &rewards[i].Address,
 			RewardAt:     (*uint64)(&wh.Block.Timestamp),
 			RewardNumber: (*uint64)(&wh.Block.Number),
 			Owner:        &rewards[i].Address,
 		})
-		//---todo 临时解决NFT元信息等没有注入问题，正常应该解析官方注入InjectSNFT的交易来填写SNFT元信息----
-		var snft node.SNFT
-		snft, err = c.GetSNFT(rewards[i].NfTAddress, wh.Block.Number.Hex())
-		if err != nil {
-			return fmt.Errorf("GetSNFT() err:%v", err)
-		}
-		wh.CreateSNFTs = append(wh.CreateSNFTs, &model.OfficialNFT{
-			Address:      rewards[i].NfTAddress,
-			CreateAt:     uint64(wh.Block.Timestamp),
-			CreateNumber: uint64(wh.Block.Number),
-			Creator:      snft.Creator,
-			RoyaltyRatio: snft.Royalty,
-			MetaUrl:      snft.MetaURL,
-		})
 	}
+	//解决NFT元信息等没有注入问题(包含创世区块的)，正常应该解析官方注入InjectSNFT的交易
+	var lastAddr = rewards[len(rewards)-1].NfTAddress
+	snft, err := c.GetSNFT(lastAddr, wh.Block.Number.Hex())
+	if err != nil {
+		return fmt.Errorf("GetSNFT() err:%v", err)
+	}
+
+	epoch := "0x0" + lastAddr[3:38]
+	dir := ""
+	if len(snft.MetaURL) > 53 {
+		dir = snft.MetaURL[0:53]
+	}
+	wh.Epochs = append(wh.Epochs, &model.Epoch{ID: epoch, RoyaltyRatio: snft.Royalty, Dir: dir, Creator: snft.Creator})
 	// wormholes交易处理
 	for _, tx := range wh.CacheTxs {
 		err = decodeWHTx(wh.Block, tx, wh)
@@ -374,12 +340,9 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		})
 
 	case 13: //官方注入NFT
-		startIndex, _ := new(big.Int).SetString(w.StartIndex[2:], 16)
-		if err != nil {
-			return
-		}
-		log.Println("官方注入:", startIndex, w.Number, w.Royalty, w.Creator, w.Dir)
-		wh.InjectSNFTs = append(wh.InjectSNFTs, &service.Inject{startIndex, w.Number, w.Royalty, w.Dir, w.Creator, blockNumber, timestamp})
+		epoch := "0x0" + w.StartIndex[3:38]
+		log.Println("官方注入:", w.StartIndex, w.Number, w.Royalty, w.Creator, w.Dir)
+		wh.Epochs = append(wh.Epochs, &model.Epoch{ID: epoch, RoyaltyRatio: w.Royalty, Dir: w.Dir, Creator: w.Creator, Number: blockNumber, Timestamp: timestamp, TxHash: txHash})
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)

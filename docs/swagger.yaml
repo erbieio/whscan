@@ -305,40 +305,31 @@ definitions:
         description: 交易类型,1：转移、2:出价成交、3:定价购买、4：惰性定价购买、5：惰性定价购买、6：出价成交、7：惰性出价成交、8：撮合交易
         type: integer
     type: object
-  model.OfficialNFT:
+  model.SNFT:
     properties:
       address:
-        description: OfficialNFT地址
+        description: SNFT地址
         type: string
       awardee:
-        description: 被奖励的矿工地址
+        description: 最后被奖励的矿工地址，未奖励过的为null
         type: string
-      create_at:
-        description: 创建时间戳
-        type: integer
-      create_number:
-        description: 创建的区块高度
-        type: integer
-      creator:
-        description: 创建者地址
+      full_nft_id:
+        description: 所属FullNFT的ID
         type: string
       last_price:
-        description: 最后成交价格(未成交为null)，单位wei
-        type: string
-      meta_url:
-        description: 元信息链接
+        description: 最后成交价格，单位wei，未成交过为null
         type: string
       owner:
         description: 所有者,未分配和回收的为null
         type: string
       reward_at:
-        description: 奖励时间戳,矿工被奖励这个OfficialNFT的时间
+        description: 最后被奖励时间戳，未奖励过的为null
         type: integer
       reward_number:
-        description: 奖励区块高度,矿工被奖励这个OfficialNFT的区块高度
+        description: 最后被奖励区块高度，未奖励过的为null
         type: integer
-      royalty_ratio:
-        description: 版税费率,单位万分之一
+      snft_index:
+        description: 所属FullNFT内序号，一FullNFT有256个SNFT
         type: integer
     type: object
   model.Transaction:
@@ -545,6 +536,81 @@ definitions:
         description: NFT总数
         type: integer
     type: object
+  service.SNFTGroupsRes:
+    properties:
+      collections:
+        description: 合集信息
+        items:
+          properties:
+            category:
+              description: 分类
+              type: string
+            creator:
+              description: 创建者
+              type: string
+            desc:
+              description: 描述
+              type: string
+            epochId:
+              description: 所属SNFT期ID
+              type: string
+            fullNFTs:
+              description: 16个FullNFT信息
+              items:
+                properties:
+                  category:
+                    description: 分类
+                    type: string
+                  desc:
+                    description: 描述
+                    type: string
+                  full_nft_index:
+                    description: 所属合集内序号，一合集有16个FullNFT
+                    type: integer
+                  groupId:
+                    description: 所属SNFT合集ID
+                    type: string
+                  id:
+                    description: FullNFT的ID，从0开始增加
+                    type: string
+                  meta_url:
+                    description: FullNFT元信息URL
+                    type: string
+                  name:
+                    description: 名称
+                    type: string
+                  source_url:
+                    description: 资源链接，图片或视频等文件链接
+                    type: string
+                  total_hold:
+                    description: 一个FullNFT里的持有SNFT数量
+                    type: integer
+                type: object
+              type: array
+            group_index:
+              description: 所属期内序号，一期有16个合集
+              type: integer
+            id:
+              description: 合集ID，从0开始增加
+              type: string
+            img_url:
+              description: 图片链接
+              type: string
+            meta_url:
+              description: 合集元信息URL，
+              type: string
+            name:
+              description: 名称
+              type: string
+            total_hold:
+              description: 一个合集里的持有SNFT数量
+              type: integer
+          type: object
+        type: array
+      total:
+        description: SNFT合集总数
+        type: integer
+    type: object
   service.SNFTsAndMetaRes:
     properties:
       nfts:
@@ -552,52 +618,49 @@ definitions:
         items:
           properties:
             address:
-              description: OfficialNFT地址
+              description: SNFT地址
               type: string
             awardee:
-              description: 被奖励的矿工地址
+              description: 最后被奖励的矿工地址，未奖励过的为null
               type: string
             category:
               description: 分类
               type: string
-            collection_id:
-              description: 所属合集id,合集名称+合集创建者+合集所在交易所的哈希
-              type: string
-            create_at:
-              description: 创建时间戳
-              type: integer
-            create_number:
-              description: 创建的区块高度
-              type: integer
-            creator:
-              description: 创建者地址
-              type: string
             desc:
               description: 描述
               type: string
+            full_nft_id:
+              description: 所属FullNFT的ID
+              type: string
+            full_nft_index:
+              description: 所属合集内序号，一合集有16个FullNFT
+              type: integer
+            groupId:
+              description: 所属SNFT合集ID
+              type: string
+            id:
+              description: FullNFT的ID，从0开始增加
+              type: string
             last_price:
-              description: 最后成交价格(未成交为null)，单位wei
+              description: 最后成交价格，单位wei，未成交过为null
               type: string
             meta_url:
-              description: 元信息链接
+              description: FullNFT元信息URL
               type: string
             name:
               description: 名称
-              type: string
-            nft_addr:
-              description: NFT地址
               type: string
             owner:
               description: 所有者,未分配和回收的为null
               type: string
             reward_at:
-              description: 奖励时间戳,矿工被奖励这个OfficialNFT的时间
+              description: 最后被奖励时间戳，未奖励过的为null
               type: integer
             reward_number:
-              description: 奖励区块高度,矿工被奖励这个OfficialNFT的区块高度
+              description: 最后被奖励区块高度，未奖励过的为null
               type: integer
-            royalty_ratio:
-              description: 版税费率,单位万分之一
+            snft_index:
+              description: 所属FullNFT内序号，一FullNFT有256个SNFT
               type: integer
             source_url:
               description: 资源链接，图片或视频等文件链接
@@ -613,7 +676,7 @@ definitions:
       nfts:
         description: SNFT列表
         items:
-          $ref: '#/definitions/model.OfficialNFT'
+          $ref: '#/definitions/model.SNFT'
         type: array
       total:
         description: SNFT总数
@@ -1358,13 +1421,72 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.OfficialNFT'
+              $ref: '#/definitions/model.SNFT'
             type: array
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: 查询区块SNFT列表
+      tags:
+      - NFT
+  /snft/collection/page:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定帐户的持有（有合集里的一个SNFT）的合集列表（包含16个FullNFT信息）
+      parameters:
+      - description: 所有者
+        in: query
+        name: owner
+        type: string
+      - description: 页,默认1
+        in: query
+        name: page
+        type: string
+      - description: 页大小,默认10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.SNFTGroupsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 分页查询帐户持有合集列表
+      tags:
+      - NFT
+  /snft/group/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定ID的FullNFT下256个SNFT的信息
+      parameters:
+      - description: FullNFT编号
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.SNFT'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询指定FullNFT的256个SNFT列表
       tags:
       - NFT
   /snft/page:

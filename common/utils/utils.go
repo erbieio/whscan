@@ -75,16 +75,19 @@ func BigToAddress(big *big.Int) types.Address {
 func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
 	page, size := 1, 10
 	if pagePtr != nil {
-		if *pagePtr <= 0 {
+		page = *pagePtr
+		if page <= 0 {
 			return 0, 0, fmt.Errorf("分页页数小于1")
 		}
-		page = *pagePtr
 	}
 	if sizePtr != nil {
-		if *sizePtr <= 0 {
+		size = *sizePtr
+		if size <= 0 {
 			return 0, 0, fmt.Errorf("分页大小小于1")
 		}
-		size = *sizePtr
+		if size > 100 {
+			return 0, 0, fmt.Errorf("分页大小大于100")
+		}
 	}
 	return page, size, nil
 }

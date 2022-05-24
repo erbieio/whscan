@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -50,7 +49,7 @@ func initCache() (err error) {
 		return err
 	}
 	cache.TotalUserNFT = number
-	if err = DB.Model(&model.OfficialNFT{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
+	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
 		return err
 	}
 	cache.TotalOfficialNFT = number
@@ -102,22 +101,13 @@ type DecodeRet struct {
 
 	// wormholes，需要按优先级插入数据库（后面的数据可能会查询先前数据）
 	Exchangers       []*model.Exchanger       //交易所,优先级：1
-	InjectSNFTs      []*Inject                //官方注入SNFT,优先级：1
+	Epochs           []*model.Epoch           //官方注入一期SNFT,优先级：1
 	RecycleSNFTs     []string                 //回收的SNFT,优先级：1
-	CreateSNFTs      []*model.OfficialNFT     //SNFT的创建信息,优先级：2
 	CreateNFTs       []*model.UserNFT         //新创建的NFT,优先级：2
-	RewardSNFTs      []*model.OfficialNFT     //SNFT的奖励信息,优先级：3
+	RewardSNFTs      []*model.SNFT            //SNFT的奖励信息,优先级：3
 	NFTTxs           []*model.NFTTx           //NFT交易记录,优先级：4
 	ExchangerPledges []*model.ExchangerPledge //交易所质押,优先级：无
 	ConsensusPledges []*model.ConsensusPledge //共识质押,优先级：无
-}
-
-type Inject struct {
-	StartIndex        *big.Int
-	Count             uint64
-	Royalty           uint32
-	Dir, Creator      string
-	Number, Timestamp uint64
 }
 
 func BlockInsert(block *DecodeRet) error {
@@ -179,7 +169,7 @@ func BlockInsert(block *DecodeRet) error {
 		cache.TotalTransaction += uint64(block.TotalTransaction)
 		cache.TotalUncle += uint64(block.UnclesCount)
 		cache.TotalUserNFT += uint64(len(block.CreateNFTs))
-		cache.TotalOfficialNFT += uint64(len(block.CreateSNFTs)) //todo 可能存在误差，注入和销毁的情况
+		cache.TotalOfficialNFT += uint64(len(block.RewardSNFTs)) //todo 可能存在误差，注入和销毁的情况
 	}
 	return err
 }
@@ -233,8 +223,8 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 		}
 	}
 	// 官方注入SNFT元信息
-	for _, snft := range wh.InjectSNFTs {
-		err = InjectSNFT(tx, snft.StartIndex, snft.Count, snft.Royalty, snft.Dir, snft.Creator, snft.Number, snft.Timestamp)
+	for _, epoch := range wh.Epochs {
+		err = InjectSNFT(tx, epoch)
 		if err != nil {
 			return
 		}
@@ -246,17 +236,18 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 			return
 		}
 	}
-	// SNFT创建
-	for _, snft := range wh.CreateSNFTs {
-		err = tx.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(snft).Error
+	// SNFT奖励
+	for _, snft := range wh.RewardSNFTs {
+		epochBig, _ := new(big.Int).SetString(snft.Address[3:38], 16)
+		epoch := epochBig.Text(16)
+		snft.FullNFTId = epoch + snft.Address[38:40]
+		_, err = fmt.Sscanf(snft.Address[40:42], "%x", &snft.SNFTIndex)
 		if err != nil {
 			return
 		}
-		go SaveNFTMeta(wh.Number, snft.Address, snft.MetaUrl)
-	}
-	// SNFT奖励
-	for _, snft := range wh.RewardSNFTs {
-		err = tx.Select("owner", "awardee", "reward_number", "reward_at").Updates(snft).Error
+		err = tx.Clauses(clause.OnConflict{
+			DoUpdates: clause.AssignmentColumns([]string{"full_nft_id", "snft_index", "owner", "awardee", "reward_number", "reward_at"}),
+		}).Create(snft).Error
 		if err != nil {
 			return
 		}
@@ -332,7 +323,7 @@ func SaveUserNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UserNFT) error 
 				}
 			}
 		}
-		go SaveNFTMeta(number, *nft.Address, nft.MetaUrl)
+		go saveNFTMeta(number, *nft.Address, nft.MetaUrl)
 	}
 	return nil
 }
@@ -356,7 +347,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		}).Error
 	} else {
 		// todo 处理合成的SNFT碎片地址
-		var nft model.OfficialNFT
+		var nft model.SNFT
 		err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
 		if err != nil {
 			return err
@@ -365,7 +356,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		if nt.From == "" {
 			nt.From = *nft.Owner
 		}
-		err = tx.Model(&model.OfficialNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
+		err = tx.Model(&model.SNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
 			"last_price": nt.Price,
 			"owner":      nt.To,
 		}).Error
@@ -401,7 +392,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 // RecycleSNFT SNFT回收,清空所有者
 func RecycleSNFT(tx *gorm.DB, addr string) error {
 	if len(addr) == 42 {
-		return tx.Model(&model.OfficialNFT{}).Where("address=?", addr).Updates(map[string]interface{}{
+		return tx.Model(&model.SNFT{}).Where("address=?", addr).Updates(map[string]interface{}{
 			"owner":         nil,
 			"awardee":       nil,
 			"reward_at":     nil,
@@ -419,27 +410,44 @@ func RecycleSNFT(tx *gorm.DB, addr string) error {
 }
 
 // InjectSNFT 官方批量注入SNFT
-func InjectSNFT(tx *gorm.DB, startIndex *big.Int, count uint64, royalty uint32, dir, creator string, number, timestamp uint64) (err error) {
-	SNFTAddr := big.NewInt(0)
-	Big1 := big.NewInt(1)
-	SNFTAddr.SetString("8000000000000000000000000000000000000000", 16)
-	SNFTAddr = SNFTAddr.Add(SNFTAddr, startIndex)
-	for i := uint64(0); i < count; i++ {
-		addr := string(utils.BigToAddress(SNFTAddr))
-		// 取地址倒数3-4位作为文件名
-		metaUrl := dir + addr[39:40]
-		err = tx.Create(&model.OfficialNFT{
-			Address:      strings.ToLower(addr),
-			CreateAt:     timestamp,
-			CreateNumber: number,
-			Creator:      creator,
-			RoyaltyRatio: royalty,
-			MetaUrl:      metaUrl,
-		}).Error
+func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
+	epochBig, _ := new(big.Int).SetString(epoch.ID, 0)
+	epoch.ID = epochBig.Text(16)
+	err = tx.First(&model.Epoch{}, "id=?", epoch.ID).Error
+	if err == gorm.ErrRecordNotFound {
+		err = tx.Create(epoch).Error
+	} else {
+		return
+	}
+	if err != nil {
+		return
+	}
+	for i := 0; i < 16; i++ {
+		hexI := fmt.Sprintf("%x", i)
+		groupId := epoch.ID + hexI
+		metaUrl := epoch.Dir + hexI + "0"
+		// 合集信息写入
+		err = tx.Create(&model.Group{ID: groupId, EpochId: epoch.ID, GroupIndex: uint8(i), MetaUrl: metaUrl}).Error
 		if err != nil {
-			return err
+			return
 		}
-		SNFTAddr = SNFTAddr.Add(SNFTAddr, Big1)
+		go saveSNFTGroup(groupId, metaUrl)
+		for j := 0; j < 16; j++ {
+			hexJ := fmt.Sprintf("%x", j)
+			fullNFTId := groupId + hexJ
+			metaUrl = epoch.Dir + hexI + hexJ
+			// 完整的SNFT信息写入
+			err = tx.Create(&model.FullNFT{
+				ID:           fullNFTId,
+				GroupId:      groupId,
+				FullNFTIndex: uint8(j),
+				MetaUrl:      metaUrl,
+			}).Error
+			if err != nil {
+				return
+			}
+			go saveSNFTMeta(fullNFTId, metaUrl)
+		}
 	}
 	return
 }
@@ -480,8 +488,41 @@ func ConsensusPledgeAdd(tx *gorm.DB, addr, amount string) error {
 	}).Create(&pledge).Error
 }
 
-// SaveNFTMeta 解析存储NFT元信息
-func SaveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
+func saveSNFTGroup(id, metaUrl string) {
+	nftMeta, err := GetNFTMeta(metaUrl)
+	if err != nil {
+		return
+	}
+	err = DB.Model(&model.Group{}).Where("id=?", id).Updates(map[string]interface{}{
+		"name":     nftMeta.CollectionsName,
+		"desc":     nftMeta.CollectionsDesc,
+		"category": nftMeta.CollectionsCategory,
+		"img_url":  nftMeta.CollectionsImgUrl,
+		"creator":  nftMeta.CollectionsCreator,
+	}).Error
+	if err != nil {
+		log.Println("解析存储SNFT合集信息失败", id, metaUrl, err)
+	}
+}
+
+func saveSNFTMeta(id, metaUrl string) {
+	nftMeta, err := GetNFTMeta(metaUrl)
+	if err != nil {
+		return
+	}
+	err = DB.Model(&model.FullNFT{}).Where("id=?", id).Updates(map[string]interface{}{
+		"name":       nftMeta.Name,
+		"desc":       nftMeta.Desc,
+		"category":   nftMeta.Category,
+		"source_url": nftMeta.SourceUrl,
+	}).Error
+	if err != nil {
+		log.Println("解析存储SNFT元信息失败", id, metaUrl, err)
+	}
+}
+
+// saveNFTMeta 解析存储NFT元信息
+func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 	var err error
 	defer func() {
 		if err != nil {

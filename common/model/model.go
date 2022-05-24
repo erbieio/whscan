@@ -19,7 +19,10 @@ var Tables = []interface{}{
 	&ERC1155Transfer{},
 	&Exchanger{},
 	&UserNFT{},
-	&OfficialNFT{},
+	&Epoch{},
+	&Group{},
+	&FullNFT{},
+	&SNFT{},
 	&NFTMeta{},
 	&Collection{},
 	&NFTTx{},
@@ -178,19 +181,52 @@ type UserNFT struct {
 	Owner         string  `json:"owner" gorm:"type:CHAR(44);index"`          //所有者
 }
 
-// OfficialNFT OfficialNFT属性信息
-type OfficialNFT struct {
-	Address      string  `json:"address" gorm:"type:CHAR(44);primary_key"` //OfficialNFT地址
-	CreateAt     uint64  `json:"create_at"`                                //创建时间戳
-	CreateNumber uint64  `json:"create_number" gorm:"index"`               //创建的区块高度
-	Creator      string  `json:"creator" gorm:"type:CHAR(44)"`             //创建者地址
-	LastPrice    *string `json:"last_price"`                               //最后成交价格(未成交为null)，单位wei
-	Awardee      *string `json:"awardee"`                                  //被奖励的矿工地址
-	RewardAt     *uint64 `json:"reward_at"`                                //奖励时间戳,矿工被奖励这个OfficialNFT的时间
-	RewardNumber *uint64 `json:"reward_number"`                            //奖励区块高度,矿工被奖励这个OfficialNFT的区块高度
-	Owner        *string `json:"owner" gorm:"type:CHAR(44);index"`         //所有者,未分配和回收的为null
-	RoyaltyRatio uint32  `json:"royalty_ratio"`                            //版税费率,单位万分之一
-	MetaUrl      string  `json:"meta_url"`                                 //元信息链接
+// Epoch SNFT一期
+type Epoch struct {
+	ID           string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //期ID，从0开始增加
+	Creator      string `json:"creator" gorm:"type:CHAR(44)"`           //创建者地址，也是版税收入地址
+	RoyaltyRatio uint32 `json:"royaltyRatio"`                           //同一期SNFT的版税费率,单位万分之一
+	Dir          string `json:"dir"`                                    //元信息目录URL
+	Number       uint64 `json:"number"`                                 //注入时的区块高度
+	Timestamp    uint64 `json:"timestamp"`                              //注入时的时间戳
+	TxHash       string `json:"tx_hash" gorm:"type:CHAR(66)"`           //注入时的交易哈希
+}
+
+// Group SNFT合集
+type Group struct {
+	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //合集ID，从0开始增加
+	EpochId    string `json:"epochId" gorm:"type:VARCHAR(40);index"`  //所属SNFT期ID
+	GroupIndex uint8  `json:"group_index"`                            //所属期内序号，一期有16个合集
+	MetaUrl    string `json:"meta_url"`                               //合集元信息URL，
+	Name       string `json:"name"`                                   //名称
+	Desc       string `json:"desc"`                                   //描述
+	Category   string `json:"category"`                               //分类
+	ImgUrl     string `json:"img_url"`                                //图片链接
+	Creator    string `json:"creator" gorm:"index"`                   //创建者
+}
+
+// FullNFT 完整的SNFT
+type FullNFT struct {
+	ID           string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FullNFT的ID，从0开始增加
+	GroupId      string `json:"groupId" gorm:"type:VARCHAR(40);index"`  //所属SNFT合集ID
+	FullNFTIndex uint8  `json:"full_nft_index"`                         //所属合集内序号，一合集有16个FullNFT
+	MetaUrl      string `json:"meta_url"`                               //FullNFT元信息URL
+	Name         string `json:"name"`                                   //名称
+	Desc         string `json:"desc"`                                   //描述
+	Category     string `json:"category"`                               //分类
+	SourceUrl    string `json:"source_url"`                             //资源链接，图片或视频等文件链接
+}
+
+// SNFT 碎片的SNFT，一期有16个合集，合集有16个FullNFT，FullNFT有256个SNFT
+type SNFT struct {
+	Address      string  `json:"address" gorm:"type:CHAR(44);primary_key"`  //SNFT地址
+	FullNFTId    string  `json:"full_nft_id" gorm:"type:VARCHAR(40);index"` //所属FullNFT的ID
+	SNFTIndex    uint8   `json:"snft_index"`                                //所属FullNFT内序号，一FullNFT有256个SNFT
+	LastPrice    *string `json:"last_price"`                                //最后成交价格，单位wei，未成交过为null
+	Awardee      *string `json:"awardee"`                                   //最后被奖励的矿工地址，未奖励过的为null
+	RewardAt     *uint64 `json:"reward_at"`                                 //最后被奖励时间戳，未奖励过的为null
+	RewardNumber *uint64 `json:"reward_number"`                             //最后被奖励区块高度，未奖励过的为null
+	Owner        *string `json:"owner" gorm:"type:CHAR(44);index"`          //所有者,未分配和回收的为null
 }
 
 // NFTTx NFT交易属性信息

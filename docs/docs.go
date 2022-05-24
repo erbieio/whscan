@@ -957,7 +957,97 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.OfficialNFT"
+                                "$ref": "#/definitions/model.SNFT"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/snft/collection/page": {
+            "get": {
+                "description": "查询指定帐户的持有（有合集里的一个SNFT）的合集列表（包含16个FullNFT信息）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "分页查询帐户持有合集列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "所有者",
+                        "name": "owner",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.SNFTGroupsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/snft/group/{id}": {
+            "get": {
+                "description": "查询指定ID的FullNFT下256个SNFT的信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "查询指定FullNFT的256个SNFT列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "FullNFT编号",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.SNFT"
                             }
                         }
                     },
@@ -1643,35 +1733,23 @@ var doc = `{
                 }
             }
         },
-        "model.OfficialNFT": {
+        "model.SNFT": {
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "OfficialNFT地址",
+                    "description": "SNFT地址",
                     "type": "string"
                 },
                 "awardee": {
-                    "description": "被奖励的矿工地址",
+                    "description": "最后被奖励的矿工地址，未奖励过的为null",
                     "type": "string"
                 },
-                "create_at": {
-                    "description": "创建时间戳",
-                    "type": "integer"
-                },
-                "create_number": {
-                    "description": "创建的区块高度",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "创建者地址",
+                "full_nft_id": {
+                    "description": "所属FullNFT的ID",
                     "type": "string"
                 },
                 "last_price": {
-                    "description": "最后成交价格(未成交为null)，单位wei",
-                    "type": "string"
-                },
-                "meta_url": {
-                    "description": "元信息链接",
+                    "description": "最后成交价格，单位wei，未成交过为null",
                     "type": "string"
                 },
                 "owner": {
@@ -1679,15 +1757,15 @@ var doc = `{
                     "type": "string"
                 },
                 "reward_at": {
-                    "description": "奖励时间戳,矿工被奖励这个OfficialNFT的时间",
+                    "description": "最后被奖励时间戳，未奖励过的为null",
                     "type": "integer"
                 },
                 "reward_number": {
-                    "description": "奖励区块高度,矿工被奖励这个OfficialNFT的区块高度",
+                    "description": "最后被奖励区块高度，未奖励过的为null",
                     "type": "integer"
                 },
-                "royalty_ratio": {
-                    "description": "版税费率,单位万分之一",
+                "snft_index": {
+                    "description": "所属FullNFT内序号，一FullNFT有256个SNFT",
                     "type": "integer"
                 }
             }
@@ -1982,6 +2060,109 @@ var doc = `{
                 }
             }
         },
+        "service.SNFTGroupsRes": {
+            "type": "object",
+            "properties": {
+                "collections": {
+                    "description": "合集信息",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "category": {
+                                "description": "分类",
+                                "type": "string"
+                            },
+                            "creator": {
+                                "description": "创建者",
+                                "type": "string"
+                            },
+                            "desc": {
+                                "description": "描述",
+                                "type": "string"
+                            },
+                            "epochId": {
+                                "description": "所属SNFT期ID",
+                                "type": "string"
+                            },
+                            "fullNFTs": {
+                                "description": "16个FullNFT信息",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "category": {
+                                            "description": "分类",
+                                            "type": "string"
+                                        },
+                                        "desc": {
+                                            "description": "描述",
+                                            "type": "string"
+                                        },
+                                        "full_nft_index": {
+                                            "description": "所属合集内序号，一合集有16个FullNFT",
+                                            "type": "integer"
+                                        },
+                                        "groupId": {
+                                            "description": "所属SNFT合集ID",
+                                            "type": "string"
+                                        },
+                                        "id": {
+                                            "description": "FullNFT的ID，从0开始增加",
+                                            "type": "string"
+                                        },
+                                        "meta_url": {
+                                            "description": "FullNFT元信息URL",
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "description": "名称",
+                                            "type": "string"
+                                        },
+                                        "source_url": {
+                                            "description": "资源链接，图片或视频等文件链接",
+                                            "type": "string"
+                                        },
+                                        "total_hold": {
+                                            "description": "一个FullNFT里的持有SNFT数量",
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            },
+                            "group_index": {
+                                "description": "所属期内序号，一期有16个合集",
+                                "type": "integer"
+                            },
+                            "id": {
+                                "description": "合集ID，从0开始增加",
+                                "type": "string"
+                            },
+                            "img_url": {
+                                "description": "图片链接",
+                                "type": "string"
+                            },
+                            "meta_url": {
+                                "description": "合集元信息URL，",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "名称",
+                                "type": "string"
+                            },
+                            "total_hold": {
+                                "description": "一个合集里的持有SNFT数量",
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "total": {
+                    "description": "SNFT合集总数",
+                    "type": "integer"
+                }
+            }
+        },
         "service.SNFTsAndMetaRes": {
             "type": "object",
             "properties": {
@@ -1992,51 +2173,47 @@ var doc = `{
                         "type": "object",
                         "properties": {
                             "address": {
-                                "description": "OfficialNFT地址",
+                                "description": "SNFT地址",
                                 "type": "string"
                             },
                             "awardee": {
-                                "description": "被奖励的矿工地址",
+                                "description": "最后被奖励的矿工地址，未奖励过的为null",
                                 "type": "string"
                             },
                             "category": {
                                 "description": "分类",
                                 "type": "string"
                             },
-                            "collection_id": {
-                                "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
-                                "type": "string"
-                            },
-                            "create_at": {
-                                "description": "创建时间戳",
-                                "type": "integer"
-                            },
-                            "create_number": {
-                                "description": "创建的区块高度",
-                                "type": "integer"
-                            },
-                            "creator": {
-                                "description": "创建者地址",
-                                "type": "string"
-                            },
                             "desc": {
                                 "description": "描述",
                                 "type": "string"
                             },
+                            "full_nft_id": {
+                                "description": "所属FullNFT的ID",
+                                "type": "string"
+                            },
+                            "full_nft_index": {
+                                "description": "所属合集内序号，一合集有16个FullNFT",
+                                "type": "integer"
+                            },
+                            "groupId": {
+                                "description": "所属SNFT合集ID",
+                                "type": "string"
+                            },
+                            "id": {
+                                "description": "FullNFT的ID，从0开始增加",
+                                "type": "string"
+                            },
                             "last_price": {
-                                "description": "最后成交价格(未成交为null)，单位wei",
+                                "description": "最后成交价格，单位wei，未成交过为null",
                                 "type": "string"
                             },
                             "meta_url": {
-                                "description": "元信息链接",
+                                "description": "FullNFT元信息URL",
                                 "type": "string"
                             },
                             "name": {
                                 "description": "名称",
-                                "type": "string"
-                            },
-                            "nft_addr": {
-                                "description": "NFT地址",
                                 "type": "string"
                             },
                             "owner": {
@@ -2044,15 +2221,15 @@ var doc = `{
                                 "type": "string"
                             },
                             "reward_at": {
-                                "description": "奖励时间戳,矿工被奖励这个OfficialNFT的时间",
+                                "description": "最后被奖励时间戳，未奖励过的为null",
                                 "type": "integer"
                             },
                             "reward_number": {
-                                "description": "奖励区块高度,矿工被奖励这个OfficialNFT的区块高度",
+                                "description": "最后被奖励区块高度，未奖励过的为null",
                                 "type": "integer"
                             },
-                            "royalty_ratio": {
-                                "description": "版税费率,单位万分之一",
+                            "snft_index": {
+                                "description": "所属FullNFT内序号，一FullNFT有256个SNFT",
                                 "type": "integer"
                             },
                             "source_url": {
@@ -2075,7 +2252,7 @@ var doc = `{
                     "description": "SNFT列表",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.OfficialNFT"
+                        "$ref": "#/definitions/model.SNFT"
                     }
                 },
                 "total": {
