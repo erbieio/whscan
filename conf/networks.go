@@ -42,7 +42,7 @@ var networks = map[int64]*network{
 	},
 	51888: {
 		Name: "wormholes",
-		Url:  "http://127.0.0.1:8545",
+		Url:  "http://43.129.181.130:8561",
 	},
 	80001: {
 		Name: "mumbai",

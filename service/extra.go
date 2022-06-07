@@ -1,4 +1,4 @@
-package extra
+package service
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"strconv"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"gorm.io/gorm/clause"
+	"server/common/model"
 	"server/common/types"
 	"server/common/utils"
 	"server/conf"
@@ -76,5 +78,14 @@ func ExchangerAuth(addr string) (status uint64, flag bool, balance string, err e
 	if len(hexRet) > 2 {
 		status, err = strconv.ParseUint(hexRet[2:], 16, 64)
 	}
+	return
+}
+
+func SaveSubscription(email string) error {
+	return DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Subscription{Email: email}).Error
+}
+
+func FetchSubscriptions(page, size int) (res []model.Subscription, err error) {
+	err = DB.Offset((page - 1) * size).Limit(size).Find(&res).Error
 	return
 }

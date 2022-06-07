@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"server/common/utils"
-	"server/extra"
 	"server/service"
 )
 
@@ -70,7 +69,7 @@ func requestErbTest(c *gin.Context) {
 		return
 	}
 
-	err = extra.SendErb(string(addr), context.Background())
+	err = service.SendErb(string(addr), context.Background())
 	if err != nil {
 		c.JSON(http.StatusBadRequest, requestErbTestRes{Code: -1, Msg: err.Error()})
 		return
@@ -165,7 +164,7 @@ func checkAuth(c *gin.Context) {
 		return
 	}
 
-	status, flag, balance, err := extra.ExchangerAuth(string(addr))
+	status, flag, balance, err := service.ExchangerAuth(string(addr))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: -1, Msg: err.Error()})
 		return

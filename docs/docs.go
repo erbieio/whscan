@@ -1164,6 +1164,87 @@ var doc = `{
                 }
             }
         },
+        "/subscription": {
+            "get": {
+                "description": "查询订阅邮箱列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "其他接口"
+                ],
+                "summary": "查询订阅邮箱列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Subscription"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "输入邮箱地址，用来接收最新的活动通知",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "其他接口"
+                ],
+                "summary": "订阅邮件",
+                "parameters": [
+                    {
+                        "description": "邮箱",
+                        "name": "_",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.Subscribe"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/transaction/page": {
             "get": {
                 "description": "逆序查询交易列表",
@@ -1380,6 +1461,14 @@ var doc = `{
                     "$ref": "#/definitions/service.Transaction"
                 },
                 "msg": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Subscribe": {
+            "type": "object",
+            "properties": {
+                "email": {
                     "type": "string"
                 }
             }
@@ -1767,6 +1856,15 @@ var doc = `{
                 "snft_index": {
                     "description": "所属FullNFT内序号，一FullNFT有256个SNFT",
                     "type": "integer"
+                }
+            }
+        },
+        "model.Subscription": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "邮箱",
+                    "type": "string"
                 }
             }
         },

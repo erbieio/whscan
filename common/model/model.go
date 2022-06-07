@@ -28,6 +28,7 @@ var Tables = []interface{}{
 	&NFTTx{},
 	&ConsensusPledge{},
 	&ExchangerPledge{},
+	&Subscription{},
 }
 
 func Migrate(db *gorm.DB) error {
@@ -295,3 +296,8 @@ type ExchangerPledge Pledge
 
 // ConsensusPledge 共识质押
 type ConsensusPledge Pledge
+
+// Subscription 订阅信息
+type Subscription struct {
+	Email string `json:"email" gorm:"type:VARCHAR(64);primary_key"` //邮箱
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"regexp"
 	"strconv"
 
 	"server/common/types"
@@ -133,4 +134,11 @@ func ABIDecodeBool(hexStr string) (bool, error) {
 		return false, fmt.Errorf("返回数据格式错误")
 	}
 	return hexStr[65] == '1', nil
+}
+
+func VerifyEmailFormat(email string) bool {
+	pattern := `^[0-9a-z][_.0-9a-z-]{0,31}@([0-9a-z][0-9a-z-]{0,30}[0-9a-z]\.){1,4}[a-z]{2,4}$`
+
+	reg := regexp.MustCompile(pattern)
+	return reg.MatchString(email)
 }
