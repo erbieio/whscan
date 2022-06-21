@@ -929,6 +929,90 @@ var doc = `{
                 }
             }
         },
+        "/reward": {
+            "get": {
+                "description": "逆序查询奖励列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "奖励"
+                ],
+                "summary": "查询奖励列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.RewardsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/reward/{block}": {
+            "get": {
+                "description": "指定区块查询奖励",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "奖励"
+                ],
+                "summary": "查询奖励",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "区块高度",
+                        "name": "block",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Reward"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/snft/block": {
             "get": {
                 "description": "查询指定区块的SNFT奖励列表",
@@ -1822,6 +1906,31 @@ var doc = `{
                 }
             }
         },
+        "model.Reward": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "奖励地址",
+                    "type": "string"
+                },
+                "amount": {
+                    "description": "奖励金额",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "奖励时的区块号",
+                    "type": "integer"
+                },
+                "identity": {
+                    "description": "身份，1：出块者、2：验证者、3、交易所",
+                    "type": "integer"
+                },
+                "snft": {
+                    "description": "SNFT地址",
+                    "type": "string"
+                }
+            }
+        },
         "model.SNFT": {
             "type": "object",
             "properties": {
@@ -2158,6 +2267,22 @@ var doc = `{
                 }
             }
         },
+        "service.RewardsRes": {
+            "type": "object",
+            "properties": {
+                "rewards": {
+                    "description": "奖励列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Reward"
+                    }
+                },
+                "total": {
+                    "description": "奖励总数",
+                    "type": "integer"
+                }
+            }
+        },
         "service.SNFTGroupsRes": {
             "type": "object",
             "properties": {
@@ -2189,6 +2314,10 @@ var doc = `{
                                 "items": {
                                     "type": "object",
                                     "properties": {
+                                        "attributes": {
+                                            "description": "属性",
+                                            "type": "string"
+                                        },
                                         "category": {
                                             "description": "分类",
                                             "type": "string"
@@ -2272,6 +2401,10 @@ var doc = `{
                         "properties": {
                             "address": {
                                 "description": "SNFT地址",
+                                "type": "string"
+                            },
+                            "attributes": {
+                                "description": "属性",
                                 "type": "string"
                             },
                             "awardee": {
@@ -2439,6 +2572,10 @@ var doc = `{
                         "properties": {
                             "address": {
                                 "description": "NFT地址,从0x1自动增长",
+                                "type": "string"
+                            },
+                            "attributes": {
+                                "description": "属性",
                                 "type": "string"
                             },
                             "block_number": {

@@ -179,27 +179,50 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) (err error) {
 		return fmt.Errorf("GetReward() err:%v", err)
 	}
 	for i := range rewards {
-		wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
-			Address:      rewards[i].NfTAddress,
-			Awardee:      &rewards[i].Address,
-			RewardAt:     (*uint64)(&wh.Block.Timestamp),
-			RewardNumber: (*uint64)(&wh.Block.Number),
-			Owner:        &rewards[i].Address,
+		identity := uint8(0)
+		switch i {
+		case 0, 1, 2, 3:
+			identity = 3
+		case 4, 5, 6, 7, 8, 9:
+			identity = 2
+		case 10:
+			identity = 1
+		default:
+			err = fmt.Errorf("reward length more than 11")
+			return
+		}
+		wh.Rewards = append(wh.Rewards, &model.Reward{
+			Address:     rewards[i].Address,
+			Identity:    identity,
+			BlockNumber: uint64(wh.Block.Number),
+			SNFT:        rewards[i].NFTAddress,
+			Amount:      rewards[i].RewardAmount,
 		})
+		if rewards[i].NFTAddress != nil {
+			wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
+				Address:      *rewards[i].NFTAddress,
+				Awardee:      &rewards[i].Address,
+				RewardAt:     (*uint64)(&wh.Block.Timestamp),
+				RewardNumber: (*uint64)(&wh.Block.Number),
+				Owner:        &rewards[i].Address,
+			})
+		}
 	}
 	//解决NFT元信息等没有注入问题(包含创世区块的)，正常应该解析官方注入InjectSNFT的交易
-	var lastAddr = rewards[len(rewards)-1].NfTAddress
-	snft, err := c.GetSNFT(lastAddr, wh.Block.Number.Hex())
-	if err != nil {
-		return fmt.Errorf("GetSNFT() err:%v", err)
-	}
+	if len(wh.RewardSNFTs) > 0 {
+		var lastAddr = wh.RewardSNFTs[len(wh.RewardSNFTs)-1].Address
+		snft, err := c.GetSNFT(lastAddr, wh.Block.Number.Hex())
+		if err != nil {
+			return fmt.Errorf("GetSNFT() err:%v", err)
+		}
 
-	epoch := "0x0" + lastAddr[3:38]
-	dir := ""
-	if len(snft.MetaURL) > 53 {
-		dir = snft.MetaURL[0:53]
+		epoch := "0x0" + lastAddr[3:38]
+		dir := ""
+		if len(snft.MetaURL) > 53 {
+			dir = snft.MetaURL[0:53]
+		}
+		wh.Epochs = append(wh.Epochs, &model.Epoch{ID: epoch, RoyaltyRatio: snft.Royalty, Dir: dir, Creator: snft.Creator})
 	}
-	wh.Epochs = append(wh.Epochs, &model.Epoch{ID: epoch, RoyaltyRatio: snft.Royalty, Dir: dir, Creator: snft.Creator})
 	// wormholes交易处理
 	for _, tx := range wh.CacheTxs {
 		err = decodeWHTx(wh.Block, tx, wh)

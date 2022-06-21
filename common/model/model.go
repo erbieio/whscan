@@ -26,6 +26,7 @@ var Tables = []interface{}{
 	&NFTMeta{},
 	&Collection{},
 	&NFTTx{},
+	&Reward{},
 	&ConsensusPledge{},
 	&ExchangerPledge{},
 	&Subscription{},
@@ -214,6 +215,7 @@ type FullNFT struct {
 	MetaUrl      string `json:"meta_url"`                               //FullNFT元信息URL
 	Name         string `json:"name"`                                   //名称
 	Desc         string `json:"desc"`                                   //描述
+	Attributes   string `json:"attributes"`                             //属性
 	Category     string `json:"category"`                               //分类
 	SourceUrl    string `json:"source_url"`                             //资源链接，图片或视频等文件链接
 }
@@ -250,6 +252,7 @@ type NFTMeta struct {
 	NFTAddr      string  `json:"nft_addr" gorm:"type:CHAR(42);primary_key"` //NFT地址
 	Name         string  `json:"name"`                                      //名称
 	Desc         string  `json:"desc"`                                      //描述
+	Attributes   string  `json:"attributes"`                                //属性
 	Category     string  `json:"category"`                                  //分类
 	SourceUrl    string  `json:"source_url"`                                //资源链接，图片或视频等文件链接
 	CollectionId *string `json:"collection_id" gorm:"index"`                //所属合集id,合集名称+合集创建者+合集所在交易所的哈希
@@ -282,6 +285,15 @@ type Exchanger struct {
 	BalanceCount    string `json:"balance_count" gorm:"type:VARCHAR(128)"`   //总交易额，单位wei
 	CollectionCount uint64 `json:"collection_count" gorm:"-"`                //总合集数,批量查询此字段无效
 	NFTCount        uint64 `json:"nft_count"`                                //总NFT数
+}
+
+// Reward 矿工奖励，奖励方式为SNFT和Amount二选一，Amount暂定为0.1ERB
+type Reward struct {
+	Address     string  `json:"address" gorm:"type:CHAR(42)"` //奖励地址
+	Identity    uint8   `json:"identity"`                     //身份，1：出块者、2：验证者、3、交易所
+	BlockNumber uint64  `json:"block_number"`                 //奖励时的区块号
+	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`    //SNFT地址
+	Amount      *string `json:"amount"`                       //奖励金额
 }
 
 // Pledge 账户质押金额

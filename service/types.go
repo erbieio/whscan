@@ -36,6 +36,7 @@ func BigIntAdd(a, b string) string {
 type NFTMeta struct {
 	Name                 string `json:"name"`                  //名称
 	Desc                 string `json:"desc"`                  //描述
+	Attributes           string `json:"attributes"`            //属性
 	Category             string `json:"category"`              //分类
 	SourceUrl            string `json:"source_url"`            //资源链接，图片或视频等文件链接
 	CollectionsCreator   string `json:"collections_creator"`   //所属合集创建者，唯一标识合集

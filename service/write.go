@@ -106,6 +106,7 @@ type DecodeRet struct {
 	CreateNFTs       []*model.UserNFT         //新创建的NFT,优先级：2
 	RewardSNFTs      []*model.SNFT            //SNFT的奖励信息,优先级：3
 	NFTTxs           []*model.NFTTx           //NFT交易记录,优先级：4
+	Rewards          []*model.Reward          //奖励记录,优先级：无
 	ExchangerPledges []*model.ExchangerPledge //交易所质押,优先级：无
 	ConsensusPledges []*model.ConsensusPledge //共识质押,优先级：无
 }
@@ -277,6 +278,9 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 		if err != nil {
 			return
 		}
+	}
+	if wh.Rewards != nil {
+		err = tx.Create(wh.Rewards).Error
 	}
 	return
 }
@@ -513,6 +517,7 @@ func saveSNFTMeta(id, metaUrl string) {
 	err = DB.Model(&model.FullNFT{}).Where("id=?", id).Updates(map[string]interface{}{
 		"name":       nftMeta.Name,
 		"desc":       nftMeta.Desc,
+		"attributes": nftMeta.Attributes,
 		"category":   nftMeta.Category,
 		"source_url": nftMeta.SourceUrl,
 	}).Error
@@ -549,6 +554,7 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 		NFTAddr:      nftAddr,
 		Name:         nftMeta.Name,
 		Desc:         nftMeta.Desc,
+		Attributes:   nftMeta.Attributes,
 		Category:     nftMeta.Category,
 		SourceUrl:    nftMeta.SourceUrl,
 		CollectionId: collectionId,

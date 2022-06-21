@@ -310,6 +310,24 @@ definitions:
         description: 交易类型,1：转移、2:出价成交、3:定价购买、4：惰性定价购买、5：惰性定价购买、6：出价成交、7：惰性出价成交、8：撮合交易
         type: integer
     type: object
+  model.Reward:
+    properties:
+      address:
+        description: 奖励地址
+        type: string
+      amount:
+        description: 奖励金额
+        type: string
+      block_number:
+        description: 奖励时的区块号
+        type: integer
+      identity:
+        description: 身份，1：出块者、2：验证者、3、交易所
+        type: integer
+      snft:
+        description: SNFT地址
+        type: string
+    type: object
   model.SNFT:
     properties:
       address:
@@ -547,6 +565,17 @@ definitions:
         description: NFT总数
         type: integer
     type: object
+  service.RewardsRes:
+    properties:
+      rewards:
+        description: 奖励列表
+        items:
+          $ref: '#/definitions/model.Reward'
+        type: array
+      total:
+        description: 奖励总数
+        type: integer
+    type: object
   service.SNFTGroupsRes:
     properties:
       collections:
@@ -569,6 +598,9 @@ definitions:
               description: 16个FullNFT信息
               items:
                 properties:
+                  attributes:
+                    description: 属性
+                    type: string
                   category:
                     description: 分类
                     type: string
@@ -630,6 +662,9 @@ definitions:
           properties:
             address:
               description: SNFT地址
+              type: string
+            attributes:
+              description: 属性
               type: string
             awardee:
               description: 最后被奖励的矿工地址，未奖励过的为null
@@ -747,6 +782,9 @@ definitions:
           properties:
             address:
               description: NFT地址,从0x1自动增长
+              type: string
+            attributes:
+              description: 属性
               type: string
             block_number:
               description: 创建的区块高度
@@ -1414,6 +1452,61 @@ paths:
       summary: 查询包含元信息NFT列表
       tags:
       - NFT
+  /reward:
+    get:
+      consumes:
+      - application/json
+      description: 逆序查询奖励列表
+      parameters:
+      - description: 页,默认1
+        in: query
+        name: page
+        type: string
+      - description: 页大小,默认10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.RewardsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询奖励列表
+      tags:
+      - 奖励
+  /reward/{block}:
+    get:
+      consumes:
+      - application/json
+      description: 指定区块查询奖励
+      parameters:
+      - description: 区块高度
+        in: path
+        name: block
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Reward'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询奖励
+      tags:
+      - 奖励
   /snft/block:
     get:
       consumes:

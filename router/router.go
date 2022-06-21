@@ -18,5 +18,6 @@ func Init() *gin.Engine {
 	api.Exchanger(r)
 	api.Collection(r)
 	api.NFT(r)
+	api.Reward(r)
 	return r
 }

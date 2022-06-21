@@ -188,8 +188,9 @@ func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, txH
 }
 
 type Reward struct {
-	Address    string
-	NfTAddress string
+	Address      string  `json:"Address"`
+	NFTAddress   *string `json:"NftAddress"`
+	RewardAmount *string `json:"RewardAmount"`
 }
 
 func (c *Client) GetReward(number string) (rewards []Reward, err error) {
