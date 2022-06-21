@@ -357,7 +357,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			return err
 		}
 		// 填充卖家字段（如果没有）
-		if nt.From == "" {
+		if nt.From == "" && nft.Owner != nil {
 			nt.From = *nft.Owner
 		}
 		err = tx.Model(&model.SNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
