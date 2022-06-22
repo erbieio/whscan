@@ -21,6 +21,7 @@ func Collection(e *gin.Engine) {
 // @Produce      json
 // @Param        exchanger  query     string  false  "交易所，空则查询所有交易所"
 // @Param        creator    query     string  false  "创建者,空则查询所有"
+// @Param        type       query     string  false  "类型：all、nft、snft，默认all"
 // @Param        page       query     string  false  "页,默认1"
 // @Param        page_size  query     string  false  "页大小,默认10"
 // @Success      200        {object}  service.CollectionsRes
@@ -32,6 +33,7 @@ func pageCollection(c *gin.Context) {
 		PageSize  *int   `form:"page_size"`
 		Exchanger string `form:"exchanger"`
 		Creator   string `form:"creator"`
+		Type      string `form:"type"`
 	}{}
 	err := c.BindQuery(&req)
 	if err != nil {
@@ -44,7 +46,7 @@ func pageCollection(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchCollections(req.Exchanger, req.Creator, page, size)
+	res, err := service.FetchCollections(req.Exchanger, req.Creator, req.Type, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

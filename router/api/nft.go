@@ -27,51 +27,13 @@ func NFT(e *gin.Engine) {
 // @Produce      json
 // @Param        exchanger      query     string  false  "交易所，空则查询所有交易所"
 // @Param        owner          query     string  false  "所有者,空则查询所有"
+// @Param        collection_id  query     string  false  "合集id,空则查询所有"
 // @Param        page           query     string  false  "页,默认1"
 // @Param        page_size      query     string  false  "页大小,默认10"
-// @Success      200        {object}  service.UserNFTsRes
+// @Success      200            {object}  service.UserNFTsRes
 // @Failure      400            {object}  service.ErrRes
 // @Router       /nft/page [get]
 func pageNFT(c *gin.Context) {
-	req := struct {
-		Page      *int   `form:"page"`
-		PageSize  *int   `form:"page_size"`
-		Exchanger string `form:"exchanger"`
-		Owner     string `form:"owner"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchUserNFTs(req.Exchanger, strings.ToLower(req.Owner), page, size)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, res)
-}
-
-// @Tags         NFT
-// @Summary      查询包含元信息NFT列表
-// @Description  按创建时间逆序查询包含元信息NFT列表
-// @Accept       json
-// @Produce      json
-// @Param        exchanger  query     string  false  "交易所，空则查询所有交易所"
-// @Param        owner      query     string  false  "所有者,空则查询所有"
-// @Param        collection_id  query     string  false  "合集id,空则查询所有"
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
-// @Success      200            {object}  service.UserNFTsAndMetaRes
-// @Failure      400  {object}  service.ErrRes
-// @Router       /nft_meta/page [get]
-func pageNFTAndMeta(c *gin.Context) {
 	req := struct {
 		Page         *int   `form:"page"`
 		PageSize     *int   `form:"page_size"`
@@ -90,12 +52,29 @@ func pageNFTAndMeta(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchUserNFTsAndMeta(req.Exchanger, req.CollectionId, strings.ToLower(req.Owner), page, size)
+	res, err := service.FetchUserNFTs(req.Exchanger, req.CollectionId, strings.ToLower(req.Owner), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, res)
+}
+
+// @Tags         NFT
+// @Summary      查询包含元信息NFT列表
+// @Description  按创建时间逆序查询包含元信息NFT列表
+// @Accept       json
+// @Produce      json
+// @Param        exchanger      query     string  false  "交易所，空则查询所有交易所"
+// @Param        owner          query     string  false  "所有者,空则查询所有"
+// @Param        collection_id  query     string  false  "合集id,空则查询所有"
+// @Param        page           query     string  false  "页,默认1"
+// @Param        page_size      query     string  false  "页大小,默认10"
+// @Success      200            {object}  service.UserNFTsRes
+// @Failure      400            {object}  service.ErrRes
+// @Router       /nft_meta/page [get]
+func pageNFTAndMeta(c *gin.Context) {
+	pageNFT(c)
 }
 
 // @Tags         NFT
@@ -109,7 +88,7 @@ func pageNFTAndMeta(c *gin.Context) {
 // @Param        page       query     string  false  "页,默认1"
 // @Param        page_size  query     string  false  "页大小,默认10"
 // @Success      200        {object}  service.NFTTxsRes
-// @Failure      400        {object}  service.ErrRes
+// @Failure      400  {object}  service.ErrRes
 // @Router       /nft/tx/page [get]
 func pageNFTTx(c *gin.Context) {
 	req := struct {
@@ -285,9 +264,6 @@ func pageSNFTGroup(c *gin.Context) {
 // @Router       /snft/group/{id} [get]
 func groupSNFTs(c *gin.Context) {
 	id := c.Param("id")
-	if len(id) == 39 {
-		id = id[37:40]
-	}
 	data, err := service.FullSNFTs(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})

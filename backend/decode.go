@@ -216,7 +216,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) (err error) {
 			return fmt.Errorf("GetSNFT() err:%v", err)
 		}
 
-		epoch := "0x0" + lastAddr[3:38]
+		epoch := "0x8" + lastAddr[3:38]
 		dir := ""
 		if len(snft.MetaURL) > 53 {
 			dir = snft.MetaURL[0:53]
@@ -363,7 +363,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		})
 
 	case 13: //官方注入NFT
-		epoch := "0x0" + w.StartIndex[3:38]
+		epoch := "0x8" + w.StartIndex[3:38]
 		log.Println("官方注入:", w.StartIndex, w.Number, w.Royalty, w.Creator, w.Dir)
 		wh.Epochs = append(wh.Epochs, &model.Epoch{ID: epoch, RoyaltyRatio: w.Royalty, Dir: w.Dir, Creator: w.Creator, Number: blockNumber, Timestamp: timestamp, TxHash: txHash})
 

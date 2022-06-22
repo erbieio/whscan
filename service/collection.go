@@ -8,13 +8,19 @@ type CollectionsRes struct {
 	Collections []model.Collection `json:"collections"` //NFT合集列表
 }
 
-func FetchCollections(exchanger, creator string, page, size int) (res CollectionsRes, err error) {
+func FetchCollections(exchanger, creator, _type string, page, size int) (res CollectionsRes, err error) {
 	db := DB
 	if exchanger != "" {
 		db = db.Where("exchanger=?", exchanger)
 	}
 	if creator != "" {
 		db = db.Where("creator=?", creator)
+	}
+	if _type == "nft" {
+		db = db.Where("length(id)=64")
+	}
+	if _type == "snft" {
+		db = db.Where("length(id)!=64")
 	}
 
 	err = db.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Collections).Error

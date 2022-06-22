@@ -20,10 +20,8 @@ var Tables = []interface{}{
 	&Exchanger{},
 	&UserNFT{},
 	&Epoch{},
-	&Group{},
 	&FullNFT{},
 	&SNFT{},
-	&NFTMeta{},
 	&Collection{},
 	&NFTTx{},
 	&Reward{},
@@ -181,9 +179,16 @@ type UserNFT struct {
 	BlockNumber   uint64  `json:"block_number"`                              //创建的区块高度
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66)"`              //创建的交易哈希
 	Owner         string  `json:"owner" gorm:"type:CHAR(44);index"`          //所有者
+	Name          string  `json:"name"`                                      //名称
+	Desc          string  `json:"desc"`                                      //描述
+	Attributes    string  `json:"attributes"`                                //属性
+	Category      string  `json:"category"`                                  //分类
+	SourceUrl     string  `json:"source_url"`                                //资源链接，图片或视频等文件链接
+	CollectionId  *string `json:"collection_id" gorm:"index"`                //所属合集id,合集名称+合集创建者+合集所在交易所的哈希
 }
 
 // Epoch SNFT一期
+// 一期SNFT->16个合集->16个FullNFT->256个SNFT
 type Epoch struct {
 	ID           string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //期ID，从0开始增加
 	Creator      string `json:"creator" gorm:"type:CHAR(44)"`           //创建者地址，也是版税收入地址
@@ -194,42 +199,25 @@ type Epoch struct {
 	TxHash       string `json:"tx_hash" gorm:"type:CHAR(66)"`           //注入时的交易哈希
 }
 
-// Group SNFT合集
-type Group struct {
-	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //合集ID，从0开始增加
-	EpochId    string `json:"epochId" gorm:"type:VARCHAR(40);index"`  //所属SNFT期ID
-	GroupIndex uint8  `json:"group_index"`                            //所属期内序号，一期有16个合集
-	MetaUrl    string `json:"meta_url"`                               //合集元信息URL，
-	Name       string `json:"name"`                                   //名称
-	Desc       string `json:"desc"`                                   //描述
-	Category   string `json:"category"`                               //分类
-	ImgUrl     string `json:"img_url"`                                //图片链接
-	Creator    string `json:"creator" gorm:"index"`                   //创建者
-}
-
 // FullNFT 完整的SNFT
 type FullNFT struct {
-	ID           string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FullNFT的ID，从0开始增加
-	GroupId      string `json:"groupId" gorm:"type:VARCHAR(40);index"`  //所属SNFT合集ID
-	FullNFTIndex uint8  `json:"full_nft_index"`                         //所属合集内序号，一合集有16个FullNFT
-	MetaUrl      string `json:"meta_url"`                               //FullNFT元信息URL
-	Name         string `json:"name"`                                   //名称
-	Desc         string `json:"desc"`                                   //描述
-	Attributes   string `json:"attributes"`                             //属性
-	Category     string `json:"category"`                               //分类
-	SourceUrl    string `json:"source_url"`                             //资源链接，图片或视频等文件链接
+	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FullNFT的ID，从0开始增加
+	MetaUrl    string `json:"meta_url"`                               //FullNFT元信息URL
+	Name       string `json:"name"`                                   //名称
+	Desc       string `json:"desc"`                                   //描述
+	Attributes string `json:"attributes"`                             //属性
+	Category   string `json:"category"`                               //分类
+	SourceUrl  string `json:"source_url"`                             //资源链接，图片或视频等文件链接
 }
 
-// SNFT 碎片的SNFT，一期有16个合集，合集有16个FullNFT，FullNFT有256个SNFT
+// SNFT 碎片的SNFT
 type SNFT struct {
-	Address      string  `json:"address" gorm:"type:CHAR(44);primary_key"`  //SNFT地址
-	FullNFTId    string  `json:"full_nft_id" gorm:"type:VARCHAR(40);index"` //所属FullNFT的ID
-	SNFTIndex    uint8   `json:"snft_index"`                                //所属FullNFT内序号，一FullNFT有256个SNFT
-	LastPrice    *string `json:"last_price"`                                //最后成交价格，单位wei，未成交过为null
-	Awardee      *string `json:"awardee"`                                   //最后被奖励的矿工地址，未奖励过的为null
-	RewardAt     *uint64 `json:"reward_at"`                                 //最后被奖励时间戳，未奖励过的为null
-	RewardNumber *uint64 `json:"reward_number"`                             //最后被奖励区块高度，未奖励过的为null
-	Owner        *string `json:"owner" gorm:"type:CHAR(44);index"`          //所有者,未分配和回收的为null
+	Address      string  `json:"address" gorm:"type:CHAR(44);primary_key"` //SNFT地址
+	LastPrice    *string `json:"last_price"`                               //最后成交价格，单位wei，未成交过为null
+	Awardee      *string `json:"awardee"`                                  //最后被奖励的矿工地址，未奖励过的为null
+	RewardAt     *uint64 `json:"reward_at"`                                //最后被奖励时间戳，未奖励过的为null
+	RewardNumber *uint64 `json:"reward_number"`                            //最后被奖励区块高度，未奖励过的为null
+	Owner        *string `json:"owner" gorm:"type:CHAR(44);index"`         //所有者,未分配和回收的为null
 }
 
 // NFTTx NFT交易属性信息
@@ -247,27 +235,17 @@ type NFTTx struct {
 	Fee           *string `json:"fee"`                                      //交易手续费，单位wei（有交易所和价格的才有手续费）
 }
 
-// NFTMeta NFT元信息
-type NFTMeta struct {
-	NFTAddr      string  `json:"nft_addr" gorm:"type:CHAR(42);primary_key"` //NFT地址
-	Name         string  `json:"name"`                                      //名称
-	Desc         string  `json:"desc"`                                      //描述
-	Attributes   string  `json:"attributes"`                                //属性
-	Category     string  `json:"category"`                                  //分类
-	SourceUrl    string  `json:"source_url"`                                //资源链接，图片或视频等文件链接
-	CollectionId *string `json:"collection_id" gorm:"index"`                //所属合集id,合集名称+合集创建者+合集所在交易所的哈希
-}
-
-// Collection 合集信息
+// Collection 合集信息，用户合集：名称+创建者+所属交易所的哈希，SNFT合集：SNFT地址去掉后3位
 type Collection struct {
-	Id          string `json:"id" gorm:"type:CHAR(66);primary_key"`  //名称+创建者+所属交易所的哈希
-	Name        string `json:"name"`                                 //名称，唯一标识合集
-	Creator     string `json:"creator" gorm:"index"`                 //创建者，唯一标识合集
-	Category    string `json:"category"`                             //分类
-	Desc        string `json:"desc"`                                 //描述
-	ImgUrl      string `json:"img_url"`                              //图片链接
-	BlockNumber uint64 `json:"block_number" gorm:"index"`            //创建区块高度，等于合集第一个NFT的
-	Exchanger   string `json:"exchanger" gorm:"type:CHAR(42);index"` //所属交易所，唯一标识合集
+	Id          string  `json:"id" gorm:"type:CHAR(66);primary_key"`  //ID
+	MetaUrl     string  `json:"meta_url"`                             //合集元信息URL
+	Name        string  `json:"name"`                                 //名称
+	Creator     string  `json:"creator" gorm:"index"`                 //创建者
+	Category    string  `json:"category"`                             //分类
+	Desc        string  `json:"desc"`                                 //描述
+	ImgUrl      string  `json:"img_url"`                              //图片链接
+	BlockNumber uint64  `json:"block_number" gorm:"index"`            //创建区块高度，等于合集第一个NFT的
+	Exchanger   *string `json:"exchanger" gorm:"type:CHAR(42);index"` //所属交易所
 }
 
 // Exchanger 交易所属性信息

@@ -239,15 +239,8 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 	}
 	// SNFT奖励
 	for _, snft := range wh.RewardSNFTs {
-		epochBig, _ := new(big.Int).SetString(snft.Address[3:38], 16)
-		epoch := epochBig.Text(16)
-		snft.FullNFTId = epoch + snft.Address[38:40]
-		_, err = fmt.Sscanf(snft.Address[40:42], "%x", &snft.SNFTIndex)
-		if err != nil {
-			return
-		}
 		err = tx.Clauses(clause.OnConflict{
-			DoUpdates: clause.AssignmentColumns([]string{"full_nft_id", "snft_index", "owner", "awardee", "reward_number", "reward_at"}),
+			DoUpdates: clause.AssignmentColumns([]string{"owner", "awardee", "reward_at", "reward_number"}),
 		}).Create(snft).Error
 		if err != nil {
 			return
@@ -332,10 +325,10 @@ func SaveUserNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UserNFT) error 
 	return nil
 }
 
-// SaveNFTTx 保存NFT交易记录
+// SaveNFTTx 保存NFT交易记录，同时更新NFT所有者和最新价格
 func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
-	// 更新NFT所有者和最新价格
 	if (*nt.NFTAddr)[2] != '8' {
+		// 处理用户NFT
 		var nft model.UserNFT
 		err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
 		if err != nil {
@@ -350,7 +343,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			"owner":      nt.To,
 		}).Error
 	} else {
-		// todo 处理合成的SNFT碎片地址
+		// todo 处理系统SNFT
 		var nft model.SNFT
 		err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
 		if err != nil {
@@ -415,8 +408,6 @@ func RecycleSNFT(tx *gorm.DB, addr string) error {
 
 // InjectSNFT 官方批量注入SNFT
 func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
-	epochBig, _ := new(big.Int).SetString(epoch.ID, 0)
-	epoch.ID = epochBig.Text(16)
 	err = tx.First(&model.Epoch{}, "id=?", epoch.ID).Error
 	if err == gorm.ErrRecordNotFound {
 		err = tx.Create(epoch).Error
@@ -428,25 +419,20 @@ func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
 	}
 	for i := 0; i < 16; i++ {
 		hexI := fmt.Sprintf("%x", i)
-		groupId := epoch.ID + hexI
+		collectionId := epoch.ID + hexI
 		metaUrl := epoch.Dir + hexI + "0"
 		// 合集信息写入
-		err = tx.Create(&model.Group{ID: groupId, EpochId: epoch.ID, GroupIndex: uint8(i), MetaUrl: metaUrl}).Error
+		err = tx.Create(&model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}).Error
 		if err != nil {
 			return
 		}
-		go saveSNFTGroup(groupId, metaUrl)
+		go saveSNFTGroup(collectionId, metaUrl)
 		for j := 0; j < 16; j++ {
 			hexJ := fmt.Sprintf("%x", j)
-			fullNFTId := groupId + hexJ
+			fullNFTId := collectionId + hexJ
 			metaUrl = epoch.Dir + hexI + hexJ
 			// 完整的SNFT信息写入
-			err = tx.Create(&model.FullNFT{
-				ID:           fullNFTId,
-				GroupId:      groupId,
-				FullNFTIndex: uint8(j),
-				MetaUrl:      metaUrl,
-			}).Error
+			err = tx.Create(&model.FullNFT{ID: fullNFTId, MetaUrl: metaUrl}).Error
 			if err != nil {
 				return
 			}
@@ -497,7 +483,7 @@ func saveSNFTGroup(id, metaUrl string) {
 	if err != nil {
 		return
 	}
-	err = DB.Model(&model.Group{}).Where("id=?", id).Updates(map[string]interface{}{
+	err = DB.Model(&model.Collection{}).Where("id=?", id).Updates(map[string]interface{}{
 		"name":     nftMeta.CollectionsName,
 		"desc":     nftMeta.CollectionsDesc,
 		"category": nftMeta.CollectionsCategory,
@@ -549,15 +535,13 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 		))
 		collectionId = &hash
 	}
-
-	err = DB.Create(&model.NFTMeta{
-		NFTAddr:      nftAddr,
-		Name:         nftMeta.Name,
-		Desc:         nftMeta.Desc,
-		Attributes:   nftMeta.Attributes,
-		Category:     nftMeta.Category,
-		SourceUrl:    nftMeta.SourceUrl,
-		CollectionId: collectionId,
+	err = DB.Model(&model.UserNFT{}).Where("address=?", nftAddr).Updates(map[string]interface{}{
+		"name":          nftMeta.Name,
+		"desc":          nftMeta.Desc,
+		"attributes":    nftMeta.Attributes,
+		"category":      nftMeta.Category,
+		"source_url":    nftMeta.SourceUrl,
+		"collection_id": collectionId,
 	}).Error
 	if err == nil && collectionId != nil {
 		err = DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
@@ -568,7 +552,7 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 			Desc:        nftMeta.CollectionsDesc,
 			ImgUrl:      nftMeta.CollectionsImgUrl,
 			BlockNumber: uint64(blockNumber),
-			Exchanger:   nftMeta.CollectionsExchanger,
+			Exchanger:   &nftMeta.CollectionsExchanger,
 		}).Error
 	}
 }
