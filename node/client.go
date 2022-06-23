@@ -187,6 +187,20 @@ func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, txH
 	return
 }
 
+type Epoch struct {
+	Dir        string   `json:"dir"`
+	StartIndex uint64   `json:"start_index"`
+	Royalty    uint32   `json:"royalty"`
+	Creator    string   `json:"creator"`
+	Address    string   `json:"address"` //交易所地址
+	VoteWeight *big.Int `json:"vote_weight"`
+}
+
+func (c *Client) GetEpoch(number string) (rewards Epoch, err error) {
+	err = c.Call(&rewards, "eth_getNominatedNFTInfo", number)
+	return
+}
+
 type Reward struct {
 	Address      string  `json:"Address"`
 	NFTAddress   *string `json:"NftAddress"`

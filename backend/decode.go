@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -169,68 +169,81 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 }
 
 // decodeWH 导入区块分发的SNFT元信息底层NFT交易
-func decodeWH(c *node.Client, wh *service.DecodeRet) (err error) {
-	if wh.Number == 0 {
-		return
-	}
-	// 矿工奖励SNFT处理
-	rewards, err := c.GetReward(wh.Block.Number.Hex())
-	if err != nil {
-		return fmt.Errorf("GetReward() err:%v", err)
-	}
-	for i := range rewards {
-		identity := uint8(0)
-		switch i {
-		case 0, 1, 2, 3:
-			identity = 3
-		case 4, 5, 6, 7, 8, 9:
-			identity = 2
-		case 10:
-			identity = 1
-		default:
-			err = fmt.Errorf("reward length more than 11")
-			return
-		}
-		wh.Rewards = append(wh.Rewards, &model.Reward{
-			Address:     rewards[i].Address,
-			Identity:    identity,
-			BlockNumber: uint64(wh.Block.Number),
-			SNFT:        rewards[i].NFTAddress,
-			Amount:      rewards[i].RewardAmount,
-		})
-		if rewards[i].NFTAddress != nil {
-			wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
-				Address:      *rewards[i].NFTAddress,
-				Awardee:      &rewards[i].Address,
-				RewardAt:     (*uint64)(&wh.Block.Timestamp),
-				RewardNumber: (*uint64)(&wh.Block.Number),
-				Owner:        &rewards[i].Address,
-			})
-		}
-	}
-	//解决NFT元信息等没有注入问题(包含创世区块的)，正常应该解析官方注入InjectSNFT的交易
-	if len(wh.RewardSNFTs) > 0 {
-		var lastAddr = wh.RewardSNFTs[len(wh.RewardSNFTs)-1].Address
-		snft, err := c.GetSNFT(lastAddr, wh.Block.Number.Hex())
+func decodeWH(c *node.Client, wh *service.DecodeRet) error {
+	epochId := ""
+	if wh.Number > 0 {
+		// 矿工奖励SNFT处理
+		rewards, err := c.GetReward(wh.Block.Number.Hex())
 		if err != nil {
-			return fmt.Errorf("GetSNFT() err:%v", err)
+			return fmt.Errorf("GetReward() err:%v", err)
+		}
+		for i := range rewards {
+			identity := uint8(0)
+			switch i {
+			case 0, 1, 2, 3:
+				identity = 3
+			case 4, 5, 6, 7, 8, 9:
+				identity = 2
+			case 10:
+				identity = 1
+			default:
+				return fmt.Errorf("reward length more than 11")
+			}
+			wh.Rewards = append(wh.Rewards, &model.Reward{
+				Address:     rewards[i].Address,
+				Identity:    identity,
+				BlockNumber: uint64(wh.Block.Number),
+				SNFT:        rewards[i].NFTAddress,
+				Amount:      rewards[i].RewardAmount,
+			})
+			if rewards[i].NFTAddress != nil {
+				nftAddr := *rewards[i].NFTAddress
+				wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
+					Address:      nftAddr,
+					Awardee:      &rewards[i].Address,
+					RewardAt:     (*uint64)(&wh.Block.Timestamp),
+					RewardNumber: (*uint64)(&wh.Block.Number),
+					Owner:        &rewards[i].Address,
+				})
+				// 解析新的一期ID
+				if len(epochId) == 0 {
+					addr, _ := new(big.Int).SetString(nftAddr[3:], 16)
+					if addr.Mod(addr, big.NewInt(65536)).Uint64() == 9 {
+						epochId = nftAddr[:38]
+					}
+				}
+			}
 		}
 
-		epoch := "0x8" + lastAddr[3:38]
-		dir := ""
-		if len(snft.MetaURL) > 53 {
-			dir = snft.MetaURL[0:53]
+		// wormholes交易处理
+		for _, tx := range wh.CacheTxs {
+			err = decodeWHTx(wh.Block, tx, wh)
+			if err != nil {
+				return err
+			}
 		}
-		wh.Epochs = append(wh.Epochs, &model.Epoch{ID: epoch, RoyaltyRatio: snft.Royalty, Dir: dir, Creator: snft.Creator})
 	}
-	// wormholes交易处理
-	for _, tx := range wh.CacheTxs {
-		err = decodeWHTx(wh.Block, tx, wh)
+	// 当前期信息写入，每隔65536个SNFT奖励写入一次
+	if len(epochId) > 0 {
+		epoch, err := c.GetEpoch((wh.Block.Number - 1).Hex())
 		if err != nil {
-			return
+			return fmt.Errorf("GetEpoch() err:%v", err)
 		}
+		if len(epoch.Dir) == 52 {
+			epoch.Dir = epoch.Dir + "/"
+		}
+		wh.Epochs = append(wh.Epochs, &model.Epoch{
+			ID:           epochId,
+			Creator:      epoch.Creator,
+			RoyaltyRatio: epoch.Royalty,
+			Dir:          epoch.Dir,
+			Exchanger:    epoch.Address,
+			VoteWeight:   epoch.VoteWeight.Text(10),
+			Number:       uint64(wh.Block.Number),
+			Timestamp:    uint64(wh.Block.Timestamp),
+		})
 	}
-	return
+	return nil
 }
 
 // decodeWHTx 解析wormholes区块链的特殊交易
@@ -241,18 +254,19 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		return
 	}
 	type Wormholes struct {
-		Type       uint8  `json:"type"`
-		NFTAddress string `json:"nft_address"`
-		Exchanger  string `json:"exchanger"`
-		Royalty    uint32 `json:"royalty"`
-		MetaURL    string `json:"meta_url"`
-		FeeRate    uint32 `json:"fee_rate"`
-		Name       string `json:"name"`
-		Url        string `json:"url"`
-		Dir        string `json:"dir"`
-		StartIndex string `json:"start_index"`
-		Number     uint64 `json:"number"`
-		Buyer      struct {
+		Type         uint8  `json:"type"`
+		NFTAddress   string `json:"nft_address"`
+		ProxyAddress string `json:"proxy_address"`
+		Exchanger    string `json:"exchanger"`
+		Royalty      uint32 `json:"royalty"`
+		MetaURL      string `json:"meta_url"`
+		FeeRate      uint32 `json:"fee_rate"`
+		Name         string `json:"name"`
+		Url          string `json:"url"`
+		Dir          string `json:"dir"`
+		StartIndex   string `json:"start_index"`
+		Number       uint64 `json:"number"`
+		Buyer        struct {
 			Amount      string `json:"price"`
 			NFTAddress  string `json:"nft_address"`
 			Exchanger   string `json:"exchanger"`
@@ -283,8 +297,9 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			BlockNumber    string `json:"block_number"`
 			Sig            string `json:"sig"`
 		} `json:"exchanger_auth"`
-		Creator string `json:"creator"`
-		Version string `json:"version"`
+		Creator    string `json:"creator"`
+		Version    string `json:"version"`
+		RewardFlag uint8  `json:"reward_flag"`
 	}
 	var w Wormholes
 	if err = json.Unmarshal(input[10:], &w); err != nil {
@@ -313,7 +328,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			Owner:         to,
 		})
 
-	case 1: //NFT自行转移
+	case 1: //用户自行转移NFT
 		w.NFTAddress = strings.ToLower(w.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        1,
@@ -331,7 +346,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
 		return
 
-	case 9: //共识质押
+	case 9: //共识质押，可多次质押，起步100000ERB
 		wh.ConsensusPledges = append(wh.ConsensusPledges, &model.ConsensusPledge{
 			Address: from,
 			Amount:  value,
@@ -361,11 +376,6 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			Address: from,
 			IsOpen:  false,
 		})
-
-	case 13: //官方注入NFT
-		epoch := "0x8" + w.StartIndex[3:38]
-		log.Println("官方注入:", w.StartIndex, w.Number, w.Royalty, w.Creator, w.Dir)
-		wh.Epochs = append(wh.Epochs, &model.Epoch{ID: epoch, RoyaltyRatio: w.Royalty, Dir: w.Dir, Creator: w.Creator, Number: blockNumber, Timestamp: timestamp, TxHash: txHash})
 
 	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)

@@ -184,7 +184,7 @@ func SaveTxLog(tx *gorm.DB, cacheLog []*model.Log) error {
 		}
 		// 解析写入ERC合约转移事件
 		contract := model.Contract{Address: cacheLog.Address}
-		err := DB.Find(&contract).Error
+		err := tx.Find(&contract).Error
 		if err != nil {
 			return err
 		}
@@ -281,16 +281,9 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 // SaveExchanger 更新交易所信息
 func SaveExchanger(tx *gorm.DB, e *model.Exchanger) error {
 	if e.IsOpen {
-		err := tx.Where("address=?", e.Address).First(&model.Exchanger{}).Error
-		if err == gorm.ErrRecordNotFound {
-			return tx.Create(e).Error
-		}
-		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Updates(map[string]interface{}{
-			"is_open":   true,
-			"name":      e.Name,
-			"url":       e.URL,
-			"fee_ratio": e.FeeRatio,
-		}).Error
+		return tx.Clauses(clause.OnConflict{
+			DoUpdates: clause.AssignmentColumns([]string{"is_open", "name", "url", "fee_ratio"}),
+		}).Create(e).Error
 	} else {
 		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Update("is_open", false).Error
 	}
@@ -408,12 +401,7 @@ func RecycleSNFT(tx *gorm.DB, addr string) error {
 
 // InjectSNFT 官方批量注入SNFT
 func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
-	err = tx.First(&model.Epoch{}, "id=?", epoch.ID).Error
-	if err == gorm.ErrRecordNotFound {
-		err = tx.Create(epoch).Error
-	} else {
-		return
-	}
+	err = tx.Create(epoch).Error
 	if err != nil {
 		return
 	}
@@ -422,11 +410,12 @@ func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
 		collectionId := epoch.ID + hexI
 		metaUrl := epoch.Dir + hexI + "0"
 		// 合集信息写入
-		err = tx.Create(&model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}).Error
+		err = tx.
+			Create(&model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}).Error
 		if err != nil {
 			return
 		}
-		go saveSNFTGroup(collectionId, metaUrl)
+		go saveSNFTCollection(collectionId, metaUrl)
 		for j := 0; j < 16; j++ {
 			hexJ := fmt.Sprintf("%x", j)
 			fullNFTId := collectionId + hexJ
@@ -478,7 +467,7 @@ func ConsensusPledgeAdd(tx *gorm.DB, addr, amount string) error {
 	}).Create(&pledge).Error
 }
 
-func saveSNFTGroup(id, metaUrl string) {
+func saveSNFTCollection(id, metaUrl string) {
 	nftMeta, err := GetNFTMeta(metaUrl)
 	if err != nil {
 		return

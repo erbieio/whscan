@@ -215,6 +215,33 @@ definitions:
         description: 名称
         type: string
     type: object
+  model.Epoch:
+    properties:
+      creator:
+        description: 创建者地址，也是版税收入地址
+        type: string
+      dir:
+        description: 元信息目录URL
+        type: string
+      exchanger:
+        description: 交易所地址
+        type: string
+      id:
+        description: 期ID
+        type: string
+      number:
+        description: 起始的区块高度
+        type: integer
+      royaltyRatio:
+        description: 同一期SNFT的版税费率,单位万分之一
+        type: integer
+      timestamp:
+        description: 起始的时间戳
+        type: integer
+      voteWeight:
+        description: 权重
+        type: string
+    type: object
   model.Exchanger:
     properties:
       address:
@@ -532,6 +559,17 @@ definitions:
         description: NFT合集总数
         type: integer
     type: object
+  service.EpochsRes:
+    properties:
+      epochs:
+        description: 系统NFT期列表
+        items:
+          $ref: '#/definitions/model.Epoch'
+        type: array
+      total:
+        description: 系统NFT期总数
+        type: integer
+    type: object
   service.ErrRes:
     properties:
       err_str:
@@ -626,7 +664,7 @@ definitions:
                     description: 描述
                     type: string
                   id:
-                    description: FullNFT的ID，从0开始增加
+                    description: FullNFT的ID
                     type: string
                   meta_url:
                     description: FullNFT元信息URL
@@ -685,7 +723,7 @@ definitions:
               description: 描述
               type: string
             id:
-              description: FullNFT的ID，从0开始增加
+              description: FullNFT的ID
               type: string
             last_price:
               description: 最后成交价格，单位wei，未成交过为null
@@ -1075,6 +1113,58 @@ paths:
       summary: 查询NFT合集列表
       tags:
       - NFT合集
+  /epoch:
+    get:
+      consumes:
+      - application/json
+      description: 按创建时间逆序查询系统NFT期列表
+      parameters:
+      - description: 页,默认1
+        in: query
+        name: page
+        type: string
+      - description: 页大小,默认10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.EpochsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询系统NFT期列表
+      tags:
+      - 系统NFT期
+  /epoch/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 指定ID查询系统NFT期信息,包含16个合集信息
+      parameters:
+      - description: 期ID，current表示查询当前的期
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Epoch'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: 查询系统NFT期
+      tags:
+      - 系统NFT期
   /erb_faucet:
     get:
       consumes:

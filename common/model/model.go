@@ -190,18 +190,19 @@ type UserNFT struct {
 // Epoch SNFT一期
 // 一期SNFT->16个合集->16个FullNFT->256个SNFT
 type Epoch struct {
-	ID           string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //期ID，从0开始增加
+	ID           string `json:"id" gorm:"type:VARCHAR(38);primary_key"` //期ID
 	Creator      string `json:"creator" gorm:"type:CHAR(44)"`           //创建者地址，也是版税收入地址
 	RoyaltyRatio uint32 `json:"royaltyRatio"`                           //同一期SNFT的版税费率,单位万分之一
 	Dir          string `json:"dir"`                                    //元信息目录URL
-	Number       uint64 `json:"number"`                                 //注入时的区块高度
-	Timestamp    uint64 `json:"timestamp"`                              //注入时的时间戳
-	TxHash       string `json:"tx_hash" gorm:"type:CHAR(66)"`           //注入时的交易哈希
+	Exchanger    string `json:"exchanger"`                              //交易所地址
+	VoteWeight   string `json:"voteWeight"`                             //权重
+	Number       uint64 `json:"number"`                                 //起始的区块高度
+	Timestamp    uint64 `json:"timestamp"`                              //起始的时间戳
 }
 
 // FullNFT 完整的SNFT
 type FullNFT struct {
-	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FullNFT的ID，从0开始增加
+	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FullNFT的ID
 	MetaUrl    string `json:"meta_url"`                               //FullNFT元信息URL
 	Name       string `json:"name"`                                   //名称
 	Desc       string `json:"desc"`                                   //描述

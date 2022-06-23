@@ -19,5 +19,6 @@ func Init() *gin.Engine {
 	api.Collection(r)
 	api.NFT(r)
 	api.Reward(r)
+	api.Epoch(r)
 	return r
 }

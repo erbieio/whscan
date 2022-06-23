@@ -460,6 +460,86 @@ var doc = `{
                 }
             }
         },
+        "/epoch": {
+            "get": {
+                "description": "按创建时间逆序查询系统NFT期列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "系统NFT期"
+                ],
+                "summary": "查询系统NFT期列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "页,默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "页大小,默认10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.EpochsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/epoch/{id}": {
+            "get": {
+                "description": "指定ID查询系统NFT期信息,包含16个合集信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "系统NFT期"
+                ],
+                "summary": "查询系统NFT期",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "期ID，current表示查询当前的期",
+                        "name": "id",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Epoch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/erb_faucet": {
             "get": {
                 "description": "请求ERB测试币",
@@ -1788,6 +1868,43 @@ var doc = `{
                 }
             }
         },
+        "model.Epoch": {
+            "type": "object",
+            "properties": {
+                "creator": {
+                    "description": "创建者地址，也是版税收入地址",
+                    "type": "string"
+                },
+                "dir": {
+                    "description": "元信息目录URL",
+                    "type": "string"
+                },
+                "exchanger": {
+                    "description": "交易所地址",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "期ID",
+                    "type": "string"
+                },
+                "number": {
+                    "description": "起始的区块高度",
+                    "type": "integer"
+                },
+                "royaltyRatio": {
+                    "description": "同一期SNFT的版税费率,单位万分之一",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "description": "起始的时间戳",
+                    "type": "integer"
+                },
+                "voteWeight": {
+                    "description": "权重",
+                    "type": "string"
+                }
+            }
+        },
         "model.Exchanger": {
             "type": "object",
             "properties": {
@@ -2229,6 +2346,22 @@ var doc = `{
                 }
             }
         },
+        "service.EpochsRes": {
+            "type": "object",
+            "properties": {
+                "epochs": {
+                    "description": "系统NFT期列表",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Epoch"
+                    }
+                },
+                "total": {
+                    "description": "系统NFT期总数",
+                    "type": "integer"
+                }
+            }
+        },
         "service.ErrRes": {
             "type": "object",
             "properties": {
@@ -2363,7 +2496,7 @@ var doc = `{
                                             "type": "string"
                                         },
                                         "id": {
-                                            "description": "FullNFT的ID，从0开始增加",
+                                            "description": "FullNFT的ID",
                                             "type": "string"
                                         },
                                         "meta_url": {
@@ -2444,7 +2577,7 @@ var doc = `{
                                 "type": "string"
                             },
                             "id": {
-                                "description": "FullNFT的ID，从0开始增加",
+                                "description": "FullNFT的ID",
                                 "type": "string"
                             },
                             "last_price": {
