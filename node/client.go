@@ -61,7 +61,7 @@ func toBlockNumArg(number *types.BigInt) string {
 	if number == nil {
 		return "latest"
 	}
-	if number.Int64() == -1 {
+	if *number == "-1" {
 		return "pending"
 	}
 	return number.Hex()
@@ -87,7 +87,7 @@ type StructLogRes struct {
 }
 
 // TraceTransaction 实现debug_traceTransaction接口，获取交易执行详情（reexec参数可以控制追溯的块深度）
-func (c *Client) TraceTransaction(ctx context.Context, txHash string, options map[string]interface{}) (*ExecutionResult, error) {
+func (c *Client) TraceTransaction(ctx context.Context, txHash types.Hash, options map[string]interface{}) (*ExecutionResult, error) {
 	var r *ExecutionResult
 	err := c.CallContext(ctx, &r, "debug_traceTransaction", txHash, options)
 	if err == nil && r == nil {
@@ -107,20 +107,25 @@ func (c *Client) TraceBlockByNumber(ctx context.Context, blockNumber types.Uint6
 }
 
 // GetInternalTx 获取交易内部调用详情
-func (c *Client) GetInternalTx(ctx context.Context, number types.Uint64, txHash types.Hash, to types.Address) (itx []*model.InternalTx, err error) {
-	execRet, err := c.TraceTransaction(ctx, string(txHash), map[string]interface{}{
+func (c *Client) GetInternalTx(ctx context.Context, tx *model.Transaction) (itx []*model.InternalTx, err error) {
+	execRet, err := c.TraceTransaction(ctx, tx.Hash, map[string]interface{}{
 		"disableStorage": true,
 		"disableMemory":  true,
 	})
 	if err != nil {
 		return
 	}
-
-	return c.decodeInternalTxs(ctx, execRet.StructLogs, txHash, &to)
+	return c.decodeInternalTxs(ctx, execRet.StructLogs, tx)
 }
 
 // GetInternalTx 获取交易内部调用详情
-func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, txHash types.Hash, to *types.Address) (itx []*model.InternalTx, err error) {
+func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, tx *model.Transaction) (itx []*model.InternalTx, err error) {
+	to, number, txHash := new(types.Address), tx.BlockNumber, tx.Hash
+	if tx.To != nil {
+		*to = *tx.To
+	} else {
+		*to = *tx.ContractAddress
+	}
 	callers, createLogs := []*types.Address{to}, make([]*model.InternalTx, 0)
 	checkDepth := func(callers *[]*types.Address, depth int, to *types.Address) {
 		if depth > len(*callers) {
@@ -141,7 +146,7 @@ func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, txH
 	}
 
 	for i, log := range logs {
-		stack, op, value := *log.Stack, strings.ToLower(log.Op), new(types.BigInt)
+		stack, op, value := *log.Stack, strings.ToLower(log.Op), types.BigInt("0")
 		switch op {
 		case "call", "callcode":
 			checkDepth(&callers, log.Depth, to)
@@ -160,6 +165,10 @@ func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, txH
 			tmp := utils.HexToAddress(stack[len(stack)-1][2:])
 			to = &tmp
 			setCreateAddr(i)
+			err = c.CallContext(ctx, &value, "eth_getBalance", tmp, number.Hex())
+			if err != nil {
+				return nil, err
+			}
 		case "create", "create2":
 			checkDepth(&callers, log.Depth, to)
 			value, to = utils.HexToBigInt(stack[len(stack)-1][2:]), new(types.Address)

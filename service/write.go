@@ -15,44 +15,38 @@ import (
 
 // cache 缓存一些数据库查询，加速查询
 var cache = struct {
-	TotalBlock       uint64        //总区块数量
-	TotalTransaction uint64        //总交易数量
-	TotalUncle       uint64        //总叔块数量
-	TotalAccount     uint64        //总账户数量
-	TotalBalance     *types.BigInt //链的币总额
-	TotalUserNFT     uint64        //用户NFT总数
-	TotalOfficialNFT uint64        //官方NFT总数
+	TotalBlock       uint64       //总区块数量
+	TotalTransaction uint64       //总交易数量
+	TotalUncle       uint64       //总叔块数量
+	TotalAccount     uint64       //总账户数量
+	TotalBalance     types.BigInt //链的币总额
+	TotalUserNFT     uint64       //用户NFT总数
+	TotalOfficialNFT uint64       //官方NFT总数
 }{}
 
 // InitCache 从数据库初始化查询缓存
 func initCache() (err error) {
-	var number uint64
-	if err = DB.Model(&model.Block{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
-		return err
+	if err = DB.Model(&model.Block{}).Select("COUNT(*)").Scan(&cache.TotalBlock).Error; err != nil {
+		return
 	}
-	cache.TotalBlock = number
-	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
-		return err
+	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Scan(&cache.TotalTransaction).Error; err != nil {
+		return
 	}
-	cache.TotalTransaction = number
-	if err = DB.Model(&model.Uncle{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
-		return err
+	if err = DB.Model(&model.Uncle{}).Select("COUNT(*)").Scan(&cache.TotalUncle).Error; err != nil {
+		return
 	}
-	cache.TotalUncle = number
-	if err = DB.Model(&model.Account{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
-		return err
+	if err = DB.Model(&model.Account{}).Select("COUNT(*)").Scan(&cache.TotalAccount).Error; err != nil {
+		return
 	}
-	cache.TotalAccount = number
-	// todo 计算和缓存币总额
-	cache.TotalBalance = new(types.BigInt)
-	if err = DB.Model(&model.UserNFT{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
-		return err
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalBalance").Select("value").Scan(&cache.TotalBalance).Error; err != nil {
+		return
 	}
-	cache.TotalUserNFT = number
-	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
-		return err
+	if err = DB.Model(&model.UserNFT{}).Select("COUNT(*)").Scan(&cache.TotalUserNFT).Error; err != nil {
+		return
 	}
-	cache.TotalOfficialNFT = number
+	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&cache.TotalOfficialNFT).Error; err != nil {
+		return
+	}
 	return err
 }
 
@@ -80,7 +74,7 @@ func TotalAccount() uint64 {
 	return cache.TotalAccount
 }
 
-func TotalBalance() *types.BigInt {
+func TotalBalance() types.BigInt {
 	return cache.TotalBalance
 }
 
@@ -96,7 +90,8 @@ type DecodeRet struct {
 	CacheInternalTxs []*model.InternalTx
 	CacheUncles      []*model.Uncle
 	CacheAccounts    map[types.Address]*model.Account
-	CacheLogs        []*model.Log //在CacheContracts之后插入
+	CacheLogs        []*model.Log //在CacheAccounts之后插入
+	AddBalance       *big.Int     //区块增加的币数量
 
 	// wormholes，需要按优先级插入数据库（后面的数据可能会查询先前数据）
 	Exchangers       []*model.Exchanger       //交易所,优先级：1
@@ -163,6 +158,12 @@ func BlockInsert(block *DecodeRet) error {
 		cache.TotalUncle += uint64(block.UnclesCount)
 		cache.TotalUserNFT += uint64(len(block.CreateNFTs))
 		cache.TotalOfficialNFT += uint64(len(block.RewardSNFTs)) //todo 可能存在误差，注入和销毁的情况
+		if block.AddBalance != nil {
+			t := new(big.Int)
+			t.SetString(string(cache.TotalBalance), 10)
+			t.Add(t, block.AddBalance)
+			cache.TotalBalance = types.BigInt(t.Text(10))
+		}
 	}
 	return err
 }

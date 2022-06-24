@@ -19,23 +19,21 @@ import (
 // DecodeBlock 解析区块
 func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormholes bool) (*service.DecodeRet, error) {
 	var raw json.RawMessage
-	// 获取区块及其交易
+	// 获取区块(包含交易)
 	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
 	if err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	} else if len(raw) == 0 {
 		return nil, node.NotFound
 	}
-
-	var block service.DecodeRet
+	block := service.DecodeRet{AddBalance: new(big.Int)}
 	if err := json.Unmarshal(raw, &block); err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	}
-
-	if totalTransaction := len(block.CacheTxs); totalTransaction > 0 {
-		block.TotalTransaction = Uint64(totalTransaction)
+	// 获取交易收据（含交易日志）
+	if block.TotalTransaction = Uint64(len(block.CacheTxs)); block.TotalTransaction > 0 {
 		// 获取交易收据
-		reqs := make([]node.BatchElem, totalTransaction)
+		reqs := make([]node.BatchElem, block.TotalTransaction)
 		for i, tx := range block.CacheTxs {
 			reqs[i] = node.BatchElem{
 				Method: "eth_getTransactionReceipt",
@@ -51,30 +49,14 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 				return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", reqs[i].Error)
 			}
 		}
-		// 获取收据logs,只能根据区块哈希查，区块高度会查到
+		// 获取收据logs,只能根据区块哈希查（可能存在多个相同区块高度的区块）
 		err := c.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
 		if err != nil {
 			return nil, fmt.Errorf("eth_getLogs err:%v", err)
 		}
-		// 获取解析内部交易
-		if isDebug {
-			for _, tx := range block.CacheTxs {
-				to := tx.To
-				if to == nil {
-					to = tx.ContractAddress
-				}
-				internalTxs, err := c.GetInternalTx(ctx, number, tx.Hash, *to)
-				if err != nil {
-					return nil, err
-				}
-				block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
-			}
-		}
 	}
-
 	// 获取叔块
-	block.UnclesCount = Uint64(len(block.UncleHashes))
-	if block.UnclesCount > 0 {
+	if block.UnclesCount = Uint64(len(block.UncleHashes)); block.UnclesCount > 0 {
 		block.CacheUncles = make([]*model.Uncle, block.UnclesCount)
 		reqs := make([]node.BatchElem, block.UnclesCount)
 		for i := range reqs {
@@ -93,99 +75,134 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 			}
 		}
 	}
-
-	// 解析相关账户和创建的合约
-	block.CacheAccounts = make(map[Address]*model.Account)
-	block.CacheAccounts[block.Miner] = &model.Account{Address: block.Miner}
-	if len(block.CacheTxs) > 0 {
+	// 解析变动的账户属性和内部交易
+	if isDebug {
+		err = decodeAccounts(c, ctx, &block)
+		if err != nil {
+			return nil, err
+		}
 		for _, tx := range block.CacheTxs {
-			block.CacheAccounts[tx.From] = &model.Account{Address: tx.From}
-			if tx.To != nil {
-				block.CacheAccounts[*tx.To] = &model.Account{Address: *tx.To}
-			}
-			if tx.ContractAddress != nil {
-				block.CacheAccounts[*tx.ContractAddress] = &model.Account{Address: *tx.ContractAddress, Creator: &tx.From, CreatedTx: &tx.Hash}
-			}
-		}
-	}
-
-	// 获取账户属性(balance,nonce,code)
-	reqs := make([]node.BatchElem, 0, 3*len(block.CacheAccounts))
-	for _, account := range block.CacheAccounts {
-		reqs = append(reqs, node.BatchElem{
-			Method: "eth_getBalance",
-			Args:   []interface{}{account.Address, "latest"},
-			Result: &account.Balance,
-		})
-		reqs = append(reqs, node.BatchElem{
-			Method: "eth_getTransactionCount",
-			Args:   []interface{}{account.Address, "latest"},
-			Result: &account.Nonce,
-		})
-		reqs = append(reqs, node.BatchElem{
-			Method: "eth_getCode",
-			Args:   []interface{}{account.Address, "latest"},
-			Result: &account.Code,
-		})
-	}
-	if err := c.BatchCallContext(ctx, reqs); err != nil {
-		return nil, fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", err)
-	}
-	for i := range reqs {
-		if reqs[i].Error != nil {
-			return nil, fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", reqs[i].Error)
-		}
-	}
-
-	// 解析合约属性
-	for _, account := range block.CacheAccounts {
-		if *account.Code == "0x" {
-			account.Code = nil
-		} else {
-			err = decodeContract(c, account)
+			internalTxs, err := c.GetInternalTx(ctx, tx)
 			if err != nil {
 				return nil, err
 			}
+			block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
 		}
 	}
-
+	// 解析wormholes特有的东西
 	if isWormholes {
 		err = decodeWH(c, &block)
 	}
 	return &block, err
 }
 
-// decodeContract 获取合约相关属性
-func decodeContract(c *node.Client, account *model.Account) (err error) {
-	address := account.Address
-	account.Name, account.Symbol, err = utils.Property(c, address)
-	if err != nil {
-		return
-	}
-	ok, err := utils.IsERC165(c, address)
-	if err != nil {
-		return
-	}
-	if !ok {
-		ok, err = utils.IsERC20(c, address)
-		if ok && err == nil {
-			account.ERC = ERC20
+// decodeAccount 获取帐户相关属性
+func decodeAccounts(c *node.Client, ctx context.Context, block *service.DecodeRet) (err error) {
+	block.CacheAccounts = make(map[Address]*model.Account)
+	if block.Number > 0 {
+		// 获取变动账户地址
+		var modifiedAccounts []Address
+		err = c.CallContext(ctx, &modifiedAccounts, "debug_getModifiedAccountsByHash", block.Hash)
+		if err != nil {
+			return fmt.Errorf("debug_getModifiedAccountsByHash err:%v", err)
 		}
-		return
+		for i := range modifiedAccounts {
+			block.CacheAccounts[modifiedAccounts[i]] = &model.Account{Address: modifiedAccounts[i]}
+		}
+		for _, tx := range block.CacheTxs {
+			if tx.ContractAddress != nil {
+				block.CacheAccounts[*tx.ContractAddress] = &model.Account{Address: *tx.ContractAddress, Creator: &tx.From, CreatedTx: &tx.Hash}
+			}
+		}
+		// 获取账户属性(balance,nonce,code)
+		reqs := make([]node.BatchElem, 0, 3*len(block.CacheAccounts))
+		for _, account := range block.CacheAccounts {
+			reqs = append(reqs, node.BatchElem{
+				Method: "eth_getBalance",
+				Args:   []interface{}{account.Address, "latest"},
+				Result: &account.Balance,
+			})
+			reqs = append(reqs, node.BatchElem{
+				Method: "eth_getTransactionCount",
+				Args:   []interface{}{account.Address, "latest"},
+				Result: &account.Nonce,
+			})
+			reqs = append(reqs, node.BatchElem{
+				Method: "eth_getCode",
+				Args:   []interface{}{account.Address, "latest"},
+				Result: &account.Code,
+			})
+		}
+		if err = c.BatchCallContext(ctx, reqs); err != nil {
+			return fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", err)
+		}
+		for i := range reqs {
+			if reqs[i].Error != nil {
+				return fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", reqs[i].Error)
+			}
+		}
+	} else {
+		genesisAccounts := struct {
+			Accounts map[Address]struct {
+				Balance BigInt  `json:"balance"`
+				Nonce   Uint64  `json:"transactionCount"`
+				Code    *string `json:"code"`
+			}
+		}{}
+		err = c.CallContext(ctx, &genesisAccounts, "debug_dumpBlock", block.Number.Hex())
+		if err != nil {
+			return fmt.Errorf("debug_dumpBlock err:%v", err)
+		}
+		for address, account := range genesisAccounts.Accounts {
+			block.CacheAccounts[address] = &model.Account{
+				Address: address,
+				Balance: account.Balance,
+				Nonce:   account.Nonce,
+				Code:    account.Code,
+			}
+			t, _ := new(big.Int).SetString(string(account.Balance), 10)
+			block.AddBalance = block.AddBalance.Add(block.AddBalance, t)
+		}
 	}
-	ok, err = utils.IsERC721(c, address)
-	if err != nil {
-		return
+	for address, account := range block.CacheAccounts {
+		if account.Code != nil && *account.Code == "0x" {
+			account.Code = nil
+		}
+		account.Name, account.Symbol, err = utils.Property(c, address)
+		if err != nil {
+			return
+		}
+		ok, err := utils.IsERC165(c, address)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			ok, err = utils.IsERC20(c, address)
+			if err != nil {
+				return err
+			}
+			if ok {
+				account.ERC = ERC20
+			}
+			continue
+		}
+		ok, err = utils.IsERC721(c, address)
+		if err != nil {
+			return err
+		}
+		if ok {
+			account.ERC = ERC721
+			continue
+		}
+		ok, err = utils.IsERC1155(c, address)
+		if err != nil {
+			return err
+		}
+		if ok {
+			account.ERC = ERC1155
+		}
 	}
-	if ok {
-		account.ERC = ERC721
-		return
-	}
-	ok, err = utils.IsERC1155(c, address)
-	if ok {
-		account.ERC = ERC1155
-	}
-	return
+	return nil
 }
 
 // decodeWH 导入区块分发的SNFT元信息底层NFT交易
@@ -331,7 +348,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 	txHash := string(tx.Hash)
 	from := string(tx.From)
 	to := string(*tx.To)
-	value := tx.Value.Text(10)
+	value := string(tx.Value)
 	switch w.Type {
 	case 0: //用户自行铸造NFT
 		nftAddr := "" //插入数据库时实时计算填充

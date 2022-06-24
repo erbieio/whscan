@@ -12,7 +12,7 @@ func TestClient_GetERC(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	erc, err := utils.GetERC(client, "0x0a057a87ce9c56d7e336b417c79cf30e8d27860b")
+	erc, err := utils.IsERC20(client, "0x0a057a87ce9c56d7e336b417c79cf30e8d27860b")
 	if err != nil {
 		t.Error(err)
 	}

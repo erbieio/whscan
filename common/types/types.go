@@ -194,11 +194,13 @@ func (a *Uint256) UnmarshalText(input []byte) error {
 	return nil
 }
 
-// BigInt 包装big.Int，增加数据库和json相关函数
-type BigInt struct{ big.Int }
+// BigInt 由十进制字符串方式表示的大数
+type BigInt string
 
+// ImplementsGraphQLType returns true if BigInt implements the provided GraphQL type.
 func (b BigInt) ImplementsGraphQLType(name string) bool { return name == "BigInt" }
 
+// UnmarshalGraphQL unmarshals the provided GraphQL query data.
 func (b *BigInt) UnmarshalGraphQL(input interface{}) error {
 	var err error
 	switch input := input.(type) {
@@ -210,27 +212,26 @@ func (b *BigInt) UnmarshalGraphQL(input interface{}) error {
 	return err
 }
 
+// UnmarshalJSON implements json.Unmarshaler.
 func (b *BigInt) UnmarshalJSON(input []byte) error {
 	return b.UnmarshalText(input[1 : len(input)-1])
 }
 
-func (b *BigInt) Scan(src interface{}) error {
-	switch srcT := src.(type) {
-	case string:
-		return b.UnmarshalText([]byte(srcT))
-	case []byte:
-		return b.UnmarshalText(srcT)
-	default:
-		return fmt.Errorf("can't scan %T into BigInt", src)
+// UnmarshalText implements encoding.TextUnmarshaler
+func (b *BigInt) UnmarshalText(input []byte) error {
+	t := new(big.Int)
+	err := t.UnmarshalText(input)
+	if err != nil {
+		return err
 	}
+	*b = BigInt(t.String())
+	return nil
 }
 
-func (b *BigInt) Value() (driver.Value, error) {
-	return b.Text(10), nil
-}
-
-func (b *BigInt) Hex() string {
-	return "0x" + b.Text(16)
+func (b BigInt) Hex() string {
+	t := new(big.Int)
+	t.SetString(string(b), 10)
+	return "0x" + t.Text(16)
 }
 
 type StrArray []string

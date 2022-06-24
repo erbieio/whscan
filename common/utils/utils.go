@@ -114,21 +114,54 @@ func Unpack1155TransferLog(log *model.Log) ([]*model.ERC1155Transfer, error) {
 	return nil, fmt.Errorf("事件签名不匹配")
 }
 
-// HexToBigInt 将不带0x前缀的16进制字符串转换成大数BigInt（非法输入会返回0）
-func HexToBigInt(hex string) *types.BigInt {
-	b := new(types.BigInt)
-	b.SetString(hex, 16)
-	return b
+// ABIDecodeString 从合约返回值只有一个的返回数据里解析字符串
+func ABIDecodeString(hexStr string) (string, error) {
+	hexLen := len(hexStr)
+	if hexLen < 130 || (hexLen-2)%64 != 0 || hexStr[64:66] != "20" {
+		return "", fmt.Errorf("返回数据格式错误")
+	}
+	strLen := new(big.Int)
+	strLen.SetString(hexStr[66:130], 16)
+	if (hexLen-130)/64 != int(strLen.Int64())/32 {
+		return "", fmt.Errorf("返回数据字符串长度错误")
+	}
+	data, err := hex.DecodeString(hexStr[130:int(130+strLen.Int64()*2)])
+	return string(data), err
 }
 
-// HexToUint256 将不带0x前缀的16进制字符串转换为256位BigInt（大于截断后面的，非法输入会返回0）
-func HexToUint256(hex string) *types.BigInt {
-	if len(hex) > 64 {
-		hex = hex[:64]
+// ABIDecodeUint8 从合约返回值只有一个的返回数据里解析uint8
+func ABIDecodeUint8(hexStr string) (uint8, error) {
+	hexLen := len(hexStr)
+	if hexLen != 66 || hexStr[:50] != "0x000000000000000000000000000000000000000000000000" {
+		return 0, fmt.Errorf("返回数据格式错误")
 	}
-	b := new(types.BigInt)
+	data, err := strconv.ParseUint(hexStr[50:], 16, 8)
+	return uint8(data), err
+}
+
+// ABIDecodeUint256 从合约返回值只有一个的返回数据里解析uint256
+func ABIDecodeUint256(hexStr string) (Uint256, error) {
+	if len(hexStr) != 66 {
+		return "", fmt.Errorf("返回数据格式错误")
+	}
+
+	return Uint256(hexStr), nil
+}
+
+// ABIDecodeBool 从合约返回值只有一个的返回数据里解析bool
+func ABIDecodeBool(hexStr string) (bool, error) {
+	hexLen := len(hexStr)
+	if hexLen != 66 || hexStr[:65] != "0x000000000000000000000000000000000000000000000000000000000000000" {
+		return false, fmt.Errorf("返回数据格式错误")
+	}
+	return hexStr[65] == '1', nil
+}
+
+// HexToBigInt 将不带0x前缀的16进制字符串转换成大数BigInt（非法输入会返回0）
+func HexToBigInt(hex string) types.BigInt {
+	b := new(big.Int)
 	b.SetString(hex, 16)
-	return b
+	return types.BigInt(b.Text(10))
 }
 
 // HexToAddress 将不带0x前缀的16进制字符串转换为Address（大于截断前面的）
@@ -195,49 +228,6 @@ func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
 		}
 	}
 	return page, size, nil
-}
-
-// ABIDecodeString 从合约返回值只有一个的返回数据里解析字符串
-func ABIDecodeString(hexStr string) (string, error) {
-	hexLen := len(hexStr)
-	if hexLen < 130 || (hexLen-2)%64 != 0 || hexStr[64:66] != "20" {
-		return "", fmt.Errorf("返回数据格式错误")
-	}
-	strLen := new(big.Int)
-	strLen.SetString(hexStr[66:130], 16)
-	if (hexLen-130)/64 != int(strLen.Int64())/32 {
-		return "", fmt.Errorf("返回数据字符串长度错误")
-	}
-	data, err := hex.DecodeString(hexStr[130:int(130+strLen.Int64()*2)])
-	return string(data), err
-}
-
-// ABIDecodeUint8 从合约返回值只有一个的返回数据里解析uint8
-func ABIDecodeUint8(hexStr string) (uint8, error) {
-	hexLen := len(hexStr)
-	if hexLen != 66 || hexStr[:50] != "0x000000000000000000000000000000000000000000000000" {
-		return 0, fmt.Errorf("返回数据格式错误")
-	}
-	data, err := strconv.ParseUint(hexStr[50:], 16, 8)
-	return uint8(data), err
-}
-
-// ABIDecodeUint256 从合约返回值只有一个的返回数据里解析uint256
-func ABIDecodeUint256(hexStr string) (Uint256, error) {
-	if len(hexStr) != 66 {
-		return "", fmt.Errorf("返回数据格式错误")
-	}
-
-	return Uint256(hexStr), nil
-}
-
-// ABIDecodeBool 从合约返回值只有一个的返回数据里解析bool
-func ABIDecodeBool(hexStr string) (bool, error) {
-	hexLen := len(hexStr)
-	if hexLen != 66 || hexStr[:65] != "0x000000000000000000000000000000000000000000000000000000000000000" {
-		return false, fmt.Errorf("返回数据格式错误")
-	}
-	return hexStr[65] == '1', nil
 }
 
 func VerifyEmailFormat(email string) bool {
