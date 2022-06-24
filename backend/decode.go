@@ -17,7 +17,7 @@ import (
 )
 
 // DecodeBlock 解析区块
-func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.DecodeRet, error) {
+func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormholes bool) (*service.DecodeRet, error) {
 	var raw json.RawMessage
 	// 获取区块及其交易
 	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
@@ -57,17 +57,19 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 			return nil, fmt.Errorf("eth_getLogs err:%v", err)
 		}
 		// 获取解析内部交易
-		//for _, tx := range block.CacheTxs {
-		//	to := tx.To
-		//	if to == nil {
-		//		to = tx.ContractAddress
-		//	}
-		//	internalTxs, err := c.GetInternalTx(ctx, number, tx.Hash, *to)
-		//	if err != nil {
-		//		return nil, err
-		//	}
-		//	block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
-		//}
+		if isDebug {
+			for _, tx := range block.CacheTxs {
+				to := tx.To
+				if to == nil {
+					to = tx.ContractAddress
+				}
+				internalTxs, err := c.GetInternalTx(ctx, number, tx.Hash, *to)
+				if err != nil {
+					return nil, err
+				}
+				block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
+			}
+		}
 	}
 
 	// 获取叔块
@@ -94,7 +96,6 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 
 	// 解析相关账户和创建的合约
 	block.CacheAccounts = make(map[Address]*model.Account)
-	block.CacheContracts = make(map[Address]*model.Contract)
 	block.CacheAccounts[block.Miner] = &model.Account{Address: block.Miner}
 	if len(block.CacheTxs) > 0 {
 		for _, tx := range block.CacheTxs {
@@ -103,14 +104,13 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 				block.CacheAccounts[*tx.To] = &model.Account{Address: *tx.To}
 			}
 			if tx.ContractAddress != nil {
-				block.CacheAccounts[*tx.ContractAddress] = &model.Account{Address: *tx.ContractAddress}
-				block.CacheContracts[*tx.ContractAddress] = &model.Contract{Address: *tx.ContractAddress, Creator: tx.From, CreatedTx: tx.Hash}
+				block.CacheAccounts[*tx.ContractAddress] = &model.Account{Address: *tx.ContractAddress, Creator: &tx.From, CreatedTx: &tx.Hash}
 			}
 		}
 	}
 
-	// 获取账户属性
-	reqs := make([]node.BatchElem, 0, 2*len(block.CacheAccounts))
+	// 获取账户属性(balance,nonce,code)
+	reqs := make([]node.BatchElem, 0, 3*len(block.CacheAccounts))
 	for _, account := range block.CacheAccounts {
 		reqs = append(reqs, node.BatchElem{
 			Method: "eth_getBalance",
@@ -122,6 +122,11 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 			Args:   []interface{}{account.Address, "latest"},
 			Result: &account.Nonce,
 		})
+		reqs = append(reqs, node.BatchElem{
+			Method: "eth_getCode",
+			Args:   []interface{}{account.Address, "latest"},
+			Result: &account.Code,
+		})
 	}
 	if err := c.BatchCallContext(ctx, reqs); err != nil {
 		return nil, fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", err)
@@ -132,40 +137,55 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64) (*service.D
 		}
 	}
 
-	// 获取合约属性
-	if len(block.CacheContracts) > 0 {
-		reqs := make([]node.BatchElem, 0, len(block.CacheContracts))
-		for _, contract := range block.CacheContracts {
-			reqs = append(reqs, node.BatchElem{
-				Method: "eth_getCode",
-				Args:   []interface{}{contract.Address, "latest"},
-				Result: &contract.Code,
-			})
-		}
-		if err := c.BatchCallContext(ctx, reqs); err != nil {
-			return nil, fmt.Errorf("eth_getCode err:%v", err)
-		}
-		for i := range reqs {
-			if reqs[i].Error != nil {
-				return nil, fmt.Errorf("eth_getCode err:%v", reqs[i].Error)
-			}
-		}
-
-		for _, contract := range block.CacheContracts {
-			code, _ := hex.DecodeString(contract.Code[2:])
-			hash := utils.Keccak256Hash(code)
-			block.CacheAccounts[contract.Address].CodeHash = &hash
-			if len(contract.Code) > 2 {
-				contract.ERC, err = utils.GetERC(c, contract.Address)
-				if err != nil {
-					return nil, fmt.Errorf("GetERC() err:%v", err)
-				}
+	// 解析合约属性
+	for _, account := range block.CacheAccounts {
+		if *account.Code == "0x" {
+			account.Code = nil
+		} else {
+			err = decodeContract(c, account)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
 
-	err = decodeWH(c, &block)
+	if isWormholes {
+		err = decodeWH(c, &block)
+	}
 	return &block, err
+}
+
+// decodeContract 获取合约相关属性
+func decodeContract(c *node.Client, account *model.Account) (err error) {
+	address := account.Address
+	account.Name, account.Symbol, err = utils.Property(c, address)
+	if err != nil {
+		return
+	}
+	ok, err := utils.IsERC165(c, address)
+	if err != nil {
+		return
+	}
+	if !ok {
+		ok, err = utils.IsERC20(c, address)
+		if ok && err == nil {
+			account.ERC = ERC20
+		}
+		return
+	}
+	ok, err = utils.IsERC721(c, address)
+	if err != nil {
+		return
+	}
+	if ok {
+		account.ERC = ERC721
+		return
+	}
+	ok, err = utils.IsERC1155(c, address)
+	if ok {
+		account.ERC = ERC1155
+	}
+	return
 }
 
 // decodeWH 导入区块分发的SNFT元信息底层NFT交易
@@ -311,7 +331,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 	txHash := string(tx.Hash)
 	from := string(tx.From)
 	to := string(*tx.To)
-	value := string(tx.Value)
+	value := tx.Value.Text(10)
 	switch w.Type {
 	case 0: //用户自行铸造NFT
 		nftAddr := "" //插入数据库时实时计算填充

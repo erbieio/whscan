@@ -15,13 +15,13 @@ import (
 
 // cache 缓存一些数据库查询，加速查询
 var cache = struct {
-	TotalBlock       uint64       //总区块数量
-	TotalTransaction uint64       //总交易数量
-	TotalUncle       uint64       //总叔块数量
-	TotalAccount     uint64       //总账户数量
-	TotalBalance     types.BigInt //链的币总额
-	TotalUserNFT     uint64       //用户NFT总数
-	TotalOfficialNFT uint64       //官方NFT总数
+	TotalBlock       uint64        //总区块数量
+	TotalTransaction uint64        //总交易数量
+	TotalUncle       uint64        //总叔块数量
+	TotalAccount     uint64        //总账户数量
+	TotalBalance     *types.BigInt //链的币总额
+	TotalUserNFT     uint64        //用户NFT总数
+	TotalOfficialNFT uint64        //官方NFT总数
 }{}
 
 // InitCache 从数据库初始化查询缓存
@@ -44,7 +44,7 @@ func initCache() (err error) {
 	}
 	cache.TotalAccount = number
 	// todo 计算和缓存币总额
-	cache.TotalBalance = "1000000000000000000000000000000000000000000000000000000000000000"
+	cache.TotalBalance = new(types.BigInt)
 	if err = DB.Model(&model.UserNFT{}).Select("COUNT(*)").Scan(&number).Error; err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func TotalAccount() uint64 {
 	return cache.TotalAccount
 }
 
-func TotalBalance() types.BigInt {
+func TotalBalance() *types.BigInt {
 	return cache.TotalBalance
 }
 
@@ -96,7 +96,6 @@ type DecodeRet struct {
 	CacheInternalTxs []*model.InternalTx
 	CacheUncles      []*model.Uncle
 	CacheAccounts    map[types.Address]*model.Account
-	CacheContracts   map[types.Address]*model.Contract
 	CacheLogs        []*model.Log //在CacheContracts之后插入
 
 	// wormholes，需要按优先级插入数据库（后面的数据可能会查询先前数据）
@@ -137,15 +136,8 @@ func BlockInsert(block *DecodeRet) error {
 		for _, account := range block.CacheAccounts {
 			// 写入账户信息
 			if err := t.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "code_hash"}),
+				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce"}),
 			}).Create(account).Error; err != nil {
-				return err
-			}
-		}
-
-		for _, contract := range block.CacheContracts {
-			// 写入合约信息
-			if err := t.Clauses(clause.OnConflict{UpdateAll: true}).Create(contract).Error; err != nil {
 				return err
 			}
 		}
@@ -183,12 +175,12 @@ func SaveTxLog(tx *gorm.DB, cacheLog []*model.Log) error {
 			return err
 		}
 		// 解析写入ERC合约转移事件
-		contract := model.Contract{Address: cacheLog.Address}
-		err := tx.Find(&contract).Error
+		account := model.Account{Address: cacheLog.Address}
+		err := DB.Find(&account).Error
 		if err != nil {
 			return err
 		}
-		switch contract.ERC {
+		switch account.ERC {
 		case types.ERC20:
 			if transferLog, err := utils.Unpack20TransferLog(cacheLog); err == nil {
 				err = tx.Create(transferLog).Error

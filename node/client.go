@@ -48,8 +48,8 @@ func (c *Client) PendingNonceAt(ctx context.Context, account types.Address) (uin
 	return strconv.ParseUint(result[2:], 16, 64)
 }
 
-func (c *Client) CallContract(ctx context.Context, msg map[string]interface{}, blockNumber *types.BigInt) (types.Bytes, error) {
-	var hex types.Bytes
+func (c *Client) CallContract(ctx context.Context, msg map[string]interface{}, blockNumber *types.BigInt) (types.Data, error) {
+	var hex types.Data
 	err := c.CallContext(ctx, &hex, "eth_call", msg, toBlockNumArg(blockNumber))
 	if err != nil {
 		return "", err
@@ -61,7 +61,7 @@ func toBlockNumArg(number *types.BigInt) string {
 	if number == nil {
 		return "latest"
 	}
-	if *number == "-1" {
+	if number.Int64() == -1 {
 		return "pending"
 	}
 	return number.Hex()
@@ -141,7 +141,7 @@ func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, txH
 	}
 
 	for i, log := range logs {
-		stack, op, value := *log.Stack, strings.ToLower(log.Op), types.BigInt("0")
+		stack, op, value := *log.Stack, strings.ToLower(log.Op), new(types.BigInt)
 		switch op {
 		case "call", "callcode":
 			checkDepth(&callers, log.Depth, to)
@@ -185,6 +185,14 @@ func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, txH
 		})
 	}
 	return
+}
+
+func (c *Client) IsDebug() bool {
+	return c.Call(&struct{}{}, "debug_gcStats") == nil
+}
+
+func (c *Client) IsWormholes() bool {
+	return c.Call(&struct{}{}, "eth_getAccountInfo", "0x0000000000000000000000000000000000000000", "0x0") == nil
 }
 
 type Epoch struct {

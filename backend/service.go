@@ -23,8 +23,10 @@ func Run() {
 func Loop(ec *node.Client, interval time.Duration) {
 	number := service.TotalBlock()
 	log.Printf("查询缓存初始化成功, 从%v区块开始数据分析", number)
+	isDebug := ec.IsDebug()
+	isWormholes := ec.IsWormholes()
 	for {
-		err := HandleBlock(ec, number)
+		err := HandleBlock(ec, number, isDebug, isWormholes)
 		if err != nil {
 			if err != node.NotFound {
 				log.Printf("在%v区块休眠, 错误：%v", number, err)
@@ -36,8 +38,8 @@ func Loop(ec *node.Client, interval time.Duration) {
 	}
 }
 
-func HandleBlock(ec *node.Client, number uint64) error {
-	ret, err := DecodeBlock(ec, context.Background(), types.Uint64(number))
+func HandleBlock(ec *node.Client, number uint64, isDebug, isWormholes bool) error {
+	ret, err := DecodeBlock(ec, context.Background(), types.Uint64(number), isDebug, isWormholes)
 	if err != nil {
 		return err
 	}

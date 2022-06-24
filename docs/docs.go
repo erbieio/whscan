@@ -1717,6 +1717,10 @@ var doc = `{
         "model.Account": {
             "type": "object",
             "properties": {
+                "ERC": {
+                    "description": "ERC类型，ERC20,ERC721,ERC1155",
+                    "type": "integer"
+                },
                 "address": {
                     "description": "地址",
                     "type": "string"
@@ -1725,12 +1729,24 @@ var doc = `{
                     "description": "余额",
                     "type": "string"
                 },
-                "codeHash": {
-                    "description": "合约字节码哈希，普通账户为空",
+                "code": {
+                    "description": "字节码",
+                    "type": "string"
+                },
+                "createdTx": {
+                    "description": "创建交易",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "创建者,合约账户才有值",
                     "type": "string"
                 },
                 "name": {
                     "description": "名称",
+                    "type": "string"
+                },
+                "symbol": {
+                    "description": "符号",
                     "type": "string"
                 },
                 "transactionCount": {

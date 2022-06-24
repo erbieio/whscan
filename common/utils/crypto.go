@@ -32,7 +32,7 @@ func NewTx(nonce uint64, to types.Address, amount *big.Int, gasLimit uint64, gas
 }
 
 // SignTx 签名交易
-func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (types.Bytes, error) {
+func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (types.Data, error) {
 	msg := rlp.Value{
 		List: []rlp.Value{
 			{String: tx["nonce"]},    //0,nonce
@@ -68,7 +68,7 @@ func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (
 	msg.List[7] = rlp.Value{String: "0x" + hex.EncodeToString(sig[0:32])}
 	msg.List[8] = rlp.Value{String: "0x" + hex.EncodeToString(sig[32:64])}
 	raw, err := msg.Encode()
-	return types.Bytes(raw), err
+	return types.Data(raw), err
 }
 
 // Sign 用私钥签名，结果最后一位是v，值为0或1

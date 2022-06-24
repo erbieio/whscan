@@ -25,9 +25,9 @@ func GetBlock(number string) (b model.Block, err error) {
 
 // AccountsRes 账户分页返回参数
 type AccountsRes struct {
-	Total    int64           `json:"total"`   //账户总数
-	Balance  types.BigInt    `json:"balance"` //链的币总额
-	Accounts []model.Account `json:"blocks"`  //账户列表
+	Total    int64           `json:"total"`                        //账户总数
+	Balance  *types.BigInt   `json:"balance" swaggertype:"string"` //链的币总额
+	Accounts []model.Account `json:"blocks"`                       //账户列表
 }
 
 func FetchAccounts(page, size int) (res AccountsRes, err error) {

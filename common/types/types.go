@@ -50,87 +50,60 @@ func (b Uint64) Hex() string {
 	return "0x" + strconv.FormatUint(uint64(b), 16)
 }
 
-type Bytes string
+// Data 用带前缀16进制字符串表示的字节数组
+type Data string
 
-// ImplementsGraphQLType returns true if Bytes implements the provided GraphQL type.
-func (a Bytes) ImplementsGraphQLType(name string) bool { return name == "Bytes" }
+// ImplementsGraphQLType returns true if Data implements the provided GraphQL type.
+func (d Data) ImplementsGraphQLType(name string) bool { return name == "Data" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
-func (a *Bytes) UnmarshalGraphQL(input interface{}) error {
+func (d *Data) UnmarshalGraphQL(input interface{}) error {
 	var err error
 	switch input := input.(type) {
 	case string:
-		return a.UnmarshalText([]byte(input))
+		return d.UnmarshalText([]byte(input))
 	default:
-		err = fmt.Errorf("unexpected type %T for Bytes", input)
+		err = fmt.Errorf("unexpected type %T for Data", input)
 	}
 	return err
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (a *Bytes) UnmarshalJSON(input []byte) error {
-	return a.UnmarshalText(input[1 : len(input)-1])
+func (d *Data) UnmarshalJSON(input []byte) error {
+	return d.UnmarshalText(input[1 : len(input)-1])
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler
-func (a *Bytes) UnmarshalText(input []byte) error {
-	*a = Bytes(input)
+func (d *Data) UnmarshalText(input []byte) error {
+	*d = Data(input)
 	return nil
 }
 
-type Bytes4 string
+type Data8 string
 
-// ImplementsGraphQLType returns true if Bytes4 implements the provided GraphQL type.
-func (a Bytes4) ImplementsGraphQLType(name string) bool { return name == "Bytes4" }
+// ImplementsGraphQLType returns true if Data8 implements the provided GraphQL type.
+func (a Data8) ImplementsGraphQLType(name string) bool { return name == "Data8" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
-func (a *Bytes4) UnmarshalGraphQL(input interface{}) error {
+func (a *Data8) UnmarshalGraphQL(input interface{}) error {
 	var err error
 	switch input := input.(type) {
 	case string:
 		return a.UnmarshalText([]byte(input))
 	default:
-		err = fmt.Errorf("unexpected type %T for Bytes4", input)
+		err = fmt.Errorf("unexpected type %T for Data8", input)
 	}
 	return err
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (a *Bytes4) UnmarshalJSON(input []byte) error {
+func (a *Data8) UnmarshalJSON(input []byte) error {
 	return a.UnmarshalText(input[1 : len(input)-1])
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler
-func (a *Bytes4) UnmarshalText(input []byte) error {
-	*a = Bytes4(input)
-	return nil
-}
-
-type Bytes8 string
-
-// ImplementsGraphQLType returns true if Bytes8 implements the provided GraphQL type.
-func (a Bytes8) ImplementsGraphQLType(name string) bool { return name == "Bytes8" }
-
-// UnmarshalGraphQL unmarshals the provided GraphQL query data.
-func (a *Bytes8) UnmarshalGraphQL(input interface{}) error {
-	var err error
-	switch input := input.(type) {
-	case string:
-		return a.UnmarshalText([]byte(input))
-	default:
-		err = fmt.Errorf("unexpected type %T for Bytes8", input)
-	}
-	return err
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (a *Bytes8) UnmarshalJSON(input []byte) error {
-	return a.UnmarshalText(input[1 : len(input)-1])
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler
-func (a *Bytes8) UnmarshalText(input []byte) error {
-	*a = Bytes8(input)
+func (a *Data8) UnmarshalText(input []byte) error {
+	*a = Data8(input)
 	return nil
 }
 
@@ -221,48 +194,42 @@ func (a *Uint256) UnmarshalText(input []byte) error {
 	return nil
 }
 
-// BigInt 由十进制字符串方式表示的大数
-type BigInt string
+// BigInt 包装big.Int，增加数据库和json相关函数
+type BigInt struct{ big.Int }
 
-// ImplementsGraphQLType returns true if BigInt implements the provided GraphQL type.
-func (a BigInt) ImplementsGraphQLType(name string) bool { return name == "BigInt" }
+func (b BigInt) ImplementsGraphQLType(name string) bool { return name == "BigInt" }
 
-// UnmarshalGraphQL unmarshals the provided GraphQL query data.
-func (a *BigInt) UnmarshalGraphQL(input interface{}) error {
+func (b *BigInt) UnmarshalGraphQL(input interface{}) error {
 	var err error
 	switch input := input.(type) {
 	case string:
-		return a.UnmarshalText([]byte(input))
+		return b.UnmarshalText([]byte(input))
 	default:
 		err = fmt.Errorf("unexpected type %T for BigInt", input)
 	}
 	return err
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (a *BigInt) UnmarshalJSON(input []byte) error {
-	return a.UnmarshalText(input[1 : len(input)-1])
+func (b *BigInt) UnmarshalJSON(input []byte) error {
+	return b.UnmarshalText(input[1 : len(input)-1])
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler
-func (a *BigInt) UnmarshalText(input []byte) error {
-	if input[0] == '0' && input[1] == 'x' || input[1] == 'X' {
-		// 16进制转10进制
-		b := new(big.Int)
-		err := b.UnmarshalText(input)
-		if err != nil {
-			return err
-		}
-		*a = BigInt(b.String())
-	} else {
-		*a = BigInt(input)
+func (b *BigInt) Scan(src interface{}) error {
+	switch srcT := src.(type) {
+	case string:
+		return b.UnmarshalText([]byte(srcT))
+	case []byte:
+		return b.UnmarshalText(srcT)
+	default:
+		return fmt.Errorf("can't scan %T into BigInt", src)
 	}
-	return nil
 }
 
-func (a BigInt) Hex() string {
-	b := new(big.Int)
-	b.SetString(string(a), 10)
+func (b *BigInt) Value() (driver.Value, error) {
+	return b.Text(10), nil
+}
+
+func (b *BigInt) Hex() string {
 	return "0x" + b.Text(16)
 }
 
