@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	client     *node.Client          //以太坊RPC客户端
-	prv        *secp256k1.PrivateKey //私钥对象
-	addr       types.Address         //私钥对应地址，持有大量测试ERB
-	chainId    *big.Int              //链ID
-	amount     *big.Int              //发送测试币的数量
-	erbPayAddr string                //erbPay合约地址
+	client     *node.Client          //Ethereum RPC client
+	prv        *secp256k1.PrivateKey //Private key object
+	addr       types.Address         //The address corresponding to the private key holds a large number of test ERBs
+	chainId    *big.Int              //Chain ID
+	amount     *big.Int              //The amount of test coins sent
+	erbPayAddr string                //erbPay contract address
 )
 
 func init() {
@@ -36,7 +36,7 @@ func init() {
 	erbPayAddr = conf.ERBPay
 }
 
-// SendErb 发送测试ERB
+// SendErb sends the test ERB
 func SendErb(to string, ctx context.Context) error {
 	nonce, err := client.PendingNonceAt(ctx, addr)
 	if err != nil {
@@ -56,7 +56,7 @@ func SendErb(to string, ctx context.Context) error {
 }
 
 func ExchangerAuth(addr string) (status uint64, flag bool, balance string, err error) {
-	// 查询交易所状态
+	// Query exchange status
 	account := struct {
 		ExchangerFlag    bool
 		ExchangerBalance *big.Int
@@ -68,7 +68,7 @@ func ExchangerAuth(addr string) (status uint64, flag bool, balance string, err e
 	flag = account.ExchangerFlag
 	balance = account.ExchangerBalance.String()
 
-	// 调用ERBPay合约查询状态
+	// Call the ERBPay contract to query the status
 	var hexRet string
 	msg := map[string]interface{}{"to": erbPayAddr, "data": "0x4b165090" + "000000000000000000000000" + addr[2:]}
 	err = client.Call(&hexRet, "eth_call", msg, "latest")

@@ -2,10 +2,10 @@ package service
 
 import "server/common/model"
 
-// CollectionsRes 合集分页返回参数
+// CollectionsRes collection paging return parameters
 type CollectionsRes struct {
-	Total       int64              `json:"total"`       //NFT合集总数
-	Collections []model.Collection `json:"collections"` //NFT合集列表
+	Total       int64              `json:"total"`       //The total number of NFT collections
+	Collections []model.Collection `json:"collections"` //NFT collection list
 }
 
 func FetchCollections(exchanger, creator, _type string, page, size int) (res CollectionsRes, err error) {

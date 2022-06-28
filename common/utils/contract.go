@@ -29,18 +29,18 @@ var (
 	Big0  = Uint256("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
 
-// Uint256 带前缀0x和前导0的16进制字符串uint256
+// Uint256 hexadecimal string uint256 with prefix 0x and leading 0
 type Uint256 string
 
 type ContractClient interface {
 	CallContract(ctx context.Context, msg map[string]interface{}, number *types.BigInt) (types.Data, error)
 }
 
-// SupportsInterface 查询给定合约是否支持interfaceId
+// SupportsInterface Query whether the given contract supports interfaceId
 func SupportsInterface(client ContractClient, address types.Address, interfaceId string) (bool, error) {
 	msg := map[string]interface{}{
 		"to":   address,
-		"data": supportsInterfaceSelector + interfaceId[2:10] + "00000000000000000000000000000000000000000000000000000000",
+		"data": supportsInterfaceSelector + interfaceId[2:10] + "000000000000000000000000000000000000000000000000000000",
 	}
 	out, err := client.CallContract(context.Background(), msg, nil)
 	if err != nil {
@@ -50,7 +50,7 @@ func SupportsInterface(client ContractClient, address types.Address, interfaceId
 	return ABIDecodeBool(string(out))
 }
 
-// Name 查询给定ERC20合约的代币名称（可选接口）
+// Name Query the token name of the given ERC20 contract (optional interface)
 func Name(client ContractClient, address types.Address) (string, error) {
 	msg := map[string]interface{}{
 		"to":   address,
@@ -64,7 +64,7 @@ func Name(client ContractClient, address types.Address) (string, error) {
 	return ABIDecodeString(string(out))
 }
 
-// Symbol 查询给定ERC20合约的代币符号（可选接口）
+// Symbol Query the token symbol of the given ERC20 contract (optional interface)
 func Symbol(client ContractClient, address types.Address) (string, error) {
 	msg := map[string]interface{}{
 		"to":   address,
@@ -78,7 +78,7 @@ func Symbol(client ContractClient, address types.Address) (string, error) {
 	return ABIDecodeString(string(out))
 }
 
-// Decimals 查询给定ERC20合约的代币符号（可选接口）
+// Decimals query the token symbol of a given ERC20 contract (optional interface)
 func Decimals(client ContractClient, address types.Address) (uint8, error) {
 	msg := map[string]interface{}{
 		"to":   address,
@@ -92,7 +92,7 @@ func Decimals(client ContractClient, address types.Address) (uint8, error) {
 	return ABIDecodeUint8(string(out))
 }
 
-// TotalSupply 查询给定ERC20合约的代币发行总量（必须接口）
+// TotalSupply Query the total amount of tokens issued for a given ERC20 contract (required interface)
 func TotalSupply(client ContractClient, address types.Address) (Uint256, error) {
 	msg := map[string]interface{}{
 		"to":   address,
@@ -244,7 +244,7 @@ func IsERC20(client ContractClient, address types.Address) (bool, error) {
 	return true, nil
 }
 
-// filterContractErr 过滤掉除网络连接外的错误
+// filterContractErr Filter out errors other than network connections
 func filterContractErr(err error) error {
 	if err != nil {
 		if strings.Index(err.Error(), "connection") > 0 {

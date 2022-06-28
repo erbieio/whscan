@@ -22,14 +22,14 @@ func Run() {
 
 func Loop(ec *node.Client, interval time.Duration) {
 	number := service.TotalBlock()
-	log.Printf("查询缓存初始化成功, 从%v区块开始数据分析", number)
+	log.Printf("The query cache was initialized successfully, starting data analysis from the %v block", number)
 	isDebug := ec.IsDebug()
 	isWormholes := ec.IsWormholes()
 	for {
 		err := HandleBlock(ec, number, isDebug, isWormholes)
 		if err != nil {
 			if err != node.NotFound {
-				log.Printf("在%v区块休眠, 错误：%v", number, err)
+				log.Printf("Sleep in block %v, error: %v", number, err)
 			}
 			time.Sleep(interval)
 		} else {

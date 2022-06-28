@@ -7,13 +7,13 @@ import (
 	"server/common/types"
 )
 
-// ExchangersRes 交易所分页返回参数
+// ExchangersRes exchange paging return parameters
 type ExchangersRes struct {
-	Total      int64             `json:"total"`        //交易所总数
-	Last0Total int64             `json:"last_0_total"` //最新0天（今日）新开交易所数量，实时计算
-	Last1Total int64             `json:"last_1_total"` //最新1天（昨日）新开交易所数量，缓存
-	Last7Total int64             `json:"last_7_total"` //最新7天新开交易所数量，缓存
-	Exchangers []model.Exchanger `json:"exchangers"`   //交易所列表
+	Total      int64             `json:"total"`        //Total number of exchanges
+	Last0Total int64             `json:"last_0_total"` //The number of newly opened exchanges in the latest 0 days (today), calculated in real time
+	Last1Total int64             `json:"last_1_total"` //Number of newly opened exchanges in the latest 1 day (yesterday), cached
+	Last7Total int64             `json:"last_7_total"` //Number of newly opened exchanges in the last 7 days, cached
+	Exchangers []model.Exchanger `json:"exchangers"`   //List of exchanges
 }
 
 func FetchExchangers(name string, page, size int) (res ExchangersRes, err error) {
@@ -45,7 +45,7 @@ func FetchExchangers(name string, page, size int) (res ExchangersRes, err error)
 	return
 }
 
-// TodayExchangerTotal 今日新开交易所数量
+// TodayExchangerTotal number of new exchanges opened today
 func TodayExchangerTotal() (count int64, err error) {
 	now := time.Now().Local()
 	loc, _ := time.LoadLocation("Local")
@@ -74,7 +74,7 @@ func cacheLastTotal() (total1 int64, total2 int64, err error) {
 	return last1Total, last7Total, nil
 }
 
-// lastExchangerTotal 最新新开交易所数量
+// lastExchangerTotal the latest number of newly opened exchanges
 func lastExchangerTotal(day int64) (count int64, err error) {
 	now := time.Now().Local()
 	loc, _ := time.LoadLocation("Local")

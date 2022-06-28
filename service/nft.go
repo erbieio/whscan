@@ -2,10 +2,10 @@ package service
 
 import "server/common/model"
 
-// UserNFTsRes NFT分页返回参数
+// UserNFTsRes NFT paging return parameters
 type UserNFTsRes struct {
-	Total int64           `json:"total"` //NFT总数
-	NFTs  []model.UserNFT `json:"nfts"`  //NFT列表
+	Total int64           `json:"total"` //The total number of NFTs
+	NFTs  []model.UserNFT `json:"nfts"`  //NFT list
 }
 
 func FetchUserNFTs(exchanger, collectionId, owner string, page, size int) (res UserNFTsRes, err error) {
@@ -28,10 +28,10 @@ func FetchUserNFTs(exchanger, collectionId, owner string, page, size int) (res U
 	return
 }
 
-// NFTTxsRes NFT交易分页返回参数
+// NFTTxsRes NFT transaction paging return parameters
 type NFTTxsRes struct {
-	Total  int64         `json:"total"`   //NFT总数
-	NFTTxs []model.NFTTx `json:"nft_txs"` //NFT交易列表
+	Total  int64         `json:"total"`   //The total number of NFTs
+	NFTTxs []model.NFTTx `json:"nft_txs"` //NFT transaction list
 }
 
 func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxsRes, err error) {
@@ -54,10 +54,10 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 	return
 }
 
-// SNFTsRes SNFT分页返回参数
+// SNFTsRes SNFT paging return parameters
 type SNFTsRes struct {
-	Total int64        `json:"total"` //SNFT总数
-	NFTs  []model.SNFT `json:"nfts"`  //SNFT列表
+	Total int64        `json:"total"` //The total number of SNFTs
+	NFTs  []model.SNFT `json:"nfts"`  //SNFT list
 }
 
 func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
@@ -77,13 +77,13 @@ func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 	return
 }
 
-// SNFTsAndMetaRes SNFT和元信息分页返回参数
+// SNFTsAndMetaRes SNFT and meta information paging return parameters
 type SNFTsAndMetaRes struct {
-	Total int64 `json:"total"` //SNFT总数
+	Total int64 `json:"total"` //The total number of SNFTs
 	NFTs  []struct {
 		model.SNFT
 		model.FullNFT
-	} `json:"nfts"` //SNFT列表
+	} `json:"nfts"` //SNFT list
 }
 
 func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
@@ -111,17 +111,17 @@ func BlockSNFTs(number uint64) (res []model.SNFT, err error) {
 	return
 }
 
-// SNFTGroupsRes SNFT合集信息返回
+// SNFTGroupsRes SNFT collection information return
 type SNFTGroupsRes struct {
-	Total       int64 `json:"total"` //SNFT合集总数
+	Total       int64 `json:"total"` //The total number of SNFT collections
 	Collections []struct {
 		model.Collection
-		TotalHold int64 `json:"total_hold"` //一个合集里的持有SNFT数量
+		TotalHold int64 `json:"total_hold"` //The number of SNFTs held in a collection
 		FullNFTs  []struct {
 			model.FullNFT
-			TotalHold int64 `json:"total_hold"` //一个FullNFT里的持有SNFT数量
-		} `gorm:"-"` // 16个FullNFT信息
-	} `json:"collections"` //合集信息
+			TotalHold int64 `json:"total_hold"` //The number of SNFTs held in a FullNFT
+		} `gorm:"-"` // 16 FullNFT messages
+	} `json:"collections"` //collection information
 }
 
 func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error) {

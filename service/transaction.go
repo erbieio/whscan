@@ -2,10 +2,10 @@ package service
 
 import "server/common/model"
 
-// TransactionsRes 交易分页返回参数
+// TransactionsRes transaction paging return parameters
 type TransactionsRes struct {
-	Total        int64               `json:"total"`        //交易总数
-	Transactions []model.Transaction `json:"transactions"` //交易列表
+	Total        int64               `json:"total"`        //The total number of transactions
+	Transactions []model.Transaction `json:"transactions"` //Transaction list
 }
 
 func FetchTransactions(page, size int, number, addr *string) (res TransactionsRes, err error) {
@@ -19,7 +19,7 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 	if number != nil || addr != nil {
 		err = db.Model(&model.Transaction{}).Count(&res.Total).Error
 	} else {
-		// 使用缓存加速查询
+		// use cache to speed up queries
 		res.Total = int64(TotalTransaction())
 	}
 	if err != nil {

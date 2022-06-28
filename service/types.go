@@ -10,12 +10,12 @@ import (
 	"server/conf"
 )
 
-// ErrRes 接口错误信息返回
+// ErrRes interface error message returned
 type ErrRes struct {
-	ErrStr string `json:"err_str"` //错误信息
+	ErrStr string `json:"err_str"` //Error message
 }
 
-// BigIntAdd 两个大数字符串相加,返回十进制大数字符串
+// BigIntAdd adds two large number strings and returns a decimal large number string
 func BigIntAdd(a, b string) string {
 	aa, ok := new(big.Int).SetString(a, 0)
 	if !ok {
@@ -32,24 +32,24 @@ func BigIntAdd(a, b string) string {
 	return cc.Text(10)
 }
 
-// NFTMeta NFT核心元信息，只解析这些字段，多余的字段忽略
+// NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored
 type NFTMeta struct {
-	Name                 string `json:"name"`                  //名称
-	Desc                 string `json:"desc"`                  //描述
-	Attributes           string `json:"attributes"`            //属性
-	Category             string `json:"category"`              //分类
-	SourceUrl            string `json:"source_url"`            //资源链接，图片或视频等文件链接
-	CollectionsCreator   string `json:"collections_creator"`   //所属合集创建者，唯一标识合集
-	CollectionsName      string `json:"collections_name"`      //所属合集的名称，唯一标识合集
-	CollectionsCategory  string `json:"collections_category"`  //所属合集的分类
-	CollectionsDesc      string `json:"collections_desc"`      //所属合集描述
-	CollectionsImgUrl    string `json:"collections_img_url"`   //合集图片链接
-	CollectionsExchanger string `json:"collections_exchanger"` //所属合集交易所，唯一标识合集
+	Name                 string `json:"name"`                  //name
+	Desc                 string `json:"desc"`                  //description
+	Attributes           string `json:"attributes"`            //Attributes
+	Category             string `json:"category"`              //category
+	SourceUrl            string `json:"source_url"`            //Resource links, file links such as pictures or videos
+	CollectionsCreator   string `json:"collections_creator"`   //The creator of the collection, uniquely identifies the collection
+	CollectionsName      string `json:"collections_name"`      //The name of the collection to which it belongs, uniquely identifying the collection
+	CollectionsCategory  string `json:"collections_category"`  //The category of the collection it belongs to
+	CollectionsDesc      string `json:"collections_desc"`      //Description of the collection it belongs to
+	CollectionsImgUrl    string `json:"collections_img_url"`   //collection image link
+	CollectionsExchanger string `json:"collections_exchanger"` //The collection exchange to which it belongs, uniquely identifies the collection
 }
 
-// GetNFTMeta 从链接里获取NFT元信息
+// GetNFTMeta gets NFT meta information from the link
 func GetNFTMeta(url string) (nft NFTMeta, err error) {
-	// 如果ipfs的链接没有给服务器地址，则使用本地ipfs服务器
+	// If the ipfs link does not give the server address, use the local ipfs server
 	realUrl := url
 	if strings.Index(url, "/ipfs/Qm") == 0 {
 		realUrl = conf.IpfsServer + url

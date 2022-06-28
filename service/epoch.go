@@ -2,10 +2,10 @@ package service
 
 import "server/common/model"
 
-// EpochsRes 系统NFT期分页返回参数
+// EpochsRes system NFT period paging return parameters
 type EpochsRes struct {
-	Total  int64         `json:"total"`  //系统NFT期总数
-	Epochs []model.Epoch `json:"epochs"` //系统NFT期列表
+	Total  int64         `json:"total"`  //The total number of NFT periods in the system
+	Epochs []model.Epoch `json:"epochs"` //List of system NFT periods
 }
 
 func FetchEpochs(page, size int) (res EpochsRes, err error) {
@@ -19,7 +19,7 @@ func FetchEpochs(page, size int) (res EpochsRes, err error) {
 
 type Epoch struct {
 	model.Epoch
-	Collections []model.Collection `json:"collections" gorm:"-"` // 16个合集信息
+	Collections []model.Collection `json:"collections" gorm:"-"` // 16 collection information
 }
 
 func GetEpoch(id string) (res Epoch, err error) {

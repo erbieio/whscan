@@ -16,10 +16,10 @@ import (
 	"server/service"
 )
 
-// DecodeBlock 解析区块
+// DecodeBlock parses the block
 func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormholes bool) (*service.DecodeRet, error) {
 	var raw json.RawMessage
-	// 获取区块(包含交易)
+	// Get the block (including the transaction)
 	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
 	if err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
@@ -30,9 +30,9 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 	if err := json.Unmarshal(raw, &block); err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	}
-	// 获取交易收据（含交易日志）
+	// Get transaction receipt (including transaction log)
 	if block.TotalTransaction = Uint64(len(block.CacheTxs)); block.TotalTransaction > 0 {
-		// 获取交易收据
+		// get transaction receipt
 		reqs := make([]node.BatchElem, block.TotalTransaction)
 		for i, tx := range block.CacheTxs {
 			reqs[i] = node.BatchElem{
@@ -49,13 +49,13 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 				return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", reqs[i].Error)
 			}
 		}
-		// 获取收据logs,只能根据区块哈希查（可能存在多个相同区块高度的区块）
+		// Get the receipt logs, which can only be checked according to the block hash (there may be multiple blocks with the same block height)
 		err := c.CallContext(ctx, &block.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": block.Hash})
 		if err != nil {
 			return nil, fmt.Errorf("eth_getLogs err:%v", err)
 		}
 	}
-	// 获取叔块
+	// get uncle block
 	if block.UnclesCount = Uint64(len(block.UncleHashes)); block.UnclesCount > 0 {
 		block.CacheUncles = make([]*model.Uncle, block.UnclesCount)
 		reqs := make([]node.BatchElem, block.UnclesCount)
@@ -75,7 +75,7 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 			}
 		}
 	}
-	// 解析变动的账户属性和内部交易
+	// Parse changed account properties and internal transactions
 	if isDebug {
 		err = decodeAccounts(c, ctx, &block)
 		if err != nil {
@@ -89,18 +89,18 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 			block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
 		}
 	}
-	// 解析wormholes特有的东西
+	// Parse things specific to wormholes
 	if isWormholes {
 		err = decodeWH(c, &block)
 	}
 	return &block, err
 }
 
-// decodeAccount 获取帐户相关属性
+// decodeAccount to get account related properties
 func decodeAccounts(c *node.Client, ctx context.Context, block *service.DecodeRet) (err error) {
 	block.CacheAccounts = make(map[Address]*model.Account)
 	if block.Number > 0 {
-		// 获取变动账户地址
+		// Get the change account address
 		var modifiedAccounts []Address
 		err = c.CallContext(ctx, &modifiedAccounts, "debug_getModifiedAccountsByHash", block.Hash)
 		if err != nil {
@@ -114,7 +114,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, block *service.DecodeRe
 				block.CacheAccounts[*tx.ContractAddress] = &model.Account{Address: *tx.ContractAddress, Creator: &tx.From, CreatedTx: &tx.Hash}
 			}
 		}
-		// 获取账户属性(balance,nonce,code)
+		// Get account attributes (balance, nonce, code)
 		reqs := make([]node.BatchElem, 0, 3*len(block.CacheAccounts))
 		for _, account := range block.CacheAccounts {
 			reqs = append(reqs, node.BatchElem{
@@ -205,11 +205,11 @@ func decodeAccounts(c *node.Client, ctx context.Context, block *service.DecodeRe
 	return nil
 }
 
-// decodeWH 导入区块分发的SNFT元信息底层NFT交易
+// decodeWH Imports the underlying NFT transaction of the SNFT meta information distributed by the block
 func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 	epochId := ""
 	if wh.Number > 0 {
-		// 矿工奖励SNFT处理
+		// Miner reward SNFT processing
 		rewards, err := c.GetReward(wh.Block.Number.Hex())
 		if err != nil {
 			return fmt.Errorf("GetReward() err:%v", err)
@@ -242,7 +242,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 					RewardNumber: (*uint64)(&wh.Block.Number),
 					Owner:        &rewards[i].Address,
 				})
-				// 解析新的一期ID
+				// Parse the new phase ID
 				if len(epochId) == 0 {
 					addr, _ := new(big.Int).SetString(nftAddr[3:], 16)
 					if addr.Mod(addr, big.NewInt(65536)).Uint64() == 9 {
@@ -252,7 +252,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 			}
 		}
 
-		// wormholes交易处理
+		// wormholes transaction processing
 		for _, tx := range wh.CacheTxs {
 			err = decodeWHTx(wh.Block, tx, wh)
 			if err != nil {
@@ -260,7 +260,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 			}
 		}
 	}
-	// 当前期信息写入，每隔65536个SNFT奖励写入一次
+	// Write the current information, once every 65536 SNFT rewards
 	if len(epochId) > 0 {
 		epoch, err := c.GetEpoch((wh.Block.Number - 1).Hex())
 		if err != nil {
@@ -283,10 +283,10 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 	return nil
 }
 
-// decodeWHTx 解析wormholes区块链的特殊交易
+// decodeWHTx parses the special transaction of the wormholes blockchain
 func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
-	// 非wormholes类型和失败的交易不解析
+	// Non-wormholes and failed transactions are not resolved
 	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
 		return
 	}
@@ -350,11 +350,11 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 	to := string(*tx.To)
 	value := string(tx.Value)
 	switch w.Type {
-	case 0: //用户自行铸造NFT
-		nftAddr := "" //插入数据库时实时计算填充
+	case 0: //Users mint NFT by themselves
+		nftAddr := "" //Calculate fill in real time when inserting into database
 		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
 			Address:       &nftAddr,
-			RoyaltyRatio:  w.Royalty, //单位万分之一
+			RoyaltyRatio:  w.Royalty, //The unit is one ten thousandth
 			MetaUrl:       realMeatUrl(w.MetaURL),
 			RawMetaUrl:    w.MetaURL,
 			ExchangerAddr: strings.ToLower(w.Exchanger),
@@ -365,13 +365,13 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			Owner:         to,
 		})
 
-	case 1: //用户自行转移NFT
+	case 1: //Users transfer NFT by themselves
 		w.NFTAddress = strings.ToLower(w.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        1,
 			NFTAddr:       &w.NFTAddress,
-			ExchangerAddr: "", //自行转移没有交易所
-			From:          "", //插入数据库时实时填充原拥有者
+			ExchangerAddr: "", //Self-transfer without exchange
+			From:          "", //The original owner is populated in real time when inserting into the database
 			To:            to,
 			Price:         nil,
 			Timestamp:     timestamp,
@@ -379,28 +379,28 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			BlockNumber:   blockNumber,
 		})
 
-	case 6: //官方NFT兑换,回收碎片到碎片池
+	case 6: //Official NFT exchange, recycling shards to shard pool
 		wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
 		return
 
-	case 9: //共识质押，可多次质押，起步100000ERB
+	case 9: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
 		wh.ConsensusPledges = append(wh.ConsensusPledges, &model.ConsensusPledge{
 			Address: from,
 			Amount:  value,
 		})
 
-	case 10: //撤销共识质押
+	case 10: //Revoke consensus pledge
 		wh.ConsensusPledges = append(wh.ConsensusPledges, &model.ConsensusPledge{
 			Address: from,
 			Amount:  "-" + value,
 		})
 
-	case 11: //开启交易所
+	case 11: //Open the exchange
 		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{
 			Address:     from,
 			Name:        w.Name,
 			URL:         w.Url,
-			FeeRatio:    w.FeeRate, //单位万分之一
+			FeeRatio:    w.FeeRate, //unit 1/10,000
 			Creator:     from,
 			Timestamp:   timestamp,
 			IsOpen:      true,
@@ -408,56 +408,56 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			TxHash:      txHash,
 		})
 
-	case 12: //关闭交易所
+	case 12: //Close the exchange
 		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{
 			Address: from,
 			IsOpen:  false,
 		})
 
-	case 14: //NFT出价成交交易（卖家或交易所发起,买家给价格签名）
+	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        2,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: w.Buyer.Exchanger,
-			From:          "", //插入数据库时实时填充原拥有者
+			From:          "", //The original owner is populated in real time when inserting into the database
 			To:            to,
-			Price:         &value, //单位为wei
+			Price:         &value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
-	case 15: //NFT定价购买交易（买家发起，卖家给价格签名）
+	case 15: //NFT pricing purchase transaction (buyer initiates, seller signs price)
 		w.Seller1.NFTAddress = strings.ToLower(w.Seller1.NFTAddress)
 		w.Seller1.Exchanger = strings.ToLower(w.Seller1.Exchanger)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        3,
 			NFTAddr:       &w.Seller1.NFTAddress,
 			ExchangerAddr: w.Seller1.Exchanger,
-			From:          "",     //插入数据库时实时填充原拥有者
-			To:            from,   //交易发起者即买家
-			Price:         &value, //单位为wei
+			From:          "",     //The original owner is populated in real time when inserting into the database
+			To:            from,   //The transaction initiator is the buyer
+			Price:         &value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
-	case 16: //NFT惰性定价购买交易，买家发起（先铸造NFT，卖家给价格签名）
-		// 从签名恢复NFT创建者地址（也是卖家地址）
+	case 16: //NFT lazy pricing purchase transaction, the buyer initiates (the NFT is minted first, and the seller signs the price)
+		// Restore NFT creator address (also seller address) from signature
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
 		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
-		// 版税费率字符串转数字
+		// royalty rate string to number
 		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
 		if err != nil {
 			return err
 		}
 		w.Seller2.Exchanger = strings.ToLower(w.Seller2.Exchanger)
-		nftAddr := "" //插入数据库时计算填充
+		nftAddr := "" //Calculate fill when inserting into database
 		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
@@ -475,32 +475,32 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: w.Seller2.Exchanger,
 			From:          string(creator),
-			To:            from,   //交易发起者即买家
-			Price:         &value, //单位为wei
+			To:            from,   //The transaction initiator is the buyer
+			Price:         &value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
-	case 17: //NFT惰性定价购买交易，交易所发起（先铸造NFT，卖家给价格签名）
-		// 从签名恢复NFT创建者地址（也是卖家地址）
+	case 17: //NFT lazy pricing purchase transaction, initiated by the exchange (mint NFT first, and the seller signs the price)
+		// Restore NFT creator address (also seller address) from signature
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
 		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
-		// 版税费率字符串转数字
+		// royalty rate string to number
 		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
 		if err != nil {
 			return err
 		}
-		nftAddr := "" //插入数据库时计算填充
+		nftAddr := "" //Calculate fill when inserting into database
 		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
-			ExchangerAddr: from, //交易发起者即交易所地址
+			ExchangerAddr: from, //The transaction initiator is the exchange address
 			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
@@ -510,17 +510,17 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        5,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: from, //交易发起者即交易所地址
+			ExchangerAddr: from, //The transaction initiator is the exchange address
 			From:          string(creator),
 			To:            to,
-			Price:         &value, //单位为wei
+			Price:         &value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
-	case 18: //NFT出价成交交易，由交易所授权的地址发起（买家给价格签名）
-		// 从授权签名恢复交易所地址
+	case 18: //The NFT bid transaction is initiated by the address authorized by the exchange (the buyer signs the price)
+		// restore the exchange address from the authorized signature
 		msg := w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
 		exchangerAddr, err := utils.RecoverAddress(msg, w.ExchangerAuth.Sig)
 		if err != nil {
@@ -531,39 +531,39 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			TxType:        6,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: string(exchangerAddr),
-			From:          "", //插入数据库时实时填充原拥有者
+			From:          "", //The original owner is populated in real time when inserting into the database
 			To:            to,
-			Price:         &value, //单位为wei
+			Price:         &value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
-	case 19: //NFT惰性出价成交交易，由交易所授权的地址发起（买家给价格签名）
-		// 从签名恢复NFT创建者地址（也是卖家地址）
+	case 19: //NFT lazy bid transaction, initiated by the address authorized by the exchange (the buyer signs the price)
+		// Restore NFT creator address (also seller address) from signature
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
 		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
-		// 从授权签名恢复交易所地址
+		// restore the exchange address from the authorized signature
 		msg = w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
 		exchangerAddr, err := utils.RecoverAddress(msg, w.ExchangerAuth.Sig)
 		if err != nil {
 			return err
 		}
-		// 版税费率字符串转数字
+		// royalty rate string to number
 		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
 		if err != nil {
 			return err
 		}
-		nftAddr := "" //插入数据库时计算填充
+		nftAddr := "" //Calculate fill when inserting into database
 		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
-			ExchangerAddr: string(exchangerAddr), //交易发起者即交易所地址
+			ExchangerAddr: string(exchangerAddr), //The transaction initiator is the exchange address
 			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
@@ -576,33 +576,33 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			ExchangerAddr: string(exchangerAddr),
 			From:          string(creator),
 			To:            to,
-			Price:         &value, //单位为wei
+			Price:         &value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
-	case 20: //NFT撮合交易，交易所发起
+	case 20: //NFT matches the transaction, and the exchange initiates it
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        8,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: from,
-			From:          "", //插入数据库时实时填充原拥有者
+			From:          "", //The original owner is populated in real time when inserting into the database
 			To:            to,
-			Price:         &value, //单位为wei
+			Price:         &value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
-	case 21: //交易所质押
+	case 21: // Exchange pledge
 		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.ExchangerPledge{
 			Address: from,
 			Amount:  value,
 		})
 
-	case 22: //撤销交易所质押
+	case 22: //Revoke the exchange pledge
 		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.ExchangerPledge{
 			Address: from,
 			Amount:  "-" + value,
@@ -611,7 +611,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 	return
 }
 
-// realMeatUrl 解析真正的metaUrl
+// realMeatUrl parses the real metaUrl
 func realMeatUrl(meta string) string {
 	data, err := hex.DecodeString(meta)
 	if err != nil {

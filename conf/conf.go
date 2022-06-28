@@ -12,7 +12,7 @@ import (
 	"server/common/utils"
 )
 
-// 默认配置
+// default allocation
 var (
 	ChainId    int64 = 51888
 	HexKey           = "7b2546a5d4e658d079c6b2755c6d7495edd01a686fddae010830e9c93b23e398"
@@ -22,33 +22,33 @@ var (
 	ResetDB          = false
 	IpfsServer       = "http://localhost:8080"
 	AmountStr        = "100000000000000000000"
-	ERBPay           = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay合约地址
+	ERBPay           = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay contract address
 )
 
-// 从配置实例化的全局可用对象
+// globally available object instantiated from config
 var (
-	ChainUrl   string                //链节点地址
-	PrivateKey *secp256k1.PrivateKey //私钥
-	Amount     *big.Int              //币数量（单位：wei）
+	ChainUrl   string                //Chain node address
+	PrivateKey *secp256k1.PrivateKey //Private key
+	Amount     *big.Int              //Amount of coins (unit: wei)
 )
 
 func init() {
-	// 读取配置覆盖默认值
+	// read configuration to override default value
 	setConf()
 
-	// 校验配置
+	// check configuration
 	if Interval < 10 {
 		panic("conf.Interval < 5")
 	}
 
 	var err error
-	// 区块链网络配置
+	// Blockchain network configuration
 	Network := networks[ChainId]
 	if Network == nil {
-		panic(fmt.Sprintf("不支持的chainId：%v", ChainId))
+		panic(fmt.Sprintf("Unsupported chainId: %v", ChainId))
 	}
 
-	// 区块链账户私钥和RPC客户端配置
+	// Blockchain account private key and RPC client configuration
 	PrivateKey, err = utils.HexToECDSA(HexKey)
 	if err != nil {
 		panic(err)
@@ -61,10 +61,10 @@ func init() {
 func setConf() {
 	err := godotenv.Load("scan.env")
 	if err != nil {
-		log.Println("从.env文件加载环境变量失败，", err)
+		log.Println("Failed to load environment variables from .env file,", err)
 	}
 
-	// 解析服务器基本配置
+	// Parse the basic configuration of the server
 	if chainId := os.Getenv("CHAIN_ID"); chainId != "" {
 		ChainId, err = strconv.ParseInt(chainId, 0, 64)
 		if err != nil {

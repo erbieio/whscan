@@ -16,13 +16,13 @@ func init() {
 		panic(err)
 	}
 	if ResetDB {
-		// 重置数据库
+		// reset the database
 		err = model.DropTable(DB)
 		if err != nil {
 			panic(err)
 		}
 	}
-	// 同步表结构到数据库, 对比数据库和代码中的结构，并执行DDL操作
+	// Synchronize the table structure to the database, compare the structure in the database and the code, and perform DDL operations
 	err = model.Migrate(DB)
 	if err != nil {
 		panic(err)

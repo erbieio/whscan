@@ -18,7 +18,7 @@ func (b *Uint64) UnmarshalGraphQL(input interface{}) error {
 	var err error
 	switch input := input.(type) {
 	case string:
-		// 必须是带0x前缀的16进制字符串
+		// must be a hexadecimal string with a 0x prefix
 		return b.UnmarshalText([]byte(input))
 	case int32:
 		*b = Uint64(input)
@@ -50,7 +50,7 @@ func (b Uint64) Hex() string {
 	return "0x" + strconv.FormatUint(uint64(b), 16)
 }
 
-// Data 用带前缀16进制字符串表示的字节数组
+// Data is a byte array represented by a prefixed hex string
 type Data string
 
 // ImplementsGraphQLType returns true if Data implements the provided GraphQL type.
@@ -194,7 +194,7 @@ func (a *Uint256) UnmarshalText(input []byte) error {
 	return nil
 }
 
-// BigInt 由十进制字符串方式表示的大数
+// BigInt big number represented by decimal string
 type BigInt string
 
 // ImplementsGraphQLType returns true if BigInt implements the provided GraphQL type.

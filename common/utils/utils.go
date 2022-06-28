@@ -18,16 +18,16 @@ var (
 	erc1155TransferBatchEventId  = "0x20114eb39ee5dfdb13684c7d9e951052ef22c89bff67131a9bf08879189b0f71"
 )
 
-// Unpack20TransferLog 解析ERC20的转移事件
+// Unpack20TransferLog parses ERC20 transfer events
 func Unpack20TransferLog(log *model.Log) (*model.ERC20Transfer, error) {
 	if len(log.Topics) != 3 {
-		return nil, fmt.Errorf("事件主题不是2个")
+		return nil, fmt.Errorf("The event subject is not 2")
 	}
 	if log.Topics[0] != erc20TransferEventId {
-		return nil, fmt.Errorf("事件签名不匹配")
+		return nil, fmt.Errorf("Event signature does not match")
 	}
 	if len(log.Data) != 66 {
-		return nil, fmt.Errorf("事件数据不是32字节")
+		return nil, fmt.Errorf("Event data is not 32 bytes")
 	}
 	return &model.ERC20Transfer{
 		TxHash:  log.TxHash,
@@ -38,16 +38,16 @@ func Unpack20TransferLog(log *model.Log) (*model.ERC20Transfer, error) {
 	}, nil
 }
 
-// Unpack721TransferLog 解析ERC721的转移事件
+// Unpack721TransferLog parses ERC721 transfer events
 func Unpack721TransferLog(log *model.Log) (*model.ERC721Transfer, error) {
 	if len(log.Topics) != 4 {
-		return nil, fmt.Errorf("事件主题不是3个")
+		return nil, fmt.Errorf("The event subject is not 3")
 	}
 	if log.Topics[0] != erc721TransferEventId {
-		return nil, fmt.Errorf("事件签名不匹配")
+		return nil, fmt.Errorf("Event signature does not match")
 	}
 	if len(log.Data) != 2 {
-		return nil, fmt.Errorf("事件数据不是0字节")
+		return nil, fmt.Errorf("Event data is not 0 bytes")
 	}
 	return &model.ERC721Transfer{
 		TxHash:  log.TxHash,
@@ -58,17 +58,17 @@ func Unpack721TransferLog(log *model.Log) (*model.ERC721Transfer, error) {
 	}, nil
 }
 
-// Unpack1155TransferLog 解析ERC1155的转移（批量）事件
+// Unpack1155TransferLog parses ERC1155 transfer (batch) events
 func Unpack1155TransferLog(log *model.Log) ([]*model.ERC1155Transfer, error) {
 	if len(log.Topics) != 4 {
-		return nil, fmt.Errorf("事件主题不是3个")
+		return nil, fmt.Errorf("The event subject is not 3")
 	}
 	operator, from, to := types.Address("0x"+log.Topics[1][26:]), types.Address("0x"+log.Topics[2][26:]), types.Address("0x"+log.Topics[3][26:])
 
-	// ERC1155 单个转移事件
+	// ERC1155 single transfer event
 	if log.Topics[0] == erc1155TransferSingleEventId {
 		if len(log.Data) != 130 {
-			return nil, fmt.Errorf("事件数据不是64字节")
+			return nil, fmt.Errorf("Event data is not 64 bytes")
 		}
 		return []*model.ERC1155Transfer{{
 			TxHash:   log.TxHash,
@@ -81,19 +81,19 @@ func Unpack1155TransferLog(log *model.Log) ([]*model.ERC1155Transfer, error) {
 		}}, nil
 	}
 
-	// ERC1155 批量转移事件
+	// ERC1155 batch transfer event
 	if log.Topics[0] != erc1155TransferBatchEventId {
-		// 动态数据类型编解码参考https://docs.soliditylang.org/en/v0.8.13/abi-spec.html#argument-encoding
-		// 字长为256位即32个字节
+		// Dynamic data type encoding and decoding reference https://docs.soliditylang.org/en/v0.8.13/abi-spec.html#argument-encoding
+		// The word length is 256 bits or 32 bytes
 		wordLen := (len(log.Data) - 2) / 64
 		if wordLen < 4 {
-			return nil, fmt.Errorf("数据少于4个字")
+			return nil, fmt.Errorf("The data is less than 4 words")
 		}
 		if wordLen%2 != 0 {
-			return nil, fmt.Errorf("数据的字个数不是双数")
+			return nil, fmt.Errorf("The number of words in the data is not a double number")
 		}
 		if log.Data[2:66] != "0000000000000000000000000000000000000000000000000000000000000040" {
-			return nil, fmt.Errorf("第一个字不是0x40")
+			return nil, fmt.Errorf("The first word is not 0x40")
 		}
 		transferCount := (wordLen - 4) / 2
 		transferLogs := make([]*model.ERC1155Transfer, transferCount)
@@ -111,60 +111,60 @@ func Unpack1155TransferLog(log *model.Log) ([]*model.ERC1155Transfer, error) {
 		}
 		return transferLogs, nil
 	}
-	return nil, fmt.Errorf("事件签名不匹配")
+	return nil, fmt.Errorf("Event signature does not match")
 }
 
-// ABIDecodeString 从合约返回值只有一个的返回数据里解析字符串
+// ABIDecodeString parses the string from the return data with only one return value from the contract
 func ABIDecodeString(hexStr string) (string, error) {
 	hexLen := len(hexStr)
 	if hexLen < 130 || (hexLen-2)%64 != 0 || hexStr[64:66] != "20" {
-		return "", fmt.Errorf("返回数据格式错误")
+		return "", fmt.Errorf("Return data format error")
 	}
 	strLen := new(big.Int)
 	strLen.SetString(hexStr[66:130], 16)
 	if (hexLen-130)/64 != int(strLen.Int64())/32 {
-		return "", fmt.Errorf("返回数据字符串长度错误")
+		return "", fmt.Errorf("Return data string length error")
 	}
 	data, err := hex.DecodeString(hexStr[130:int(130+strLen.Int64()*2)])
 	return string(data), err
 }
 
-// ABIDecodeUint8 从合约返回值只有一个的返回数据里解析uint8
+// ABIDecodeUint8 parses uint8 from the return data with only one return value from the contract
 func ABIDecodeUint8(hexStr string) (uint8, error) {
 	hexLen := len(hexStr)
-	if hexLen != 66 || hexStr[:50] != "0x000000000000000000000000000000000000000000000000" {
-		return 0, fmt.Errorf("返回数据格式错误")
+	if hexLen != 66 || hexStr[:50] != "0x0000000000000000000000000000000000000000000000000" {
+		return 0, fmt.Errorf("Return data format error")
 	}
 	data, err := strconv.ParseUint(hexStr[50:], 16, 8)
 	return uint8(data), err
 }
 
-// ABIDecodeUint256 从合约返回值只有一个的返回数据里解析uint256
+// ABIDecodeUint256 parses uint256 from the return data with only one return value from the contract
 func ABIDecodeUint256(hexStr string) (Uint256, error) {
 	if len(hexStr) != 66 {
-		return "", fmt.Errorf("返回数据格式错误")
+		return "", fmt.Errorf("Return data format error")
 	}
 
 	return Uint256(hexStr), nil
 }
 
-// ABIDecodeBool 从合约返回值只有一个的返回数据里解析bool
+// ABIDecodeBool parses the bool from the return data with only one return value from the contract
 func ABIDecodeBool(hexStr string) (bool, error) {
 	hexLen := len(hexStr)
 	if hexLen != 66 || hexStr[:65] != "0x000000000000000000000000000000000000000000000000000000000000000" {
-		return false, fmt.Errorf("返回数据格式错误")
+		return false, fmt.Errorf("Return data format error")
 	}
 	return hexStr[65] == '1', nil
 }
 
-// HexToBigInt 将不带0x前缀的16进制字符串转换成大数BigInt（非法输入会返回0）
+// HexToBigInt converts a hexadecimal string without 0x prefix to a big number BigInt (illegal input will return 0)
 func HexToBigInt(hex string) types.BigInt {
 	b := new(big.Int)
 	b.SetString(hex, 16)
 	return types.BigInt(b.Text(10))
 }
 
-// HexToAddress 将不带0x前缀的16进制字符串转换为Address（大于截断前面的）
+// HexToAddress converts a hexadecimal string without a 0x prefix to an Address (greater than the truncated front)
 func HexToAddress(hex string) types.Address {
 	if len(hex) < 40 {
 		hex = "0000000000000000000000000000000000000000" + hex
@@ -172,13 +172,13 @@ func HexToAddress(hex string) types.Address {
 	return types.Address("0x" + hex[len(hex)-40:])
 }
 
-// ParseAddress 将带前缀0x的16进制的字符串转换成地址
+// ParseAddress converts a hexadecimal string prefixed with 0x to an address
 func ParseAddress(hex string) (types.Address, error) {
 	if len(hex) != 42 {
-		return "", fmt.Errorf("长度不是42")
+		return "", fmt.Errorf("Length is not 42")
 	}
 	if hex[0] != '0' || (hex[1] != 'x' && hex[1] != 'X') {
-		return "", fmt.Errorf("前缀不是0x")
+		return "", fmt.Errorf("Prefix is ​​not 0x")
 	}
 	for i, c := range []byte(hex) {
 		if '0' <= c && c <= '9' {
@@ -195,12 +195,12 @@ func ParseAddress(hex string) (types.Address, error) {
 			[]byte(hex)[i] = 'x'
 			continue
 		}
-		return "", fmt.Errorf("非法字符:%v", c)
+		return "", fmt.Errorf("Illegal character: %v", c)
 	}
 	return types.Address(hex), nil
 }
 
-// BigToAddress 大数转换成地址（数太大会截断前面的）
+// BigToAddress converts large numbers into addresses (too large numbers will truncate the previous ones)
 func BigToAddress(big *big.Int) types.Address {
 	addr := "0000000000000000000000000000000000000000"
 	if big != nil {
@@ -209,22 +209,22 @@ func BigToAddress(big *big.Int) types.Address {
 	return types.Address("0x" + addr[len(addr)-40:])
 }
 
-// ParsePage 解析分页参数，默认值是第一页10条记录
+// ParsePage parses the paging parameters, the default value is 10 records on the first page
 func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
 	page, size := 1, 10
 	if pagePtr != nil {
 		page = *pagePtr
 		if page <= 0 {
-			return 0, 0, fmt.Errorf("分页页数小于1")
+			return 0, 0, fmt.Errorf("Number of paging pages is less than 1")
 		}
 	}
 	if sizePtr != nil {
 		size = *sizePtr
 		if size <= 0 {
-			return 0, 0, fmt.Errorf("分页大小小于1")
+			return 0, 0, fmt.Errorf("The page size is less than 1")
 		}
 		if size > 100 {
-			return 0, 0, fmt.Errorf("分页大小大于100")
+			return 0, 0, fmt.Errorf("Page size is greater than 100")
 		}
 	}
 	return page, size, nil

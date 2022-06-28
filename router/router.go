@@ -8,9 +8,9 @@ import (
 
 func Init() *gin.Engine {
 	r := gin.New()
-	// 允许跨域访问，有nginx等代理的可以关闭
+	// Allow cross-domain access, and those with nginx and other proxies can be closed
 	r.Use(middleware.Cors())
-	// 设置可访问路由
+	// Set up accessible routes
 	api.Extra(r)
 	api.Depreciation(r)
 	api.Block(r)

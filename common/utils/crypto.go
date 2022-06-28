@@ -13,13 +13,13 @@ import (
 	"server/common/types"
 )
 
-// PubkeyToAddress 公钥转地址
+// PubkeyToAddress public key to address
 func PubkeyToAddress(p *secp256k1.PublicKey) types.Address {
 	data := elliptic.Marshal(secp256k1.S256(), p.X(), p.Y())
 	return types.Address("0x" + hex.EncodeToString(Keccak256(data[1:])[12:]))
 }
 
-// NewTx 创建交易，nonce：带前缀16进制字符串，gasPrice：10进制字符串
+// NewTx creates a transaction, nonce: hexadecimal string with prefix, gasPrice: decimal string
 func NewTx(nonce uint64, to types.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte) map[string]string {
 	tx := map[string]string{}
 	tx["nonce"] = "0x" + hex.EncodeToString(big.NewInt(int64(nonce)).Bytes())
@@ -31,7 +31,7 @@ func NewTx(nonce uint64, to types.Address, amount *big.Int, gasLimit uint64, gas
 	return tx
 }
 
-// SignTx 签名交易
+// SignTx sign the transaction
 func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (types.Data, error) {
 	msg := rlp.Value{
 		List: []rlp.Value{
@@ -41,7 +41,7 @@ func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (
 			{String: tx["to"]},       //3,to
 			{String: tx["value"]},    //4,value
 			{String: tx["data"]},     //5,data
-			{String: "0x" + hex.EncodeToString(chainId.Bytes())}, //6,V,未签名之前等于ChainId
+			{String: "0x" + hex.EncodeToString(chainId.Bytes())}, //6,V, equal to ChainId before unsigned
 			{String: "0x"}, //7,R
 			{String: "0x"}, //8,V
 		},
@@ -71,17 +71,17 @@ func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (
 	return types.Data(raw), err
 }
 
-// Sign 用私钥签名，结果最后一位是v，值为0或1
+// Sign signed with the private key, the last bit of the result is v, the value is 0 or 1
 func Sign(digestHash []byte, prv *secp256k1.PrivateKey) ([]byte, error) {
 	if len(digestHash) != 32 {
-		return nil, fmt.Errorf("哈希需要32字节：%d", len(digestHash))
+		return nil, fmt.Errorf("Hash requires 32 bytes: %d", len(digestHash))
 	}
 	sig := ecdsa.SignCompact(prv, digestHash, false)
-	// 将v减去27并放到最后
+	// Subtract 27 from v and put it at the end
 	return append(sig[1:65], sig[0]-27), nil
 }
 
-// SigToPub 签名恢复公钥
+// SigToPub signature recovery public key
 func SigToPub(hash, sig []byte) (*secp256k1.PublicKey, error) {
 	s, _, err := ecdsa.RecoverCompact(append([]byte{sig[64] + 27}, sig[:64]...), hash)
 	if err != nil {
@@ -91,12 +91,12 @@ func SigToPub(hash, sig []byte) (*secp256k1.PublicKey, error) {
 	return s, nil
 }
 
-// Keccak256Hash 计算Keccak256，返回哈希
+// Keccak256Hash calculates Keccak256 and returns the hash
 func Keccak256Hash(data ...[]byte) (h types.Hash) {
 	return types.Hash(hex.EncodeToString(Keccak256(data...)))
 }
 
-// Keccak256 计算Keccak256返回字节数组（32字节）
+// Keccak256 Calculate Keccak256 return byte array (32 bytes)
 func Keccak256(data ...[]byte) (h []byte) {
 	d := sha3.NewLegacyKeccak256()
 	for _, b := range data {
@@ -106,7 +106,7 @@ func Keccak256(data ...[]byte) (h []byte) {
 	return d.Sum(nil)
 }
 
-// HexToECDSA 16进制字符串还原私钥对象
+// HexToECDSA hexadecimal string restore private key object
 func HexToECDSA(key string) (*secp256k1.PrivateKey, error) {
 	b, err := hex.DecodeString(key)
 	if byteErr, ok := err.(hex.InvalidByteError); ok {
@@ -117,7 +117,7 @@ func HexToECDSA(key string) (*secp256k1.PrivateKey, error) {
 	return secp256k1.PrivKeyFromBytes(b), nil
 }
 
-// RecoverAddress 从签名恢复地址
+// RecoverAddress recovers the address from the signature
 func RecoverAddress(msg string, hexSig string) (types.Address, error) {
 	sig, _ := hex.DecodeString(hexSig[2:])
 	if len(sig) != 65 {

@@ -2,10 +2,10 @@ package service
 
 import "server/common/model"
 
-// RewardsRes 奖励分页返回参数
+// RewardsRes reward paging return parameters
 type RewardsRes struct {
-	Total   int64          `json:"total"`   //奖励总数
-	Rewards []model.Reward `json:"rewards"` //奖励列表
+	Total   int64          `json:"total"`   //The total number of rewards
+	Rewards []model.Reward `json:"rewards"` //Rewards list
 }
 
 func FetchRewards(page, size int) (res RewardsRes, err error) {
