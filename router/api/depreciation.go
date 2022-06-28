@@ -20,13 +20,13 @@ func Depreciation(e *gin.Engine) {
 	e.GET("/block/viewTransactions", viewTransactions)
 }
 
-// @Tags         过时接口
-// @Summary      查询交易所(新/exchanger/{addr})
-// @Description  按地址查询交易所
+// @Tags         obsolete interface
+// @Summary      query exchange (new /exchanger/{addr})
+// @Description  Query exchanges by address
 // @Deprecated
 // @Accept   json
 // @Produce  json
-// @Param    addr  query     string  true  "交易所地址"
+// @Param    addr  query     string  true  "Exchange address"
 // @Success  200   {object}  model.Exchanger
 // @Failure  400   {object}  service.ErrRes
 // @Router   /exchanger/get [get]
@@ -34,20 +34,20 @@ func _getExchanger(c *gin.Context) {
 	getExchanger(c)
 }
 
-// requestErbTestReq 请求
+// requestErbTestReq request
 type requestErbTestReq struct {
-	Address string `form:"address" json:"address"` //地址
+	Address string `form:"address" json:"address"` //Address
 }
 
-// requestErbTestRes  返回
+// requestErbTestRes returns
 type requestErbTestRes struct {
-	Code int64  `json:"code"` //0 成功  1 地址有误 其他失败
+	Code int64  `json:"code"` //0 success 1 wrong address other failure
 	Msg  string `json:"msg"`
 }
 
-// @Tags         过时接口
-// @Summary      请求ERB测试币(新/erb_faucet)
-// @Description  请求ERB测试币
+// @Tags         obsolete interface
+// @Summary      request ERB test coin (new /erb_faucet)
+// @Description  request ERB test coins
 // @Deprecated
 // @Accept   json
 // @Produce  json
@@ -78,9 +78,9 @@ func requestErbTest(c *gin.Context) {
 	c.JSON(http.StatusOK, requestErbTestRes{Code: 0, Msg: "ok"})
 }
 
-// @Tags         过时接口
-// @Summary      查询区块列表（新/block/page）
-// @Description  查询区块列表
+// @Tags         obsolete interface
+// @Summary      query block list (new /block/page)
+// @Description  query block list
 // @Deprecated
 // @Accept   json
 // @Produce  json
@@ -103,9 +103,9 @@ func viewBlocks(c *gin.Context) {
 	c.JSON(http.StatusOK, ViewBlocksRes{Code: 0, Msg: "ok", Data: blocks, Total: count})
 }
 
-// @Tags         过时接口
-// @Summary      查询交易列表（新/transaction/page）
-// @Description  查询交易列表
+// @Tags         obsolete interface
+// @Summary      query transaction list (new /transaction/page)
+// @Description  query transaction list
 // @Deprecated
 // @Accept   json
 // @Produce  json
@@ -128,21 +128,21 @@ func viewTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, ViewTxsRes{Code: 0, Msg: "ok", Data: txs, Total: count})
 }
 
-// CheckAuthReq 请求
+// CheckAuthReq request
 type CheckAuthReq struct {
-	Address string `form:"address" json:"address"` //地址
+	Address string `form:"address" json:"address"` //Address
 }
 
-// CheckAuthRes 返回
+// CheckAuthRes returns
 type CheckAuthRes struct {
-	Code int64    `json:"code"` //0 成功  1 地址有误 其他失败
+	Code int64    `json:"code"` //0 success 1 wrong address other failure
 	Msg  string   `json:"msg"`
 	Data *AuthRes `json:"data" `
 }
 
-// @Tags         过时接口
-// @Summary      查询交易所状态(新/exchanger_auth)
-// @Description  查询交易所状态
+// @Tags         obsolete interface
+// @Summary      query exchange status (new /exchanger_auth)
+// @Description  query exchange status
 // @Deprecated
 // @Accept   json
 // @Produce  json
@@ -176,9 +176,9 @@ func checkAuth(c *gin.Context) {
 	}})
 }
 
-// @Tags         过时接口
-// @Summary      查询区块（新/block/{number}）
-// @Description  查询区块
+// @Tags         obsolete interface
+// @Summary      query block (new /block/{number})
+// @Description  query block
 // @Deprecated
 // @Accept   json
 // @Produce  json
@@ -201,9 +201,9 @@ func _getBlock(c *gin.Context) {
 	c.JSON(http.StatusOK, GetBlockRes{Code: 0, Msg: "ok", Data: block})
 }
 
-// @Tags         过时接口
-// @Summary      查询交易（新/transaction/{hash}）
-// @Description  查询交易
+// @Tags         obsolete interface
+// @Summary      query transaction (new /transaction/{hash})
+// @Description  query transaction
 // @Deprecated
 // @Accept   json
 // @Produce  json
@@ -226,9 +226,9 @@ func _getTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, GetTxRes{Code: 0, Msg: "ok", Data: tx})
 }
 
-// @Tags         过时接口
-// @Summary      查询收据(新/transaction_logs/{hash})
-// @Description  查询收据
+// @Tags         obsolete interface
+// @Summary      query receipt (new /transaction_logs/{hash})
+// @Description  query receipt
 // @Deprecated
 // @Accept   json
 // @Produce  json
@@ -251,47 +251,47 @@ func _getTransactionLogs(c *gin.Context) {
 	c.JSON(http.StatusOK, GetReceiptsRes{Code: 0, Msg: "ok", Data: receipts})
 }
 
-// GetBlockRes 返回
+// GetBlockRes returns
 type GetBlockRes struct {
 	Code int64         `json:"code" `
 	Msg  string        `json:"msg"`
 	Data service.Block `json:"data" `
 }
 
-// GetBlockReq 请求
+// GetBlockReq request
 type GetBlockReq struct {
-	BlockNumber string `form:"block_number" json:"block_number"` //区块号
+	BlockNumber string `form:"block_number" json:"block_number"` //block number
 }
 
-// ErrRes 接口错误信息返回
+// ErrRes interface error message returned
 type ErrRes struct {
-	Err string `json:"err"` //错误信息
+	Err string `json:"err"` //Error message
 }
 
-// GetTxRes 返回
+// GetTxRes returns
 type GetTxRes struct {
 	Code int64               `json:"code" `
 	Msg  string              `json:"msg"`
 	Data service.Transaction `json:"data" `
 }
 
-// GetTxReq 请求
+// GetTxReq request
 type GetTxReq struct {
-	TxHash string `form:"tx_hash" json:"tx_hash"` //交易hash
+	TxHash string `form:"tx_hash" json:"tx_hash"` //Transaction hash
 }
 
-// GetReceiptsRes 返回
+// GetReceiptsRes returns
 type GetReceiptsRes struct {
 	Code int64         `json:"code" `
 	Msg  string        `json:"msg"`
-	Data []service.Log `json:"data" `
+	Data []service.Log `json:"data"`
 }
 
-// IndexReq 请求
+// IndexReq request
 type IndexReq struct {
 }
 
-// IndexRes 请求
+// IndexRes request
 type IndexRes struct {
 	Code   int64   `json:"code" `
 	Msg    string  `json:"msg"`
@@ -318,21 +318,21 @@ type Tx struct {
 	Ts     string `json:"timestamp"`
 }
 
-// TxPageReq 请求
+// TxPageReq request
 type TxPageReq struct {
-	Page        int    `form:"page" json:"page"`                 //页
-	PageSize    int    `form:"page_size" json:"page_size"`       //页码
-	Address     string `form:"address" json:"address"`           //地址 不区分传
-	BlockNumber string `form:"block_number" json:"block_number"` //区块号 不区分
+	Page        int    `form:"page" json:"page"`                 //page
+	PageSize    int    `form:"page_size" json:"page_size"`       //page number
+	Address     string `form:"address" json:"address"`           //Address does not distinguish transmission
+	BlockNumber string `form:"block_number" json:"block_number"` //Block number is indistinguishable
 }
 
-// PageReq 请求
+// PageReq request
 type PageReq struct {
-	Page     int `form:"page" json:"page"`           //页
-	PageSize int `form:"page_size" json:"page_size"` //页码
+	Page     int `form:"page" json:"page"`           //page
+	PageSize int `form:"page_size" json:"page_size"` //page number
 }
 
-// ViewBlocksRes 请求
+// ViewBlocksRes request
 type ViewBlocksRes struct {
 	Code  int64           `json:"code" `
 	Msg   string          `json:"msg"`
@@ -340,7 +340,7 @@ type ViewBlocksRes struct {
 	Total int64           `json:"total" `
 }
 
-// ViewTxsRes 请求
+// ViewTxsRes request
 type ViewTxsRes struct {
 	Code  int64                 `json:"code" `
 	Msg   string                `json:"msg"`

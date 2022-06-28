@@ -21,15 +21,15 @@ func NFT(e *gin.Engine) {
 }
 
 // @Tags         NFT
-// @Summary      查询NFT列表
-// @Description  按创建时间逆序查询NFT列表
+// @Summary      query NFT list
+// @Description  Query the NFT list in reverse order of creation time
 // @Accept       json
 // @Produce      json
-// @Param        exchanger      query     string  false  "交易所，空则查询所有交易所"
-// @Param        owner          query     string  false  "所有者,空则查询所有"
-// @Param        collection_id  query     string  false  "合集id,空则查询所有"
-// @Param        page           query     string  false  "页,默认1"
-// @Param        page_size      query     string  false  "页大小,默认10"
+// @Param        exchanger      query     string  false  "Exchange, if empty, query all exchanges"
+// @Param        owner          query     string  false  "Owner, if empty, query all"
+// @Param        collection_id  query     string  false  "collection id, if empty, query all"
+// @Param        page           query     string  false  "Page, default 1"
+// @Param        page_size      query     string  false  "Page size, default 10"
 // @Success      200            {object}  service.UserNFTsRes
 // @Failure      400            {object}  service.ErrRes
 // @Router       /nft/page [get]
@@ -61,15 +61,15 @@ func pageNFT(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      查询包含元信息NFT列表
-// @Description  按创建时间逆序查询包含元信息NFT列表
+// @Summary      query contains meta information NFT list
+// @Description  query the NFT list containing meta information in reverse order of creation time
 // @Accept       json
 // @Produce      json
-// @Param        exchanger      query     string  false  "交易所，空则查询所有交易所"
-// @Param        owner          query     string  false  "所有者,空则查询所有"
-// @Param        collection_id  query     string  false  "合集id,空则查询所有"
-// @Param        page           query     string  false  "页,默认1"
-// @Param        page_size      query     string  false  "页大小,默认10"
+// @Param        exchanger      query     string  false  "Exchange, if empty, query all exchanges"
+// @Param        owner          query     string  false  "Owner, if empty, query all"
+// @Param        collection_id  query     string  false  "collection id, if empty, query all"
+// @Param        page           query     string  false  "Page, default 1"
+// @Param        page_size      query     string  false  "Page size, default 10"
 // @Success      200            {object}  service.UserNFTsRes
 // @Failure      400            {object}  service.ErrRes
 // @Router       /nft_meta/page [get]
@@ -78,17 +78,17 @@ func pageNFTAndMeta(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      查询NFT交易列表
-// @Description  按创建时间逆序查询NFT交易列表
+// @Summary      Query NFT transaction list
+// @Description  Query the list of NFT transactions in reverse order of creation time
 // @Accept       json
 // @Produce      json
-// @Param        address    query     string  false  "指定NFT地址,空则查询所有地址的"
-// @Param        exchanger  query     string  false  "交易所，空则查询所有交易所"
-// @Param        account    query     string  false  "指定账户,空则查询所有账户的"
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        address    query     string  false  "Specify the NFT address, if empty, query all addresses"
+// @Param        exchanger  query     string  false  "Exchange, if empty, query all exchanges"
+// @Param        account    query     string  false  "Specify an account, if empty, query all accounts"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.NFTTxsRes
-// @Failure      400  {object}  service.ErrRes
+// @Failure      400        {object}  service.ErrRes
 // @Router       /nft/tx/page [get]
 func pageNFTTx(c *gin.Context) {
 	req := struct {
@@ -118,15 +118,15 @@ func pageNFTTx(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      查询SNFT列表
-// @Description  按创建时间逆序查询SNFT列表
+// @Summary      query SNFT list
+// @Description  Query the SNFT list in reverse order of creation time
 // @Accept       json
 // @Produce      json
-// @Param        owner          query     string  false  "所有者,空则查询所有"
-// @Param        page           query     string  false  "页,默认1"
-// @Param        page_size      query     string  false  "页大小,默认10"
+// @Param        owner      query     string  false  "Owner, if empty, query all"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.SNFTsRes
-// @Failure      400            {object}  service.ErrRes
+// @Failure      400        {object}  service.ErrRes
 // @Router       /snft/page [get]
 func pageSNFT(c *gin.Context) {
 	req := struct {
@@ -154,16 +154,16 @@ func pageSNFT(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      查询有元信息SNFT列表
-// @Description  按创建时间逆序查询有元信息SNFT列表
+// @Summary      Query a list of SNFTs with meta information
+// @Description  Query the list of SNFTs with meta information in reverse order of creation time
 // @Accept       json
 // @Produce      json
-// @Param        collection_id  query     string  false  "合集id,空则查询所有"
-// @Param        owner      query     string  false  "所有者,空则查询所有"
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        collection_id  query     string  false  "collection id, if empty, query all"
+// @Param        owner          query     string  false  "Owner, if empty, query all"
+// @Param        page           query     string  false  "Page, default 1"
+// @Param        page_size      query     string  false  "Page size, default 10"
 // @Success      200            {object}  service.SNFTsAndMetaRes
-// @Failure      400        {object}  service.ErrRes
+// @Failure      400            {object}  service.ErrRes
 // @Router       /snft_meta/page [get]
 func pageSNFTAndMeta(c *gin.Context) {
 	req := struct {
@@ -192,13 +192,13 @@ func pageSNFTAndMeta(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      查询区块SNFT列表
-// @Description  查询指定区块的SNFT奖励列表
+// @Summary      Query blocks SNFT list
+// @Description  Query the list of SNFT rewards for the specified block
 // @Accept       json
 // @Produce      json
-// @Param        number  query     string  true  "区块号"
+// @Param        number  query     string  true  "Block number"
 // @Success      200     {object}  []model.SNFT
-// @Failure      400        {object}  service.ErrRes
+// @Failure      400     {object}  service.ErrRes
 // @Router       /snft/block [get]
 func blockSNFT(c *gin.Context) {
 	req := struct {
@@ -219,13 +219,13 @@ func blockSNFT(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      分页查询帐户持有合集列表
-// @Description  查询指定帐户的持有（有合集里的一个SNFT）的合集列表（包含16个FullNFT信息）
+// @Summary      paging query account holding collection list
+// @Description  Query the collection list (including 16 FullNFT information) held by the specified account (with one SNFT in the collection)
 // @Accept       json
 // @Produce      json
-// @Param        owner      query     string  false  "所有者"
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        owner      query     string  false  "owner"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.SNFTGroupsRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /snft/collection/page [get]
@@ -254,13 +254,13 @@ func pageSNFTGroup(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      查询指定FullNFT的256个SNFT列表
-// @Description  查询指定ID的FullNFT下256个SNFT的信息
+// @Summary      Query the list of 256 SNFTs of the specified FullNFT
+// @Description  Query the information of 256 SNFTs under the FullNFT of the specified ID
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "FullNFT编号"
+// @Param        id   path      string  true  "FullNFT ID"
 // @Success      200  {object}  []model.SNFT
-// @Failure      400     {object}  service.ErrRes
+// @Failure      400  {object}  service.ErrRes
 // @Router       /snft/group/{id} [get]
 func groupSNFTs(c *gin.Context) {
 	id := c.Param("id")

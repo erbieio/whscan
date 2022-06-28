@@ -8,22 +8,22 @@ import (
 	"server/service"
 )
 
-// Transaction 交易API
+// Transaction transactionAPI
 func Transaction(e *gin.Engine) {
 	e.GET("/transaction/page", pageTransaction)
 	e.GET("/transaction/:hash", getTransaction)
 	e.GET("/transaction_logs/:hash", getTransactionLogs)
 }
 
-// @Tags         交易
-// @Summary      查询交易列表
-// @Description  逆序查询交易列表
+// @Tags         transaction
+// @Summary      query transaction list
+// @Description  query transaction list in reverse order
 // @Accept       json
 // @Produce      json
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
-// @Param        number     query     string  false  "区块号，空则查询所有"
-// @Param        addr       query     string  false  "账户地址，空则查询所有"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
+// @Param        number     query     string  false  "Block number, if empty, query all"
+// @Param        addr       query     string  false  "Account address, if empty, query all"
 // @Success      200        {object}  service.TransactionsRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /transaction/page [get]
@@ -53,12 +53,12 @@ func pageTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// @Tags         交易
-// @Summary      查询交易
-// @Description  指定hash查询交易
+// @Tags         transaction
+// @Summary      query transaction
+// @Description  specifies the hash query transaction
 // @Accept       json
 // @Produce      json
-// @Param        hash  path      string  true  "交易哈希"
+// @Param        hash  path      string  true  "Transaction hash"
 // @Success      200   {object}  model.Transaction
 // @Failure      400   {object}  service.ErrRes
 // @Router       /transaction/{hash} [get]
@@ -73,12 +73,12 @@ func getTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// @Tags         交易
-// @Summary      查询交易收据
-// @Description  指定交易hash查询交易收据
+// @Tags         transaction
+// @Summary      query transaction receipt
+// @Description  specifies the transaction hash to query the transaction receipt
 // @Accept       json
 // @Produce      json
-// @Param        hash  path      string  true  "交易哈希"
+// @Param        hash  path      string  true  "Transaction hash"
 // @Success      200   {object}  []model.Log
 // @Failure      400   {object}  service.ErrRes
 // @Router       /transaction_logs/{hash} [get]

@@ -8,19 +8,19 @@ import (
 	"server/service"
 )
 
-// Reward 奖励API
+// Reward API
 func Reward(e *gin.Engine) {
 	e.GET("/reward", pageReward)
 	e.GET("/reward/:block", blockReward)
 }
 
-// @Tags         奖励
-// @Summary      查询奖励列表
-// @Description  逆序查询奖励列表
+// @Tags         reward
+// @Summary      Query the reward list
+// @Description  query the reward list in reverse order
 // @Accept       json
 // @Produce      json
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.RewardsRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /reward [get]
@@ -48,12 +48,12 @@ func pageReward(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// @Tags         奖励
-// @Summary      查询奖励
-// @Description  指定区块查询奖励
+// @Tags         reward
+// @Summary      query reward
+// @Description  specifies the block query reward
 // @Accept       json
 // @Produce      json
-// @Param        block  path      string  true  "区块高度"
+// @Param        block  path      string  true  "Block height"
 // @Success      200    {object}  []model.Reward
 // @Failure      400    {object}  service.ErrRes
 // @Router       /reward/{block} [get]

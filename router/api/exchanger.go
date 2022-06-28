@@ -13,14 +13,14 @@ func Exchanger(e *gin.Engine) {
 	e.GET("/exchanger/:addr", getExchanger)
 }
 
-// @Tags         交易所
-// @Summary      查询交易所列表
-// @Description  按创建时间逆序查询交易所列表
+// @Tags         Exchange
+// @Summary      Query the list of exchanges
+// @Description  Query the list of exchanges in reverse order of creation time
 // @Accept       json
 // @Produce      json
-// @Param        name       query     string  false  "交易所名称,空则查询所有交易所"
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        name       query     string  false  "Exchange name, if empty, query all exchanges"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.ExchangersRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /exchanger/page [get]
@@ -51,12 +51,12 @@ func pageExchanger(c *gin.Context) {
 
 }
 
-// @Tags         交易所
-// @Summary      查询交易所
-// @Description  按地址查询交易所
+// @Tags         Exchange
+// @Summary      query exchange
+// @Description  Query exchanges by address
 // @Accept       json
 // @Produce      json
-// @Param        addr  path      string  true  "交易所地址"
+// @Param        addr  path      string  true  "Exchange address"
 // @Success      200   {object}  model.Exchanger
 // @Failure      400   {object}  service.ErrRes
 // @Router       /exchanger/{addr} [get]

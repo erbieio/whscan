@@ -8,20 +8,20 @@ import (
 	"server/service"
 )
 
-// Block 区块API
+// Block blockAPI
 func Block(e *gin.Engine) {
 	e.GET("/block/page", pageBlock)
 	e.GET("/block/:number", getBlock)
 	e.GET("/account/page", pageAccount)
 }
 
-// @Tags         区块
-// @Summary      查询区块列表
-// @Description  按高度逆序查询区块列表
+// @Tags         block
+// @Summary      query block list
+// @Description  Query the block list in reverse order of height
 // @Accept       json
 // @Produce      json
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.BlocksRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /block/page [get]
@@ -49,12 +49,12 @@ func pageBlock(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// @Tags         区块
-// @Summary      查询区块
-// @Description  指定number查询区块
+// @Tags         block
+// @Summary      query block
+// @Description  specifies the number query block
 // @Accept       json
 // @Produce      json
-// @Param        number  path      string  true  "区块号"
+// @Param        number  path      string  true  "Block number"
 // @Success      200     {object}  model.Block
 // @Failure      400     {object}  service.ErrRes
 // @Router       /block/{number} [get]
@@ -69,13 +69,13 @@ func getBlock(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// @Tags         区块
-// @Summary      查询顶尖账户
-// @Description  按持有币多少来设置账户排行
+// @Tags         block
+// @Summary      query top accounts
+// @Description  set the account ranking according to the amount of coins held
 // @Accept       json
 // @Produce      json
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.AccountsRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /account/page [get]

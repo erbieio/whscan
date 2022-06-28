@@ -18,13 +18,13 @@ func Extra(e *gin.Engine) {
 }
 
 type price struct {
-	USD float64 `json:"USD"` //一个ERB美元价格
-	CNY float64 `json:"CNY"` //一个ERB人民币价格
+	USD float64 `json:"USD"` //The price of an ERB in USD
+	CNY float64 `json:"CNY"` //The price of an ERB in RMB
 }
 
-// @Tags         其他接口
-// @Summary      查询ERB价格
-// @Description  查询一个ERB价格，1ERB=10^18wei，未能实现ERB价格定义，固定为1ERB=1USD
+// @Tags         other interfaces
+// @Summary      query ERB price
+// @Description  Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=1USD
 // @Accept       json
 // @Produce      json
 // @Success      200  {object}  price
@@ -33,14 +33,14 @@ func erbPrice(c *gin.Context) {
 	c.JSON(http.StatusOK, price{CNY: 6.3, USD: 1})
 }
 
-// @Tags         其他接口
-// @Summary      请求ERB测试币
-// @Description  请求ERB测试币
+// @Tags         other interfaces
+// @Summary      request ERB test coins
+// @Description  request ERB test coins
 // @Accept       json
 // @Produce      json
-// @Param        addr  query     string  true  "地址"
+// @Param        addr  query  string  true  "address"
 // @Success      200
-// @Failure      400        {object}  service.ErrRes
+// @Failure      400  {object}  service.ErrRes
 // @Router       /erb_faucet [get]
 func erbFaucet(c *gin.Context) {
 	addr, err := utils.ParseAddress(c.Query("addr"))
@@ -59,19 +59,19 @@ func erbFaucet(c *gin.Context) {
 }
 
 type AuthRes struct {
-	Status           uint64 `json:"status"` //2 交易所付费状态正常  其他数字为欠费或者没交费
+	Status           uint64 `json:"status"` //2 The payment status of the exchange is normal, other numbers are arrears or no payment
 	ExchangerFlag    bool   `json:"exchanger_flag"`
 	ExchangerBalance string `json:"exchanger_balance"`
 }
 
-// @Tags         其他接口
-// @Summary      查询交易所状态
-// @Description  查询交易所状态
+// @Tags         other interfaces
+// @Summary      query exchange status
+// @Description  query exchange status
 // @Accept       json
 // @Produce      json
-// @Param        addr  query  string  true  "地址"
+// @Param        addr  query     string  true  "address"
 // @Success      200   {object}  AuthRes
-// @Failure      400  {object}  service.ErrRes
+// @Failure      400   {object}  service.ErrRes
 // @Router       /exchanger_auth [get]
 func exchangerAuth(c *gin.Context) {
 	addr, err := utils.ParseAddress(c.Query("addr"))
@@ -97,12 +97,12 @@ type Subscribe struct {
 	Email string `form:"email"`
 }
 
-// @Tags         其他接口
-// @Summary      订阅邮件
-// @Description  输入邮箱地址，用来接收最新的活动通知
+// @Tags         other interfaces
+// @Summary      subscribe email
+// @Description  Enter the email address to receive the latest event notifications
 // @Accept       json
 // @Produce      json
-// @Param        _  body  Subscribe  true  "邮箱"
+// @Param        _  body  Subscribe  true  "Mailbox"
 // @Success      200
 // @Failure      400  {object}  service.ErrRes
 // @Router       /subscription [post]
@@ -114,7 +114,7 @@ func subscribe(c *gin.Context) {
 		return
 	}
 	if !utils.VerifyEmailFormat(req.Email) {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: "邮箱格式有误"})
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: "The email format is incorrect"})
 		return
 	}
 
@@ -127,15 +127,15 @@ func subscribe(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// @Tags         其他接口
-// @Summary      查询订阅邮箱列表
-// @Description  查询订阅邮箱列表
+// @Tags         other interfaces
+// @Summary      Query the list of subscription mailboxes
+// @Description  Query the list of subscription mailboxes
 // @Accept       json
 // @Produce      json
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  []model.Subscription
-// @Failure      400   {object}  service.ErrRes
+// @Failure      400        {object}  service.ErrRes
 // @Router       /subscription [get]
 func pageSubscribe(c *gin.Context) {
 	req := struct {

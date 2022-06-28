@@ -25,7 +25,7 @@ var doc = `{
     "paths": {
         "/account/page": {
             "get": {
-                "description": "按持有币多少来设置账户排行",
+                "description": "set the account ranking according to the amount of coins held",
                 "consumes": [
                     "application/json"
                 ],
@@ -33,19 +33,19 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块"
+                    "block"
                 ],
-                "summary": "查询顶尖账户",
+                "summary": "query top accounts",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -68,7 +68,7 @@ var doc = `{
         },
         "/block/getBlock": {
             "get": {
-                "description": "查询区块",
+                "description": "query block",
                 "consumes": [
                     "application/json"
                 ],
@@ -76,14 +76,14 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "查询区块（新/block/{number}）",
+                "summary": "query block (new /block/{number})",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "区块号",
+                        "description": "block number",
                         "name": "block_number",
                         "in": "query"
                     }
@@ -106,7 +106,7 @@ var doc = `{
         },
         "/block/getTransaction": {
             "get": {
-                "description": "查询交易",
+                "description": "query transaction",
                 "consumes": [
                     "application/json"
                 ],
@@ -114,14 +114,14 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "查询交易（新/transaction/{hash}）",
+                "summary": "query transaction (new /transaction/{hash})",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易hash",
+                        "description": "Transaction hash",
                         "name": "tx_hash",
                         "in": "query"
                     }
@@ -144,7 +144,7 @@ var doc = `{
         },
         "/block/getTransactionLogs": {
             "get": {
-                "description": "查询收据",
+                "description": "query receipt",
                 "consumes": [
                     "application/json"
                 ],
@@ -152,14 +152,14 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "查询收据(新/transaction_logs/{hash})",
+                "summary": "query receipt (new /transaction_logs/{hash})",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易hash",
+                        "description": "Transaction hash",
                         "name": "tx_hash",
                         "in": "query"
                     }
@@ -182,7 +182,7 @@ var doc = `{
         },
         "/block/page": {
             "get": {
-                "description": "按高度逆序查询区块列表",
+                "description": "Query the block list in reverse order of height",
                 "consumes": [
                     "application/json"
                 ],
@@ -190,19 +190,19 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块"
+                    "block"
                 ],
-                "summary": "查询区块列表",
+                "summary": "query block list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -225,7 +225,7 @@ var doc = `{
         },
         "/block/viewBlocks": {
             "get": {
-                "description": "查询区块列表",
+                "description": "query block list",
                 "consumes": [
                     "application/json"
                 ],
@@ -233,20 +233,20 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "查询区块列表（新/block/page）",
+                "summary": "query block list (new /block/page)",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "页",
+                        "description": "page",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "页码",
+                        "description": "page number",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -269,7 +269,7 @@ var doc = `{
         },
         "/block/viewTransactions": {
             "get": {
-                "description": "查询交易列表",
+                "description": "query transaction list",
                 "consumes": [
                     "application/json"
                 ],
@@ -277,32 +277,32 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "查询交易列表（新/transaction/page）",
+                "summary": "query transaction list (new /transaction/page)",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "地址 不区分传",
+                        "description": "Address does not distinguish transmission",
                         "name": "address",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "区块号 不区分",
+                        "description": "Block number is indistinguishable",
                         "name": "block_number",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "页",
+                        "description": "page",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "页码",
+                        "description": "page number",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -325,7 +325,7 @@ var doc = `{
         },
         "/block/{number}": {
             "get": {
-                "description": "指定number查询区块",
+                "description": "specifies the number query block",
                 "consumes": [
                     "application/json"
                 ],
@@ -333,13 +333,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "区块"
+                    "block"
                 ],
-                "summary": "查询区块",
+                "summary": "query block",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "区块号",
+                        "description": "Block number",
                         "name": "number",
                         "in": "path",
                         "required": true
@@ -363,7 +363,7 @@ var doc = `{
         },
         "/collection/page": {
             "get": {
-                "description": "按创建区块高度逆序查询NFT合集列表",
+                "description": "Query NFT collection list in reverse order of created block height",
                 "consumes": [
                     "application/json"
                 ],
@@ -371,37 +371,37 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "NFT合集"
+                    "NFT Collection"
                 ],
-                "summary": "查询NFT合集列表",
+                "summary": "Query the list of NFT collections",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易所，空则查询所有交易所",
+                        "description": "Exchange, if empty, query all exchanges",
                         "name": "exchanger",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "创建者,空则查询所有",
+                        "description": "Creator, if empty, query all",
                         "name": "creator",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "类型：all、nft、snft，默认all",
+                        "description": "Type: all, nft, snft, default all",
                         "name": "type",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -424,7 +424,7 @@ var doc = `{
         },
         "/collection/{id}": {
             "get": {
-                "description": "指定ID查询NFT合集信息",
+                "description": "specifies the ID to query the NFT collection information",
                 "consumes": [
                     "application/json"
                 ],
@@ -432,13 +432,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "NFT合集"
+                    "NFT Collection"
                 ],
-                "summary": "查询NFT合集",
+                "summary": "query NFT collection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "合集ID",
+                        "description": "Collection ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -462,7 +462,7 @@ var doc = `{
         },
         "/epoch": {
             "get": {
-                "description": "按创建时间逆序查询系统NFT期列表",
+                "description": "Query the system NFT period list in reverse order of creation time",
                 "consumes": [
                     "application/json"
                 ],
@@ -470,19 +470,19 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "系统NFT期"
+                    "system NFT period"
                 ],
-                "summary": "查询系统NFT期列表",
+                "summary": "Query the system NFT period list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -505,7 +505,7 @@ var doc = `{
         },
         "/epoch/{id}": {
             "get": {
-                "description": "指定ID查询系统NFT期信息,包含16个合集信息",
+                "description": "specifies the ID to query the NFT period information of the system, including 16 collection information",
                 "consumes": [
                     "application/json"
                 ],
@@ -513,13 +513,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "系统NFT期"
+                    "system NFT period"
                 ],
-                "summary": "查询系统NFT期",
+                "summary": "Query system NFT period",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "期ID，current表示查询当前的期",
+                        "description": "Period ID, current means query the current period",
                         "name": "id",
                         "in": "path"
                     }
@@ -542,7 +542,7 @@ var doc = `{
         },
         "/erb_faucet": {
             "get": {
-                "description": "请求ERB测试币",
+                "description": "request ERB test coins",
                 "consumes": [
                     "application/json"
                 ],
@@ -550,13 +550,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "其他接口"
+                    "other interfaces"
                 ],
-                "summary": "请求ERB测试币",
+                "summary": "request ERB test coins",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "地址",
+                        "description": "address",
                         "name": "addr",
                         "in": "query",
                         "required": true
@@ -577,7 +577,7 @@ var doc = `{
         },
         "/erb_price": {
             "get": {
-                "description": "查询一个ERB价格，1ERB=10^18wei，未能实现ERB价格定义，固定为1ERB=1USD",
+                "description": "Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=1USD",
                 "consumes": [
                     "application/json"
                 ],
@@ -585,9 +585,9 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "其他接口"
+                    "other interfaces"
                 ],
-                "summary": "查询ERB价格",
+                "summary": "query ERB price",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -600,7 +600,7 @@ var doc = `{
         },
         "/exchanger/get": {
             "get": {
-                "description": "按地址查询交易所",
+                "description": "Query exchanges by address",
                 "consumes": [
                     "application/json"
                 ],
@@ -608,14 +608,14 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "查询交易所(新/exchanger/{addr})",
+                "summary": "query exchange (new /exchanger/{addr})",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易所地址",
+                        "description": "Exchange address",
                         "name": "addr",
                         "in": "query",
                         "required": true
@@ -639,7 +639,7 @@ var doc = `{
         },
         "/exchanger/page": {
             "get": {
-                "description": "按创建时间逆序查询交易所列表",
+                "description": "Query the list of exchanges in reverse order of creation time",
                 "consumes": [
                     "application/json"
                 ],
@@ -647,25 +647,25 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "交易所"
+                    "Exchange"
                 ],
-                "summary": "查询交易所列表",
+                "summary": "Query the list of exchanges",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易所名称,空则查询所有交易所",
+                        "description": "Exchange name, if empty, query all exchanges",
                         "name": "name",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -688,7 +688,7 @@ var doc = `{
         },
         "/exchanger/{addr}": {
             "get": {
-                "description": "按地址查询交易所",
+                "description": "Query exchanges by address",
                 "consumes": [
                     "application/json"
                 ],
@@ -696,13 +696,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "交易所"
+                    "Exchange"
                 ],
-                "summary": "查询交易所",
+                "summary": "query exchange",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易所地址",
+                        "description": "Exchange address",
                         "name": "addr",
                         "in": "path",
                         "required": true
@@ -726,7 +726,7 @@ var doc = `{
         },
         "/exchanger_auth": {
             "get": {
-                "description": "查询交易所状态",
+                "description": "query exchange status",
                 "consumes": [
                     "application/json"
                 ],
@@ -734,13 +734,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "其他接口"
+                    "other interfaces"
                 ],
-                "summary": "查询交易所状态",
+                "summary": "query exchange status",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "地址",
+                        "description": "address",
                         "name": "addr",
                         "in": "query",
                         "required": true
@@ -764,7 +764,7 @@ var doc = `{
         },
         "/extra/checkAuth": {
             "get": {
-                "description": "查询交易所状态",
+                "description": "query exchange status",
                 "consumes": [
                     "application/json"
                 ],
@@ -772,14 +772,14 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "查询交易所状态(新/exchanger_auth)",
+                "summary": "query exchange status (new /exchanger_auth)",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "地址",
+                        "description": "Address",
                         "name": "address",
                         "in": "query"
                     }
@@ -802,7 +802,7 @@ var doc = `{
         },
         "/extra/requestErbTest": {
             "get": {
-                "description": "请求ERB测试币",
+                "description": "request ERB test coins",
                 "consumes": [
                     "application/json"
                 ],
@@ -810,14 +810,14 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "过时接口"
+                    "obsolete interface"
                 ],
-                "summary": "请求ERB测试币(新/erb_faucet)",
+                "summary": "request ERB test coin (new /erb_faucet)",
                 "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "地址",
+                        "description": "Address",
                         "name": "address",
                         "in": "query"
                     }
@@ -840,7 +840,7 @@ var doc = `{
         },
         "/nft/page": {
             "get": {
-                "description": "按创建时间逆序查询NFT列表",
+                "description": "Query the NFT list in reverse order of creation time",
                 "consumes": [
                     "application/json"
                 ],
@@ -850,35 +850,35 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "查询NFT列表",
+                "summary": "query NFT list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易所，空则查询所有交易所",
+                        "description": "Exchange, if empty, query all exchanges",
                         "name": "exchanger",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "所有者,空则查询所有",
+                        "description": "Owner, if empty, query all",
                         "name": "owner",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "合集id,空则查询所有",
+                        "description": "collection id, if empty, query all",
                         "name": "collection_id",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -901,7 +901,7 @@ var doc = `{
         },
         "/nft/tx/page": {
             "get": {
-                "description": "按创建时间逆序查询NFT交易列表",
+                "description": "Query the list of NFT transactions in reverse order of creation time",
                 "consumes": [
                     "application/json"
                 ],
@@ -911,35 +911,35 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "查询NFT交易列表",
+                "summary": "Query NFT transaction list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "指定NFT地址,空则查询所有地址的",
+                        "description": "Specify the NFT address, if empty, query all addresses",
                         "name": "address",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "交易所，空则查询所有交易所",
+                        "description": "Exchange, if empty, query all exchanges",
                         "name": "exchanger",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "指定账户,空则查询所有账户的",
+                        "description": "Specify an account, if empty, query all accounts",
                         "name": "account",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -962,7 +962,7 @@ var doc = `{
         },
         "/nft_meta/page": {
             "get": {
-                "description": "按创建时间逆序查询包含元信息NFT列表",
+                "description": "query the NFT list containing meta information in reverse order of creation time",
                 "consumes": [
                     "application/json"
                 ],
@@ -972,35 +972,35 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "查询包含元信息NFT列表",
+                "summary": "query contains meta information NFT list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易所，空则查询所有交易所",
+                        "description": "Exchange, if empty, query all exchanges",
                         "name": "exchanger",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "所有者,空则查询所有",
+                        "description": "Owner, if empty, query all",
                         "name": "owner",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "合集id,空则查询所有",
+                        "description": "collection id, if empty, query all",
                         "name": "collection_id",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -1023,7 +1023,7 @@ var doc = `{
         },
         "/reward": {
             "get": {
-                "description": "逆序查询奖励列表",
+                "description": "query the reward list in reverse order",
                 "consumes": [
                     "application/json"
                 ],
@@ -1031,19 +1031,19 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "奖励"
+                    "reward"
                 ],
-                "summary": "查询奖励列表",
+                "summary": "Query the reward list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -1066,7 +1066,7 @@ var doc = `{
         },
         "/reward/{block}": {
             "get": {
-                "description": "指定区块查询奖励",
+                "description": "specifies the block query reward",
                 "consumes": [
                     "application/json"
                 ],
@@ -1074,13 +1074,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "奖励"
+                    "reward"
                 ],
-                "summary": "查询奖励",
+                "summary": "query reward",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "区块高度",
+                        "description": "Block height",
                         "name": "block",
                         "in": "path",
                         "required": true
@@ -1107,7 +1107,7 @@ var doc = `{
         },
         "/snft/block": {
             "get": {
-                "description": "查询指定区块的SNFT奖励列表",
+                "description": "Query the list of SNFT rewards for the specified block",
                 "consumes": [
                     "application/json"
                 ],
@@ -1117,11 +1117,11 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "查询区块SNFT列表",
+                "summary": "Query blocks SNFT list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "区块号",
+                        "description": "Block number",
                         "name": "number",
                         "in": "query",
                         "required": true
@@ -1148,7 +1148,7 @@ var doc = `{
         },
         "/snft/collection/page": {
             "get": {
-                "description": "查询指定帐户的持有（有合集里的一个SNFT）的合集列表（包含16个FullNFT信息）",
+                "description": "Query the collection list (including 16 FullNFT information) held by the specified account (with one SNFT in the collection)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1158,23 +1158,23 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "分页查询帐户持有合集列表",
+                "summary": "paging query account holding collection list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "所有者",
+                        "description": "owner",
                         "name": "owner",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -1197,7 +1197,7 @@ var doc = `{
         },
         "/snft/group/{id}": {
             "get": {
-                "description": "查询指定ID的FullNFT下256个SNFT的信息",
+                "description": "Query the information of 256 SNFTs under the FullNFT of the specified ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1207,11 +1207,11 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "查询指定FullNFT的256个SNFT列表",
+                "summary": "Query the list of 256 SNFTs of the specified FullNFT",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "FullNFT编号",
+                        "description": "FullNFT ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1238,7 +1238,7 @@ var doc = `{
         },
         "/snft/page": {
             "get": {
-                "description": "按创建时间逆序查询SNFT列表",
+                "description": "Query the SNFT list in reverse order of creation time",
                 "consumes": [
                     "application/json"
                 ],
@@ -1248,23 +1248,23 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "查询SNFT列表",
+                "summary": "query SNFT list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "所有者,空则查询所有",
+                        "description": "Owner, if empty, query all",
                         "name": "owner",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -1287,7 +1287,7 @@ var doc = `{
         },
         "/snft_meta/page": {
             "get": {
-                "description": "按创建时间逆序查询有元信息SNFT列表",
+                "description": "Query the list of SNFTs with meta information in reverse order of creation time",
                 "consumes": [
                     "application/json"
                 ],
@@ -1297,29 +1297,29 @@ var doc = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "查询有元信息SNFT列表",
+                "summary": "Query a list of SNFTs with meta information",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "合集id,空则查询所有",
+                        "description": "collection id, if empty, query all",
                         "name": "collection_id",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "所有者,空则查询所有",
+                        "description": "Owner, if empty, query all",
                         "name": "owner",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -1342,7 +1342,7 @@ var doc = `{
         },
         "/subscription": {
             "get": {
-                "description": "查询订阅邮箱列表",
+                "description": "Query the list of subscription mailboxes",
                 "consumes": [
                     "application/json"
                 ],
@@ -1350,19 +1350,19 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "其他接口"
+                    "other interfaces"
                 ],
-                "summary": "查询订阅邮箱列表",
+                "summary": "Query the list of subscription mailboxes",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     }
@@ -1386,7 +1386,7 @@ var doc = `{
                 }
             },
             "post": {
-                "description": "输入邮箱地址，用来接收最新的活动通知",
+                "description": "Enter the email address to receive the latest event notifications",
                 "consumes": [
                     "application/json"
                 ],
@@ -1394,12 +1394,12 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "其他接口"
+                    "other interfaces"
                 ],
-                "summary": "订阅邮件",
+                "summary": "subscribe email",
                 "parameters": [
                     {
-                        "description": "邮箱",
+                        "description": "Mailbox",
                         "name": "_",
                         "in": "body",
                         "required": true,
@@ -1423,7 +1423,7 @@ var doc = `{
         },
         "/transaction/page": {
             "get": {
-                "description": "逆序查询交易列表",
+                "description": "query transaction list in reverse order",
                 "consumes": [
                     "application/json"
                 ],
@@ -1431,31 +1431,31 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "交易"
+                    "transaction"
                 ],
-                "summary": "查询交易列表",
+                "summary": "query transaction list",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "页,默认1",
+                        "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "页大小,默认10",
+                        "description": "Page size, default 10",
                         "name": "page_size",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "区块号，空则查询所有",
+                        "description": "Block number, if empty, query all",
                         "name": "number",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "账户地址，空则查询所有",
+                        "description": "Account address, if empty, query all",
                         "name": "addr",
                         "in": "query"
                     }
@@ -1478,7 +1478,7 @@ var doc = `{
         },
         "/transaction/{hash}": {
             "get": {
-                "description": "指定hash查询交易",
+                "description": "specifies the hash query transaction",
                 "consumes": [
                     "application/json"
                 ],
@@ -1486,13 +1486,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "交易"
+                    "transaction"
                 ],
-                "summary": "查询交易",
+                "summary": "query transaction",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易哈希",
+                        "description": "Transaction hash",
                         "name": "hash",
                         "in": "path",
                         "required": true
@@ -1516,7 +1516,7 @@ var doc = `{
         },
         "/transaction_logs/{hash}": {
             "get": {
-                "description": "指定交易hash查询交易收据",
+                "description": "specifies the transaction hash to query the transaction receipt",
                 "consumes": [
                     "application/json"
                 ],
@@ -1524,13 +1524,13 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "交易"
+                    "transaction"
                 ],
-                "summary": "查询交易收据",
+                "summary": "query transaction receipt",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "交易哈希",
+                        "description": "Transaction hash",
                         "name": "hash",
                         "in": "path",
                         "required": true
@@ -1567,7 +1567,7 @@ var doc = `{
                     "type": "boolean"
                 },
                 "status": {
-                    "description": "2 交易所付费状态正常  其他数字为欠费或者没交费",
+                    "description": "2 The payment status of the exchange is normal, other numbers are arrears or no payment",
                     "type": "integer"
                 }
             }
@@ -1576,7 +1576,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "description": "0 成功  1 地址有误 其他失败",
+                    "description": "0 success 1 wrong address other failure",
                     "type": "integer"
                 },
                 "data": {
@@ -1591,7 +1591,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "err": {
-                    "description": "错误信息",
+                    "description": "Error message",
                     "type": "string"
                 }
             }
@@ -1693,11 +1693,11 @@ var doc = `{
             "type": "object",
             "properties": {
                 "CNY": {
-                    "description": "一个ERB人民币价格",
+                    "description": "The price of an ERB in RMB",
                     "type": "number"
                 },
                 "USD": {
-                    "description": "一个ERB美元价格",
+                    "description": "The price of an ERB in USD",
                     "type": "number"
                 }
             }
@@ -1706,7 +1706,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "description": "0 成功  1 地址有误 其他失败",
+                    "description": "0 success 1 wrong address other failure",
                     "type": "integer"
                 },
                 "msg": {
@@ -1718,39 +1718,39 @@ var doc = `{
             "type": "object",
             "properties": {
                 "ERC": {
-                    "description": "ERC类型，ERC20,ERC721,ERC1155",
+                    "description": "ERC types, ERC20, ERC721, ERC1155",
                     "type": "integer"
                 },
                 "address": {
-                    "description": "地址",
+                    "description": "address",
                     "type": "string"
                 },
                 "balance": {
-                    "description": "余额",
+                    "description": "balance",
                     "type": "string"
                 },
                 "code": {
-                    "description": "字节码",
+                    "description": "bytecode",
                     "type": "string"
                 },
                 "createdTx": {
-                    "description": "创建交易",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "creator": {
-                    "description": "创建者,合约账户才有值",
+                    "description": "The creator, the contract account has value",
                     "type": "string"
                 },
                 "name": {
-                    "description": "名称",
+                    "description": "name",
                     "type": "string"
                 },
                 "symbol": {
-                    "description": "符号",
+                    "description": "symbol",
                     "type": "string"
                 },
                 "transactionCount": {
-                    "description": "交易随机数，交易量",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 }
             }
@@ -1759,86 +1759,86 @@ var doc = `{
             "type": "object",
             "properties": {
                 "difficulty": {
-                    "description": "难度",
+                    "description": "difficulty",
                     "type": "integer"
                 },
                 "extraData": {
-                    "description": "额外数据",
+                    "description": "Extra data",
                     "type": "string"
                 },
                 "gasLimit": {
-                    "description": "燃料上限",
+                    "description": "Gas limit",
                     "type": "integer"
                 },
                 "gasUsed": {
-                    "description": "燃料消耗",
+                    "description": "Gas consumption",
                     "type": "integer"
                 },
                 "hash": {
-                    "description": "哈希",
+                    "description": "Hash",
                     "type": "string"
                 },
                 "miner": {
-                    "description": "矿工",
+                    "description": "miner",
                     "type": "string"
                 },
                 "mixHash": {
-                    "description": "混合哈希",
+                    "description": "Mixed hash",
                     "type": "string"
                 },
                 "nonce": {
-                    "description": "难度随机数",
+                    "description": "difficulty random number",
                     "type": "string"
                 },
                 "number": {
-                    "description": "区块号",
+                    "description": "block number",
                     "type": "integer"
                 },
                 "parentHash": {
-                    "description": "父区块哈希",
+                    "description": "parent block hash",
                     "type": "string"
                 },
                 "receiptsRoot": {
-                    "description": "交易收据根哈希",
+                    "description": "Transaction receipt root hash",
                     "type": "string"
                 },
                 "sha3Uncles": {
-                    "description": "叔块根哈希",
+                    "description": "Uncle root hash",
                     "type": "string"
                 },
                 "size": {
-                    "description": "大小",
+                    "description": "size",
                     "type": "integer"
                 },
                 "stateRoot": {
-                    "description": "世界树根哈希",
+                    "description": "World tree root hash",
                     "type": "string"
                 },
                 "timestamp": {
-                    "description": "时间戳",
+                    "description": "timestamp",
                     "type": "integer"
                 },
                 "totalDifficulty": {
-                    "description": "总难度",
+                    "description": "Total difficulty",
                     "type": "string"
                 },
                 "totalTransaction": {
-                    "description": "交易数量",
+                    "description": "Number of transactions",
                     "type": "integer"
                 },
                 "transactionsRoot": {
-                    "description": "交易根哈希",
+                    "description": "transaction root hash",
                     "type": "string"
                 },
                 "uncles": {
-                    "description": "叔块哈希",
+                    "description": "Uncle block hash",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "unclesCount": {
-                    "description": "叔块数量",
+                    "description": "Number of uncle blocks",
                     "type": "integer"
                 }
             }
@@ -1847,23 +1847,23 @@ var doc = `{
             "type": "object",
             "properties": {
                 "block_number": {
-                    "description": "创建区块高度，等于合集第一个NFT的",
+                    "description": "Create block height, equal to the first NFT in the collection",
                     "type": "integer"
                 },
                 "category": {
-                    "description": "分类",
+                    "description": "category",
                     "type": "string"
                 },
                 "creator": {
-                    "description": "创建者",
+                    "description": "Creator",
                     "type": "string"
                 },
                 "desc": {
-                    "description": "描述",
+                    "description": "description",
                     "type": "string"
                 },
                 "exchanger": {
-                    "description": "所属交易所",
+                    "description": "belongs to the exchange",
                     "type": "string"
                 },
                 "id": {
@@ -1871,15 +1871,15 @@ var doc = `{
                     "type": "string"
                 },
                 "img_url": {
-                    "description": "图片链接",
+                    "description": "image link",
                     "type": "string"
                 },
                 "meta_url": {
-                    "description": "合集元信息URL",
+                    "description": "collection meta information URL",
                     "type": "string"
                 },
                 "name": {
-                    "description": "名称",
+                    "description": "name",
                     "type": "string"
                 }
             }
@@ -1888,35 +1888,35 @@ var doc = `{
             "type": "object",
             "properties": {
                 "creator": {
-                    "description": "创建者地址，也是版税收入地址",
+                    "description": "Creator address, also the address of royalty income",
                     "type": "string"
                 },
                 "dir": {
-                    "description": "元信息目录URL",
+                    "description": "meta information directory URL",
                     "type": "string"
                 },
                 "exchanger": {
-                    "description": "交易所地址",
+                    "description": "Exchange address",
                     "type": "string"
                 },
                 "id": {
-                    "description": "期ID",
+                    "description": "period ID",
                     "type": "string"
                 },
                 "number": {
-                    "description": "起始的区块高度",
+                    "description": "Starting block height",
                     "type": "integer"
                 },
                 "royaltyRatio": {
-                    "description": "同一期SNFT的版税费率,单位万分之一",
+                    "description": "The royalty rate of the same period of SNFT, the unit is one ten thousandth",
                     "type": "integer"
                 },
                 "timestamp": {
-                    "description": "起始的时间戳",
+                    "description": "Starting timestamp",
                     "type": "integer"
                 },
                 "voteWeight": {
-                    "description": "权重",
+                    "description": "Weight",
                     "type": "string"
                 }
             }
@@ -1925,55 +1925,55 @@ var doc = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "交易所地址",
+                    "description": "Exchange address",
                     "type": "string"
                 },
                 "balance_count": {
-                    "description": "总交易额，单位wei",
+                    "description": "Total transaction amount, unit wei",
                     "type": "string"
                 },
                 "block_number": {
-                    "description": "创建时的区块号",
+                    "description": "The block number when created",
                     "type": "integer"
                 },
                 "collection_count": {
-                    "description": "总合集数,批量查询此字段无效",
+                    "description": "Total number of collections, batch query of this field is invalid",
                     "type": "integer"
                 },
                 "creator": {
-                    "description": "创建者地址",
+                    "description": "Creator address",
                     "type": "string"
                 },
                 "fee_ratio": {
-                    "description": "手续费率,单位万分之一",
+                    "description": "fee rate, unit 1/10,000",
                     "type": "integer"
                 },
                 "is_open": {
-                    "description": "是否开启中",
+                    "description": "Whether it is open",
                     "type": "boolean"
                 },
                 "name": {
-                    "description": "交易所名称",
+                    "description": "Exchange name",
                     "type": "string"
                 },
                 "nft_count": {
-                    "description": "总NFT数",
+                    "description": "Total NFT count",
                     "type": "integer"
                 },
                 "timestamp": {
-                    "description": "开启时间",
+                    "description": "Open time",
                     "type": "integer"
                 },
                 "tx_count": {
-                    "description": "总交易数，转移不计算在内",
+                    "description": "Total number of transactions, transfers are not counted",
                     "type": "integer"
                 },
                 "tx_hash": {
-                    "description": "创建的交易",
+                    "description": "The transaction created",
                     "type": "string"
                 },
                 "url": {
-                    "description": "交易所URL",
+                    "description": "Exchange URL",
                     "type": "string"
                 }
             }
@@ -1982,30 +1982,30 @@ var doc = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "所属合约地址",
+                    "description": "The contract address",
                     "type": "string"
                 },
                 "data": {
-                    "description": "数据",
+                    "description": "data",
                     "type": "string"
                 },
                 "logIndex": {
-                    "description": "在交易内的序号",
+                    "description": "The serial number in the transaction",
                     "type": "integer"
                 },
                 "removed": {
-                    "description": "是否移除",
+                    "description": "whether to remove",
                     "type": "boolean"
                 },
                 "topics": {
-                    "description": "主题",
+                    "description": "topic",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "transactionHash": {
-                    "description": "所属交易哈希",
+                    "description": "The transaction hash",
                     "type": "string"
                 }
             }
@@ -2014,43 +2014,43 @@ var doc = `{
             "type": "object",
             "properties": {
                 "block_number": {
-                    "description": "区块号",
+                    "description": "block number",
                     "type": "integer"
                 },
                 "exchanger_addr": {
-                    "description": "交易所地址",
+                    "description": "Exchange address",
                     "type": "string"
                 },
                 "fee": {
-                    "description": "交易手续费，单位wei（有交易所和价格的才有手续费）",
+                    "description": "Transaction fee, in wei (only if there is an exchange and price)",
                     "type": "string"
                 },
                 "from": {
-                    "description": "卖家",
+                    "description": "Seller",
                     "type": "string"
                 },
                 "nft_addr": {
-                    "description": "交易的NFT地址",
+                    "description": "The NFT address of the transaction",
                     "type": "string"
                 },
                 "price": {
-                    "description": "价格,单位为wei",
+                    "description": "price, the unit is wei",
                     "type": "string"
                 },
                 "timestamp": {
-                    "description": "交易时间戳",
+                    "description": "Transaction timestamp",
                     "type": "integer"
                 },
                 "to": {
-                    "description": "买家",
+                    "description": "buyer",
                     "type": "string"
                 },
                 "tx_hash": {
-                    "description": "交易哈希",
+                    "description": "transaction hash",
                     "type": "string"
                 },
                 "tx_type": {
-                    "description": "交易类型,1：转移、2:出价成交、3:定价购买、4：惰性定价购买、5：惰性定价购买、6：出价成交、7：惰性出价成交、8：撮合交易",
+                    "description": "Transaction type, 1: transfer, 2: bid transaction, 3: fixed price purchase, 4: lazy price purchase, 5: lazy price purchase, 6: bid transaction, 7: lazy bid transaction, 8: matching transaction",
                     "type": "integer"
                 }
             }
@@ -2059,23 +2059,23 @@ var doc = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "奖励地址",
+                    "description": "reward address",
                     "type": "string"
                 },
                 "amount": {
-                    "description": "奖励金额",
+                    "description": "Amount of reward",
                     "type": "string"
                 },
                 "block_number": {
-                    "description": "奖励时的区块号",
+                    "description": "The block number when rewarding",
                     "type": "integer"
                 },
                 "identity": {
-                    "description": "身份，1：出块者、2：验证者、3、交易所",
+                    "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
                     "type": "integer"
                 },
                 "snft": {
-                    "description": "SNFT地址",
+                    "description": "SNFT address",
                     "type": "string"
                 }
             }
@@ -2084,27 +2084,27 @@ var doc = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "SNFT地址",
+                    "description": "SNFT address",
                     "type": "string"
                 },
                 "awardee": {
-                    "description": "最后被奖励的矿工地址，未奖励过的为null",
+                    "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
                     "type": "string"
                 },
                 "last_price": {
-                    "description": "最后成交价格，单位wei，未成交过为null",
+                    "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
                     "type": "string"
                 },
                 "owner": {
-                    "description": "所有者,未分配和回收的为null",
+                    "description": "owner, unallocated and reclaimed are null",
                     "type": "string"
                 },
                 "reward_at": {
-                    "description": "最后被奖励时间戳，未奖励过的为null",
+                    "description": "The timestamp of the last rewarded, null if not rewarded",
                     "type": "integer"
                 },
                 "reward_number": {
-                    "description": "最后被奖励区块高度，未奖励过的为null",
+                    "description": "The height of the last rewarded block, null if not rewarded",
                     "type": "integer"
                 }
             }
@@ -2113,7 +2113,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "email": {
-                    "description": "邮箱",
+                    "description": "Email",
                     "type": "string"
                 }
             }
@@ -2122,67 +2122,67 @@ var doc = `{
             "type": "object",
             "properties": {
                 "blockHash": {
-                    "description": "区块哈希",
+                    "description": "Block Hash",
                     "type": "string"
                 },
                 "blockNumber": {
-                    "description": "区块号",
+                    "description": "block number",
                     "type": "integer"
                 },
                 "contractAddress": {
-                    "description": "创建的合约地址",
+                    "description": "The created contract address",
                     "type": "string"
                 },
                 "cumulativeGasUsed": {
-                    "description": "累计燃料消耗",
+                    "description": "Cumulative gas consumption",
                     "type": "integer"
                 },
                 "from": {
-                    "description": "发送地址",
+                    "description": "Send address",
                     "type": "string"
                 },
                 "gas": {
-                    "description": "燃料",
+                    "description": "fuel",
                     "type": "integer"
                 },
                 "gasPrice": {
-                    "description": "燃料价格",
+                    "description": "Gas price",
                     "type": "integer"
                 },
                 "gasUsed": {
-                    "description": "燃料消耗",
+                    "description": "Gas consumption",
                     "type": "integer"
                 },
                 "hash": {
-                    "description": "哈希",
+                    "description": "Hash",
                     "type": "string"
                 },
                 "input": {
-                    "description": "额外输入数据，合约调用编码数据",
+                    "description": "Additional input data, contract call encoded data",
                     "type": "string"
                 },
                 "methodId": {
-                    "description": "方法ID，普通交易为空",
+                    "description": "Method ID, normal transaction is empty",
                     "type": "string"
                 },
                 "nonce": {
-                    "description": "随机数，发起账户的交易次数",
+                    "description": "Random number, the number of transactions initiated by the account",
                     "type": "integer"
                 },
                 "status": {
-                    "description": "状态，1：成功；0：失败",
+                    "description": "Status, 1: success; 0: failure",
                     "type": "integer"
                 },
                 "to": {
-                    "description": "接收地址",
+                    "description": "Receive address",
                     "type": "string"
                 },
                 "transactionIndex": {
-                    "description": "在区块内的序号",
+                    "description": "The serial number in the block",
                     "type": "integer"
                 },
                 "value": {
-                    "description": "金额，单位wei",
+                    "description": "Amount, unit wei",
                     "type": "string"
                 }
             }
@@ -2191,71 +2191,71 @@ var doc = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "NFT地址,从0x1自动增长",
+                    "description": "NFT address, grows automatically from 0x1",
                     "type": "string"
                 },
                 "attributes": {
-                    "description": "属性",
+                    "description": "Attributes",
                     "type": "string"
                 },
                 "block_number": {
-                    "description": "创建的区块高度",
+                    "description": "The height of the created block",
                     "type": "integer"
                 },
                 "category": {
-                    "description": "分类",
+                    "description": "category",
                     "type": "string"
                 },
                 "collection_id": {
-                    "description": "所属合集id,合集名称+合集创建者+合集所在交易所的哈希",
+                    "description": "The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located",
                     "type": "string"
                 },
                 "creator": {
-                    "description": "创建者地址",
+                    "description": "Creator address",
                     "type": "string"
                 },
                 "desc": {
-                    "description": "描述",
+                    "description": "description",
                     "type": "string"
                 },
                 "exchanger_addr": {
-                    "description": "所在交易所地址,没有的可以在任意交易所交易",
+                    "description": "The address of the exchange, if there is none, it can be traded on any exchange",
                     "type": "string"
                 },
                 "last_price": {
-                    "description": "最后成交价格(未成交为null)，单位wei",
+                    "description": "The last transaction price (null if the transaction is not completed), the unit is wei",
                     "type": "string"
                 },
                 "meta_url": {
-                    "description": "真实的元信息URL",
+                    "description": "Real meta information URL",
                     "type": "string"
                 },
                 "name": {
-                    "description": "名称",
+                    "description": "name",
                     "type": "string"
                 },
                 "owner": {
-                    "description": "所有者",
+                    "description": "owner",
                     "type": "string"
                 },
                 "raw_meta_url": {
-                    "description": "链上原始的元信息URL",
+                    "description": "Original meta information URL on the chain",
                     "type": "string"
                 },
                 "royalty_ratio": {
-                    "description": "版税费率,单位万分之一",
+                    "description": "Royalty rate, in ten thousandths",
                     "type": "integer"
                 },
                 "source_url": {
-                    "description": "资源链接，图片或视频等文件链接",
+                    "description": "Resource links, file links such as pictures or videos",
                     "type": "string"
                 },
                 "timestamp": {
-                    "description": "创建时间戳",
+                    "description": "Create timestamp",
                     "type": "integer"
                 },
                 "tx_hash": {
-                    "description": "创建的交易哈希",
+                    "description": "The transaction hash created",
                     "type": "string"
                 }
             }
@@ -2263,19 +2263,19 @@ var doc = `{
         "service.AccountsRes": {
             "type": "object",
             "properties": {
-                "balance": {
-                    "description": "链的币总额",
-                    "type": "string"
-                },
-                "blocks": {
-                    "description": "账户列表",
+                "accounts": {
+                    "description": "Account list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Account"
                     }
                 },
+                "balance": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
+                },
                 "total": {
-                    "description": "账户总数",
+                    "description": "Total number of accounts",
                     "type": "integer"
                 }
             }
@@ -2334,14 +2334,14 @@ var doc = `{
             "type": "object",
             "properties": {
                 "blocks": {
-                    "description": "区块列表",
+                    "description": "block list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Block"
                     }
                 },
                 "total": {
-                    "description": "区块总数",
+                    "description": "The total number of blocks",
                     "type": "integer"
                 }
             }
@@ -2350,14 +2350,14 @@ var doc = `{
             "type": "object",
             "properties": {
                 "collections": {
-                    "description": "NFT合集列表",
+                    "description": "NFT collection list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Collection"
                     }
                 },
                 "total": {
-                    "description": "NFT合集总数",
+                    "description": "The total number of NFT collections",
                     "type": "integer"
                 }
             }
@@ -2366,14 +2366,14 @@ var doc = `{
             "type": "object",
             "properties": {
                 "epochs": {
-                    "description": "系统NFT期列表",
+                    "description": "List of system NFT periods",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Epoch"
                     }
                 },
                 "total": {
-                    "description": "系统NFT期总数",
+                    "description": "The total number of NFT periods in the system",
                     "type": "integer"
                 }
             }
@@ -2382,7 +2382,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "err_str": {
-                    "description": "错误信息",
+                    "description": "Error message",
                     "type": "string"
                 }
             }
@@ -2391,26 +2391,26 @@ var doc = `{
             "type": "object",
             "properties": {
                 "exchangers": {
-                    "description": "交易所列表",
+                    "description": "List of exchanges",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Exchanger"
                     }
                 },
                 "last_0_total": {
-                    "description": "最新0天（今日）新开交易所数量，实时计算",
+                    "description": "The number of newly opened exchanges in the latest 0 days (today), calculated in real time",
                     "type": "integer"
                 },
                 "last_1_total": {
-                    "description": "最新1天（昨日）新开交易所数量，缓存",
+                    "description": "Number of newly opened exchanges in the latest 1 day (yesterday), cached",
                     "type": "integer"
                 },
                 "last_7_total": {
-                    "description": "最新7天新开交易所数量，缓存",
+                    "description": "Number of newly opened exchanges in the last 7 days, cached",
                     "type": "integer"
                 },
                 "total": {
-                    "description": "交易所总数",
+                    "description": "Total number of exchanges",
                     "type": "integer"
                 }
             }
@@ -2436,14 +2436,14 @@ var doc = `{
             "type": "object",
             "properties": {
                 "nft_txs": {
-                    "description": "NFT交易列表",
+                    "description": "NFT transaction list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.NFTTx"
                     }
                 },
                 "total": {
-                    "description": "NFT总数",
+                    "description": "The total number of NFTs",
                     "type": "integer"
                 }
             }
@@ -2452,14 +2452,14 @@ var doc = `{
             "type": "object",
             "properties": {
                 "rewards": {
-                    "description": "奖励列表",
+                    "description": "Rewards list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Reward"
                     }
                 },
                 "total": {
-                    "description": "奖励总数",
+                    "description": "The total number of rewards",
                     "type": "integer"
                 }
             }
@@ -2468,67 +2468,67 @@ var doc = `{
             "type": "object",
             "properties": {
                 "collections": {
-                    "description": "合集信息",
+                    "description": "collection information",
                     "type": "array",
                     "items": {
                         "type": "object",
                         "properties": {
                             "block_number": {
-                                "description": "创建区块高度，等于合集第一个NFT的",
+                                "description": "Create block height, equal to the first NFT in the collection",
                                 "type": "integer"
                             },
                             "category": {
-                                "description": "分类",
+                                "description": "category",
                                 "type": "string"
                             },
                             "creator": {
-                                "description": "创建者",
+                                "description": "Creator",
                                 "type": "string"
                             },
                             "desc": {
-                                "description": "描述",
+                                "description": "description",
                                 "type": "string"
                             },
                             "exchanger": {
-                                "description": "所属交易所",
+                                "description": "belongs to the exchange",
                                 "type": "string"
                             },
                             "fullNFTs": {
-                                "description": "16个FullNFT信息",
+                                "description": "16 FullNFT messages",
                                 "type": "array",
                                 "items": {
                                     "type": "object",
                                     "properties": {
                                         "attributes": {
-                                            "description": "属性",
+                                            "description": "Attributes",
                                             "type": "string"
                                         },
                                         "category": {
-                                            "description": "分类",
+                                            "description": "category",
                                             "type": "string"
                                         },
                                         "desc": {
-                                            "description": "描述",
+                                            "description": "description",
                                             "type": "string"
                                         },
                                         "id": {
-                                            "description": "FullNFT的ID",
+                                            "description": "FullNFT ID",
                                             "type": "string"
                                         },
                                         "meta_url": {
-                                            "description": "FullNFT元信息URL",
+                                            "description": "FullNFT meta information URL",
                                             "type": "string"
                                         },
                                         "name": {
-                                            "description": "名称",
+                                            "description": "name",
                                             "type": "string"
                                         },
                                         "source_url": {
-                                            "description": "资源链接，图片或视频等文件链接",
+                                            "description": "Resource links, file links such as pictures or videos",
                                             "type": "string"
                                         },
                                         "total_hold": {
-                                            "description": "一个FullNFT里的持有SNFT数量",
+                                            "description": "The number of SNFTs held in a FullNFT",
                                             "type": "integer"
                                         }
                                     }
@@ -2539,26 +2539,26 @@ var doc = `{
                                 "type": "string"
                             },
                             "img_url": {
-                                "description": "图片链接",
+                                "description": "image link",
                                 "type": "string"
                             },
                             "meta_url": {
-                                "description": "合集元信息URL",
+                                "description": "collection meta information URL",
                                 "type": "string"
                             },
                             "name": {
-                                "description": "名称",
+                                "description": "name",
                                 "type": "string"
                             },
                             "total_hold": {
-                                "description": "一个合集里的持有SNFT数量",
+                                "description": "The number of SNFTs held in a collection",
                                 "type": "integer"
                             }
                         }
                     }
                 },
                 "total": {
-                    "description": "SNFT合集总数",
+                    "description": "The total number of SNFT collections",
                     "type": "integer"
                 }
             }
@@ -2567,68 +2567,68 @@ var doc = `{
             "type": "object",
             "properties": {
                 "nfts": {
-                    "description": "SNFT列表",
+                    "description": "SNFT list",
                     "type": "array",
                     "items": {
                         "type": "object",
                         "properties": {
                             "address": {
-                                "description": "SNFT地址",
+                                "description": "SNFT address",
                                 "type": "string"
                             },
                             "attributes": {
-                                "description": "属性",
+                                "description": "Attributes",
                                 "type": "string"
                             },
                             "awardee": {
-                                "description": "最后被奖励的矿工地址，未奖励过的为null",
+                                "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
                                 "type": "string"
                             },
                             "category": {
-                                "description": "分类",
+                                "description": "category",
                                 "type": "string"
                             },
                             "desc": {
-                                "description": "描述",
+                                "description": "description",
                                 "type": "string"
                             },
                             "id": {
-                                "description": "FullNFT的ID",
+                                "description": "FullNFT ID",
                                 "type": "string"
                             },
                             "last_price": {
-                                "description": "最后成交价格，单位wei，未成交过为null",
+                                "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
                                 "type": "string"
                             },
                             "meta_url": {
-                                "description": "FullNFT元信息URL",
+                                "description": "FullNFT meta information URL",
                                 "type": "string"
                             },
                             "name": {
-                                "description": "名称",
+                                "description": "name",
                                 "type": "string"
                             },
                             "owner": {
-                                "description": "所有者,未分配和回收的为null",
+                                "description": "owner, unallocated and reclaimed are null",
                                 "type": "string"
                             },
                             "reward_at": {
-                                "description": "最后被奖励时间戳，未奖励过的为null",
+                                "description": "The timestamp of the last rewarded, null if not rewarded",
                                 "type": "integer"
                             },
                             "reward_number": {
-                                "description": "最后被奖励区块高度，未奖励过的为null",
+                                "description": "The height of the last rewarded block, null if not rewarded",
                                 "type": "integer"
                             },
                             "source_url": {
-                                "description": "资源链接，图片或视频等文件链接",
+                                "description": "Resource links, file links such as pictures or videos",
                                 "type": "string"
                             }
                         }
                     }
                 },
                 "total": {
-                    "description": "SNFT总数",
+                    "description": "The total number of SNFTs",
                     "type": "integer"
                 }
             }
@@ -2637,14 +2637,14 @@ var doc = `{
             "type": "object",
             "properties": {
                 "nfts": {
-                    "description": "SNFT列表",
+                    "description": "SNFT list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.SNFT"
                     }
                 },
                 "total": {
-                    "description": "SNFT总数",
+                    "description": "The total number of SNFTs",
                     "type": "integer"
                 }
             }
@@ -2706,11 +2706,11 @@ var doc = `{
             "type": "object",
             "properties": {
                 "total": {
-                    "description": "交易总数",
+                    "description": "The total number of transactions",
                     "type": "integer"
                 },
                 "transactions": {
-                    "description": "交易列表",
+                    "description": "Transaction list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.Transaction"
@@ -2722,14 +2722,14 @@ var doc = `{
             "type": "object",
             "properties": {
                 "nfts": {
-                    "description": "NFT列表",
+                    "description": "NFT list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/model.UserNFT"
                     }
                 },
                 "total": {
-                    "description": "NFT总数",
+                    "description": "The total number of NFTs",
                     "type": "integer"
                 }
             }
@@ -2752,8 +2752,8 @@ var SwaggerInfo = swaggerInfo{
 	Host:        "",
 	BasePath:    "",
 	Schemes:     []string{},
-	Title:       "区块浏览器API",
-	Description: "区块浏览器后端接口，从区块链解析数据，提供区块、交易、NFT、SNFT、NFT合集、交易所的信息检索服务",
+	Title:       "block explorer API",
+	Description: "Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, NFT collections, and exchanges",
 }
 
 type s struct{}

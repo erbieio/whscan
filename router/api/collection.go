@@ -8,22 +8,22 @@ import (
 	"server/service"
 )
 
-// Collection 合集API
+// Collection CollectionAPI
 func Collection(e *gin.Engine) {
 	e.GET("/collection/page", pageCollection)
 	e.GET("/collection/:id", getCollection)
 }
 
-// @Tags         NFT合集
-// @Summary      查询NFT合集列表
-// @Description  按创建区块高度逆序查询NFT合集列表
+// @Tags         NFT Collection
+// @Summary      Query the list of NFT collections
+// @Description  Query NFT collection list in reverse order of created block height
 // @Accept       json
 // @Produce      json
-// @Param        exchanger  query     string  false  "交易所，空则查询所有交易所"
-// @Param        creator    query     string  false  "创建者,空则查询所有"
-// @Param        type       query     string  false  "类型：all、nft、snft，默认all"
-// @Param        page       query     string  false  "页,默认1"
-// @Param        page_size  query     string  false  "页大小,默认10"
+// @Param        exchanger  query     string  false  "Exchange, if empty, query all exchanges"
+// @Param        creator    query     string  false  "Creator, if empty, query all"
+// @Param        type       query     string  false  "Type: all, nft, snft, default all"
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.CollectionsRes
 // @Failure      400        {object}  service.ErrRes
 // @Router       /collection/page [get]
@@ -54,12 +54,12 @@ func pageCollection(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags         NFT合集
-// @Summary      查询NFT合集
-// @Description  指定ID查询NFT合集信息
+// @Tags         NFT Collection
+// @Summary      query NFT collection
+// @Description  specifies the ID to query the NFT collection information
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "合集ID"
+// @Param        id   path      string  true  "Collection ID"
 // @Success      200  {object}  model.Collection
 // @Failure      400  {object}  service.ErrRes
 // @Router       /collection/{id} [get]

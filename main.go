@@ -11,9 +11,9 @@ import (
 	"server/router"
 )
 
-// @title block explorer API
-// @version 1.0
-// @description Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, NFT collections, and exchanges
+// @title        block explorer API
+// @version      1.0
+// @description  Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, NFT collections, and exchanges
 func main() {
 	backend.Run()
 	r := router.Init()
