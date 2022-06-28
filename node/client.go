@@ -86,7 +86,7 @@ type StructLogRes struct {
 	Storage *map[string]string `json:"storage,omitempty"`
 }
 
-// TraceTransaction 实现debug_traceTransaction接口，获取交易执行详情（reexec参数可以控制追溯的块深度）
+// TraceTransaction implements the debug_traceTransaction interface to obtain transaction execution details (the reexec parameter can control the traced block depth)
 func (c *Client) TraceTransaction(ctx context.Context, txHash types.Hash, options map[string]interface{}) (*ExecutionResult, error) {
 	var r *ExecutionResult
 	err := c.CallContext(ctx, &r, "debug_traceTransaction", txHash, options)
@@ -96,7 +96,7 @@ func (c *Client) TraceTransaction(ctx context.Context, txHash types.Hash, option
 	return r, err
 }
 
-// TraceBlockByNumber 实现debug_traceBlockByNumber接口，获取区块执行详情（reexec参数可以控制追溯的块深度）
+// TraceBlockByNumber implements the debug_traceBlockByNumber interface to obtain block execution details (the reexec parameter can control the traced block depth)
 func (c *Client) TraceBlockByNumber(ctx context.Context, blockNumber types.Uint64, options map[string]interface{}) ([]*ExecutionResult, error) {
 	var r []*ExecutionResult
 	err := c.CallContext(ctx, &r, "debug_traceBlockByNumber", blockNumber.Hex(), options)
@@ -106,7 +106,7 @@ func (c *Client) TraceBlockByNumber(ctx context.Context, blockNumber types.Uint6
 	return r, err
 }
 
-// GetInternalTx 获取交易内部调用详情
+// GetInternalTx Get transaction internal call details
 func (c *Client) GetInternalTx(ctx context.Context, tx *model.Transaction) (itx []*model.InternalTx, err error) {
 	execRet, err := c.TraceTransaction(ctx, tx.Hash, map[string]interface{}{
 		"disableStorage": true,
@@ -118,7 +118,7 @@ func (c *Client) GetInternalTx(ctx context.Context, tx *model.Transaction) (itx 
 	return c.decodeInternalTxs(ctx, execRet.StructLogs, tx)
 }
 
-// GetInternalTx 获取交易内部调用详情
+// GetInternalTx Get transaction internal call details
 func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, tx *model.Transaction) (itx []*model.InternalTx, err error) {
 	to, number, txHash := new(types.Address), tx.BlockNumber, tx.Hash
 	if tx.To != nil {
@@ -172,7 +172,7 @@ func (c *Client) decodeInternalTxs(ctx context.Context, logs []StructLogRes, tx 
 		case "create", "create2":
 			checkDepth(&callers, log.Depth, to)
 			value, to = utils.HexToBigInt(stack[len(stack)-1][2:]), new(types.Address)
-			// 创建的地址需要等到创建return之后的第一个命令栈里面获取
+			// The created address needs to be obtained in the first command stack after the return is created
 			createLogs = append(createLogs, &model.InternalTx{
 				Depth: types.Uint64(log.Depth),
 				To:    to,
@@ -209,7 +209,7 @@ type Epoch struct {
 	StartIndex uint64   `json:"start_index"`
 	Royalty    uint32   `json:"royalty"`
 	Creator    string   `json:"creator"`
-	Address    string   `json:"address"` //交易所地址
+	Address    string   `json:"address"` //Exchange address
 	VoteWeight *big.Int `json:"vote_weight"`
 }
 
@@ -238,7 +238,7 @@ type SNFT struct {
 
 func (c *Client) GetSNFT(addr, number string) (snft SNFT, err error) {
 	err = c.Call(&snft, "eth_getAccountInfo", addr, number)
-	// todo 因为链错误，转换一下MetaURL
+	// todo because the chain is wrong, convert the MetaURL
 	if len(snft.MetaURL) == 95 {
 		snft.MetaURL = snft.MetaURL[0:53] + strings.ToLower(snft.MetaURL[91:93])
 	}

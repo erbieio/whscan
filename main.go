@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
+	"github.com/swaggo/files"
 	"github.com/swaggo/gin-swagger"
-	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"server/backend"
 	. "server/conf"
 	_ "server/docs"
