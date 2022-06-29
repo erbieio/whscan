@@ -75,6 +75,9 @@ func TotalAccount() uint64 {
 }
 
 func TotalBalance() types.BigInt {
+	if cache.TotalBalance == "" {
+		cache.TotalBalance = "0"
+	}
 	return cache.TotalBalance
 }
 
@@ -163,6 +166,10 @@ func BlockInsert(block *DecodeRet) error {
 			t.SetString(string(cache.TotalBalance), 10)
 			t.Add(t, block.AddBalance)
 			cache.TotalBalance = types.BigInt(t.Text(10))
+			err = DB.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
+				Key:   "TotalBalance",
+				Value: string(cache.TotalBalance),
+			}).Error
 		}
 	}
 	return err

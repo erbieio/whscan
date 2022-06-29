@@ -107,7 +107,10 @@ func decodeAccounts(c *node.Client, ctx context.Context, block *service.DecodeRe
 			return fmt.Errorf("debug_getModifiedAccountsByHash err:%v", err)
 		}
 		for i := range modifiedAccounts {
-			block.CacheAccounts[modifiedAccounts[i]] = &model.Account{Address: modifiedAccounts[i]}
+			// ignore snft address
+			if modifiedAccounts[i][:14] == "0x000000000000" {
+				block.CacheAccounts[modifiedAccounts[i]] = &model.Account{Address: modifiedAccounts[i]}
+			}
 		}
 		for _, tx := range block.CacheTxs {
 			if tx.ContractAddress != nil {
