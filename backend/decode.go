@@ -81,13 +81,13 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 		if err != nil {
 			return nil, err
 		}
-		for _, tx := range block.CacheTxs {
-			internalTxs, err := c.GetInternalTx(ctx, tx)
-			if err != nil {
-				return nil, err
-			}
-			block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
-		}
+		//for _, tx := range block.CacheTxs {
+		// internalTxs, err := c.GetInternalTx(ctx, tx)
+		// if err != nil {
+		// return nil, fmt. Errorf("GetInternalTx err:%v", err)
+		// }
+		// block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
+		//}
 	}
 	// Parse things specific to wormholes
 	if isWormholes {
@@ -107,8 +107,8 @@ func decodeAccounts(c *node.Client, ctx context.Context, block *service.DecodeRe
 			return fmt.Errorf("debug_getModifiedAccountsByHash err:%v", err)
 		}
 		for i := range modifiedAccounts {
-			// ignore snft address
-			if modifiedAccounts[i][:14] == "0x000000000000" {
+			// Ignore NFT type addresses
+			if modifiedAccounts[i][:14] != "0x000000000000" && modifiedAccounts[i][:14] != "0x800000000000" {
 				block.CacheAccounts[modifiedAccounts[i]] = &model.Account{Address: modifiedAccounts[i]}
 			}
 		}
@@ -117,31 +117,33 @@ func decodeAccounts(c *node.Client, ctx context.Context, block *service.DecodeRe
 				block.CacheAccounts[*tx.ContractAddress] = &model.Account{Address: *tx.ContractAddress, Creator: &tx.From, CreatedTx: &tx.Hash}
 			}
 		}
-		// Get account attributes (balance, nonce, code)
-		reqs := make([]node.BatchElem, 0, 3*len(block.CacheAccounts))
-		for _, account := range block.CacheAccounts {
-			reqs = append(reqs, node.BatchElem{
-				Method: "eth_getBalance",
-				Args:   []interface{}{account.Address, "latest"},
-				Result: &account.Balance,
-			})
-			reqs = append(reqs, node.BatchElem{
-				Method: "eth_getTransactionCount",
-				Args:   []interface{}{account.Address, "latest"},
-				Result: &account.Nonce,
-			})
-			reqs = append(reqs, node.BatchElem{
-				Method: "eth_getCode",
-				Args:   []interface{}{account.Address, "latest"},
-				Result: &account.Code,
-			})
-		}
-		if err = c.BatchCallContext(ctx, reqs); err != nil {
-			return fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", err)
-		}
-		for i := range reqs {
-			if reqs[i].Error != nil {
-				return fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", reqs[i].Error)
+		if len(block.CacheAccounts) > 0 {
+			// Get account attributes (balance, nonce, code)
+			reqs := make([]node.BatchElem, 0, 3*len(block.CacheAccounts))
+			for _, account := range block.CacheAccounts {
+				reqs = append(reqs, node.BatchElem{
+					Method: "eth_getBalance",
+					Args:   []interface{}{account.Address, "latest"},
+					Result: &account.Balance,
+				})
+				reqs = append(reqs, node.BatchElem{
+					Method: "eth_getTransactionCount",
+					Args:   []interface{}{account.Address, "latest"},
+					Result: &account.Nonce,
+				})
+				reqs = append(reqs, node.BatchElem{
+					Method: "eth_getCode",
+					Args:   []interface{}{account.Address, "latest"},
+					Result: &account.Code,
+				})
+			}
+			if err = c.BatchCallContext(ctx, reqs); err != nil {
+				return fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", err)
+			}
+			for i := range reqs {
+				if reqs[i].Error != nil {
+					return fmt.Errorf("eth_getBalance or eth_getTransactionCount err:%v", reqs[i].Error)
+				}
 			}
 		}
 	} else {
@@ -252,6 +254,9 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 						epochId = nftAddr[:38]
 					}
 				}
+			} else {
+				// Reward an ERB equivalent to SNFT
+				wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level0Reward)
 			}
 		}
 
@@ -285,6 +290,14 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 	}
 	return nil
 }
+
+var (
+	level0Reward, _ = new(big.Int).SetString("100000000000000000", 10)       //1
+	level1Reward, _ = new(big.Int).SetString("2400000000000000000", 10)      //16
+	level2Reward, _ = new(big.Int).SetString("57600000000000000000", 10)     //256
+	level3Reward, _ = new(big.Int).SetString("1382400000000000000000", 10)   //4096
+	level4Reward, _ = new(big.Int).SetString("221184000000000000000000", 10) //65536
+)
 
 // decodeWHTx parses the special transaction of the wormholes blockchain
 func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet) (err error) {
@@ -383,7 +396,30 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		})
 
 	case 6: //Official NFT exchange, recycling shards to shard pool
-		wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
+		level := 42 - len(w.NFTAddress)
+		if level == 0 {
+			wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
+		} else {
+			// Synthetic SNFT address processing
+			for i := 0; i < 1<<(level*4); i++ {
+				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
+				wh.RecycleSNFTs = append(wh.RecycleSNFTs, address)
+			}
+		}
+		switch level {
+		case 0:
+			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level0Reward)
+		case 1:
+			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level1Reward)
+		case 2:
+			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level2Reward)
+		case 3:
+			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level3Reward)
+		case 4:
+			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level4Reward)
+		default:
+			return fmt.Errorf("recycle %s SNFT level not support:%d", w.NFTAddress, level)
+		}
 		return
 
 	case 9: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
@@ -400,22 +436,19 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 
 	case 11: //Open the exchange
 		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{
-			Address:     from,
-			Name:        w.Name,
-			URL:         w.Url,
-			FeeRatio:    w.FeeRate, //unit 1/10,000
-			Creator:     from,
-			Timestamp:   timestamp,
-			IsOpen:      true,
-			BlockNumber: blockNumber,
-			TxHash:      txHash,
+			Address:      from,
+			Name:         w.Name,
+			URL:          w.Url,
+			FeeRatio:     w.FeeRate, //unit 1/10,000
+			Creator:      from,
+			Timestamp:    timestamp,
+			BlockNumber:  blockNumber,
+			TxHash:       txHash,
+			BalanceCount: "0",
 		})
 
 	case 12: //Close the exchange
-		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{
-			Address: from,
-			IsOpen:  false,
-		})
+		wh.CloseExchangers = append(wh.CloseExchangers, from)
 
 	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)

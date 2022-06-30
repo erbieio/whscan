@@ -1414,6 +1414,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/totals": {
+            "get": {
+                "description": "Query the total number of blocks, transactions, accounts, etc.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "block"
+                ],
+                "summary": "query some total data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.Cache"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/transaction/page": {
             "get": {
                 "description": "query transaction list in reverse order",
@@ -1941,10 +1970,6 @@ const docTemplate = `{
                     "description": "fee rate, unit 1/10,000",
                     "type": "integer"
                 },
-                "is_open": {
-                    "description": "Whether it is open",
-                    "type": "boolean"
-                },
                 "name": {
                     "description": "Exchange name",
                     "type": "string"
@@ -2335,6 +2360,51 @@ const docTemplate = `{
                 },
                 "total": {
                     "description": "The total number of blocks",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.Cache": {
+            "type": "object",
+            "properties": {
+                "genesisBalance": {
+                    "description": "balance",
+                    "type": "string"
+                },
+                "totalAccount": {
+                    "description": "Total account number",
+                    "type": "integer"
+                },
+                "totalBalance": {
+                    "description": "balance",
+                    "type": "string"
+                },
+                "totalBlock": {
+                    "description": "Total number of blocks",
+                    "type": "integer"
+                },
+                "totalExchanger": {
+                    "description": "Total number of exchanges",
+                    "type": "integer"
+                },
+                "totalNFTTx": {
+                    "description": "Total number of NFT transactions",
+                    "type": "integer"
+                },
+                "totalOfficialNFT": {
+                    "description": "Total number of official NFTs",
+                    "type": "integer"
+                },
+                "totalTransaction": {
+                    "description": "Total number of transactions",
+                    "type": "integer"
+                },
+                "totalUncle": {
+                    "description": "Number of total uncle blocks",
+                    "type": "integer"
+                },
+                "totalUserNFT": {
+                    "description": "Total number of user NFTs",
                     "type": "integer"
                 }
             }

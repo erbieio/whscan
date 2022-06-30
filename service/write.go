@@ -13,16 +13,21 @@ import (
 	"server/common/utils"
 )
 
-// cache caches some database queries to speed up queries
-var cache = struct {
+// Cache caches some database queries to speed up queries
+type Cache struct {
 	TotalBlock       uint64       //Total number of blocks
 	TotalTransaction uint64       //Total number of transactions
 	TotalUncle       uint64       //Number of total uncle blocks
 	TotalAccount     uint64       //Total account number
+	GenesisBalance   types.BigInt //Total amount of coins created
 	TotalBalance     types.BigInt //The total amount of coins in the chain
+	TotalExchanger   uint64       //Total number of exchanges
 	TotalUserNFT     uint64       //Total number of user NFTs
 	TotalOfficialNFT uint64       //Total number of official NFTs
-}{}
+	TotalNFTTx       uint64       //Total number of NFT transactions
+}
+
+var cache = Cache{}
 
 // InitCache initializes the query cache from the database
 func initCache() (err error) {
@@ -38,13 +43,22 @@ func initCache() (err error) {
 	if err = DB.Model(&model.Account{}).Select("COUNT(*)").Scan(&cache.TotalAccount).Error; err != nil {
 		return
 	}
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "GenesisBalance").Select("value").Scan(&cache.GenesisBalance).Error; err != nil {
+		return
+	}
 	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalBalance").Select("value").Scan(&cache.TotalBalance).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.Exchanger{}).Select("COUNT(*)").Scan(&cache.TotalExchanger).Error; err != nil {
 		return
 	}
 	if err = DB.Model(&model.UserNFT{}).Select("COUNT(*)").Scan(&cache.TotalUserNFT).Error; err != nil {
 		return
 	}
 	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&cache.TotalOfficialNFT).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.NFTTx{}).Select("COUNT(*)").Scan(&cache.TotalNFTTx).Error; err != nil {
 		return
 	}
 	return err
@@ -97,12 +111,13 @@ type DecodeRet struct {
 	AddBalance       *big.Int     //The number of coins added by the block
 
 	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
-	Exchangers       []*model.Exchanger       //Exchange, priority: 1
+	Exchangers       []*model.Exchanger       //The created exchange, priority: 1
 	Epochs           []*model.Epoch           //Official injection of the first phase of SNFT, priority: 1
-	RecycleSNFTs     []string                 //Recycled SNFT, priority: 1
 	CreateNFTs       []*model.UserNFT         //Newly created NFT, priority: 2
 	RewardSNFTs      []*model.SNFT            //Reward information of SNFT, priority: 3
 	NFTTxs           []*model.NFTTx           //NFT transaction record, priority: 4
+	RecycleSNFTs     []string                 //Recycle SNFT, priority: 5
+	CloseExchangers  []string                 //Close exchanges, priority: 5
 	Rewards          []*model.Reward          //reward record, priority: none
 	ExchangerPledges []*model.ExchangerPledge //Exchange pledge, priority: none
 	ConsensusPledges []*model.ConsensusPledge //Consensus pledge, priority: none
@@ -150,6 +165,28 @@ func BlockInsert(block *DecodeRet) error {
 		if err := t.Create(block.Block).Error; err != nil {
 			return err
 		}
+
+		if block.AddBalance.Uint64() != 0 {
+			if block.Number == 0 {
+				err = t.Create(model.Cache{
+					Key:   "GenesisBalance",
+					Value: block.AddBalance.Text(10),
+				}).Error
+				if err != nil {
+					return err
+				}
+			}
+			b := new(big.Int)
+			b.SetString(string(cache.TotalBalance), 10)
+			b.Add(b, block.AddBalance)
+			err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
+				Key: "TotalBalance", Value: b.Text(10),
+			}).Error
+			if err != nil {
+				return err
+			}
+		}
+
 		// wormholes unique data write
 		return WHInsert(t, block)
 	})
@@ -160,16 +197,19 @@ func BlockInsert(block *DecodeRet) error {
 		cache.TotalTransaction += uint64(block.TotalTransaction)
 		cache.TotalUncle += uint64(block.UnclesCount)
 		cache.TotalUserNFT += uint64(len(block.CreateNFTs))
-		cache.TotalOfficialNFT += uint64(len(block.RewardSNFTs)) //todo may have errors, injection and destruction
-		if block.AddBalance != nil {
-			t := new(big.Int)
-			t.SetString(string(cache.TotalBalance), 10)
-			t.Add(t, block.AddBalance)
-			cache.TotalBalance = types.BigInt(t.Text(10))
-			err = DB.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
-				Key:   "TotalBalance",
-				Value: string(cache.TotalBalance),
-			}).Error
+		cache.TotalOfficialNFT += uint64(len(block.RewardSNFTs))
+		cache.TotalOfficialNFT -= uint64(len(block.RecycleSNFTs))
+		cache.TotalExchanger += uint64(len(block.Exchangers))
+		cache.TotalExchanger -= uint64(len(block.CloseExchangers))
+		cache.TotalNFTTx -= uint64(len(block.NFTTxs))
+		if block.AddBalance.Uint64() != 0 {
+			if block.Number == 0 {
+				cache.GenesisBalance = types.BigInt(block.AddBalance.Text(10))
+			}
+			b := new(big.Int)
+			b.SetString(string(cache.TotalBalance), 10)
+			b.Add(b, block.AddBalance)
+			cache.TotalBalance = types.BigInt(b.Text(10))
 		}
 	}
 	return err
@@ -216,9 +256,9 @@ func SaveTxLog(tx *gorm.DB, cacheLog []*model.Log) error {
 }
 
 func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
-	// Exchange created or closed
-	for _, exchanger := range wh.Exchangers {
-		err = SaveExchanger(tx, exchanger)
+	// exchange creation
+	if wh.Exchangers != nil {
+		err = tx.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(wh.Exchangers).Error
 		if err != nil {
 			return
 		}
@@ -230,18 +270,9 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 			return
 		}
 	}
-	// Recycle SNFT
-	for _, snft := range wh.RecycleSNFTs {
-		err = RecycleSNFT(tx, snft)
-		if err != nil {
-			return
-		}
-	}
 	// SNFT reward
-	for _, snft := range wh.RewardSNFTs {
-		err = tx.Clauses(clause.OnConflict{
-			DoUpdates: clause.AssignmentColumns([]string{"owner", "awardee", "reward_at", "reward_number"}),
-		}).Create(snft).Error
+	if wh.RewardSNFTs != nil {
+		err = tx.Create(wh.RewardSNFTs).Error
 		if err != nil {
 			return
 		}
@@ -254,6 +285,19 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 	// NFT transactions, including user and official types of NFTs
 	for _, nftTx := range wh.NFTTxs {
 		err = SaveNFTTx(tx, nftTx)
+		if err != nil {
+			return
+		}
+	}
+	// Recycle SNFT
+	for _, snft := range wh.RecycleSNFTs {
+		err = tx.Delete(model.SNFT{}, "address=?", snft).Error
+		if err != nil {
+			return
+		}
+	}
+	for _, exchanger := range wh.CloseExchangers {
+		err = tx.Delete(model.Exchanger{}, "address=?", exchanger).Error
 		if err != nil {
 			return
 		}
@@ -276,17 +320,6 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 		err = tx.Create(wh.Rewards).Error
 	}
 	return
-}
-
-// SaveExchanger update exchange information
-func SaveExchanger(tx *gorm.DB, e *model.Exchanger) error {
-	if e.IsOpen {
-		return tx.Clauses(clause.OnConflict{
-			DoUpdates: clause.AssignmentColumns([]string{"is_open", "name", "url", "fee_ratio"}),
-		}).Create(e).Error
-	} else {
-		return tx.Model(&model.Exchanger{}).Where("address=?", e.Address).Update("is_open", false).Error
-	}
 }
 
 // SaveUserNFT saves the NFT created by the user
@@ -313,7 +346,9 @@ func SaveUserNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UserNFT) error 
 				}
 			}
 		}
-		go saveNFTMeta(number, *nft.Address, nft.MetaUrl)
+		if nft.MetaUrl != "" {
+			go saveNFTMeta(number, *nft.Address, nft.MetaUrl)
+		}
 	}
 	return nil
 }
@@ -379,26 +414,6 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 	return tx.Create(&nt).Error
 }
 
-// RecycleSNFT SNFT recycling, clear the owner
-func RecycleSNFT(tx *gorm.DB, addr string) error {
-	if len(addr) == 42 {
-		return tx.Model(&model.SNFT{}).Where("address=?", addr).Updates(map[string]interface{}{
-			"owner":         nil,
-			"awardee":       nil,
-			"reward_at":     nil,
-			"reward_number": nil,
-		}).Error
-	} else {
-		for i := 0; i < 16; i++ {
-			err := RecycleSNFT(tx, fmt.Sprintf("%s%x", addr, i))
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 // InjectSNFT official batch injection of SNFT
 func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
 	err = tx.Create(epoch).Error
@@ -408,24 +423,33 @@ func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
 	for i := 0; i < 16; i++ {
 		hexI := fmt.Sprintf("%x", i)
 		collectionId := epoch.ID + hexI
-		metaUrl := epoch.Dir + hexI + "0"
+		metaUrl := ""
+		if epoch.Dir != "" {
+			metaUrl = epoch.Dir + hexI + "0"
+		}
 		// write collection information
 		err = tx.
 			Create(&model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}).Error
 		if err != nil {
 			return
 		}
-		go saveSNFTCollection(collectionId, metaUrl)
+		if metaUrl != "" {
+			go saveSNFTCollection(collectionId, metaUrl)
+		}
 		for j := 0; j < 16; j++ {
 			hexJ := fmt.Sprintf("%x", j)
 			fullNFTId := collectionId + hexJ
-			metaUrl = epoch.Dir + hexI + hexJ
+			if epoch.Dir != "" {
+				metaUrl = epoch.Dir + hexI + hexJ
+			}
 			// write complete SNFT information
 			err = tx.Create(&model.FullNFT{ID: fullNFTId, MetaUrl: metaUrl}).Error
 			if err != nil {
 				return
 			}
-			go saveSNFTMeta(fullNFTId, metaUrl)
+			if metaUrl != "" {
+				go saveSNFTMeta(fullNFTId, metaUrl)
+			}
 		}
 	}
 	return

@@ -258,7 +258,6 @@ type Exchanger struct {
 	FeeRatio        uint32 `json:"fee_ratio"`                                //fee rate, unit 1/10,000
 	Creator         string `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
 	Timestamp       uint64 `json:"timestamp" gorm:"index"`                   //Open time
-	IsOpen          bool   `json:"is_open"`                                  //Whether it is open
 	BlockNumber     uint64 `json:"block_number" gorm:"index"`                //The block number when created
 	TxHash          string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
 	TxCount         uint64 `json:"tx_count"`                                 //Total number of transactions, transfers are not counted

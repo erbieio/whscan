@@ -25,10 +25,7 @@ func FetchExchangers(name string, page, size int) (res ExchangersRes, err error)
 		err = DB.Where("name=?", name).Model(&model.Exchanger{}).Count(&res.Total).Error
 	} else {
 		err = DB.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Exchangers).Error
-		if err != nil {
-			return
-		}
-		err = DB.Model(&model.Exchanger{}).Count(&res.Total).Error
+		res.Total = int64(cache.TotalExchanger)
 	}
 	if err == nil {
 		res.Last0Total, err = TodayExchangerTotal()

@@ -37,3 +37,7 @@ func FetchAccounts(page, size int) (res AccountsRes, err error) {
 	res.Total = int64(TotalAccount())
 	return
 }
+
+func FetchTotals() (res Cache, err error) {
+	return cache, nil
+}

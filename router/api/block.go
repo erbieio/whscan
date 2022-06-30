@@ -13,6 +13,7 @@ func Block(e *gin.Engine) {
 	e.GET("/block/page", pageBlock)
 	e.GET("/block/:number", getBlock)
 	e.GET("/account/page", pageAccount)
+	e.GET("/totals", totals)
 }
 
 // @Tags         block
@@ -102,5 +103,22 @@ func pageAccount(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
 
+// @Tags         block
+// @Summary      query some total data
+// @Description  Query the total number of blocks, transactions, accounts, etc.
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  service.Cache
+// @Failure      400  {object}  service.ErrRes
+// @Router       /totals [get]
+func totals(c *gin.Context) {
+	res, err := service.FetchTotals()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }
