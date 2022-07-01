@@ -15,16 +15,18 @@ import (
 
 // Cache caches some database queries to speed up queries
 type Cache struct {
-	TotalBlock       uint64       //Total number of blocks
-	TotalTransaction uint64       //Total number of transactions
-	TotalUncle       uint64       //Number of total uncle blocks
-	TotalAccount     uint64       //Total account number
-	GenesisBalance   types.BigInt //Total amount of coins created
-	TotalBalance     types.BigInt //The total amount of coins in the chain
-	TotalExchanger   uint64       //Total number of exchanges
-	TotalUserNFT     uint64       //Total number of user NFTs
-	TotalOfficialNFT uint64       //Total number of official NFTs
-	TotalNFTTx       uint64       //Total number of NFT transactions
+	TotalBlock          uint64       `json:"totalBlock"`          //Total number of blocks
+	TotalTransaction    uint64       `json:"totalTransaction"`    //Total number of transactions
+	TotalUncle          uint64       `json:"totalUncle"`          //Number of total uncle blocks
+	TotalAccount        uint64       `json:"totalAccount"`        //Total account number
+	GenesisBalance      types.BigInt `json:"genesisBalance"`      //Total amount of coins created
+	TotalBalance        types.BigInt `json:"totalBalance"`        //The total amount of coins in the chain
+	TotalExchanger      uint64       `json:"totalExchanger"`      //Total number of exchanges
+	TotalUNFTCollection uint64       `json:"totalUNFTCollection"` //Total number of UNFT collections
+	TotalSNFTCollection uint64       `json:"totalSNFTCollection"` //Total number of SNFT collections
+	TotalUNFT           uint64       `json:"totalUNFT"`           //Total number of UNFTs
+	TotalSNFT           uint64       `json:"totalSNFT"`           //Total number of SNFTs
+	TotalNFTTx          uint64       `json:"totalNFTTx"`          //Total number of NFT transactions
 }
 
 var cache = Cache{}
@@ -52,10 +54,16 @@ func initCache() (err error) {
 	if err = DB.Model(&model.Exchanger{}).Select("COUNT(*)").Scan(&cache.TotalExchanger).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.UserNFT{}).Select("COUNT(*)").Scan(&cache.TotalUserNFT).Error; err != nil {
+	if err = DB.Model(&model.Collection{}).Where("length(id)!=39").Select("COUNT(*)").Scan(&cache.TotalUNFTCollection).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&cache.TotalOfficialNFT).Error; err != nil {
+	if err = DB.Model(&model.Collection{}).Where("length(id)=39").Select("COUNT(*)").Scan(&cache.TotalSNFTCollection).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.UNFT{}).Select("COUNT(*)").Scan(&cache.TotalUNFT).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&cache.TotalSNFT).Error; err != nil {
 		return
 	}
 	if err = DB.Model(&model.NFTTx{}).Select("COUNT(*)").Scan(&cache.TotalNFTTx).Error; err != nil {
@@ -72,8 +80,8 @@ func TotalTransaction() uint64 {
 	return cache.TotalTransaction
 }
 
-func TotalOfficialNFT() uint64 {
-	return cache.TotalOfficialNFT
+func TotalSNFT() uint64 {
+	return cache.TotalSNFT
 }
 
 var lastAccount = time.Now()
@@ -97,7 +105,7 @@ func TotalBalance() types.BigInt {
 
 // getNFTAddr Get the NFT address
 func getNFTAddr(next *big.Int) string {
-	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalUserNFT+1)))))
+	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalUNFT+1)))))
 }
 
 // DecodeRet block parsing result
@@ -113,7 +121,7 @@ type DecodeRet struct {
 	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
 	Exchangers       []*model.Exchanger       //The created exchange, priority: 1
 	Epochs           []*model.Epoch           //Official injection of the first phase of SNFT, priority: 1
-	CreateNFTs       []*model.UserNFT         //Newly created NFT, priority: 2
+	CreateNFTs       []*model.UNFT            //Newly created NFT, priority: 2
 	RewardSNFTs      []*model.SNFT            //Reward information of SNFT, priority: 3
 	NFTTxs           []*model.NFTTx           //NFT transaction record, priority: 4
 	RecycleSNFTs     []string                 //Recycle SNFT, priority: 5
@@ -196,12 +204,13 @@ func BlockInsert(block *DecodeRet) error {
 		cache.TotalBlock++
 		cache.TotalTransaction += uint64(block.TotalTransaction)
 		cache.TotalUncle += uint64(block.UnclesCount)
-		cache.TotalUserNFT += uint64(len(block.CreateNFTs))
-		cache.TotalOfficialNFT += uint64(len(block.RewardSNFTs))
-		cache.TotalOfficialNFT -= uint64(len(block.RecycleSNFTs))
+		cache.TotalUNFT += uint64(len(block.CreateNFTs))
+		cache.TotalSNFT += uint64(len(block.RewardSNFTs))
+		cache.TotalSNFT -= uint64(len(block.RecycleSNFTs))
 		cache.TotalExchanger += uint64(len(block.Exchangers))
 		cache.TotalExchanger -= uint64(len(block.CloseExchangers))
 		cache.TotalNFTTx -= uint64(len(block.NFTTxs))
+		cache.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
 		if block.AddBalance.Uint64() != 0 {
 			if block.Number == 0 {
 				cache.GenesisBalance = types.BigInt(block.AddBalance.Text(10))
@@ -277,8 +286,8 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 			return
 		}
 	}
-	// UserNFT creation
-	err = SaveUserNFT(tx, wh.Number, wh.CreateNFTs)
+	// UNFT creation
+	err = SaveUNFT(tx, wh.Number, wh.CreateNFTs)
 	if err != nil {
 		return
 	}
@@ -322,8 +331,8 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 	return
 }
 
-// SaveUserNFT saves the NFT created by the user
-func SaveUserNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UserNFT) error {
+// SaveUNFT saves the NFT created by the user
+func SaveUNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UNFT) error {
 	for i, nft := range nfts {
 		*nft.Address = getNFTAddr(big.NewInt(int64(i)))
 		err := tx.Create(nft).Error
@@ -356,8 +365,8 @@ func SaveUserNFT(tx *gorm.DB, number types.Uint64, nfts []*model.UserNFT) error 
 // SaveNFTTx saves the NFT transaction record, while updating the NFT owner and the latest price
 func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 	if (*nt.NFTAddr)[2] != '8' {
-		// handle user NFT
-		var nft model.UserNFT
+		// handle UNFT
+		var nft model.UNFT
 		err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
 		if err != nil {
 			return err
@@ -366,7 +375,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		if nt.From == "" {
 			nt.From = nft.Owner
 		}
-		err = tx.Model(&model.UserNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
+		err = tx.Model(&model.UNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
 			"last_price": nt.Price,
 			"owner":      nt.To,
 		}).Error
@@ -548,7 +557,7 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 		))
 		collectionId = &hash
 	}
-	err = DB.Model(&model.UserNFT{}).Where("address=?", nftAddr).Updates(map[string]interface{}{
+	err = DB.Model(&model.UNFT{}).Where("address=?", nftAddr).Updates(map[string]interface{}{
 		"name":          nftMeta.Name,
 		"desc":          nftMeta.Desc,
 		"attributes":    nftMeta.Attributes,
@@ -557,7 +566,7 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 		"collection_id": collectionId,
 	}).Error
 	if err == nil && collectionId != nil {
-		err = DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
+		result := DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
 			Id:          *collectionId,
 			Name:        nftMeta.CollectionsName,
 			Creator:     nftMeta.CollectionsCreator,
@@ -566,6 +575,8 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 			ImgUrl:      nftMeta.CollectionsImgUrl,
 			BlockNumber: uint64(blockNumber),
 			Exchanger:   &nftMeta.CollectionsExchanger,
-		}).Error
+		})
+		err = result.Error
+		cache.TotalUNFTCollection += uint64(result.RowsAffected)
 	}
 }

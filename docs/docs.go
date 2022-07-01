@@ -880,7 +880,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.UserNFTsRes"
+                            "$ref": "#/definitions/service.UNFTsRes"
                         }
                     },
                     "400": {
@@ -1002,7 +1002,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.UserNFTsRes"
+                            "$ref": "#/definitions/service.UNFTsRes"
                         }
                     },
                     "400": {
@@ -2205,7 +2205,7 @@ const docTemplate = `{
                 }
             }
         },
-        "model.UserNFT": {
+        "model.UNFT": {
             "type": "object",
             "properties": {
                 "address": {
@@ -2368,7 +2368,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "genesisBalance": {
-                    "description": "balance",
+                    "description": "Total amount of coins created",
                     "type": "string"
                 },
                 "totalAccount": {
@@ -2376,7 +2376,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalBalance": {
-                    "description": "balance",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "totalBlock": {
@@ -2391,20 +2391,28 @@ const docTemplate = `{
                     "description": "Total number of NFT transactions",
                     "type": "integer"
                 },
-                "totalOfficialNFT": {
-                    "description": "Total number of official NFTs",
+                "totalSNFT": {
+                    "description": "Total number of SNFTs",
+                    "type": "integer"
+                },
+                "totalSNFTCollection": {
+                    "description": "Total number of SNFT collections",
                     "type": "integer"
                 },
                 "totalTransaction": {
                     "description": "Total number of transactions",
                     "type": "integer"
                 },
-                "totalUncle": {
-                    "description": "Number of total uncle blocks",
+                "totalUNFT": {
+                    "description": "Total number of UNFTs",
                     "type": "integer"
                 },
-                "totalUserNFT": {
-                    "description": "Total number of user NFTs",
+                "totalUNFTCollection": {
+                    "description": "Total number of UNFT collections",
+                    "type": "integer"
+                },
+                "totalUncle": {
+                    "description": "Number of total uncle blocks",
                     "type": "integer"
                 }
             }
@@ -2781,14 +2789,14 @@ const docTemplate = `{
                 }
             }
         },
-        "service.UserNFTsRes": {
+        "service.UNFTsRes": {
             "type": "object",
             "properties": {
                 "nfts": {
                     "description": "NFT list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.UserNFT"
+                        "$ref": "#/definitions/model.UNFT"
                     }
                 },
                 "total": {

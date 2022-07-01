@@ -368,7 +368,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 	switch w.Type {
 	case 0: //Users mint NFT by themselves
 		nftAddr := "" //Calculate fill in real time when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &model.UNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  w.Royalty, //The unit is one ten thousandth
 			MetaUrl:       realMeatUrl(w.MetaURL),
@@ -494,7 +494,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		}
 		w.Seller2.Exchanger = strings.ToLower(w.Seller2.Exchanger)
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &model.UNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -531,7 +531,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &model.UNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -594,7 +594,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.UserNFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &model.UNFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),

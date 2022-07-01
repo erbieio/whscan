@@ -2,14 +2,14 @@ package service
 
 import "server/common/model"
 
-// UserNFTsRes NFT paging return parameters
-type UserNFTsRes struct {
-	Total int64           `json:"total"` //The total number of NFTs
-	NFTs  []model.UserNFT `json:"nfts"`  //NFT list
+// UNFTsRes NFT paging return parameters
+type UNFTsRes struct {
+	Total int64        `json:"total"` //The total number of NFTs
+	NFTs  []model.UNFT `json:"nfts"`  //NFT list
 }
 
-func FetchUserNFTs(exchanger, collectionId, owner string, page, size int) (res UserNFTsRes, err error) {
-	db := DB.Model(&model.UserNFT{})
+func FetchUNFTs(exchanger, collectionId, owner string, page, size int) (res UNFTsRes, err error) {
+	db := DB.Model(&model.UNFT{})
 	if exchanger != "" {
 		db = db.Where("exchanger_addr=?", exchanger)
 	}
@@ -66,7 +66,7 @@ func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 		db = db.Where("owner=?", owner)
 	}
 	if owner == "" {
-		res.Total = int64(TotalOfficialNFT())
+		res.Total = int64(TotalSNFT())
 	} else {
 		err = db.Model(&model.SNFT{}).Count(&res.Total).Error
 	}
@@ -95,7 +95,7 @@ func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAnd
 		db = db.Where("group_id=?", collectionId)
 	}
 	if owner == "" && collectionId == "" {
-		res.Total = int64(TotalOfficialNFT())
+		res.Total = int64(TotalSNFT())
 	} else {
 		err = db.Count(&res.Total).Error
 	}

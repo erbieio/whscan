@@ -451,7 +451,7 @@ definitions:
         description: Amount, unit wei
         type: string
     type: object
-  model.UserNFT:
+  model.UNFT:
     properties:
       address:
         description: NFT address, grows automatically from 0x1
@@ -569,13 +569,13 @@ definitions:
   service.Cache:
     properties:
       genesisBalance:
-        description: balance
+        description: Total amount of coins created
         type: string
       totalAccount:
         description: Total account number
         type: integer
       totalBalance:
-        description: balance
+        description: The total amount of coins in the chain
         type: string
       totalBlock:
         description: Total number of blocks
@@ -586,17 +586,23 @@ definitions:
       totalNFTTx:
         description: Total number of NFT transactions
         type: integer
-      totalOfficialNFT:
-        description: Total number of official NFTs
+      totalSNFT:
+        description: Total number of SNFTs
+        type: integer
+      totalSNFTCollection:
+        description: Total number of SNFT collections
         type: integer
       totalTransaction:
         description: Total number of transactions
         type: integer
+      totalUNFT:
+        description: Total number of UNFTs
+        type: integer
+      totalUNFTCollection:
+        description: Total number of UNFT collections
+        type: integer
       totalUncle:
         description: Number of total uncle blocks
-        type: integer
-      totalUserNFT:
-        description: Total number of user NFTs
         type: integer
     type: object
   service.CollectionsRes:
@@ -864,12 +870,12 @@ definitions:
           $ref: '#/definitions/model.Transaction'
         type: array
     type: object
-  service.UserNFTsRes:
+  service.UNFTsRes:
     properties:
       nfts:
         description: NFT list
         items:
-          $ref: '#/definitions/model.UserNFT'
+          $ref: '#/definitions/model.UNFT'
         type: array
       total:
         description: The total number of NFTs
@@ -1452,7 +1458,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.UserNFTsRes'
+            $ref: '#/definitions/service.UNFTsRes'
         "400":
           description: Bad Request
           schema:
@@ -1534,7 +1540,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.UserNFTsRes'
+            $ref: '#/definitions/service.UNFTsRes'
         "400":
           description: Bad Request
           schema:

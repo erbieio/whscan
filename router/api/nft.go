@@ -30,7 +30,7 @@ func NFT(e *gin.Engine) {
 // @Param        collection_id  query     string  false  "collection id, if empty, query all"
 // @Param        page           query     string  false  "Page, default 1"
 // @Param        page_size      query     string  false  "Page size, default 10"
-// @Success      200            {object}  service.UserNFTsRes
+// @Success      200            {object}  service.UNFTsRes
 // @Failure      400            {object}  service.ErrRes
 // @Router       /nft/page [get]
 func pageNFT(c *gin.Context) {
@@ -52,7 +52,7 @@ func pageNFT(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchUserNFTs(req.Exchanger, req.CollectionId, strings.ToLower(req.Owner), page, size)
+	res, err := service.FetchUNFTs(req.Exchanger, req.CollectionId, strings.ToLower(req.Owner), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -70,7 +70,7 @@ func pageNFT(c *gin.Context) {
 // @Param        collection_id  query     string  false  "collection id, if empty, query all"
 // @Param        page           query     string  false  "Page, default 1"
 // @Param        page_size      query     string  false  "Page size, default 10"
-// @Success      200            {object}  service.UserNFTsRes
+// @Success      200            {object}  service.UNFTsRes
 // @Failure      400            {object}  service.ErrRes
 // @Router       /nft_meta/page [get]
 func pageNFTAndMeta(c *gin.Context) {

@@ -18,7 +18,7 @@ var Tables = []interface{}{
 	&ERC721Transfer{},
 	&ERC1155Transfer{},
 	&Exchanger{},
-	&UserNFT{},
+	&UNFT{},
 	&Epoch{},
 	&FullNFT{},
 	&SNFT{},
@@ -167,8 +167,8 @@ type ERC1155Transfer struct {
 	Value    types.BigInt  `json:"value" gorm:"type:VARCHAR(80)"`     //Token amount
 }
 
-// UserNFT User NFT attribute information
-type UserNFT struct {
+// UNFT User NFT attribute information
+type UNFT struct {
 	Address       *string `json:"address" gorm:"type:CHAR(44);primary_key"`  //NFT address, grows automatically from 0x1
 	RoyaltyRatio  uint32  `json:"royalty_ratio"`                             //Royalty rate, in ten thousandths
 	MetaUrl       string  `json:"meta_url"`                                  //Real meta information URL
