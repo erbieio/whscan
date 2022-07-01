@@ -235,10 +235,9 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 				Address:     rewards[i].Address,
 				Identity:    identity,
 				BlockNumber: uint64(wh.Block.Number),
-				SNFT:        rewards[i].NFTAddress,
-				Amount:      rewards[i].RewardAmount,
 			})
 			if rewards[i].NFTAddress != nil {
+				wh.Rewards[i].SNFT = rewards[i].NFTAddress
 				nftAddr := *rewards[i].NFTAddress
 				wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
 					Address:      nftAddr,
@@ -255,6 +254,8 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 					}
 				}
 			} else {
+				wh.Rewards[i].Amount = new(string)
+				*wh.Rewards[i].Amount = rewards[i].RewardAmount.Text(10)
 				// Reward an ERB equivalent to SNFT
 				wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level0Reward)
 			}

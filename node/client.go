@@ -219,9 +219,9 @@ func (c *Client) GetEpoch(number string) (rewards Epoch, err error) {
 }
 
 type Reward struct {
-	Address      string  `json:"Address"`
-	NFTAddress   *string `json:"NftAddress"`
-	RewardAmount *string `json:"RewardAmount"`
+	Address      string   `json:"Address"`
+	NFTAddress   *string  `json:"NftAddress"`
+	RewardAmount *big.Int `json:"RewardAmount"`
 }
 
 func (c *Client) GetReward(number string) (rewards []Reward, err error) {
