@@ -705,7 +705,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Exchanger"
+                            "$ref": "#/definitions/service.ExchangerRes"
                         }
                     },
                     "400": {
@@ -1014,6 +1014,153 @@ const docTemplate = `{
                 }
             }
         },
+        "/ranking/exchanger": {
+            "get": {
+                "description": "Exchanger ranking for a specified time range",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ranking"
+                ],
+                "summary": "query exchanger ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Limit, time range",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.RankingExchangerRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/ranking/snft": {
+            "get": {
+                "description": "SNFT ranking for a specified time range",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ranking"
+                ],
+                "summary": "query SNFT ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Limit, time range",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.RankingSNFTRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/ranking/unft": {
+            "get": {
+                "description": "UNFT ranking for a specified time range",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ranking"
+                ],
+                "summary": "query UNFT ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Limit, time range",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.RankingUNFTRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/reward": {
             "get": {
                 "description": "query the reward list in reverse order",
@@ -1141,7 +1288,7 @@ const docTemplate = `{
         },
         "/snft/collection/page": {
             "get": {
-                "description": "Query the collection list (including 16 FullNFT information) held by the specified account (with one SNFT in the collection)",
+                "description": "Query the collection list (including 16 FNFT information) held by the specified account (with one SNFT in the collection)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1190,7 +1337,7 @@ const docTemplate = `{
         },
         "/snft/group/{id}": {
             "get": {
-                "description": "Query the information of 256 SNFTs under the FullNFT of the specified ID",
+                "description": "Query the information of 256 SNFTs under the FNFT of the specified ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1200,11 +1347,11 @@ const docTemplate = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "Query the list of 256 SNFTs of the specified FullNFT",
+                "summary": "Query the list of 256 SNFTs of the specified FNFT",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "FullNFT ID",
+                        "description": "FNFT ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1267,6 +1414,44 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/service.SNFTsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/snft/{addr}": {
+            "get": {
+                "description": "Query one SNFT by address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "query one SNFT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "addr",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.SNFT"
                         }
                     },
                     "400": {
@@ -1566,6 +1751,44 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/model.Log"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/unft/{addr}": {
+            "get": {
+                "description": "Query one UNFT by address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "query one UNFT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address",
+                        "name": "addr",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.UNFT"
                         }
                     },
                     "400": {
@@ -1958,10 +2181,6 @@ const docTemplate = `{
                     "description": "The block number when created",
                     "type": "integer"
                 },
-                "collection_count": {
-                    "description": "Total number of collections, batch query of this field is invalid",
-                    "type": "integer"
-                },
                 "creator": {
                     "description": "Creator address",
                     "type": "string"
@@ -1980,10 +2199,6 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "description": "Open time",
-                    "type": "integer"
-                },
-                "tx_count": {
-                    "description": "Total number of transactions, transfers are not counted",
                     "type": "integer"
                 },
                 "tx_hash": {
@@ -2387,16 +2602,20 @@ const docTemplate = `{
                     "description": "Total number of exchanges",
                     "type": "integer"
                 },
-                "totalNFTTx": {
-                    "description": "Total number of NFT transactions",
-                    "type": "integer"
-                },
                 "totalSNFT": {
                     "description": "Total number of SNFTs",
                     "type": "integer"
                 },
+                "totalSNFTAmount": {
+                    "description": "Total transaction value of SNFTs",
+                    "type": "string"
+                },
                 "totalSNFTCollection": {
                     "description": "Total number of SNFT collections",
+                    "type": "integer"
+                },
+                "totalSNFTTx": {
+                    "description": "Total number of  SNFT transactions",
                     "type": "integer"
                 },
                 "totalTransaction": {
@@ -2407,8 +2626,16 @@ const docTemplate = `{
                     "description": "Total number of UNFTs",
                     "type": "integer"
                 },
+                "totalUNFTAmount": {
+                    "description": "Total transaction value of UNFTs",
+                    "type": "string"
+                },
                 "totalUNFTCollection": {
                     "description": "Total number of UNFT collections",
+                    "type": "integer"
+                },
+                "totalUNFTTx": {
+                    "description": "Total number of  UNFT transactions",
                     "type": "integer"
                 },
                 "totalUncle": {
@@ -2454,6 +2681,54 @@ const docTemplate = `{
             "properties": {
                 "err_str": {
                     "description": "Error message",
+                    "type": "string"
+                }
+            }
+        },
+        "service.ExchangerRes": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Exchange address",
+                    "type": "string"
+                },
+                "balance_count": {
+                    "description": "Total transaction amount, unit wei",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "The block number when created",
+                    "type": "integer"
+                },
+                "collectionCount": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "description": "Creator address",
+                    "type": "string"
+                },
+                "fee_ratio": {
+                    "description": "fee rate, unit 1/10,000",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Exchange name",
+                    "type": "string"
+                },
+                "nft_count": {
+                    "description": "Total NFT count",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "description": "Open time",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "The transaction created",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "Exchange URL",
                     "type": "string"
                 }
             }
@@ -2519,6 +2794,204 @@ const docTemplate = `{
                 }
             }
         },
+        "service.RankingExchangerRes": {
+            "type": "object",
+            "properties": {
+                "exchangers": {
+                    "description": "Exchanger list",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "Exchange address",
+                                "type": "string"
+                            },
+                            "balance_count": {
+                                "description": "Total transaction amount, unit wei",
+                                "type": "string"
+                            },
+                            "block_number": {
+                                "description": "The block number when created",
+                                "type": "integer"
+                            },
+                            "creator": {
+                                "description": "Creator address",
+                                "type": "string"
+                            },
+                            "fee_ratio": {
+                                "description": "fee rate, unit 1/10,000",
+                                "type": "integer"
+                            },
+                            "name": {
+                                "description": "Exchange name",
+                                "type": "string"
+                            },
+                            "nft_count": {
+                                "description": "Total NFT count",
+                                "type": "integer"
+                            },
+                            "timestamp": {
+                                "description": "Open time",
+                                "type": "integer"
+                            },
+                            "txCount": {
+                                "type": "integer"
+                            },
+                            "tx_hash": {
+                                "description": "The transaction created",
+                                "type": "string"
+                            },
+                            "url": {
+                                "description": "Exchange URL",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "total": {
+                    "description": "The total number of Exchanger",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.RankingSNFTRes": {
+            "type": "object",
+            "properties": {
+                "nfts": {
+                    "description": "SNFT list",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "SNFT address",
+                                "type": "string"
+                            },
+                            "awardee": {
+                                "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
+                                "type": "string"
+                            },
+                            "creator": {
+                                "type": "string"
+                            },
+                            "last_price": {
+                                "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
+                                "type": "string"
+                            },
+                            "owner": {
+                                "description": "owner, unallocated and reclaimed are null",
+                                "type": "string"
+                            },
+                            "reward_at": {
+                                "description": "The timestamp of the last rewarded, null if not rewarded",
+                                "type": "integer"
+                            },
+                            "reward_number": {
+                                "description": "The height of the last rewarded block, null if not rewarded",
+                                "type": "integer"
+                            },
+                            "txCount": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "total": {
+                    "description": "The total number of SNFTs",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.RankingUNFTRes": {
+            "type": "object",
+            "properties": {
+                "nfts": {
+                    "description": "UNFT list",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "NFT address, grows automatically from 0x1",
+                                "type": "string"
+                            },
+                            "attributes": {
+                                "description": "Attributes",
+                                "type": "string"
+                            },
+                            "block_number": {
+                                "description": "The height of the created block",
+                                "type": "integer"
+                            },
+                            "category": {
+                                "description": "category",
+                                "type": "string"
+                            },
+                            "collection_id": {
+                                "description": "The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located",
+                                "type": "string"
+                            },
+                            "creator": {
+                                "description": "Creator address",
+                                "type": "string"
+                            },
+                            "desc": {
+                                "description": "description",
+                                "type": "string"
+                            },
+                            "exchanger_addr": {
+                                "description": "The address of the exchange, if there is none, it can be traded on any exchange",
+                                "type": "string"
+                            },
+                            "last_price": {
+                                "description": "The last transaction price (null if the transaction is not completed), the unit is wei",
+                                "type": "string"
+                            },
+                            "meta_url": {
+                                "description": "Real meta information URL",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "name",
+                                "type": "string"
+                            },
+                            "owner": {
+                                "description": "owner",
+                                "type": "string"
+                            },
+                            "raw_meta_url": {
+                                "description": "Original meta information URL on the chain",
+                                "type": "string"
+                            },
+                            "royalty_ratio": {
+                                "description": "Royalty rate, in ten thousandths",
+                                "type": "integer"
+                            },
+                            "source_url": {
+                                "description": "Resource links, file links such as pictures or videos",
+                                "type": "string"
+                            },
+                            "timestamp": {
+                                "description": "Create timestamp",
+                                "type": "integer"
+                            },
+                            "txCount": {
+                                "type": "integer"
+                            },
+                            "tx_hash": {
+                                "description": "The transaction hash created",
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "total": {
+                    "description": "The total number of UNFTs",
+                    "type": "integer"
+                }
+            }
+        },
         "service.RewardsRes": {
             "type": "object",
             "properties": {
@@ -2532,6 +3005,99 @@ const docTemplate = `{
                 "total": {
                     "description": "The total number of rewards",
                     "type": "integer"
+                }
+            }
+        },
+        "service.SNFT": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "SNFT address",
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "Attributes",
+                    "type": "string"
+                },
+                "awardee": {
+                    "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "Create block height, equal to the first NFT in the collection",
+                    "type": "integer"
+                },
+                "category": {
+                    "description": "category",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "Creator address, also the address of royalty income",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "description",
+                    "type": "string"
+                },
+                "dir": {
+                    "description": "meta information directory URL",
+                    "type": "string"
+                },
+                "exchanger": {
+                    "description": "Exchange address",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "period ID",
+                    "type": "string"
+                },
+                "img_url": {
+                    "description": "image link",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "collection meta information URL",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "name",
+                    "type": "string"
+                },
+                "number": {
+                    "description": "Starting block height",
+                    "type": "integer"
+                },
+                "owner": {
+                    "description": "owner, unallocated and reclaimed are null",
+                    "type": "string"
+                },
+                "reward_at": {
+                    "description": "The timestamp of the last rewarded, null if not rewarded",
+                    "type": "integer"
+                },
+                "reward_number": {
+                    "description": "The height of the last rewarded block, null if not rewarded",
+                    "type": "integer"
+                },
+                "royaltyRatio": {
+                    "description": "The royalty rate of the same period of SNFT, the unit is one ten thousandth",
+                    "type": "integer"
+                },
+                "source_url": {
+                    "description": "Resource links, file links such as pictures or videos",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Starting timestamp",
+                    "type": "integer"
+                },
+                "voteWeight": {
+                    "description": "Weight",
+                    "type": "string"
                 }
             }
         },
@@ -2565,7 +3131,7 @@ const docTemplate = `{
                                 "type": "string"
                             },
                             "fullNFTs": {
-                                "description": "16 FullNFT messages",
+                                "description": "16 FNFT messages",
                                 "type": "array",
                                 "items": {
                                     "type": "object",
@@ -2583,11 +3149,11 @@ const docTemplate = `{
                                             "type": "string"
                                         },
                                         "id": {
-                                            "description": "FullNFT ID",
+                                            "description": "FNFT ID",
                                             "type": "string"
                                         },
                                         "meta_url": {
-                                            "description": "FullNFT meta information URL",
+                                            "description": "FNFT meta information URL",
                                             "type": "string"
                                         },
                                         "name": {
@@ -2599,7 +3165,7 @@ const docTemplate = `{
                                             "type": "string"
                                         },
                                         "total_hold": {
-                                            "description": "The number of SNFTs held in a FullNFT",
+                                            "description": "The number of SNFTs held in a FNFT",
                                             "type": "integer"
                                         }
                                     }
@@ -2664,7 +3230,7 @@ const docTemplate = `{
                                 "type": "string"
                             },
                             "id": {
-                                "description": "FullNFT ID",
+                                "description": "FNFT ID",
                                 "type": "string"
                             },
                             "last_price": {
@@ -2672,7 +3238,7 @@ const docTemplate = `{
                                 "type": "string"
                             },
                             "meta_url": {
-                                "description": "FullNFT meta information URL",
+                                "description": "FNFT meta information URL",
                                 "type": "string"
                             },
                             "name": {
@@ -2786,6 +3352,91 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/model.Transaction"
                     }
+                }
+            }
+        },
+        "service.UNFT": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "NFT address, grows automatically from 0x1",
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "Attributes",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "Create block height, equal to the first NFT in the collection",
+                    "type": "integer"
+                },
+                "category": {
+                    "description": "category",
+                    "type": "string"
+                },
+                "collection_id": {
+                    "description": "The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "Creator",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "description",
+                    "type": "string"
+                },
+                "exchanger": {
+                    "description": "belongs to the exchange",
+                    "type": "string"
+                },
+                "exchanger_addr": {
+                    "description": "The address of the exchange, if there is none, it can be traded on any exchange",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID",
+                    "type": "string"
+                },
+                "img_url": {
+                    "description": "image link",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "The last transaction price (null if the transaction is not completed), the unit is wei",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "collection meta information URL",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "name",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "owner",
+                    "type": "string"
+                },
+                "raw_meta_url": {
+                    "description": "Original meta information URL on the chain",
+                    "type": "string"
+                },
+                "royalty_ratio": {
+                    "description": "Royalty rate, in ten thousandths",
+                    "type": "integer"
+                },
+                "source_url": {
+                    "description": "Resource links, file links such as pictures or videos",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Create timestamp",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "The transaction hash created",
+                    "type": "string"
                 }
             }
         },

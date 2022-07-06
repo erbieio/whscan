@@ -5,6 +5,7 @@ import (
 
 	"server/common/model"
 	"server/common/types"
+	"server/common/utils"
 )
 
 // ExchangersRes exchange paging return parameters
@@ -73,17 +74,17 @@ func cacheLastTotal() (total1 int64, total2 int64, err error) {
 
 // lastExchangerTotal the latest number of newly opened exchanges
 func lastExchangerTotal(day int64) (count int64, err error) {
-	now := time.Now().Local()
-	loc, _ := time.LoadLocation("Local")
-	daySecond := 24 * time.Hour.Milliseconds() / 1000
-	stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", now.Format("2006-01-02")+" 00:00:00", loc)
-	stop := stopTime.Unix()
-	start := stop - daySecond*day
+	start, stop := utils.LastTimeRange(day)
 	err = DB.Model(&model.Exchanger{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&count).Error
 	return
 }
 
-func FindExchanger(addr types.Address) (res model.Exchanger, err error) {
+type ExchangerRes struct {
+	model.Exchanger
+	CollectionCount uint64 `json:"collectionCount"`
+}
+
+func FindExchanger(addr types.Address) (res ExchangerRes, err error) {
 	err = DB.Where("address=?", addr).First(&res).Error
 	if err != nil {
 		return

@@ -81,13 +81,13 @@ func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, is
 		if err != nil {
 			return nil, err
 		}
-		//for _, tx := range block.CacheTxs {
-		// internalTxs, err := c.GetInternalTx(ctx, tx)
-		// if err != nil {
-		// return nil, fmt. Errorf("GetInternalTx err:%v", err)
-		// }
-		// block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
-		//}
+		for _, tx := range block.CacheTxs {
+			internalTxs, err := c.GetInternalTx(ctx, tx)
+			if err != nil {
+				return nil, fmt.Errorf("GetInternalTx err:%v", err)
+			}
+			block.CacheInternalTxs = append(block.CacheInternalTxs, internalTxs...)
+		}
 	}
 	// Parse things specific to wormholes
 	if isWormholes {
@@ -249,7 +249,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 				// Parse the new phase ID
 				if len(epochId) == 0 {
 					addr, _ := new(big.Int).SetString(nftAddr[3:], 16)
-					if addr.Mod(addr, big.NewInt(65536)).Uint64() == 9 {
+					if addr.Mod(addr, big.NewInt(65536)).Uint64() == 0 {
 						epochId = nftAddr[:38]
 					}
 				}
@@ -280,7 +280,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 		}
 		wh.Epochs = append(wh.Epochs, &model.Epoch{
 			ID:           epochId,
-			Creator:      epoch.Creator,
+			Creator:      strings.ToLower(epoch.Creator),
 			RoyaltyRatio: epoch.Royalty,
 			Dir:          epoch.Dir,
 			Exchanger:    epoch.Address,

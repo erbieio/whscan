@@ -57,7 +57,7 @@ func pageExchanger(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        addr  path      string  true  "Exchange address"
-// @Success      200   {object}  model.Exchanger
+// @Success      200   {object}  service.ExchangerRes
 // @Failure      400   {object}  service.ErrRes
 // @Router       /exchanger/{addr} [get]
 func getExchanger(c *gin.Context) {

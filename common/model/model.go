@@ -20,7 +20,7 @@ var Tables = []interface{}{
 	&Exchanger{},
 	&UNFT{},
 	&Epoch{},
-	&FullNFT{},
+	&FNFT{},
 	&SNFT{},
 	&Collection{},
 	&NFTTx{},
@@ -189,7 +189,7 @@ type UNFT struct {
 }
 
 // Epoch SNFT Phase 1
-// One SNFT->16 Collections->16 FullNFTs->256 SNFTs
+// One SNFT->16 Collections->16 FNFTs->256 SNFTs
 type Epoch struct {
 	ID           string `json:"id" gorm:"type:VARCHAR(38);primary_key"` //period ID
 	Creator      string `json:"creator" gorm:"type:CHAR(44)"`           //Creator address, also the address of royalty income
@@ -201,10 +201,10 @@ type Epoch struct {
 	Timestamp    uint64 `json:"timestamp"`                              //Starting timestamp
 }
 
-// FullNFT full SNFT
-type FullNFT struct {
-	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FullNFT ID
-	MetaUrl    string `json:"meta_url"`                               //FullNFT meta information URL
+// FNFT full SNFT
+type FNFT struct {
+	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FNFT ID
+	MetaUrl    string `json:"meta_url"`                               //FNFT meta information URL
 	Name       string `json:"name"`                                   //name
 	Desc       string `json:"desc"`                                   //description
 	Attributes string `json:"attributes"`                             //Attributes
@@ -252,18 +252,16 @@ type Collection struct {
 
 // Exchanger exchange attribute information
 type Exchanger struct {
-	Address         string `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
-	Name            string `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
-	URL             string `json:"url"`                                      //Exchange URL
-	FeeRatio        uint32 `json:"fee_ratio"`                                //fee rate, unit 1/10,000
-	Creator         string `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
-	Timestamp       uint64 `json:"timestamp" gorm:"index"`                   //Open time
-	BlockNumber     uint64 `json:"block_number" gorm:"index"`                //The block number when created
-	TxHash          string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
-	TxCount         uint64 `json:"tx_count"`                                 //Total number of transactions, transfers are not counted
-	BalanceCount    string `json:"balance_count" gorm:"type:VARCHAR(128)"`   //Total transaction amount, unit wei
-	CollectionCount uint64 `json:"collection_count" gorm:"-"`                //Total number of collections, batch query of this field is invalid
-	NFTCount        uint64 `json:"nft_count"`                                //Total NFT count
+	Address      string `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
+	Name         string `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
+	URL          string `json:"url"`                                      //Exchange URL
+	FeeRatio     uint32 `json:"fee_ratio"`                                //fee rate, unit 1/10,000
+	Creator      string `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
+	Timestamp    uint64 `json:"timestamp" gorm:"index"`                   //Open time
+	BlockNumber  uint64 `json:"block_number" gorm:"index"`                //The block number when created
+	TxHash       string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
+	BalanceCount string `json:"balance_count" gorm:"type:VARCHAR(128)"`   //Total transaction amount, unit wei
+	NFTCount     uint64 `json:"nft_count"`                                //Total NFT count
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB

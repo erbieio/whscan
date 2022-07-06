@@ -14,6 +14,8 @@ func NFT(e *gin.Engine) {
 	e.GET("/nft_meta/page", pageNFTAndMeta)
 	e.GET("/nft/tx/page", pageNFTTx)
 	e.GET("/snft/page", pageSNFT)
+	e.GET("/unft/:addr", getUNFT)
+	e.GET("/snft/:addr", getSNFT)
 	e.GET("/snft/block", blockSNFT)
 	e.GET("/snft_meta/page", pageSNFTAndMeta)
 	e.GET("/snft/collection/page", pageSNFTGroup)
@@ -88,7 +90,7 @@ func pageNFTAndMeta(c *gin.Context) {
 // @Param        page       query     string  false  "Page, default 1"
 // @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.NFTTxsRes
-// @Failure      400        {object}  service.ErrRes
+// @Failure      400   {object}  service.ErrRes
 // @Router       /nft/tx/page [get]
 func pageNFTTx(c *gin.Context) {
 	req := struct {
@@ -125,8 +127,8 @@ func pageNFTTx(c *gin.Context) {
 // @Param        owner      query     string  false  "Owner, if empty, query all"
 // @Param        page       query     string  false  "Page, default 1"
 // @Param        page_size  query     string  false  "Page size, default 10"
-// @Success      200        {object}  service.SNFTsRes
-// @Failure      400        {object}  service.ErrRes
+// @Success      200   {object}  service.SNFTsRes
+// @Failure      400   {object}  service.ErrRes
 // @Router       /snft/page [get]
 func pageSNFT(c *gin.Context) {
 	req := struct {
@@ -146,6 +148,42 @@ func pageSNFT(c *gin.Context) {
 	}
 
 	res, err := service.FetchSNFTs(strings.ToLower(req.Owner), page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags         NFT
+// @Summary      query one UNFT
+// @Description  Query one UNFT by address
+// @Accept       json
+// @Produce      json
+// @Param        addr  path      string  true  "Address"
+// @Success      200   {object}  service.UNFT
+// @Failure      400        {object}  service.ErrRes
+// @Router       /unft/{addr} [get]
+func getUNFT(c *gin.Context) {
+	res, err := service.GetUNFT(c.Param("addr"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags         NFT
+// @Summary      query one SNFT
+// @Description  Query one SNFT by address
+// @Accept       json
+// @Produce      json
+// @Param        addr  path      string  true  "Address"
+// @Success      200        {object}  service.SNFT
+// @Failure      400        {object}  service.ErrRes
+// @Router       /snft/{addr} [get]
+func getSNFT(c *gin.Context) {
+	res, err := service.GetSNFT(c.Param("addr"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -220,7 +258,7 @@ func blockSNFT(c *gin.Context) {
 
 // @Tags         NFT
 // @Summary      paging query account holding collection list
-// @Description  Query the collection list (including 16 FullNFT information) held by the specified account (with one SNFT in the collection)
+// @Description  Query the collection list (including 16 FNFT information) held by the specified account (with one SNFT in the collection)
 // @Accept       json
 // @Produce      json
 // @Param        owner      query     string  false  "owner"
@@ -254,17 +292,17 @@ func pageSNFTGroup(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      Query the list of 256 SNFTs of the specified FullNFT
-// @Description  Query the information of 256 SNFTs under the FullNFT of the specified ID
+// @Summary      Query the list of 256 SNFTs of the specified FNFT
+// @Description  Query the information of 256 SNFTs under the FNFT of the specified ID
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "FullNFT ID"
+// @Param        id   path      string  true  "FNFT ID"
 // @Success      200  {object}  []model.SNFT
 // @Failure      400  {object}  service.ErrRes
 // @Router       /snft/group/{id} [get]
 func groupSNFTs(c *gin.Context) {
 	id := c.Param("id")
-	data, err := service.FullSNFTs(id)
+	data, err := service.FNFTs(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

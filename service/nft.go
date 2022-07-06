@@ -82,12 +82,12 @@ type SNFTsAndMetaRes struct {
 	Total int64 `json:"total"` //The total number of SNFTs
 	NFTs  []struct {
 		model.SNFT
-		model.FullNFT
+		model.FNFT
 	} `json:"nfts"` //SNFT list
 }
 
 func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
-	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN full_nfts ON LEFT(address,40)=full_nfts.id")
+	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id")
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
@@ -102,7 +102,33 @@ func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAnd
 	if err != nil {
 		return
 	}
-	err = db.Select("snfts.*,full_nfts.*").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	err = db.Select("snfts.*,fnfts.*").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	return
+}
+
+type UNFT struct {
+	model.UNFT
+	model.Collection
+}
+
+func GetUNFT(addr string) (res UNFT, err error) {
+	err = DB.Model(&model.UNFT{}).Joins("LEFT JOIN collections ON collection_id=collections.id").
+		Where("address=?", addr).Select("unfts.*,collections.*").Scan(&res).Error
+	return
+}
+
+type SNFT struct {
+	model.SNFT
+	model.FNFT
+	model.Collection
+	model.Epoch
+}
+
+func GetSNFT(addr string) (res SNFT, err error) {
+	err = DB.Model(&model.SNFT{}).Joins("LEFT JOIN collections ON LEFT(address,41)=collections.id").
+		Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
+		Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
+		Where("address=?", addr).Select("snfts.*,fnfts.*,epoches.*").Scan(&res).Error
 	return
 }
 
@@ -118,9 +144,9 @@ type SNFTGroupsRes struct {
 		model.Collection
 		TotalHold int64 `json:"total_hold"` //The number of SNFTs held in a collection
 		FullNFTs  []struct {
-			model.FullNFT
-			TotalHold int64 `json:"total_hold"` //The number of SNFTs held in a FullNFT
-		} `gorm:"-"` // 16 FullNFT messages
+			model.FNFT
+			TotalHold int64 `json:"total_hold"` //The number of SNFTs held in a FNFT
+		} `gorm:"-"` // 16 FNFT messages
 	} `json:"collections"` //collection information
 }
 
@@ -135,8 +161,8 @@ func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error)
 		Order("id DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Collections).Error
 	for i := range res.Collections {
 		err = DB.Model(&model.SNFT{}).
-			Joins("LEFT JOIN full_nfts on LEFT(address,40) = full_nfts.id").
-			Select("full_nfts.*,COUNT(*) AS total_hold").
+			Joins("LEFT JOIN fnfts on LEFT(address,40) = fnfts.id").
+			Select("fnfts.*,COUNT(*) AS total_hold").
 			Where("LEFT(address, 39)=? AND owner=?", res.Collections[i].Id, owner).Group("id").
 			Scan(&res.Collections[i].FullNFTs).Error
 		if err != nil {
@@ -146,7 +172,7 @@ func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error)
 	return
 }
 
-func FullSNFTs(fullNFTId string) (res []model.SNFT, err error) {
-	err = DB.Where("LEFT(address, 40)=?", fullNFTId).Find(&res).Error
+func FNFTs(FNFTId string) (res []model.SNFT, err error) {
+	err = DB.Where("LEFT(address, 40)=?", FNFTId).Find(&res).Error
 	return
 }

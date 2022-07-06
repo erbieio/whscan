@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"regexp"
 	"strconv"
+	"time"
 
 	"server/common/model"
 	"server/common/types"
@@ -16,6 +17,8 @@ var (
 	erc721TransferEventId        = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 	erc1155TransferSingleEventId = "0x7b912cc6629daab379d004780e875cdb7625e8331d3a7c8fbe08a42156325546"
 	erc1155TransferBatchEventId  = "0x20114eb39ee5dfdb13684c7d9e951052ef22c89bff67131a9bf08879189b0f71"
+	loc, _                       = time.LoadLocation("Local")
+	daySecond                    = 24 * time.Hour.Milliseconds() / 1000
 )
 
 // Unpack20TransferLog parses ERC20 transfer events
@@ -228,6 +231,15 @@ func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
 		}
 	}
 	return page, size, nil
+}
+
+// LastTimeRange unix time range for the specified number of days based on the current time
+func LastTimeRange(day int64) (start, stop int64) {
+	now := time.Now().Local()
+	stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", now.Format("2006-01-02")+" 00:00:00", loc)
+	stop = stopTime.Unix()
+	start = stop - daySecond*day
+	return
 }
 
 func VerifyEmailFormat(email string) bool {

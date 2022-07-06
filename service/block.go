@@ -34,10 +34,12 @@ func FetchAccounts(page, size int) (res AccountsRes, err error) {
 	err = DB.Order("length(balance) DESC,balance DESC").Offset((page - 1) * size).Limit(size).Find(&res.Accounts).Error
 	// use cache to speed up queries
 	res.Balance = TotalBalance()
-	res.Total = int64(TotalAccount())
+	freshCache()
+	res.Total = int64(cache.TotalAccount)
 	return
 }
 
 func FetchTotals() (res Cache, err error) {
+	freshCache()
 	return cache, nil
 }

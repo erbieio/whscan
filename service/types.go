@@ -27,7 +27,7 @@ func BigIntAdd(a, b string) string {
 	}
 	cc := aa.Add(aa, bb)
 	if cc.Sign() == -1 {
-		panic(nil)
+		panic("big add err:" + a + " " + b)
 	}
 	return cc.Text(10)
 }
