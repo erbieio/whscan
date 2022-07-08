@@ -9,8 +9,8 @@ import (
 )
 
 func Ranking(e *gin.Engine) {
+	e.GET("/ranking/nft", rankingNFT)
 	e.GET("/ranking/snft", rankingSNFT)
-	e.GET("/ranking/unft", rankingUNFT)
 	e.GET("/ranking/exchanger", rankingExchanger)
 }
 
@@ -51,17 +51,17 @@ func rankingSNFT(c *gin.Context) {
 }
 
 // @Tags         Ranking
-// @Summary      query UNFT ranking
-// @Description  UNFT ranking for a specified time range
+// @Summary      query NFT ranking
+// @Description  NFT ranking for a specified time range
 // @Accept       json
 // @Produce      json
 // @Param        limit      query     string  false  "Limit, time range"
 // @Param        page       query     string  false  "Page, default 1"
 // @Param        page_size  query     string  false  "Page size, default 10"
-// @Success      200        {object}  service.RankingUNFTRes
+// @Success      200        {object}  service.RankingNFTRes
 // @Failure      400        {object}  service.ErrRes
-// @Router       /ranking/unft [get]
-func rankingUNFT(c *gin.Context) {
+// @Router       /ranking/nft [get]
+func rankingNFT(c *gin.Context) {
 	req := struct {
 		Page     *int   `form:"page"`
 		PageSize *int   `form:"page_size"`
@@ -78,7 +78,7 @@ func rankingUNFT(c *gin.Context) {
 		return
 	}
 
-	res, err := service.RankingUNFT(req.Limit, page, size)
+	res, err := service.RankingNFT(req.Limit, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

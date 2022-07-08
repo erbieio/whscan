@@ -312,6 +312,63 @@ definitions:
         description: The transaction hash
         type: string
     type: object
+  model.NFT:
+    properties:
+      address:
+        description: NFT address, grows automatically from 0x1
+        type: string
+      attributes:
+        description: Attributes
+        type: string
+      block_number:
+        description: The height of the created block
+        type: integer
+      category:
+        description: category
+        type: string
+      collection_id:
+        description: The id of the collection, the name of the collection + the creator
+          of the collection + the hash of the exchange where the collection is located
+        type: string
+      creator:
+        description: Creator address
+        type: string
+      desc:
+        description: description
+        type: string
+      exchanger_addr:
+        description: The address of the exchange, if there is none, it can be traded
+          on any exchange
+        type: string
+      last_price:
+        description: The last transaction price (null if the transaction is not completed),
+          the unit is wei
+        type: string
+      meta_url:
+        description: Real meta information URL
+        type: string
+      name:
+        description: name
+        type: string
+      owner:
+        description: owner
+        type: string
+      raw_meta_url:
+        description: Original meta information URL on the chain
+        type: string
+      royalty_ratio:
+        description: Royalty rate, in ten thousandths
+        type: integer
+      source_url:
+        description: Resource links, file links such as pictures or videos
+        type: string
+      timestamp:
+        description: Create timestamp
+        type: integer
+      tx_hash:
+        description: The transaction hash created
+        type: string
+    type: object
   model.NFTTx:
     properties:
       block_number:
@@ -445,62 +502,50 @@ definitions:
         description: Amount, unit wei
         type: string
     type: object
-  model.UNFT:
+  service.AccountRes:
     properties:
-      address:
-        description: NFT address, grows automatically from 0x1
-        type: string
-      attributes:
-        description: Attributes
-        type: string
-      block_number:
-        description: The height of the created block
+      ERC:
+        description: ERC types, ERC20, ERC721, ERC1155
         type: integer
-      category:
-        description: category
+      address:
+        description: address
         type: string
-      collection_id:
-        description: The id of the collection, the name of the collection + the creator
-          of the collection + the hash of the exchange where the collection is located
+      balance:
+        description: balance
+        type: string
+      code:
+        description: bytecode
+        type: string
+      createdTx:
+        description: Create transaction
         type: string
       creator:
-        description: Creator address
-        type: string
-      desc:
-        description: description
-        type: string
-      exchanger_addr:
-        description: The address of the exchange, if there is none, it can be traded
-          on any exchange
-        type: string
-      last_price:
-        description: The last transaction price (null if the transaction is not completed),
-          the unit is wei
-        type: string
-      meta_url:
-        description: Real meta information URL
+        description: The creator, the contract account has value
         type: string
       name:
         description: name
         type: string
-      owner:
-        description: owner
+      pledgeAmount:
+        description: pledge amount
         type: string
-      raw_meta_url:
-        description: Original meta information URL on the chain
-        type: string
-      royalty_ratio:
-        description: Royalty rate, in ten thousandths
+      rewardCoinCount:
+        description: Number of times to get coin rewards, 0.1ERB once
         type: integer
-      source_url:
-        description: Resource links, file links such as pictures or videos
-        type: string
-      timestamp:
-        description: Create timestamp
+      rewardSNFTCount:
+        description: Number of times to get SNFT rewards
         type: integer
-      tx_hash:
-        description: The transaction hash created
+      symbol:
+        description: symbol
         type: string
+      totalNFT:
+        description: Number of NFTs held
+        type: integer
+      totalSNFT:
+        description: Number of SNFTs held
+        type: integer
+      transactionCount:
+        description: Transaction random number, transaction volume
+        type: integer
     type: object
   service.AccountsRes:
     properties:
@@ -565,6 +610,12 @@ definitions:
       genesisBalance:
         description: Total amount of coins created
         type: string
+      rewardCoinCount:
+        description: Total Number of times to get coin rewards, 0.1ERB once
+        type: integer
+      rewardSNFTCount:
+        description: Total Number of times to get SNFT rewards
+        type: integer
       totalAccount:
         description: Total account number
         type: integer
@@ -577,6 +628,21 @@ definitions:
       totalExchanger:
         description: Total number of exchanges
         type: integer
+      totalNFT:
+        description: Total number of NFTs
+        type: integer
+      totalNFTAmount:
+        description: Total transaction value of NFTs
+        type: string
+      totalNFTCollection:
+        description: Total number of NFT collections
+        type: integer
+      totalNFTCreator:
+        description: Total creator of NFTs
+        type: integer
+      totalNFTTx:
+        description: Total number of  NFT transactions
+        type: integer
       totalSNFT:
         description: Total number of SNFTs
         type: integer
@@ -586,23 +652,14 @@ definitions:
       totalSNFTCollection:
         description: Total number of SNFT collections
         type: integer
+      totalSNFTCreator:
+        description: Total creator of SNFTs
+        type: integer
       totalSNFTTx:
         description: Total number of  SNFT transactions
         type: integer
       totalTransaction:
         description: Total number of transactions
-        type: integer
-      totalUNFT:
-        description: Total number of UNFTs
-        type: integer
-      totalUNFTAmount:
-        description: Total transaction value of UNFTs
-        type: string
-      totalUNFTCollection:
-        description: Total number of UNFT collections
-        type: integer
-      totalUNFTTx:
-        description: Total number of  UNFT transactions
         type: integer
       totalUncle:
         description: Number of total uncle blocks
@@ -704,12 +761,89 @@ definitions:
       tx_hash:
         type: string
     type: object
+  service.NFT:
+    properties:
+      address:
+        description: NFT address, grows automatically from 0x1
+        type: string
+      attributes:
+        description: Attributes
+        type: string
+      block_number:
+        description: Create block height, equal to the first NFT in the collection
+        type: integer
+      category:
+        description: category
+        type: string
+      collection_id:
+        description: The id of the collection, the name of the collection + the creator
+          of the collection + the hash of the exchange where the collection is located
+        type: string
+      creator:
+        description: Creator
+        type: string
+      desc:
+        description: description
+        type: string
+      exchanger:
+        description: belongs to the exchange
+        type: string
+      exchanger_addr:
+        description: The address of the exchange, if there is none, it can be traded
+          on any exchange
+        type: string
+      id:
+        description: ID
+        type: string
+      img_url:
+        description: image link
+        type: string
+      last_price:
+        description: The last transaction price (null if the transaction is not completed),
+          the unit is wei
+        type: string
+      meta_url:
+        description: collection meta information URL
+        type: string
+      name:
+        description: name
+        type: string
+      owner:
+        description: owner
+        type: string
+      raw_meta_url:
+        description: Original meta information URL on the chain
+        type: string
+      royalty_ratio:
+        description: Royalty rate, in ten thousandths
+        type: integer
+      source_url:
+        description: Resource links, file links such as pictures or videos
+        type: string
+      timestamp:
+        description: Create timestamp
+        type: integer
+      tx_hash:
+        description: The transaction hash created
+        type: string
+    type: object
   service.NFTTxsRes:
     properties:
       nft_txs:
         description: NFT transaction list
         items:
           $ref: '#/definitions/model.NFTTx'
+        type: array
+      total:
+        description: The total number of NFTs
+        type: integer
+    type: object
+  service.NFTsRes:
+    properties:
+      nfts:
+        description: NFT list
+        items:
+          $ref: '#/definitions/model.NFT'
         type: array
       total:
         description: The total number of NFTs
@@ -759,46 +893,10 @@ definitions:
         description: The total number of Exchanger
         type: integer
     type: object
-  service.RankingSNFTRes:
+  service.RankingNFTRes:
     properties:
       nfts:
-        description: SNFT list
-        items:
-          properties:
-            address:
-              description: SNFT address
-              type: string
-            awardee:
-              description: The address of the miner that was rewarded last, null if
-                it has not been rewarded
-              type: string
-            creator:
-              type: string
-            last_price:
-              description: The last transaction price, the unit is wei, null if the
-                transaction has not been completed
-              type: string
-            owner:
-              description: owner, unallocated and reclaimed are null
-              type: string
-            reward_at:
-              description: The timestamp of the last rewarded, null if not rewarded
-              type: integer
-            reward_number:
-              description: The height of the last rewarded block, null if not rewarded
-              type: integer
-            txCount:
-              type: integer
-          type: object
-        type: array
-      total:
-        description: The total number of SNFTs
-        type: integer
-    type: object
-  service.RankingUNFTRes:
-    properties:
-      nfts:
-        description: UNFT list
+        description: NFT list
         items:
           properties:
             address:
@@ -861,7 +959,43 @@ definitions:
           type: object
         type: array
       total:
-        description: The total number of UNFTs
+        description: The total number of NFTs
+        type: integer
+    type: object
+  service.RankingSNFTRes:
+    properties:
+      nfts:
+        description: SNFT list
+        items:
+          properties:
+            address:
+              description: SNFT address
+              type: string
+            awardee:
+              description: The address of the miner that was rewarded last, null if
+                it has not been rewarded
+              type: string
+            creator:
+              type: string
+            last_price:
+              description: The last transaction price, the unit is wei, null if the
+                transaction has not been completed
+              type: string
+            owner:
+              description: owner, unallocated and reclaimed are null
+              type: string
+            reward_at:
+              description: The timestamp of the last rewarded, null if not rewarded
+              type: integer
+            reward_number:
+              description: The height of the last rewarded block, null if not rewarded
+              type: integer
+            txCount:
+              type: integer
+          type: object
+        type: array
+      total:
+        description: The total number of SNFTs
         type: integer
     type: object
   service.RewardsRes:
@@ -887,9 +1021,6 @@ definitions:
         description: The address of the miner that was rewarded last, null if it has
           not been rewarded
         type: string
-      block_number:
-        description: Create block height, equal to the first NFT in the collection
-        type: integer
       category:
         description: category
         type: string
@@ -908,15 +1039,12 @@ definitions:
       id:
         description: period ID
         type: string
-      img_url:
-        description: image link
-        type: string
       last_price:
         description: The last transaction price, the unit is wei, null if the transaction
           has not been completed
         type: string
       meta_url:
-        description: collection meta information URL
+        description: FNFT meta information URL
         type: string
       name:
         description: name
@@ -1129,83 +1257,6 @@ definitions:
           $ref: '#/definitions/model.Transaction'
         type: array
     type: object
-  service.UNFT:
-    properties:
-      address:
-        description: NFT address, grows automatically from 0x1
-        type: string
-      attributes:
-        description: Attributes
-        type: string
-      block_number:
-        description: Create block height, equal to the first NFT in the collection
-        type: integer
-      category:
-        description: category
-        type: string
-      collection_id:
-        description: The id of the collection, the name of the collection + the creator
-          of the collection + the hash of the exchange where the collection is located
-        type: string
-      creator:
-        description: Creator
-        type: string
-      desc:
-        description: description
-        type: string
-      exchanger:
-        description: belongs to the exchange
-        type: string
-      exchanger_addr:
-        description: The address of the exchange, if there is none, it can be traded
-          on any exchange
-        type: string
-      id:
-        description: ID
-        type: string
-      img_url:
-        description: image link
-        type: string
-      last_price:
-        description: The last transaction price (null if the transaction is not completed),
-          the unit is wei
-        type: string
-      meta_url:
-        description: collection meta information URL
-        type: string
-      name:
-        description: name
-        type: string
-      owner:
-        description: owner
-        type: string
-      raw_meta_url:
-        description: Original meta information URL on the chain
-        type: string
-      royalty_ratio:
-        description: Royalty rate, in ten thousandths
-        type: integer
-      source_url:
-        description: Resource links, file links such as pictures or videos
-        type: string
-      timestamp:
-        description: Create timestamp
-        type: integer
-      tx_hash:
-        description: The transaction hash created
-        type: string
-    type: object
-  service.UNFTsRes:
-    properties:
-      nfts:
-        description: NFT list
-        items:
-          $ref: '#/definitions/model.UNFT'
-        type: array
-      total:
-        description: The total number of NFTs
-        type: integer
-    type: object
 info:
   contact: {}
   description: Block browser back-end interface, parses data from the blockchain,
@@ -1214,6 +1265,31 @@ info:
   title: block explorer API
   version: "1.0"
 paths:
+  /account/{addr}:
+    get:
+      consumes:
+      - application/json
+      description: Query the account information of the specified address
+      parameters:
+      - description: account address
+        in: path
+        name: addr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.AccountRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query one account
+      tags:
+      - account
   /account/page:
     get:
       consumes:
@@ -1241,7 +1317,7 @@ paths:
             $ref: '#/definitions/service.ErrRes'
       summary: query top accounts
       tags:
-      - block
+      - account
   /block/{number}:
     get:
       consumes:
@@ -1751,6 +1827,31 @@ paths:
       summary: request ERB test coin (new /erb_faucet)
       tags:
       - obsolete interface
+  /nft/{addr}:
+    get:
+      consumes:
+      - application/json
+      description: Query one NFT by address
+      parameters:
+      - description: Address
+        in: path
+        name: addr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.NFT'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query one NFT
+      tags:
+      - NFT
   /nft/page:
     get:
       consumes:
@@ -1783,7 +1884,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.UNFTsRes'
+            $ref: '#/definitions/service.NFTsRes'
         "400":
           description: Bad Request
           schema:
@@ -1865,7 +1966,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.UNFTsRes'
+            $ref: '#/definitions/service.NFTsRes'
         "400":
           description: Bad Request
           schema:
@@ -1905,6 +2006,38 @@ paths:
       summary: query exchanger ranking
       tags:
       - Ranking
+  /ranking/nft:
+    get:
+      consumes:
+      - application/json
+      description: NFT ranking for a specified time range
+      parameters:
+      - description: Limit, time range
+        in: query
+        name: limit
+        type: string
+      - description: Page, default 1
+        in: query
+        name: page
+        type: string
+      - description: Page size, default 10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.RankingNFTRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query NFT ranking
+      tags:
+      - Ranking
   /ranking/snft:
     get:
       consumes:
@@ -1935,38 +2068,6 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: query SNFT ranking
-      tags:
-      - Ranking
-  /ranking/unft:
-    get:
-      consumes:
-      - application/json
-      description: UNFT ranking for a specified time range
-      parameters:
-      - description: Limit, time range
-        in: query
-        name: limit
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.RankingUNFTRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query UNFT ranking
       tags:
       - Ranking
   /reward:
@@ -2366,29 +2467,4 @@ paths:
       summary: query transaction receipt
       tags:
       - transaction
-  /unft/{addr}:
-    get:
-      consumes:
-      - application/json
-      description: Query one UNFT by address
-      parameters:
-      - description: Address
-        in: path
-        name: addr
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.UNFT'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query one UNFT
-      tags:
-      - NFT
 swagger: "2.0"

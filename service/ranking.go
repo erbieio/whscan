@@ -37,18 +37,18 @@ func RankingSNFT(limit string, page, size int) (res RankingSNFTRes, err error) {
 	return
 }
 
-// RankingUNFTRes UNFT ranking return parameters
-type RankingUNFTRes struct {
-	Total uint64 `json:"total"` //The total number of UNFTs
+// RankingNFTRes NFT ranking return parameters
+type RankingNFTRes struct {
+	Total uint64 `json:"total"` //The total number of NFTs
 	NFTs  []struct {
-		model.UNFT
+		model.NFT
 		TxCount uint64 `json:"txCount"`
-	} `json:"nfts"` //UNFT list
+	} `json:"nfts"` //NFT list
 }
 
-func RankingUNFT(limit string, page, size int) (res RankingUNFTRes, err error) {
-	db := DB.Model(&model.UNFT{}).Group("address").Offset((page - 1) * size).Limit(size).
-		Order("tx_count DESC, address DESC").Select("unfts.*,COUNT(nft_addr) AS tx_count")
+func RankingNFT(limit string, page, size int) (res RankingNFTRes, err error) {
+	db := DB.Model(&model.NFT{}).Group("address").Offset((page - 1) * size).Limit(size).
+		Order("tx_count DESC, address DESC").Select("nfts.*,COUNT(nft_addr) AS tx_count")
 	switch limit {
 	case "24h":
 		start, stop := utils.LastTimeRange(1)
@@ -63,7 +63,7 @@ func RankingUNFT(limit string, page, size int) (res RankingUNFTRes, err error) {
 		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address")
 	}
 	err = db.Scan(&res.NFTs).Error
-	res.Total = cache.TotalUNFT
+	res.Total = cache.TotalNFT
 	return
 }
 

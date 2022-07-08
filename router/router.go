@@ -15,6 +15,7 @@ func Init() *gin.Engine {
 	api.Depreciation(r)
 	api.Block(r)
 	api.Transaction(r)
+	api.Account(r)
 	api.Exchanger(r)
 	api.Collection(r)
 	api.NFT(r)

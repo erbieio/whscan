@@ -2,14 +2,14 @@ package service
 
 import "server/common/model"
 
-// UNFTsRes NFT paging return parameters
-type UNFTsRes struct {
-	Total int64        `json:"total"` //The total number of NFTs
-	NFTs  []model.UNFT `json:"nfts"`  //NFT list
+// NFTsRes NFT paging return parameters
+type NFTsRes struct {
+	Total int64       `json:"total"` //The total number of NFTs
+	NFTs  []model.NFT `json:"nfts"`  //NFT list
 }
 
-func FetchUNFTs(exchanger, collectionId, owner string, page, size int) (res UNFTsRes, err error) {
-	db := DB.Model(&model.UNFT{})
+func FetchNFTs(exchanger, collectionId, owner string, page, size int) (res NFTsRes, err error) {
+	db := DB.Model(&model.NFT{})
 	if exchanger != "" {
 		db = db.Where("exchanger_addr=?", exchanger)
 	}
@@ -106,27 +106,25 @@ func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAnd
 	return
 }
 
-type UNFT struct {
-	model.UNFT
+type NFT struct {
+	model.NFT
 	model.Collection
 }
 
-func GetUNFT(addr string) (res UNFT, err error) {
-	err = DB.Model(&model.UNFT{}).Joins("LEFT JOIN collections ON collection_id=collections.id").
-		Where("address=?", addr).Select("unfts.*,collections.*").Scan(&res).Error
+func GetNFT(addr string) (res NFT, err error) {
+	err = DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON collection_id=collections.id").
+		Where("address=?", addr).Select("nfts.*,collections.*").Scan(&res).Error
 	return
 }
 
 type SNFT struct {
 	model.SNFT
 	model.FNFT
-	model.Collection
 	model.Epoch
 }
 
 func GetSNFT(addr string) (res SNFT, err error) {
-	err = DB.Model(&model.SNFT{}).Joins("LEFT JOIN collections ON LEFT(address,41)=collections.id").
-		Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
+	err = DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
 		Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
 		Where("address=?", addr).Select("snfts.*,fnfts.*,epoches.*").Scan(&res).Error
 	return

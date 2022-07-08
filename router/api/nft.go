@@ -14,7 +14,7 @@ func NFT(e *gin.Engine) {
 	e.GET("/nft_meta/page", pageNFTAndMeta)
 	e.GET("/nft/tx/page", pageNFTTx)
 	e.GET("/snft/page", pageSNFT)
-	e.GET("/unft/:addr", getUNFT)
+	e.GET("/nft/:addr", getNFT)
 	e.GET("/snft/:addr", getSNFT)
 	e.GET("/snft/block", blockSNFT)
 	e.GET("/snft_meta/page", pageSNFTAndMeta)
@@ -32,7 +32,7 @@ func NFT(e *gin.Engine) {
 // @Param        collection_id  query     string  false  "collection id, if empty, query all"
 // @Param        page           query     string  false  "Page, default 1"
 // @Param        page_size      query     string  false  "Page size, default 10"
-// @Success      200            {object}  service.UNFTsRes
+// @Success      200            {object}  service.NFTsRes
 // @Failure      400            {object}  service.ErrRes
 // @Router       /nft/page [get]
 func pageNFT(c *gin.Context) {
@@ -54,7 +54,7 @@ func pageNFT(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchUNFTs(req.Exchanger, req.CollectionId, strings.ToLower(req.Owner), page, size)
+	res, err := service.FetchNFTs(req.Exchanger, req.CollectionId, strings.ToLower(req.Owner), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -72,7 +72,7 @@ func pageNFT(c *gin.Context) {
 // @Param        collection_id  query     string  false  "collection id, if empty, query all"
 // @Param        page           query     string  false  "Page, default 1"
 // @Param        page_size      query     string  false  "Page size, default 10"
-// @Success      200            {object}  service.UNFTsRes
+// @Success      200            {object}  service.NFTsRes
 // @Failure      400            {object}  service.ErrRes
 // @Router       /nft_meta/page [get]
 func pageNFTAndMeta(c *gin.Context) {
@@ -156,16 +156,16 @@ func pageSNFT(c *gin.Context) {
 }
 
 // @Tags         NFT
-// @Summary      query one UNFT
-// @Description  Query one UNFT by address
+// @Summary      query one NFT
+// @Description  Query one NFT by address
 // @Accept       json
 // @Produce      json
 // @Param        addr  path      string  true  "Address"
-// @Success      200   {object}  service.UNFT
+// @Success      200   {object}  service.NFT
 // @Failure      400        {object}  service.ErrRes
-// @Router       /unft/{addr} [get]
-func getUNFT(c *gin.Context) {
-	res, err := service.GetUNFT(c.Param("addr"))
+// @Router       /nft/{addr} [get]
+func getNFT(c *gin.Context) {
+	res, err := service.GetNFT(c.Param("addr"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
