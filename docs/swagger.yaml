@@ -616,6 +616,15 @@ definitions:
       rewardSNFTCount:
         description: Total number of times to get SNFT rewards
         type: integer
+      total24HExchangerTx:
+        description: Total number of exchanger  transactions within 24 hours
+        type: integer
+      total24HNFT:
+        description: Total number of NFT within 24 hours
+        type: integer
+      total24HTx:
+        description: Total number of transactions within 24 hours
+        type: integer
       totalAccount:
         description: Total account number
         type: integer
@@ -627,6 +636,9 @@ definitions:
         type: integer
       totalExchanger:
         description: Total number of exchanges
+        type: integer
+      totalExchangerTx:
+        description: Total number of exchanger  transactions
         type: integer
       totalNFT:
         description: Total number of NFTs
@@ -701,6 +713,9 @@ definitions:
       address:
         description: Exchange address
         type: string
+      amount:
+        description: pledge amount
+        type: string
       balance_count:
         description: Total transaction amount, unit wei
         type: string
@@ -708,6 +723,7 @@ definitions:
         description: The block number when created
         type: integer
       collectionCount:
+        description: collection count
         type: integer
       creator:
         description: Creator address
@@ -727,6 +743,9 @@ definitions:
       tx_hash:
         description: The transaction created
         type: string
+      txCount:
+        description: transaction count
+        type: integer
       url:
         description: Exchange URL
         type: string
@@ -761,6 +780,17 @@ definitions:
             number:
               type: integer
             txCount:
+              type: integer
+          type: object
+        type: array
+      exchangers:
+        items:
+          properties:
+            day:
+              type: string
+            index:
+              type: integer
+            num:
               type: integer
           type: object
         type: array
@@ -1825,6 +1855,36 @@ paths:
       summary: query exchange status
       tags:
       - other interfaces
+  /exchangers:
+    get:
+      consumes:
+      - application/json
+      description: Query the list of exchanges in reverse order of creation time
+      parameters:
+      - description: Page, default 1
+        in: query
+        name: page
+        type: string
+      - description: Page size, default 10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.ExchangerRes'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: Query the list of exchanges
+      tags:
+      - Exchange
   /extra/checkAuth:
     get:
       consumes:

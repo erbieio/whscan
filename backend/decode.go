@@ -450,6 +450,10 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 		wh.CacheInternalTxs = append(wh.CacheInternalTxs, internalTx)
 
 	case 11: //Open the exchange
+		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.ExchangerPledge{
+			Address: from,
+			Amount:  value,
+		})
 		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{
 			Address:      from,
 			Name:         w.Name,

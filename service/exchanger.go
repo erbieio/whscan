@@ -81,14 +81,32 @@ func lastExchangerTotal(day int64) (count int64, err error) {
 
 type ExchangerRes struct {
 	model.Exchanger
-	CollectionCount uint64 `json:"collectionCount"`
+	Amount          string `json:"amount"`          // pledge amount
+	TxCount         uint64 `json:"txCount"`         //transaction count
+	CollectionCount uint64 `json:"collectionCount"` //collection count
 }
 
 func FindExchanger(addr types.Address) (res ExchangerRes, err error) {
-	err = DB.Where("address=?", addr).First(&res).Error
+	err = DB.Model(&model.Exchanger{}).Where("address=?", addr).Scan(&res).Error
+	if err != nil {
+		return
+	}
+	err = DB.Where("address=?", addr).Model(&model.ExchangerPledge{}).Select("amount").Scan(&res.Amount).Error
 	if err != nil {
 		return
 	}
 	err = DB.Where("exchanger=?", addr).Model(&model.Collection{}).Select("COUNT(*)").Scan(&res.CollectionCount).Error
+	if err != nil {
+		return
+	}
+	err = DB.Where("exchanger_addr=?", addr).Model(&model.NFTTx{}).Select("COUNT(*)").Scan(&res.TxCount).Error
+	return
+}
+
+func Exchangers(page, size int) (res []ExchangerRes, err error) {
+	s := "*, (SELECT COUNT(*) FROM collections WHERE exchanger=exchangers.address) AS collection_count"
+	s += ", (SELECT COUNT(*) FROM nft_txes WHERE exchanger_addr=exchangers.address) AS tx_count"
+	s += ", IFNULL((SELECT amount FROM exchanger_pledges WHERE address=exchangers.address),'0') AS amount"
+	err = DB.Model(model.Exchanger{}).Select(s).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Scan(&res).Error
 	return
 }

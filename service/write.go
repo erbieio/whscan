@@ -32,6 +32,10 @@ type Cache struct {
 	TotalSNFTAmount     types.BigInt `json:"totalSNFTAmount"`     //Total transaction value of SNFTs
 	TotalNFTCreator     uint64       `json:"totalNFTCreator"`     //Total creator of NFTs
 	TotalSNFTCreator    uint64       `json:"totalSNFTCreator"`    //Total creator of SNFTs
+	Total24HTx          uint64       `json:"total24HTx"`          //Total number of transactions within 24 hours
+	TotalExchangerTx    uint64       `json:"totalExchangerTx"`    //Total number of exchanger  transactions
+	Total24HExchangerTx uint64       `json:"total24HExchangerTx"` //Total number of exchanger  transactions within 24 hours
+	Total24HNFT         uint64       `json:"total24HNFT"`         //Total number of NFT within 24 hours
 	RewardCoinCount     uint64       `json:"rewardCoinCount"`     //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount     uint64       `json:"rewardSNFTCount"`     //Total number of times to get SNFT rewards
 	TotalRecycle        uint64       `json:"totalRecycle"`        //Total number of recycle SNFT
@@ -102,10 +106,10 @@ func TotalSNFT() uint64 {
 	return cache.TotalSNFT
 }
 
-var lastTime = time.Now()
+var lastTime = int64(0)
 
 func freshCache() {
-	if now := time.Now(); now.Sub(lastTime).Seconds() > 60 {
+	if now := time.Now().Unix(); now-lastTime > 60 {
 		var number uint64
 		if err := DB.Model(&model.Account{}).Select("COUNT(*)").Scan(&number).Error; err == nil {
 			cache.TotalAccount = number
@@ -115,6 +119,18 @@ func freshCache() {
 		}
 		if err := DB.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
 			cache.TotalNFTCreator = number
+		}
+		if err := DB.Model(&model.Block{}).Where("timestamp>?", now-86400).Select("SUM(total_transaction)").Scan(&number).Error; err == nil {
+			cache.Total24HTx = number
+		}
+		if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Select("COUNT(*)").Scan(&number).Error; err == nil {
+			cache.TotalExchangerTx = number
+		}
+		if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>?", now-86400).Select("COUNT(*)").Scan(&number).Error; err == nil {
+			cache.Total24HExchangerTx = number
+		}
+		if err := DB.Model(&model.NFT{}).Where("timestamp>?", now-86400).Select("COUNT(*)").Scan(&number).Error; err == nil {
+			cache.Total24HNFT = number
 		}
 		if err := DB.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&number).Error; err == nil {
 			cache.RewardSNFTCount = number
@@ -408,7 +424,7 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 	// Consensus pledge
 	for _, pledge := range wh.ConsensusPledges {
 		if err = tx.Create(pledge).Error; err != nil {
-			err = tx.Exec("UPDATE consensus_pledges SET amount=? count=count+1 WHERE address=?", pledge.Amount, pledge.Amount).Error
+			err = tx.Exec("UPDATE consensus_pledges SET amount=?, count=count+1 WHERE address=?", pledge.Amount, pledge.Address).Error
 		}
 		if err != nil {
 			return

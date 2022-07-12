@@ -830,6 +830,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/exchangers": {
+            "get": {
+                "description": "Query the list of exchanges in reverse order of creation time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Exchange"
+                ],
+                "summary": "Query the list of exchanges",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.ExchangerRes"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/extra/checkAuth": {
             "get": {
                 "description": "query exchange status",
@@ -2730,6 +2776,18 @@ const docTemplate = `{
                     "description": "Total number of times to get SNFT rewards",
                     "type": "integer"
                 },
+                "total24HExchangerTx": {
+                    "description": "Total number of exchanger  transactions within 24 hours",
+                    "type": "integer"
+                },
+                "total24HNFT": {
+                    "description": "Total number of NFT within 24 hours",
+                    "type": "integer"
+                },
+                "total24HTx": {
+                    "description": "Total number of transactions within 24 hours",
+                    "type": "integer"
+                },
                 "totalAccount": {
                     "description": "Total account number",
                     "type": "integer"
@@ -2744,6 +2802,10 @@ const docTemplate = `{
                 },
                 "totalExchanger": {
                     "description": "Total number of exchanges",
+                    "type": "integer"
+                },
+                "totalExchangerTx": {
+                    "description": "Total number of exchanger  transactions",
                     "type": "integer"
                 },
                 "totalNFT": {
@@ -2848,6 +2910,10 @@ const docTemplate = `{
                     "description": "Exchange address",
                     "type": "string"
                 },
+                "amount": {
+                    "description": "pledge amount",
+                    "type": "string"
+                },
                 "balance_count": {
                     "description": "Total transaction amount, unit wei",
                     "type": "string"
@@ -2857,6 +2923,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "collectionCount": {
+                    "description": "collection count",
                     "type": "integer"
                 },
                 "creator": {
@@ -2877,6 +2944,10 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "description": "Open time",
+                    "type": "integer"
+                },
+                "txCount": {
+                    "description": "transaction count",
                     "type": "integer"
                 },
                 "tx_hash": {
@@ -2929,6 +3000,23 @@ const docTemplate = `{
                                 "type": "integer"
                             },
                             "txCount": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "exchangers": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "day": {
+                                "type": "string"
+                            },
+                            "index": {
+                                "type": "integer"
+                            },
+                            "num": {
                                 "type": "integer"
                             }
                         }

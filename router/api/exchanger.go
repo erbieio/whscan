@@ -11,6 +11,7 @@ import (
 func Exchanger(e *gin.Engine) {
 	e.GET("/exchanger/page", pageExchanger)
 	e.GET("/exchanger/:addr", getExchanger)
+	e.GET("/exchangers", exchangers)
 }
 
 // @Tags         Exchange
@@ -48,7 +49,6 @@ func pageExchanger(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
-
 }
 
 // @Tags         Exchange
@@ -76,4 +76,39 @@ func getExchanger(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, data)
+}
+
+// @Tags         Exchange
+// @Summary      Query the list of exchanges
+// @Description  Query the list of exchanges in reverse order of creation time
+// @Accept       json
+// @Produce      json
+// @Param        page       query     string  false  "Page, default 1"
+// @Param        page_size  query     string  false  "Page size, default 10"
+// @Success      200        {object}  []service.ExchangerRes
+// @Failure      400        {object}  service.ErrRes
+// @Router       /exchangers [get]
+func exchangers(c *gin.Context) {
+	req := struct {
+		Page     *int `form:"page"`
+		PageSize *int `form:"page_size"`
+	}{}
+	err := c.BindQuery(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	page, size, err := utils.ParsePage(req.Page, req.PageSize)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	res, err := service.Exchangers(page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }
