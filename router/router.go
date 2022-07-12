@@ -22,5 +22,6 @@ func Init() *gin.Engine {
 	api.Reward(r)
 	api.Epoch(r)
 	api.Ranking(r)
+	api.Chart(r)
 	return r
 }

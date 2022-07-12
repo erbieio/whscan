@@ -264,7 +264,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 
 		// wormholes transaction processing
 		for _, tx := range wh.CacheTxs {
-			err = decodeWHTx(wh.Block, tx, wh)
+			err = decodeWHTx(c, wh.Block, tx, wh)
 			if err != nil {
 				return err
 			}
@@ -302,7 +302,7 @@ var (
 )
 
 // decodeWHTx parses the special transaction of the wormholes blockchain
-func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet) (err error) {
+func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *service.DecodeRet) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
 	// Non-wormholes and failed transactions are not resolved
 	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
@@ -367,6 +367,7 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 	from := string(tx.From)
 	to := string(*tx.To)
 	value := string(tx.Value)
+	amount := "0"
 	switch w.Type {
 	case 0: //Users mint NFT by themselves
 		nftAddr := "" //Calculate fill in real time when inserting into database
@@ -424,17 +425,29 @@ func decodeWHTx(block *model.Block, tx *model.Transaction, wh *service.DecodeRet
 		}
 		return
 
-	case 9: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
+	case 9, 10: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
+		amount, err = c.GetPledge(from, wh.Number.Hex())
+		if err != nil {
+			return err
+		}
 		wh.ConsensusPledges = append(wh.ConsensusPledges, &model.ConsensusPledge{
 			Address: from,
-			Amount:  value,
+			Amount:  amount,
+			Count:   1,
 		})
-
-	case 10: //Revoke consensus pledge
-		wh.ConsensusPledges = append(wh.ConsensusPledges, &model.ConsensusPledge{
-			Address: from,
-			Amount:  "-" + value,
-		})
+		internalTx := &model.InternalTx{
+			ParentTxHash: Hash(txHash),
+			From:         &tx.From,
+			To:           tx.To,
+			Value:        tx.Value,
+			GasLimit:     tx.Gas,
+		}
+		if w.Type == 9 {
+			internalTx.Op = "pledge_add"
+		} else {
+			internalTx.Op = "pledge_sub"
+		}
+		wh.CacheInternalTxs = append(wh.CacheInternalTxs, internalTx)
 
 	case 11: //Open the exchange
 		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{

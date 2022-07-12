@@ -392,6 +392,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/chart/line": {
+            "get": {
+                "description": "query charts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chart"
+                ],
+                "summary": "query charts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Limit, default 10",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.LineChartRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/collection/page": {
             "get": {
                 "description": "Query NFT collection list in reverse order of created block height",
@@ -2686,11 +2723,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "rewardCoinCount": {
-                    "description": "Total Number of times to get coin rewards, 0.1ERB once",
+                    "description": "Total number of times to get coin rewards, 0.1ERB once",
                     "type": "integer"
                 },
                 "rewardSNFTCount": {
-                    "description": "Total Number of times to get SNFT rewards",
+                    "description": "Total number of times to get SNFT rewards",
                     "type": "integer"
                 },
                 "totalAccount": {
@@ -2727,6 +2764,10 @@ const docTemplate = `{
                 },
                 "totalNFTTx": {
                     "description": "Total number of  NFT transactions",
+                    "type": "integer"
+                },
+                "totalRecycle": {
+                    "description": "Total number of recycle SNFT",
                     "type": "integer"
                 },
                 "totalSNFT": {
@@ -2873,6 +2914,39 @@ const docTemplate = `{
                 "total": {
                     "description": "Total number of exchanges",
                     "type": "integer"
+                }
+            }
+        },
+        "service.LineChartRes": {
+            "type": "object",
+            "properties": {
+                "blocks": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "number": {
+                                "type": "integer"
+                            },
+                            "txCount": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "txs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "gasPrice": {
+                                "type": "integer"
+                            },
+                            "hash": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 }
             }
         },

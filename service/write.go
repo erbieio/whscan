@@ -34,6 +34,7 @@ type Cache struct {
 	TotalSNFTCreator    uint64       `json:"totalSNFTCreator"`    //Total creator of SNFTs
 	RewardCoinCount     uint64       `json:"rewardCoinCount"`     //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount     uint64       `json:"rewardSNFTCount"`     //Total number of times to get SNFT rewards
+	TotalRecycle        uint64       `json:"totalRecycle"`        //Total number of recycle SNFT
 }
 
 var cache = Cache{}
@@ -80,6 +81,9 @@ func initCache() (err error) {
 		return
 	}
 	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalSNFTAmount").Select("value").Scan(&cache.TotalSNFTAmount).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalRecycle").Select("value").Scan(&cache.TotalRecycle).Error; err != nil {
 		return
 	}
 	freshCache()
@@ -220,6 +224,12 @@ func BlockInsert(block *DecodeRet) error {
 				return err
 			}
 		}
+		err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
+			Key: "TotalRecycle", Value: fmt.Sprintf("%d", cache.TotalRecycle+uint64(len(block.RecycleSNFTs))),
+		}).Error
+		if err != nil {
+			return err
+		}
 
 		// wormholes unique data write
 		return WHInsert(t, block)
@@ -235,6 +245,7 @@ func BlockInsert(block *DecodeRet) error {
 		cache.TotalSNFT -= uint64(len(block.RecycleSNFTs))
 		cache.TotalExchanger += uint64(len(block.Exchangers))
 		cache.TotalExchanger -= uint64(len(block.CloseExchangers))
+		cache.TotalRecycle += uint64(len(block.RecycleSNFTs))
 		for _, tx := range block.NFTTxs {
 			if (*tx.NFTAddr)[:3] == "0x0" {
 				cache.TotalNFTTx += 1
@@ -396,7 +407,9 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 	}
 	// Consensus pledge
 	for _, pledge := range wh.ConsensusPledges {
-		err = ConsensusPledgeAdd(tx, pledge.Address, pledge.Amount)
+		if err = tx.Create(pledge).Error; err != nil {
+			err = tx.Exec("UPDATE consensus_pledges SET amount=? count=count+1 WHERE address=?", pledge.Amount, pledge.Amount).Error
+		}
 		if err != nil {
 			return
 		}
@@ -542,24 +555,6 @@ func InjectSNFT(tx *gorm.DB, epoch *model.Epoch) (err error) {
 // ExchangerPledgeAdd increases the pledge amount (reduces if the amount is negative)
 func ExchangerPledgeAdd(tx *gorm.DB, addr, amount string) error {
 	pledge := model.ExchangerPledge{}
-	err := tx.Where("address=?", addr).Find(&pledge).Error
-	if err != nil {
-		return err
-	}
-	pledge.Count++
-	pledge.Address = addr
-	if pledge.Amount == "" {
-		pledge.Amount = "0"
-	}
-	pledge.Amount = BigIntAdd(pledge.Amount, amount)
-	return tx.Clauses(clause.OnConflict{
-		DoUpdates: clause.AssignmentColumns([]string{"amount", "count"}),
-	}).Create(&pledge).Error
-}
-
-// ConsensusPledgeAdd increases the pledge amount (decreases if the amount is negative)
-func ConsensusPledgeAdd(tx *gorm.DB, addr, amount string) error {
-	pledge := model.ConsensusPledge{}
 	err := tx.Where("address=?", addr).Find(&pledge).Error
 	if err != nil {
 		return err

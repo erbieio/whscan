@@ -244,3 +244,15 @@ func (c *Client) GetSNFT(addr, number string) (snft SNFT, err error) {
 	}
 	return
 }
+
+func (c *Client) GetPledge(addr, number string) (string, error) {
+	pledge := struct {
+		PledgedBalance *big.Int
+	}{}
+	err := c.Call(&pledge, "eth_getAccountInfo", addr, number)
+	if pledge.PledgedBalance != nil {
+		return pledge.PledgedBalance.Text(10), err
+	} else {
+		return "0", err
+	}
+}
