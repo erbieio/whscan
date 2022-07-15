@@ -3013,9 +3013,6 @@ const docTemplate = `{
                             "day": {
                                 "type": "string"
                             },
-                            "index": {
-                                "type": "integer"
-                            },
                             "num": {
                                 "type": "integer"
                             }
@@ -3720,7 +3717,77 @@ const docTemplate = `{
                     "description": "Transaction list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Transaction"
+                        "type": "object",
+                        "properties": {
+                            "blockHash": {
+                                "description": "Block Hash",
+                                "type": "string"
+                            },
+                            "blockNumber": {
+                                "description": "block number",
+                                "type": "integer"
+                            },
+                            "contractAddress": {
+                                "description": "The created contract address",
+                                "type": "string"
+                            },
+                            "cumulativeGasUsed": {
+                                "description": "Cumulative gas consumption",
+                                "type": "integer"
+                            },
+                            "from": {
+                                "description": "Send address",
+                                "type": "string"
+                            },
+                            "gas": {
+                                "description": "fuel",
+                                "type": "integer"
+                            },
+                            "gasPrice": {
+                                "description": "Gas price",
+                                "type": "integer"
+                            },
+                            "gasUsed": {
+                                "description": "Gas consumption",
+                                "type": "integer"
+                            },
+                            "hash": {
+                                "description": "Hash",
+                                "type": "string"
+                            },
+                            "input": {
+                                "description": "Additional input data, contract call encoded data",
+                                "type": "string"
+                            },
+                            "methodId": {
+                                "description": "Method ID, normal transaction is empty",
+                                "type": "string"
+                            },
+                            "nonce": {
+                                "description": "Random number, the number of transactions initiated by the account",
+                                "type": "integer"
+                            },
+                            "status": {
+                                "description": "Status, 1: success; 0: failure",
+                                "type": "integer"
+                            },
+                            "timestamp": {
+                                "description": "The event stamp of the block it is in",
+                                "type": "integer"
+                            },
+                            "to": {
+                                "description": "Receive address",
+                                "type": "string"
+                            },
+                            "transactionIndex": {
+                                "description": "The serial number in the block",
+                                "type": "integer"
+                            },
+                            "value": {
+                                "description": "Amount, unit wei",
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }

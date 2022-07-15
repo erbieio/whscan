@@ -21,7 +21,7 @@ var (
 	MysqlDsn         = "root:123456@tcp(127.0.0.1:3306)/scan"
 	ResetDB          = false
 	IpfsServer       = "http://localhost:8080"
-	AmountStr        = "100000000000000000000"
+	AmountStr        = "1000000000000000000"
 	ERBPay           = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay contract address
 )
 
