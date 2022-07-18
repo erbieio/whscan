@@ -86,7 +86,7 @@ type SNFTsAndMetaRes struct {
 	} `json:"nfts"` //SNFT list
 }
 
-func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
+func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
 	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id")
 	if owner != "" {
 		db = db.Where("owner=?", owner)
@@ -94,7 +94,10 @@ func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAnd
 	if collectionId != "" {
 		db = db.Where("group_id=?", collectionId)
 	}
-	if owner == "" && collectionId == "" {
+	if exchanger != "" {
+		db = db.Where("LEFT(address,38) IN (?)", DB.Model(&Epoch{}).Where("exchanger=?", exchanger).Select("id"))
+	}
+	if owner == "" && collectionId == "" && exchanger == "" {
 		res.Total = int64(TotalSNFT())
 	} else {
 		err = db.Count(&res.Total).Error

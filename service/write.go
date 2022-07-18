@@ -41,7 +41,10 @@ type Cache struct {
 	TotalRecycle        uint64       `json:"totalRecycle"`        //Total number of recycle SNFT
 }
 
-var cache = Cache{}
+var cache = Cache{
+	TotalNFTAmount:  "0",
+	TotalSNFTAmount: "0",
+}
 
 // InitCache initializes the query cache from the database
 func initCache() (err error) {

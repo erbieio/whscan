@@ -6,17 +6,18 @@ import (
 )
 
 type LineChartRes struct {
-	Blocks []struct {
+	Blocks []*struct {
 		Number           uint64 `json:"number"`
 		TotalTransaction uint64 `json:"txCount"`
 	} `json:"blocks"`
-	Txs []struct {
+	Txs []*struct {
 		Hash     string `json:"hash"`
 		GasPrice uint64 `json:"gasPrice"`
-	}
-	Exchangers []struct {
-		Day string `json:"day"`
-		Num uint64 `json:"num"`
+	} `json:"txs"`
+	Exchangers []*struct {
+		Index uint64 `json:"index"`
+		Day   string `json:"day"`
+		Num   uint64 `json:"num"`
 	} `json:"exchangers"`
 }
 
@@ -30,7 +31,7 @@ func LineChart(limit int) (res LineChartRes, err error) {
 		return
 	}
 	start, stop := utils.LastTimeRange(int64(limit))
-	err = DB.Model(&model.Exchanger{}).Select("FROM_UNIXTIME(timestamp,'%Y-%m-%d') AS day,COUNT(*) AS num").
-		Order("day").Group("FROM_UNIXTIME(timestamp,'%Y-%m-%d')").Where("timestamp>=? AND timestamp<?", start, stop).Scan(&res.Exchangers).Error
+	err = DB.Table("(?) A", DB.Model(&model.Exchanger{}).Select("(timestamp-1656950400) DIV 86400 AS `index`, FROM_UNIXTIME(timestamp,'%Y-%m-%d') AS `day`").
+		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`, `day`").Select("*, COUNT(*) AS num").Scan(&res.Exchangers).Error
 	return
 }

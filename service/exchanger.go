@@ -110,3 +110,29 @@ func Exchangers(page, size int) (res []ExchangerRes, err error) {
 	err = DB.Model(model.Exchanger{}).Select(s).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Scan(&res).Error
 	return
 }
+
+type ExchangerTxCountRes struct {
+	Total uint64 `json:"total"`
+	Day30 uint64 `json:"day30"`
+	Day7  uint64 `json:"day_7"`
+	Day1  uint64 `json:"day_1"`
+}
+
+func ExchangerTxCount(addr types.Address) (res ExchangerTxCountRes, err error) {
+	start, stop := utils.LastTimeRange(30)
+	db := DB.Model(&model.NFTTx{}).Where("exchanger_addr=?", addr).Select("COUNT(*)")
+	err = db.Scan(&res.Total).Error
+	if err != nil {
+		return
+	}
+	err = db.Where("timestamp>=? AND timestamp<?", start, stop).Scan(&res.Day30).Error
+	if err != nil {
+		return
+	}
+	err = db.Where("timestamp>=? AND timestamp<?", stop-7*utils.DaySecond, stop).Scan(&res.Day7).Error
+	if err != nil {
+		return
+	}
+	err = db.Where("timestamp>=? AND timestamp<?", stop-1*utils.DaySecond, stop).Scan(&res.Day1).Error
+	return
+}

@@ -17,7 +17,7 @@ type RankingSNFTRes struct {
 
 func RankingSNFT(limit string, page, size int) (res RankingSNFTRes, err error) {
 	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
-		Group("address").Offset((page - 1) * size).Limit(size).
+		Group("address,creator").Offset((page - 1) * size).Limit(size).
 		Order("tx_count DESC, address DESC").Select("snfts.*,creator,COUNT(nft_addr) AS tx_count")
 	switch limit {
 	case "24h":

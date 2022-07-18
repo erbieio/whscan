@@ -750,6 +750,17 @@ definitions:
         description: Exchange URL
         type: string
     type: object
+  service.ExchangerTxCountRes:
+    properties:
+      day_1:
+        type: integer
+      day_7:
+        type: integer
+      day30:
+        type: integer
+      total:
+        type: integer
+    type: object
   service.ExchangersRes:
     properties:
       exchangers:
@@ -788,6 +799,8 @@ definitions:
           properties:
             day:
               type: string
+            index:
+              type: integer
             num:
               type: integer
           type: object
@@ -1881,6 +1894,33 @@ paths:
       summary: Query the list of exchanges
       tags:
       - Exchange
+  /exchanger/tx_count/{addr}:
+    get:
+      consumes:
+      - application/json
+      description: Query the exchanges tx count chart
+      parameters:
+      - description: Exchanger address
+        in: path
+        name: addr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.ExchangerTxCountRes'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: Query the exchanges tx count
+      tags:
+      - Exchange
   /exchanger_auth:
     get:
       consumes:
@@ -2439,6 +2479,10 @@ paths:
       - description: collection id, if empty, query all
         in: query
         name: collection_id
+        type: string
+      - description: exchanger, if empty, query all
+        in: query
+        name: exchanger
         type: string
       - description: Owner, if empty, query all
         in: query

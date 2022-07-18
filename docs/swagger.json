@@ -745,6 +745,47 @@
                 }
             }
         },
+        "/exchanger/tx_count/{addr}": {
+            "get": {
+                "description": "Query the exchanges tx count chart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Exchange"
+                ],
+                "summary": "Query the exchanges tx count",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Exchanger address",
+                        "name": "addr",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.ExchangerTxCountRes"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/exchanger/{addr}": {
             "get": {
                 "description": "Query exchanges by address",
@@ -1631,6 +1672,12 @@
                         "type": "string",
                         "description": "collection id, if empty, query all",
                         "name": "collection_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "exchanger, if empty, query all",
+                        "name": "exchanger",
                         "in": "query"
                     },
                     {
@@ -2951,6 +2998,23 @@
                 }
             }
         },
+        "service.ExchangerTxCountRes": {
+            "type": "object",
+            "properties": {
+                "day30": {
+                    "type": "integer"
+                },
+                "day_1": {
+                    "type": "integer"
+                },
+                "day_7": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "service.ExchangersRes": {
             "type": "object",
             "properties": {
@@ -3003,6 +3067,9 @@
                         "properties": {
                             "day": {
                                 "type": "string"
+                            },
+                            "index": {
+                                "type": "integer"
                             },
                             "num": {
                                 "type": "integer"

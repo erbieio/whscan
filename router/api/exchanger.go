@@ -12,6 +12,7 @@ func Exchanger(e *gin.Engine) {
 	e.GET("/exchanger/page", pageExchanger)
 	e.GET("/exchanger/:addr", getExchanger)
 	e.GET("/exchangers", exchangers)
+	e.GET("/exchanger/tx_count/:addr", getExchangerTxCount)
 }
 
 // @Tags         Exchange
@@ -23,7 +24,7 @@ func Exchanger(e *gin.Engine) {
 // @Param        page       query     string  false  "Page, default 1"
 // @Param        page_size  query     string  false  "Page size, default 10"
 // @Success      200        {object}  service.ExchangersRes
-// @Failure      400        {object}  service.ErrRes
+// @Failure      400   {object}  service.ErrRes
 // @Router       /exchanger/page [get]
 func pageExchanger(c *gin.Context) {
 	req := struct {
@@ -111,4 +112,28 @@ func exchangers(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+// @Tags         Exchange
+// @Summary      Query the exchanges tx count
+// @Description  Query the exchanges tx count chart
+// @Accept       json
+// @Produce      json
+// @Param        addr  path      string  true  "Exchanger address"
+// @Success      200   {object}  []service.ExchangerTxCountRes
+// @Failure      400        {object}  service.ErrRes
+// @Router       /exchanger/tx_count/{addr} [get]
+func getExchangerTxCount(c *gin.Context) {
+	address := c.Param("addr")
+	addr, err := utils.ParseAddress(address)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	data, err := service.ExchangerTxCount(addr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
 }

@@ -28,7 +28,7 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 	if err != nil {
 		return
 	}
-	err = db.Joins("LEFT JOIN blocks ON number=block_number").Select("transaction.*,timestamp").
+	err = db.Joins("LEFT JOIN blocks ON number=block_number").Select("transactions.*,timestamp").
 		Order("block_number DESC, tx_index DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Transactions).Error
 	return
 }

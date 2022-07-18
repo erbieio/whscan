@@ -197,6 +197,7 @@ func getSNFT(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        collection_id  query     string  false  "collection id, if empty, query all"
+// @Param        exchanger      query     string  false  "exchanger, if empty, query all"
 // @Param        owner          query     string  false  "Owner, if empty, query all"
 // @Param        page           query     string  false  "Page, default 1"
 // @Param        page_size      query     string  false  "Page size, default 10"
@@ -208,6 +209,7 @@ func pageSNFTAndMeta(c *gin.Context) {
 		Page         *int   `form:"page"`
 		PageSize     *int   `form:"page_size"`
 		CollectionId string `form:"collection_id"`
+		Exchanger    string `form:"exchanger"`
 		Owner        string `form:"owner"`
 	}{}
 	err := c.BindQuery(&req)
@@ -221,7 +223,7 @@ func pageSNFTAndMeta(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchSNFTsAndMeta(strings.ToLower(req.Owner), req.CollectionId, page, size)
+	res, err := service.FetchSNFTsAndMeta(strings.ToLower(req.Owner), req.Exchanger, req.CollectionId, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
