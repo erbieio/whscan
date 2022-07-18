@@ -123,7 +123,7 @@ func freshCache() {
 		if err := DB.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
 			cache.TotalNFTCreator = number
 		}
-		if err := DB.Model(&model.Block{}).Where("timestamp>?", now-86400).Select("SUM(total_transaction)").Scan(&number).Error; err == nil {
+		if err := DB.Model(&model.Block{}).Where("timestamp>?", now-86400).Select("IFNULL(SUM(total_transaction),0)").Scan(&number).Error; err == nil {
 			cache.Total24HTx = number
 		}
 		if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Select("COUNT(*)").Scan(&number).Error; err == nil {

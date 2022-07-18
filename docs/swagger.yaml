@@ -599,7 +599,76 @@ definitions:
       blocks:
         description: block list
         items:
-          $ref: '#/definitions/model.Block'
+          properties:
+            coinCount:
+              description: number of times to get coin rewards, 0.1ERB once
+              type: integer
+            difficulty:
+              description: difficulty
+              type: integer
+            extraData:
+              description: Extra data
+              type: string
+            gasLimit:
+              description: Gas limit
+              type: integer
+            gasUsed:
+              description: Gas consumption
+              type: integer
+            hash:
+              description: Hash
+              type: string
+            miner:
+              description: miner
+              type: string
+            mixHash:
+              description: Mixed hash
+              type: string
+            nonce:
+              description: difficulty random number
+              type: string
+            number:
+              description: block number
+              type: integer
+            parentHash:
+              description: parent block hash
+              type: string
+            receiptsRoot:
+              description: Transaction receipt root hash
+              type: string
+            sha3Uncles:
+              description: Uncle root hash
+              type: string
+            size:
+              description: size
+              type: integer
+            snftCount:
+              description: number of times to get SNFT rewards
+              type: integer
+            stateRoot:
+              description: World tree root hash
+              type: string
+            timestamp:
+              description: timestamp
+              type: integer
+            totalDifficulty:
+              description: Total difficulty
+              type: string
+            totalTransaction:
+              description: Number of transactions
+              type: integer
+            transactionsRoot:
+              description: transaction root hash
+              type: string
+            uncles:
+              description: Uncle block hash
+              items:
+                type: string
+              type: array
+            unclesCount:
+              description: Number of uncle blocks
+              type: integer
+          type: object
         type: array
       total:
         description: The total number of blocks
