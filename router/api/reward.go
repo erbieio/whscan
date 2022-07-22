@@ -14,16 +14,16 @@ func Reward(e *gin.Engine) {
 	e.GET("/reward/:block", blockReward)
 }
 
-// @Tags         reward
-// @Summary      Query the reward list
-// @Description  query the reward list in reverse order
-// @Accept       json
-// @Produce      json
-// @Param        page       query     string  false  "Page, default 1"
-// @Param        page_size  query     string  false  "Page size, default 10"
-// @Success      200        {object}  service.RewardsRes
-// @Failure      400        {object}  service.ErrRes
-// @Router       /reward [get]
+// @Tags        reward
+// @Summary     Query the reward list
+// @Description query the reward list in reverse order
+// @Accept      json
+// @Produce     json
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.RewardsRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /reward [get]
 func pageReward(c *gin.Context) {
 	req := struct {
 		Page     *int `form:"page"`
@@ -48,15 +48,15 @@ func pageReward(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// @Tags         reward
-// @Summary      query reward
-// @Description  specifies the block query reward
-// @Accept       json
-// @Produce      json
-// @Param        block  path      string  true  "Block height"
-// @Success      200    {object}  []model.Reward
-// @Failure      400    {object}  service.ErrRes
-// @Router       /reward/{block} [get]
+// @Tags        reward
+// @Summary     query reward
+// @Description specifies the block query reward
+// @Accept      json
+// @Produce     json
+// @Param       block path     string true "Block height"
+// @Success     200   {object} []model.Reward
+// @Failure     400   {object} service.ErrRes
+// @Router      /reward/{block} [get]
 func blockReward(c *gin.Context) {
 	block := c.Param("block")
 

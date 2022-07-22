@@ -632,7 +632,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -1794,7 +1794,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -2139,7 +2139,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "balance": {
-                    "description": "balance",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "code": {
@@ -2151,7 +2151,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "creator": {
-                    "description": "The creator, the contract account has value",
+                    "description": "address",
                     "type": "string"
                 },
                 "name": {
@@ -2172,7 +2172,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "difficulty": {
-                    "description": "difficulty",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "extraData": {
@@ -2180,23 +2180,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gasLimit": {
-                    "description": "Gas limit",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "gasUsed": {
-                    "description": "Gas consumption",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "hash": {
-                    "description": "Hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "miner": {
-                    "description": "miner",
+                    "description": "address",
                     "type": "string"
                 },
                 "mixHash": {
-                    "description": "Mixed hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "nonce": {
@@ -2204,43 +2204,43 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "number": {
-                    "description": "block number",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "parentHash": {
-                    "description": "parent block hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "receiptsRoot": {
-                    "description": "Transaction receipt root hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "sha3Uncles": {
-                    "description": "Uncle root hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "size": {
-                    "description": "size",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "stateRoot": {
-                    "description": "World tree root hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "timestamp": {
-                    "description": "timestamp",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "totalDifficulty": {
-                    "description": "Total difficulty",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "totalTransaction": {
-                    "description": "Number of transactions",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "transactionsRoot": {
-                    "description": "transaction root hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "uncles": {
@@ -2251,7 +2251,7 @@ const docTemplate = `{
                     }
                 },
                 "unclesCount": {
-                    "description": "Number of uncle blocks",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 }
             }
@@ -2383,7 +2383,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "address": {
-                    "description": "The contract address",
+                    "description": "address",
                     "type": "string"
                 },
                 "data": {
@@ -2391,7 +2391,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "logIndex": {
-                    "description": "The serial number in the transaction",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "removed": {
@@ -2399,14 +2399,14 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "topics": {
-                    "description": "topic",
+                    "description": "Uncle block hash",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "transactionHash": {
-                    "description": "The transaction hash",
+                    "description": "Create transaction",
                     "type": "string"
                 }
             }
@@ -2596,39 +2596,39 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "blockHash": {
-                    "description": "Block Hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "blockNumber": {
-                    "description": "block number",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "contractAddress": {
-                    "description": "The created contract address",
+                    "description": "address",
                     "type": "string"
                 },
                 "cumulativeGasUsed": {
-                    "description": "Cumulative gas consumption",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "from": {
-                    "description": "Send address",
+                    "description": "address",
                     "type": "string"
                 },
                 "gas": {
-                    "description": "fuel",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "gasPrice": {
-                    "description": "Gas price",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "gasUsed": {
-                    "description": "Gas consumption",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "hash": {
-                    "description": "Hash",
+                    "description": "Create transaction",
                     "type": "string"
                 },
                 "input": {
@@ -2636,27 +2636,27 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "methodId": {
-                    "description": "Method ID, normal transaction is empty",
+                    "description": "difficulty random number",
                     "type": "string"
                 },
                 "nonce": {
-                    "description": "Random number, the number of transactions initiated by the account",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "status": {
-                    "description": "Status, 1: success; 0: failure",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "to": {
-                    "description": "Receive address",
+                    "description": "address",
                     "type": "string"
                 },
                 "transactionIndex": {
-                    "description": "The serial number in the block",
+                    "description": "Transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "value": {
-                    "description": "Amount, unit wei",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 }
             }
@@ -2673,7 +2673,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "balance": {
-                    "description": "balance",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "code": {
@@ -2685,7 +2685,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "creator": {
-                    "description": "The creator, the contract account has value",
+                    "description": "address",
                     "type": "string"
                 },
                 "name": {
@@ -2812,7 +2812,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "genesisBalance": {
-                    "description": "Total amount of coins created",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "rewardCoinCount": {
@@ -2860,7 +2860,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalNFTAmount": {
-                    "description": "Total transaction value of NFTs",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "totalNFTCollection": {
@@ -2884,7 +2884,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalSNFTAmount": {
-                    "description": "Total transaction value of SNFTs",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "totalSNFTCollection": {
@@ -3663,6 +3663,9 @@ const docTemplate = `{
                                 "description": "description",
                                 "type": "string"
                             },
+                            "exchanger": {
+                                "type": "string"
+                            },
                             "id": {
                                 "description": "FNFT ID",
                                 "type": "string"
@@ -3787,39 +3790,39 @@ const docTemplate = `{
                         "type": "object",
                         "properties": {
                             "blockHash": {
-                                "description": "Block Hash",
+                                "description": "Create transaction",
                                 "type": "string"
                             },
                             "blockNumber": {
-                                "description": "block number",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "contractAddress": {
-                                "description": "The created contract address",
+                                "description": "address",
                                 "type": "string"
                             },
                             "cumulativeGasUsed": {
-                                "description": "Cumulative gas consumption",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "from": {
-                                "description": "Send address",
+                                "description": "address",
                                 "type": "string"
                             },
                             "gas": {
-                                "description": "fuel",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "gasPrice": {
-                                "description": "Gas price",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "gasUsed": {
-                                "description": "Gas consumption",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "hash": {
-                                "description": "Hash",
+                                "description": "Create transaction",
                                 "type": "string"
                             },
                             "input": {
@@ -3827,15 +3830,15 @@ const docTemplate = `{
                                 "type": "string"
                             },
                             "methodId": {
-                                "description": "Method ID, normal transaction is empty",
+                                "description": "difficulty random number",
                                 "type": "string"
                             },
                             "nonce": {
-                                "description": "Random number, the number of transactions initiated by the account",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "status": {
-                                "description": "Status, 1: success; 0: failure",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "timestamp": {
@@ -3843,15 +3846,15 @@ const docTemplate = `{
                                 "type": "integer"
                             },
                             "to": {
-                                "description": "Receive address",
+                                "description": "address",
                                 "type": "string"
                             },
                             "transactionIndex": {
-                                "description": "The serial number in the block",
+                                "description": "Transaction random number, transaction volume",
                                 "type": "integer"
                             },
                             "value": {
-                                "description": "Amount, unit wei",
+                                "description": "The total amount of coins in the chain",
                                 "type": "string"
                             }
                         }

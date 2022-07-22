@@ -83,11 +83,12 @@ type SNFTsAndMetaRes struct {
 	NFTs  []struct {
 		model.SNFT
 		model.FNFT
+		Exchanger string `json:"exchanger"`
 	} `json:"nfts"` //SNFT list
 }
 
 func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
-	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id")
+	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id")
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
@@ -105,7 +106,7 @@ func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (r
 	if err != nil {
 		return
 	}
-	err = db.Select("snfts.*,fnfts.*").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	err = db.Select("snfts.*,fnfts.*,epoches.exchanger").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 

@@ -18,6 +18,9 @@ import (
 
 // DecodeBlock parses the block
 func DecodeBlock(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormholes bool) (*service.DecodeRet, error) {
+	if n, _ := c.BlockNumber(ctx); n <= uint64(number) {
+		return nil, node.NotFound
+	}
 	var raw json.RawMessage
 	// Get the block (including the transaction)
 	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)

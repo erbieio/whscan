@@ -20,16 +20,16 @@ func Depreciation(e *gin.Engine) {
 	e.GET("/block/viewTransactions", viewTransactions)
 }
 
-// @Tags         obsolete interface
-// @Summary      query exchange (new /exchanger/{addr})
-// @Description  Query exchanges by address
+// @Tags        obsolete interface
+// @Summary     query exchange (new /exchanger/{addr})
+// @Description Query exchanges by address
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    addr  query     string  true  "Exchange address"
-// @Success  200   {object}  model.Exchanger
-// @Failure  400   {object}  service.ErrRes
-// @Router   /exchanger/get [get]
+// @Accept  json
+// @Produce json
+// @Param   addr query    string true "Exchange address"
+// @Success 200  {object} model.Exchanger
+// @Failure 400  {object} service.ErrRes
+// @Router  /exchanger/get [get]
 func _getExchanger(c *gin.Context) {
 	getExchanger(c)
 }
@@ -45,16 +45,16 @@ type requestErbTestRes struct {
 	Msg  string `json:"msg"`
 }
 
-// @Tags         obsolete interface
-// @Summary      request ERB test coin (new /erb_faucet)
-// @Description  request ERB test coins
+// @Tags        obsolete interface
+// @Summary     request ERB test coin (new /erb_faucet)
+// @Description request ERB test coins
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    body  query     requestErbTestReq  true  "body"
-// @Success  200   {object}  requestErbTestRes
-// @Failure  400   {object}  requestErbTestRes
-// @Router   /extra/requestErbTest [get]
+// @Accept  json
+// @Produce json
+// @Param   body query    requestErbTestReq true "body"
+// @Success 200  {object} requestErbTestRes
+// @Failure 400  {object} requestErbTestRes
+// @Router  /extra/requestErbTest [get]
 func requestErbTest(c *gin.Context) {
 	var req requestErbTestReq
 	err := c.BindQuery(&req)
@@ -78,16 +78,16 @@ func requestErbTest(c *gin.Context) {
 	c.JSON(http.StatusOK, requestErbTestRes{Code: 0, Msg: "ok"})
 }
 
-// @Tags         obsolete interface
-// @Summary      query block list (new /block/page)
-// @Description  query block list
+// @Tags        obsolete interface
+// @Summary     query block list (new /block/page)
+// @Description query block list
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    body  query     PageReq  true  "body"
-// @Success  200   {object}  ViewBlocksRes
-// @Failure  400   {object}  ErrRes
-// @Router   /block/viewBlocks [get]
+// @Accept  json
+// @Produce json
+// @Param   body query    PageReq true "body"
+// @Success 200  {object} ViewBlocksRes
+// @Failure 400  {object} ErrRes
+// @Router  /block/viewBlocks [get]
 func viewBlocks(c *gin.Context) {
 	var req PageReq
 	err := c.BindQuery(&req)
@@ -103,16 +103,16 @@ func viewBlocks(c *gin.Context) {
 	c.JSON(http.StatusOK, ViewBlocksRes{Code: 0, Msg: "ok", Data: blocks, Total: count})
 }
 
-// @Tags         obsolete interface
-// @Summary      query transaction list (new /transaction/page)
-// @Description  query transaction list
+// @Tags        obsolete interface
+// @Summary     query transaction list (new /transaction/page)
+// @Description query transaction list
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    body  query     TxPageReq  true  "body"
-// @Success  200   {object}  ViewTxsRes
-// @Failure  400   {object}  ErrRes
-// @Router   /block/viewTransactions [get]
+// @Accept  json
+// @Produce json
+// @Param   body query    TxPageReq true "body"
+// @Success 200  {object} ViewTxsRes
+// @Failure 400  {object} ErrRes
+// @Router  /block/viewTransactions [get]
 func viewTransactions(c *gin.Context) {
 	var req TxPageReq
 	err := c.BindQuery(&req)
@@ -140,16 +140,16 @@ type CheckAuthRes struct {
 	Data *AuthRes `json:"data" `
 }
 
-// @Tags         obsolete interface
-// @Summary      query exchange status (new /exchanger_auth)
-// @Description  query exchange status
+// @Tags        obsolete interface
+// @Summary     query exchange status (new /exchanger_auth)
+// @Description query exchange status
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    body  query     CheckAuthReq  true  "body"
-// @Success  200   {object}  CheckAuthRes
-// @Failure  400   {object}  ErrRes
-// @Router   /extra/checkAuth [get]
+// @Accept  json
+// @Produce json
+// @Param   body query    CheckAuthReq true "body"
+// @Success 200  {object} CheckAuthRes
+// @Failure 400  {object} ErrRes
+// @Router  /extra/checkAuth [get]
 func checkAuth(c *gin.Context) {
 	var req CheckAuthReq
 	err := c.BindQuery(&req)
@@ -176,16 +176,16 @@ func checkAuth(c *gin.Context) {
 	}})
 }
 
-// @Tags         obsolete interface
-// @Summary      query block (new /block/{number})
-// @Description  query block
+// @Tags        obsolete interface
+// @Summary     query block (new /block/{number})
+// @Description query block
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    body  query     GetBlockReq  true  "body"
-// @Success  200   {object}  GetBlockRes
-// @Failure  400   {object}  ErrRes
-// @Router   /block/getBlock [get]
+// @Accept  json
+// @Produce json
+// @Param   body query    GetBlockReq true "body"
+// @Success 200  {object} GetBlockRes
+// @Failure 400  {object} ErrRes
+// @Router  /block/getBlock [get]
 func _getBlock(c *gin.Context) {
 	var req GetBlockReq
 	err := c.BindQuery(&req)
@@ -201,16 +201,16 @@ func _getBlock(c *gin.Context) {
 	c.JSON(http.StatusOK, GetBlockRes{Code: 0, Msg: "ok", Data: block})
 }
 
-// @Tags         obsolete interface
-// @Summary      query transaction (new /transaction/{hash})
-// @Description  query transaction
+// @Tags        obsolete interface
+// @Summary     query transaction (new /transaction/{hash})
+// @Description query transaction
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    body  query     GetTxReq  true  "body"
-// @Success  200   {object}  GetTxRes
-// @Failure  400   {object}  ErrRes
-// @Router   /block/getTransaction [get]
+// @Accept  json
+// @Produce json
+// @Param   body query    GetTxReq true "body"
+// @Success 200  {object} GetTxRes
+// @Failure 400  {object} ErrRes
+// @Router  /block/getTransaction [get]
 func _getTransaction(c *gin.Context) {
 	var req GetTxReq
 	err := c.BindQuery(&req)
@@ -226,16 +226,16 @@ func _getTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, GetTxRes{Code: 0, Msg: "ok", Data: tx})
 }
 
-// @Tags         obsolete interface
-// @Summary      query receipt (new /transaction_logs/{hash})
-// @Description  query receipt
+// @Tags        obsolete interface
+// @Summary     query receipt (new /transaction_logs/{hash})
+// @Description query receipt
 // @Deprecated
-// @Accept   json
-// @Produce  json
-// @Param    body  query     GetTxReq  true  "body"
-// @Success  200   {object}  GetReceiptsRes
-// @Failure  400   {object}  ErrRes
-// @Router   /block/getTransactionLogs [get]
+// @Accept  json
+// @Produce json
+// @Param   body query    GetTxReq true "body"
+// @Success 200  {object} GetReceiptsRes
+// @Failure 400  {object} ErrRes
+// @Router  /block/getTransactionLogs [get]
 func _getTransactionLogs(c *gin.Context) {
 	var req GetTxReq
 	err := c.BindQuery(&req)

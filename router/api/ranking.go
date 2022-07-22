@@ -14,17 +14,17 @@ func Ranking(e *gin.Engine) {
 	e.GET("/ranking/exchanger", rankingExchanger)
 }
 
-// @Tags         Ranking
-// @Summary      query SNFT ranking
-// @Description  SNFT ranking for a specified time range
-// @Accept       json
-// @Produce      json
-// @Param        limit      query     string  false  "Limit, time range"
-// @Param        page       query     string  false  "Page, default 1"
-// @Param        page_size  query     string  false  "Page size, default 10"
-// @Success      200        {object}  service.RankingSNFTRes
-// @Failure      400        {object}  service.ErrRes
-// @Router       /ranking/snft [get]
+// @Tags        Ranking
+// @Summary     query SNFT ranking
+// @Description SNFT ranking for a specified time range
+// @Accept      json
+// @Produce     json
+// @Param       limit     query    string false "Limit, time range"
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.RankingSNFTRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /ranking/snft [get]
 func rankingSNFT(c *gin.Context) {
 	req := struct {
 		Page     *int   `form:"page"`
@@ -50,17 +50,17 @@ func rankingSNFT(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags         Ranking
-// @Summary      query NFT ranking
-// @Description  NFT ranking for a specified time range
-// @Accept       json
-// @Produce      json
-// @Param        limit      query     string  false  "Limit, time range"
-// @Param        page       query     string  false  "Page, default 1"
-// @Param        page_size  query     string  false  "Page size, default 10"
-// @Success      200        {object}  service.RankingNFTRes
-// @Failure      400        {object}  service.ErrRes
-// @Router       /ranking/nft [get]
+// @Tags        Ranking
+// @Summary     query NFT ranking
+// @Description NFT ranking for a specified time range
+// @Accept      json
+// @Produce     json
+// @Param       limit     query    string false "Limit, time range"
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.RankingNFTRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /ranking/nft [get]
 func rankingNFT(c *gin.Context) {
 	req := struct {
 		Page     *int   `form:"page"`
@@ -86,17 +86,17 @@ func rankingNFT(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags         Ranking
-// @Summary      query exchanger ranking
-// @Description  Exchanger ranking for a specified time range
-// @Accept       json
-// @Produce      json
-// @Param        limit      query     string  false  "Limit, time range"
-// @Param        page       query     string  false  "Page, default 1"
-// @Param        page_size  query     string  false  "Page size, default 10"
-// @Success      200        {object}  service.RankingExchangerRes
-// @Failure      400        {object}  service.ErrRes
-// @Router       /ranking/exchanger [get]
+// @Tags        Ranking
+// @Summary     query exchanger ranking
+// @Description Exchanger ranking for a specified time range
+// @Accept      json
+// @Produce     json
+// @Param       limit     query    string false "Limit, time range"
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.RankingExchangerRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /ranking/exchanger [get]
 func rankingExchanger(c *gin.Context) {
 	req := struct {
 		Page     *int   `form:"page"`

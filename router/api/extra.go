@@ -22,26 +22,26 @@ type price struct {
 	CNY float64 `json:"CNY"` //The price of an ERB in RMB
 }
 
-// @Tags         other interfaces
-// @Summary      query ERB price
-// @Description  Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=1USD
-// @Accept       json
-// @Produce      json
-// @Success      200  {object}  price
-// @Router       /erb_price [get]
+// @Tags        other interfaces
+// @Summary     query ERB price
+// @Description Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=1USD
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} price
+// @Router      /erb_price [get]
 func erbPrice(c *gin.Context) {
 	c.JSON(http.StatusOK, price{CNY: 6.3, USD: 1})
 }
 
-// @Tags         other interfaces
-// @Summary      request ERB test coins
-// @Description  request ERB test coins
-// @Accept       json
-// @Produce      json
-// @Param        addr  query  string  true  "address"
-// @Success      200
-// @Failure      400  {object}  service.ErrRes
-// @Router       /erb_faucet [get]
+// @Tags        other interfaces
+// @Summary     request ERB test coins
+// @Description request ERB test coins
+// @Accept      json
+// @Produce     json
+// @Param       addr query string true "address"
+// @Success     200
+// @Failure     400 {object} service.ErrRes
+// @Router      /erb_faucet [get]
 func erbFaucet(c *gin.Context) {
 	addr, err := utils.ParseAddress(c.Query("addr"))
 	if err != nil {
@@ -64,15 +64,15 @@ type AuthRes struct {
 	ExchangerBalance string `json:"exchanger_balance"`
 }
 
-// @Tags         other interfaces
-// @Summary      query exchange status
-// @Description  query exchange status
-// @Accept       json
-// @Produce      json
-// @Param        addr  query     string  true  "address"
-// @Success      200   {object}  AuthRes
-// @Failure      400   {object}  service.ErrRes
-// @Router       /exchanger_auth [get]
+// @Tags        other interfaces
+// @Summary     query exchange status
+// @Description query exchange status
+// @Accept      json
+// @Produce     json
+// @Param       addr query    string true "address"
+// @Success     200  {object} AuthRes
+// @Failure     400  {object} service.ErrRes
+// @Router      /exchanger_auth [get]
 func exchangerAuth(c *gin.Context) {
 	addr, err := utils.ParseAddress(c.Query("addr"))
 	if err != nil {
@@ -97,15 +97,15 @@ type Subscribe struct {
 	Email string `form:"email"`
 }
 
-// @Tags         other interfaces
-// @Summary      subscribe email
-// @Description  Enter the email address to receive the latest event notifications
-// @Accept       json
-// @Produce      json
-// @Param        _  body  Subscribe  true  "Mailbox"
-// @Success      200
-// @Failure      400  {object}  service.ErrRes
-// @Router       /subscription [post]
+// @Tags        other interfaces
+// @Summary     subscribe email
+// @Description Enter the email address to receive the latest event notifications
+// @Accept      json
+// @Produce     json
+// @Param       _ body Subscribe true "Mailbox"
+// @Success     200
+// @Failure     400 {object} service.ErrRes
+// @Router      /subscription [post]
 func subscribe(c *gin.Context) {
 	req := Subscribe{}
 	err := c.BindJSON(&req)
@@ -127,16 +127,16 @@ func subscribe(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-// @Tags         other interfaces
-// @Summary      Query the list of subscription mailboxes
-// @Description  Query the list of subscription mailboxes
-// @Accept       json
-// @Produce      json
-// @Param        page       query     string  false  "Page, default 1"
-// @Param        page_size  query     string  false  "Page size, default 10"
-// @Success      200        {object}  []model.Subscription
-// @Failure      400        {object}  service.ErrRes
-// @Router       /subscription [get]
+// @Tags        other interfaces
+// @Summary     Query the list of subscription mailboxes
+// @Description Query the list of subscription mailboxes
+// @Accept      json
+// @Produce     json
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} []model.Subscription
+// @Failure     400       {object} service.ErrRes
+// @Router      /subscription [get]
 func pageSubscribe(c *gin.Context) {
 	req := struct {
 		Page     *int `form:"page"`
