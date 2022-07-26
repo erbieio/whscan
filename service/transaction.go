@@ -2,13 +2,22 @@ package service
 
 import "server/common/model"
 
+// TransactionRes transaction return parameters
+type TransactionRes struct {
+	model.Transaction
+	Timestamp uint64 `json:"timestamp"` //The event stamp of the block it is in
+}
+
+func GetTransaction(hash string) (res TransactionRes, err error) {
+	err = DB.Model(&Transaction{}).Joins("LEFT JOIN blocks ON number=block_number").Where("transactions.hash=?", hash).
+		Select("transactions.*,timestamp").First(&res).Error
+	return
+}
+
 // TransactionsRes transaction paging return parameters
 type TransactionsRes struct {
-	Total        int64 `json:"total"` //The total number of transactions
-	Transactions []struct {
-		model.Transaction
-		Timestamp uint64 //The event stamp of the block it is in
-	} `json:"transactions"` //Transaction list
+	Total        int64             `json:"total"`        //The total number of transactions
+	Transactions []*TransactionRes `json:"transactions"` //Transaction list
 }
 
 func FetchTransactions(page, size int, number, addr *string) (res TransactionsRes, err error) {
@@ -30,11 +39,6 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 	}
 	err = db.Joins("LEFT JOIN blocks ON number=block_number").Select("transactions.*,timestamp").
 		Order("block_number DESC, tx_index DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Transactions).Error
-	return
-}
-
-func GetTransaction(hash string) (t model.Transaction, err error) {
-	err = DB.Where("hash=?", hash).First(&t).Error
 	return
 }
 

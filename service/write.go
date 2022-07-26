@@ -28,8 +28,9 @@ type Cache struct {
 	TotalSNFT           uint64       `json:"totalSNFT"`           //Total number of SNFTs
 	TotalNFTTx          uint64       `json:"totalNFTTx"`          //Total number of  NFT transactions
 	TotalSNFTTx         uint64       `json:"totalSNFTTx"`         //Total number of  SNFT transactions
-	TotalNFTAmount      types.BigInt `json:"totalNFTAmount"`      //Total transaction value of NFTs
-	TotalSNFTAmount     types.BigInt `json:"totalSNFTAmount"`     //Total transaction value of SNFTs
+	TotalAmount         types.BigInt `json:"totalAmount"`         //total transaction volume
+	TotalNFTAmount      types.BigInt `json:"totalNFTAmount"`      //Total transaction volume of NFTs
+	TotalSNFTAmount     types.BigInt `json:"totalSNFTAmount"`     //Total transaction volume of SNFTs
 	TotalNFTCreator     uint64       `json:"totalNFTCreator"`     //Total creator of NFTs
 	TotalSNFTCreator    uint64       `json:"totalSNFTCreator"`    //Total creator of SNFTs
 	Total24HTx          uint64       `json:"total24HTx"`          //Total number of transactions within 24 hours
@@ -42,6 +43,7 @@ type Cache struct {
 }
 
 var cache = Cache{
+	TotalAmount:     "0",
 	TotalNFTAmount:  "0",
 	TotalSNFTAmount: "0",
 }
@@ -84,6 +86,9 @@ func initCache() (err error) {
 	if err = DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x8'").Select("COUNT(*)").Scan(&cache.TotalSNFTTx).Error; err != nil {
 		return
 	}
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalAmount").Select("value").Scan(&cache.TotalAmount).Error; err != nil {
+		return
+	}
 	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalNFTAmount").Select("value").Scan(&cache.TotalNFTAmount).Error; err != nil {
 		return
 	}
@@ -121,7 +126,7 @@ func freshCache() {
 			cache.TotalNFTCreator = number
 		}
 		if err := DB.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
-			cache.TotalNFTCreator = number
+			cache.TotalSNFTCreator = number
 		}
 		if err := DB.Model(&model.Block{}).Where("timestamp>?", now-86400).Select("IFNULL(SUM(total_transaction),0)").Scan(&number).Error; err == nil {
 			cache.Total24HTx = number
@@ -181,12 +186,15 @@ type DecodeRet struct {
 }
 
 func BlockInsert(block *DecodeRet) error {
+	totalAmount, b := new(big.Int), new(big.Int)
 	err := DB.Transaction(func(t *gorm.DB) error {
 		for _, tx := range block.CacheTxs {
 			// write block transaction
 			if err := t.Create(tx).Error; err != nil {
 				return err
 			}
+			b.SetString(string(tx.Value), 10)
+			totalAmount = totalAmount.Add(totalAmount, b)
 		}
 
 		for _, internalTx := range block.CacheInternalTxs {
@@ -249,6 +257,16 @@ func BlockInsert(block *DecodeRet) error {
 		if err != nil {
 			return err
 		}
+		if len(block.CacheTxs) > 0 {
+			b.SetString(string(cache.TotalAmount), 10)
+			totalAmount = totalAmount.Add(totalAmount, b)
+			err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
+				Key: "TotalAmount", Value: totalAmount.Text(10),
+			}).Error
+			if err != nil {
+				return err
+			}
+		}
 
 		// wormholes unique data write
 		return WHInsert(t, block)
@@ -295,6 +313,9 @@ func BlockInsert(block *DecodeRet) error {
 			b.SetString(string(cache.TotalBalance), 10)
 			b.Add(b, block.AddBalance)
 			cache.TotalBalance = types.BigInt(b.Text(10))
+		}
+		if len(block.CacheTxs) > 0 {
+			cache.TotalAmount = types.BigInt(totalAmount.Text(10))
 		}
 	}
 	freshCache()

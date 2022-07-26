@@ -4,12 +4,15 @@ import "server/common/model"
 
 // NFTsRes NFT paging return parameters
 type NFTsRes struct {
-	Total int64       `json:"total"` //The total number of NFTs
-	NFTs  []model.NFT `json:"nfts"`  //NFT list
+	Total int64 `json:"total"` //The total number of NFTs
+	NFTs  []*struct {
+		model.NFT
+		CollectionName string `json:"collectionName"`
+	} `json:"nfts"` //NFT list
 }
 
 func FetchNFTs(exchanger, collectionId, owner string, page, size int) (res NFTsRes, err error) {
-	db := DB.Model(&model.NFT{})
+	db := DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON id=LEFT(address,39)")
 	if exchanger != "" {
 		db = db.Where("exchanger_addr=?", exchanger)
 	}
@@ -24,7 +27,7 @@ func FetchNFTs(exchanger, collectionId, owner string, page, size int) (res NFTsR
 	if err != nil {
 		return
 	}
-	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Select("nfts.*, collections.name AS collection_name").Scan(&res.NFTs).Error
 	return
 }
 
@@ -83,12 +86,15 @@ type SNFTsAndMetaRes struct {
 	NFTs  []struct {
 		model.SNFT
 		model.FNFT
-		Exchanger string `json:"exchanger"`
+		Exchanger      string `json:"exchanger"`
+		CollectionName string `json:"collectionName"`
 	} `json:"nfts"` //SNFT list
 }
 
 func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
-	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id")
+	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
+		Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
+		Joins("LEFT JOIN collections ON collections.id=LEFT(address,39)")
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
@@ -106,7 +112,7 @@ func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (r
 	if err != nil {
 		return
 	}
-	err = db.Select("snfts.*,fnfts.*,epoches.exchanger").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	err = db.Select("snfts.*,fnfts.*,epoches.exchanger,collections.name AS collection_name").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 

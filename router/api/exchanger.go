@@ -66,7 +66,7 @@ func getExchanger(c *gin.Context) {
 	if address == "" {
 		address = c.Query("addr")
 	}
-	addr, err := utils.ParseAddress(address)
+	addr, err := utils.ParseAddress([]byte(address))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -125,7 +125,7 @@ func exchangers(c *gin.Context) {
 // @Router      /exchanger/tx_count/{addr} [get]
 func getExchangerTxCount(c *gin.Context) {
 	address := c.Param("addr")
-	addr, err := utils.ParseAddress(address)
+	addr, err := utils.ParseAddress([]byte(address))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

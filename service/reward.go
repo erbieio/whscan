@@ -4,16 +4,17 @@ import "server/common/model"
 
 // RewardsRes reward paging return parameters
 type RewardsRes struct {
-	Total   int64          `json:"total"`   //The total number of rewards
-	Rewards []model.Reward `json:"rewards"` //Rewards list
+	Total   int64 `json:"total"` //The total number of rewards
+	Rewards []*struct {
+		model.Reward
+		CollectionName string `json:"collectionName"`
+	} `json:"rewards"` //Rewards list
 }
 
 func FetchRewards(page, size int) (res RewardsRes, err error) {
-	err = DB.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Rewards).Error
-	if err != nil {
-		return
-	}
-	err = DB.Model(&model.Reward{}).Count(&res.Total).Error
+	err = DB.Model(&model.Reward{}).Order("block_number DESC").Offset((page - 1) * size).Limit(size).
+		Joins("LEFT JOIN collections ON id=LEFT(snft,39)").Select("rewards.*, name AS collection_name").Scan(&res.Rewards).Error
+	res.Total = int64((cache.TotalBlock - 1) * 11)
 	return
 }
 

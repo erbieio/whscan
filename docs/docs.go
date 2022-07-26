@@ -1915,7 +1915,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Transaction"
+                            "$ref": "#/definitions/service.TransactionRes"
                         }
                     },
                     "400": {
@@ -2411,79 +2411,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.NFT": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "NFT address, grows automatically from 0x1",
-                    "type": "string"
-                },
-                "attributes": {
-                    "description": "Attributes",
-                    "type": "string"
-                },
-                "block_number": {
-                    "description": "The height of the created block",
-                    "type": "integer"
-                },
-                "category": {
-                    "description": "category",
-                    "type": "string"
-                },
-                "collection_id": {
-                    "description": "The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located",
-                    "type": "string"
-                },
-                "creator": {
-                    "description": "Creator address",
-                    "type": "string"
-                },
-                "desc": {
-                    "description": "description",
-                    "type": "string"
-                },
-                "exchanger_addr": {
-                    "description": "The address of the exchange, if there is none, it can be traded on any exchange",
-                    "type": "string"
-                },
-                "last_price": {
-                    "description": "The last transaction price (null if the transaction is not completed), the unit is wei",
-                    "type": "string"
-                },
-                "meta_url": {
-                    "description": "Real meta information URL",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "name",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "owner",
-                    "type": "string"
-                },
-                "raw_meta_url": {
-                    "description": "Original meta information URL on the chain",
-                    "type": "string"
-                },
-                "royalty_ratio": {
-                    "description": "Royalty rate, in ten thousandths",
-                    "type": "integer"
-                },
-                "source_url": {
-                    "description": "Resource links, file links such as pictures or videos",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "Create timestamp",
-                    "type": "integer"
-                },
-                "tx_hash": {
-                    "description": "The transaction hash created",
-                    "type": "string"
-                }
-            }
-        },
         "model.NFTTx": {
             "type": "object",
             "properties": {
@@ -2588,75 +2515,6 @@ const docTemplate = `{
             "properties": {
                 "email": {
                     "description": "Email",
-                    "type": "string"
-                }
-            }
-        },
-        "model.Transaction": {
-            "type": "object",
-            "properties": {
-                "blockHash": {
-                    "description": "Create transaction",
-                    "type": "string"
-                },
-                "blockNumber": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "contractAddress": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "cumulativeGasUsed": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "from": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "gas": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "gasPrice": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "gasUsed": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "hash": {
-                    "description": "Create transaction",
-                    "type": "string"
-                },
-                "input": {
-                    "description": "Additional input data, contract call encoded data",
-                    "type": "string"
-                },
-                "methodId": {
-                    "description": "difficulty random number",
-                    "type": "string"
-                },
-                "nonce": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "status": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "to": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "transactionIndex": {
-                    "description": "Transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "value": {
-                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 }
             }
@@ -2838,6 +2696,10 @@ const docTemplate = `{
                 "totalAccount": {
                     "description": "Total account number",
                     "type": "integer"
+                },
+                "totalAmount": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
                 },
                 "totalBalance": {
                     "description": "The total amount of coins in the chain",
@@ -3227,7 +3089,80 @@ const docTemplate = `{
                     "description": "NFT list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.NFT"
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "NFT address, grows automatically from 0x1",
+                                "type": "string"
+                            },
+                            "attributes": {
+                                "description": "Attributes",
+                                "type": "string"
+                            },
+                            "block_number": {
+                                "description": "The height of the created block",
+                                "type": "integer"
+                            },
+                            "category": {
+                                "description": "category",
+                                "type": "string"
+                            },
+                            "collectionName": {
+                                "type": "string"
+                            },
+                            "collection_id": {
+                                "description": "The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located",
+                                "type": "string"
+                            },
+                            "creator": {
+                                "description": "Creator address",
+                                "type": "string"
+                            },
+                            "desc": {
+                                "description": "description",
+                                "type": "string"
+                            },
+                            "exchanger_addr": {
+                                "description": "The address of the exchange, if there is none, it can be traded on any exchange",
+                                "type": "string"
+                            },
+                            "last_price": {
+                                "description": "The last transaction price (null if the transaction is not completed), the unit is wei",
+                                "type": "string"
+                            },
+                            "meta_url": {
+                                "description": "Real meta information URL",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "name",
+                                "type": "string"
+                            },
+                            "owner": {
+                                "description": "owner",
+                                "type": "string"
+                            },
+                            "raw_meta_url": {
+                                "description": "Original meta information URL on the chain",
+                                "type": "string"
+                            },
+                            "royalty_ratio": {
+                                "description": "Royalty rate, in ten thousandths",
+                                "type": "integer"
+                            },
+                            "source_url": {
+                                "description": "Resource links, file links such as pictures or videos",
+                                "type": "string"
+                            },
+                            "timestamp": {
+                                "description": "Create timestamp",
+                                "type": "integer"
+                            },
+                            "tx_hash": {
+                                "description": "The transaction hash created",
+                                "type": "string"
+                            }
+                        }
                     }
                 },
                 "total": {
@@ -3441,7 +3376,32 @@ const docTemplate = `{
                     "description": "Rewards list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Reward"
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "reward address",
+                                "type": "string"
+                            },
+                            "amount": {
+                                "description": "Amount of reward",
+                                "type": "string"
+                            },
+                            "block_number": {
+                                "description": "The block number when rewarding",
+                                "type": "integer"
+                            },
+                            "collectionName": {
+                                "type": "string"
+                            },
+                            "identity": {
+                                "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
+                                "type": "integer"
+                            },
+                            "snft": {
+                                "description": "SNFT address",
+                                "type": "string"
+                            }
+                        }
                     }
                 },
                 "total": {
@@ -3659,6 +3619,9 @@ const docTemplate = `{
                                 "description": "category",
                                 "type": "string"
                             },
+                            "collectionName": {
+                                "type": "string"
+                            },
                             "desc": {
                                 "description": "description",
                                 "type": "string"
@@ -3776,6 +3739,79 @@ const docTemplate = `{
                 }
             }
         },
+        "service.TransactionRes": {
+            "type": "object",
+            "properties": {
+                "blockHash": {
+                    "description": "Create transaction",
+                    "type": "string"
+                },
+                "blockNumber": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "contractAddress": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "cumulativeGasUsed": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "from": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "gas": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "gasPrice": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "gasUsed": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "hash": {
+                    "description": "Create transaction",
+                    "type": "string"
+                },
+                "input": {
+                    "description": "Additional input data, contract call encoded data",
+                    "type": "string"
+                },
+                "methodId": {
+                    "description": "difficulty random number",
+                    "type": "string"
+                },
+                "nonce": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "description": "The event stamp of the block it is in",
+                    "type": "integer"
+                },
+                "to": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "transactionIndex": {
+                    "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "value": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
+                }
+            }
+        },
         "service.TransactionsRes": {
             "type": "object",
             "properties": {
@@ -3787,77 +3823,7 @@ const docTemplate = `{
                     "description": "Transaction list",
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "blockHash": {
-                                "description": "Create transaction",
-                                "type": "string"
-                            },
-                            "blockNumber": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "contractAddress": {
-                                "description": "address",
-                                "type": "string"
-                            },
-                            "cumulativeGasUsed": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "from": {
-                                "description": "address",
-                                "type": "string"
-                            },
-                            "gas": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "gasPrice": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "gasUsed": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "hash": {
-                                "description": "Create transaction",
-                                "type": "string"
-                            },
-                            "input": {
-                                "description": "Additional input data, contract call encoded data",
-                                "type": "string"
-                            },
-                            "methodId": {
-                                "description": "difficulty random number",
-                                "type": "string"
-                            },
-                            "nonce": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "status": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "timestamp": {
-                                "description": "The event stamp of the block it is in",
-                                "type": "integer"
-                            },
-                            "to": {
-                                "description": "address",
-                                "type": "string"
-                            },
-                            "transactionIndex": {
-                                "description": "Transaction random number, transaction volume",
-                                "type": "integer"
-                            },
-                            "value": {
-                                "description": "The total amount of coins in the chain",
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/service.TransactionRes"
                     }
                 }
             }

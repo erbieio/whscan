@@ -59,7 +59,7 @@ func pageTransaction(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       hash path     string true "Transaction hash"
-// @Success     200  {object} model.Transaction
+// @Success     200  {object} service.TransactionRes
 // @Failure     400  {object} service.ErrRes
 // @Router      /transaction/{hash} [get]
 func getTransaction(c *gin.Context) {

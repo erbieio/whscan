@@ -43,7 +43,7 @@ func erbPrice(c *gin.Context) {
 // @Failure     400 {object} service.ErrRes
 // @Router      /erb_faucet [get]
 func erbFaucet(c *gin.Context) {
-	addr, err := utils.ParseAddress(c.Query("addr"))
+	addr, err := utils.ParseAddress([]byte(c.Query("addr")))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -74,7 +74,7 @@ type AuthRes struct {
 // @Failure     400  {object} service.ErrRes
 // @Router      /exchanger_auth [get]
 func exchangerAuth(c *gin.Context) {
-	addr, err := utils.ParseAddress(c.Query("addr"))
+	addr, err := utils.ParseAddress([]byte(c.Query("addr")))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

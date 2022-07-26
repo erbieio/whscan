@@ -176,29 +176,24 @@ func HexToAddress(hex string) types.Address {
 }
 
 // ParseAddress converts a hexadecimal string prefixed with 0x to an address
-func ParseAddress(hex string) (types.Address, error) {
+func ParseAddress(hex []byte) (types.Address, error) {
 	if len(hex) != 42 {
-		return "", fmt.Errorf("Length is not 42")
+		return "", fmt.Errorf("length is not 42")
 	}
 	if hex[0] != '0' || (hex[1] != 'x' && hex[1] != 'X') {
-		return "", fmt.Errorf("Prefix is ​​not 0x")
+		return "", fmt.Errorf("prefix is not 0x")
 	}
-	for i, c := range []byte(hex) {
-		if '0' <= c && c <= '9' {
-			continue
-		}
-		if 'a' <= c && c <= 'f' {
+	hex[1] = 'x'
+	for i := 2; i < 42; i++ {
+		c := hex[i]
+		if ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') {
 			continue
 		}
 		if 'A' <= c && c <= 'F' {
-			[]byte(hex)[i] = c - 27
+			hex[i] = c + 32
 			continue
 		}
-		if 'X' == c || 'x' == c {
-			[]byte(hex)[i] = 'x'
-			continue
-		}
-		return "", fmt.Errorf("Illegal character: %v", c)
+		return "", fmt.Errorf("illegal character: %v", c)
 	}
 	return types.Address(hex), nil
 }

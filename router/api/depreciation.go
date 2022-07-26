@@ -63,7 +63,7 @@ func requestErbTest(c *gin.Context) {
 		return
 	}
 
-	addr, err := utils.ParseAddress(req.Address)
+	addr, err := utils.ParseAddress([]byte(req.Address))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -158,7 +158,7 @@ func checkAuth(c *gin.Context) {
 		return
 	}
 
-	addr, err := utils.ParseAddress(req.Address)
+	addr, err := utils.ParseAddress([]byte(req.Address))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
