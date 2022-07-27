@@ -31,7 +31,19 @@ func LineChart(limit int) (res LineChartRes, err error) {
 		return
 	}
 	start, stop := utils.LastTimeRange(int64(limit))
-	err = DB.Table("(?) A", DB.Model(&model.Exchanger{}).Select("(timestamp-1656950400) DIV 86400 AS `index`, FROM_UNIXTIME(timestamp,'%Y-%m-%d') AS `day`").
+	err = DB.Table("(?) A", DB.Model(&model.Exchanger{}).Select("(timestamp-?) DIV 86400 AS `index`, FROM_UNIXTIME(timestamp,'%Y-%m-%d') AS `day`", start).
 		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`, `day`").Select("*, COUNT(*) AS num").Scan(&res.Exchangers).Error
+	return
+}
+
+type TxChartRes struct {
+	Index uint64 `json:"index"`
+	Num   uint64 `json:"num"`
+}
+
+func TxChart() (res TxChartRes, err error) {
+	start, stop := utils.LastTimeRange(int64(1))
+	err = DB.Table("(?) A", DB.Model(&model.Block{}).Select("(timestamp-?) DIV 3600 AS `index`,`total_transaction`", start).
+		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`").Select("`index`, SUM(total_transaction) AS num").Scan(&res).Error
 	return
 }

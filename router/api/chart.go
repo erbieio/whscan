@@ -10,6 +10,7 @@ import (
 // Chart ChartAPI
 func Chart(e *gin.Engine) {
 	e.GET("/chart/line", lineChart)
+	e.GET("/chart/tx", txChart)
 }
 
 // @Tags        chart
@@ -19,7 +20,7 @@ func Chart(e *gin.Engine) {
 // @Produce     json
 // @Param       limit query    string false "Limit, default 10"
 // @Success     200   {object} service.LineChartRes
-// @Failure     400   {object} service.ErrRes
+// @Failure     400 {object} service.ErrRes
 // @Router      /chart/line [get]
 func lineChart(c *gin.Context) {
 	req := struct {
@@ -36,6 +37,23 @@ func lineChart(c *gin.Context) {
 	}
 
 	res, err := service.LineChart(limit)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        chart
+// @Summary     query tx charts
+// @Description query tx charts
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} service.TxChartRes
+// @Failure     400   {object} service.ErrRes
+// @Router      /chart/tx [get]
+func txChart(c *gin.Context) {
+	res, err := service.TxChart()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

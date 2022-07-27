@@ -403,7 +403,6 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 			return
 		}
 		if (*nftTx.NFTAddr)[:3] == "0x0" {
-			cache.TotalNFTTx += 1
 			if nftTx.Price != nil {
 				b, price := new(big.Int), new(big.Int)
 				b.SetString(string(cache.TotalNFTAmount), 10)
@@ -417,7 +416,6 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 				}
 			}
 		} else {
-			cache.TotalSNFTTx += 1
 			if nftTx.Price != nil {
 				b, price := new(big.Int), new(big.Int)
 				b.SetString(string(cache.TotalSNFTAmount), 10)

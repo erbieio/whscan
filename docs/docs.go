@@ -429,6 +429,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/chart/tx": {
+            "get": {
+                "description": "query tx charts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chart"
+                ],
+                "summary": "query tx charts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.TxChartRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/collection/page": {
             "get": {
                 "description": "Query NFT collection list in reverse order of created block height",
@@ -3825,6 +3854,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/service.TransactionRes"
                     }
+                }
+            }
+        },
+        "service.TxChartRes": {
+            "type": "object",
+            "properties": {
+                "index": {
+                    "type": "integer"
+                },
+                "num": {
+                    "type": "integer"
                 }
             }
         }

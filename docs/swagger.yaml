@@ -1351,6 +1351,13 @@ definitions:
           $ref: '#/definitions/service.TransactionRes'
         type: array
     type: object
+  service.TxChartRes:
+    properties:
+      index:
+        type: integer
+      num:
+        type: integer
+    type: object
 info:
   contact: {}
   description: Block browser back-end interface, parses data from the blockchain,
@@ -1628,6 +1635,25 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: query charts
+      tags:
+      - chart
+  /chart/tx:
+    get:
+      consumes:
+      - application/json
+      description: query tx charts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.TxChartRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query tx charts
       tags:
       - chart
   /collection/{id}:
