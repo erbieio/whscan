@@ -7,7 +7,7 @@ import (
 
 // RankingSNFTRes SNFT ranking return parameters
 type RankingSNFTRes struct {
-	Total uint64 `json:"total"` //The total number of SNFTs
+	Total int64 `json:"total"` //The total number of SNFTs
 	NFTs  []*struct {
 		model.SNFT
 		model.FNFT
@@ -17,31 +17,34 @@ type RankingSNFTRes struct {
 }
 
 func RankingSNFT(limit string, page, size int) (res RankingSNFTRes, err error) {
-	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
-		Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
-		Group("address,id,creator").Offset((page - 1) * size).Limit(size).
-		Order("tx_count DESC, address DESC").Select("snfts.*,fnfts.*,creator,COUNT(tx_hash) AS tx_count")
+	db := DB.Model(&model.NFTTx{}).Joins("LEFT JOIN epoches ON LEFT(nft_addr,38)=epoches.id").
+		Joins("LEFT JOIN fnfts ON LEFT(nft_addr,40)=fnfts.id").
+		Joins("LEFT JOIN snfts ON nft_addr=address").
+		Order("tx_count DESC, nft_addr DESC").Select("snfts.*,fnfts.*,creator,COUNT(nft_addr) AS tx_count")
 	switch limit {
 	case "24h":
 		start, stop := utils.LastTimeRange(1)
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(nft_addr,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
 	case "7d":
 		start, stop := utils.LastTimeRange(7)
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(nft_addr,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
 	case "30d":
 		start, stop := utils.LastTimeRange(30)
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(nft_addr,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
 	default:
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address")
+		db = db.Where("LEFT(nft_addr,3)='0x8'")
 	}
-	err = db.Scan(&res.NFTs).Error
-	res.Total = cache.TotalSNFT
+	err = db.Count(&res.Total).Error
+	if err != nil {
+		return
+	}
+	err = db.Group("nft_addr,epoches.id,fnfts.id,address").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 
 // RankingNFTRes NFT ranking return parameters
 type RankingNFTRes struct {
-	Total uint64 `json:"total"` //The total number of NFTs
+	Total int64 `json:"total"` //The total number of NFTs
 	NFTs  []struct {
 		model.NFT
 		TxCount uint64 `json:"txCount"`
@@ -49,23 +52,25 @@ type RankingNFTRes struct {
 }
 
 func RankingNFT(limit string, page, size int) (res RankingNFTRes, err error) {
-	db := DB.Model(&model.NFT{}).Group("address").Offset((page - 1) * size).Limit(size).
-		Order("tx_count DESC, address DESC").Select("nfts.*,COUNT(nft_addr) AS tx_count")
+	db := DB.Model(&model.NFTTx{}).Order("tx_count DESC, address DESC").Select("nfts.*,COUNT(nft_addr) AS tx_count")
 	switch limit {
 	case "24h":
 		start, stop := utils.LastTimeRange(1)
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	case "7d":
 		start, stop := utils.LastTimeRange(7)
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	case "30d":
 		start, stop := utils.LastTimeRange(30)
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	default:
-		db = db.Joins("LEFT JOIN nft_txes ON nft_addr=address")
+		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address")
 	}
-	err = db.Scan(&res.NFTs).Error
-	res.Total = cache.TotalNFT
+	err = db.Count(&res.Total).Error
+	if err != nil {
+		return
+	}
+	err = db.Group("address").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 
