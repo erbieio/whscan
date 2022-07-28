@@ -3363,15 +3363,39 @@ const docTemplate = `{
                                 "description": "SNFT address",
                                 "type": "string"
                             },
+                            "attributes": {
+                                "description": "Attributes",
+                                "type": "string"
+                            },
                             "awardee": {
                                 "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
+                                "type": "string"
+                            },
+                            "category": {
+                                "description": "category",
                                 "type": "string"
                             },
                             "creator": {
                                 "type": "string"
                             },
+                            "desc": {
+                                "description": "description",
+                                "type": "string"
+                            },
+                            "id": {
+                                "description": "FNFT ID",
+                                "type": "string"
+                            },
                             "last_price": {
                                 "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
+                                "type": "string"
+                            },
+                            "meta_url": {
+                                "description": "FNFT meta information URL",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "name",
                                 "type": "string"
                             },
                             "owner": {
@@ -3385,6 +3409,10 @@ const docTemplate = `{
                             "reward_number": {
                                 "description": "The height of the last rewarded block, null if not rewarded",
                                 "type": "integer"
+                            },
+                            "source_url": {
+                                "description": "Resource links, file links such as pictures or videos",
+                                "type": "string"
                             },
                             "txCount": {
                                 "type": "integer"

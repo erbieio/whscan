@@ -41,9 +41,9 @@ type TxChartRes struct {
 	Num   uint64 `json:"num"`
 }
 
-func TxChart() (res TxChartRes, err error) {
+func TxChart() (res []*TxChartRes, err error) {
 	start, stop := utils.LastTimeRange(int64(1))
 	err = DB.Table("(?) A", DB.Model(&model.Block{}).Select("(timestamp-?) DIV 3600 AS `index`,`total_transaction`", start).
-		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`").Select("`index`, SUM(total_transaction) AS num").Scan(&res).Error
+		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`").Order("`index`").Select("`index`, SUM(total_transaction) AS num").Scan(&res).Error
 	return
 }

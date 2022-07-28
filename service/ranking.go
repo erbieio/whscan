@@ -8,8 +8,9 @@ import (
 // RankingSNFTRes SNFT ranking return parameters
 type RankingSNFTRes struct {
 	Total uint64 `json:"total"` //The total number of SNFTs
-	NFTs  []struct {
+	NFTs  []*struct {
 		model.SNFT
+		model.FNFT
 		Creator string `json:"creator"`
 		TxCount uint64 `json:"txCount"`
 	} `json:"nfts"` //SNFT list
@@ -17,8 +18,9 @@ type RankingSNFTRes struct {
 
 func RankingSNFT(limit string, page, size int) (res RankingSNFTRes, err error) {
 	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
-		Group("address,creator").Offset((page - 1) * size).Limit(size).
-		Order("tx_count DESC, address DESC").Select("snfts.*,creator,COUNT(nft_addr) AS tx_count")
+		Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
+		Group("address,id,creator").Offset((page - 1) * size).Limit(size).
+		Order("tx_count DESC, address DESC").Select("snfts.*,fnfts.*,creator,COUNT(tx_hash) AS tx_count")
 	switch limit {
 	case "24h":
 		start, stop := utils.LastTimeRange(1)
