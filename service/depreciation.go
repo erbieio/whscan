@@ -64,7 +64,7 @@ func FetchTxs(page, size int, addr, block string) (data []Transaction, count int
 		db = db.Where("block_number=?", block)
 	}
 	if addr == "" && block == "" {
-		count = int64(TotalTransaction())
+		count = int64(cache.TotalTransaction)
 	} else {
 		err = db.Count(&count).Error
 	}

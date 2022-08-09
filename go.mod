@@ -3,14 +3,14 @@ module server
 go 1.18
 
 require (
-	github.com/INFURA/go-ethlibs v0.0.0-20220707084150-21e05c7e04ff
+	github.com/INFURA/go-ethlibs v0.0.0-20220727233241-fb9d65fce000
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1
 	github.com/gin-gonic/gin v1.8.1
 	github.com/joho/godotenv v1.4.0
-	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe
+	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
 	github.com/swaggo/gin-swagger v1.5.1
-	github.com/swaggo/swag v1.8.3
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+	github.com/swaggo/swag v1.8.4
+	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
 	gorm.io/driver/mysql v1.3.5
 	gorm.io/gorm v1.23.8
 )

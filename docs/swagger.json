@@ -2495,6 +2495,10 @@
                     "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
                     "type": "integer"
                 },
+                "proxy": {
+                    "description": "proxy address",
+                    "type": "string"
+                },
                 "snft": {
                     "description": "SNFT address",
                     "type": "string"
@@ -3445,6 +3449,10 @@
                                 "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
                                 "type": "integer"
                             },
+                            "proxy": {
+                                "description": "proxy address",
+                                "type": "string"
+                            },
                             "snft": {
                                 "description": "SNFT address",
                                 "type": "string"
@@ -3668,6 +3676,7 @@
                                 "type": "string"
                             },
                             "collectionName": {
+                                "description": "collection name",
                                 "type": "string"
                             },
                             "desc": {
@@ -3675,6 +3684,7 @@
                                 "type": "string"
                             },
                             "exchanger": {
+                                "description": "exchanger address",
                                 "type": "string"
                             },
                             "id": {

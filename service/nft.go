@@ -12,7 +12,7 @@ type NFTsRes struct {
 }
 
 func FetchNFTs(exchanger, collectionId, owner string, page, size int) (res NFTsRes, err error) {
-	db := DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON id=LEFT(address,39)")
+	db := DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON id=collection_id")
 	if exchanger != "" {
 		db = db.Where("exchanger_addr=?", exchanger)
 	}
@@ -69,7 +69,7 @@ func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 		db = db.Where("owner=?", owner)
 	}
 	if owner == "" {
-		res.Total = int64(TotalSNFT())
+		res.Total = int64(cache.TotalSNFT)
 	} else {
 		err = db.Model(&model.SNFT{}).Count(&res.Total).Error
 	}
@@ -83,36 +83,34 @@ func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 // SNFTsAndMetaRes SNFT and meta information paging return parameters
 type SNFTsAndMetaRes struct {
 	Total int64 `json:"total"` //The total number of SNFTs
-	NFTs  []struct {
+	NFTs  []*struct {
 		model.SNFT
 		model.FNFT
-		Exchanger      string `json:"exchanger"`
-		CollectionName string `json:"collectionName"`
+		Exchanger      string `json:"exchanger"`      //exchanger address
+		CollectionName string `json:"collectionName"` //collection name
 	} `json:"nfts"` //SNFT list
 }
 
 func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
-	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
-		Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
-		Joins("LEFT JOIN collections ON collections.id=LEFT(address,39)")
+	db := DB.Table("v_snfts")
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
 	if collectionId != "" {
-		db = db.Where("group_id=?", collectionId)
+		db = db.Where("collection_id=?", collectionId)
 	}
 	if exchanger != "" {
-		db = db.Where("LEFT(address,38) IN (?)", DB.Model(&Epoch{}).Where("exchanger=?", exchanger).Select("id"))
+		db = db.Where("exchanger=?", exchanger)
 	}
 	if owner == "" && collectionId == "" && exchanger == "" {
-		res.Total = int64(TotalSNFT())
+		res.Total = int64(cache.TotalSNFT)
 	} else {
 		err = db.Count(&res.Total).Error
 	}
 	if err != nil {
 		return
 	}
-	err = db.Select("snfts.*,fnfts.*,epoches.exchanger,collections.name AS collection_name").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 

@@ -220,12 +220,38 @@ func (c *Client) GetEpoch(number string) (rewards Epoch, err error) {
 
 type Reward struct {
 	Address      string   `json:"Address"`
+	Proxy        string   `json:"Proxy"`
 	NFTAddress   *string  `json:"NftAddress"`
 	RewardAmount *big.Int `json:"RewardAmount"`
 }
 
-func (c *Client) GetReward(number string) (rewards []Reward, err error) {
+func (c *Client) GetReward(number string) (rewards []*Reward, err error) {
 	err = c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", number, true)
+	if err != nil {
+		return
+	}
+	validators := struct {
+		Validators []*struct {
+			Addr  string `json:"Addr"`
+			Proxy string `json:"Proxy"`
+		} `json:"Validators"`
+	}{}
+	err = c.Call(&validators, "eth_getValidator", number)
+	if err != nil {
+		return
+	}
+	for _, validator := range validators.Validators {
+		for _, reward := range rewards {
+			if validator.Addr == reward.Address {
+				reward.Proxy = validator.Proxy
+			}
+		}
+	}
+	for _, reward := range rewards {
+		if reward.Proxy == "" {
+			reward.Proxy = reward.Address
+		}
+	}
 	return
 }
 

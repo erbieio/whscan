@@ -38,6 +38,29 @@ func DropTable(db *gorm.DB) error {
 	return db.Migrator().DropTable(Tables...)
 }
 
+var Views = map[string]string{
+	"v_snfts": `
+CREATE OR REPLACE VIEW vsnfts
+AS
+SELECT snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio
+     , dir, vote_weight, number, collections.id AS collection_id
+     , collections.name AS collection_name, collections.desc AS collection_desc
+FROM snfts
+         LEFT JOIN fnfts ON LEFT(address, 40) = fnfts.id
+         LEFT JOIN collections ON LEFT(address, 39) = collections.id
+         LEFT JOIN epoches ON LEFT(address, 38) = epoches.id;`,
+}
+
+func SetView(db *gorm.DB) error {
+	for _, view := range Views {
+		err := db.Exec(view).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Cache stores some statistical data
 type Cache struct {
 	Key   string `gorm:"type:VARCHAR(64);primaryKey"` //Key
@@ -65,13 +88,13 @@ type Header struct {
 	UnclesCount      types.Uint64   `json:"unclesCount"`                           //Number of uncle blocks
 }
 
-// Uncle uncle block information
+// Uncle block information
 type Uncle struct {
 	Header
 	Number types.Uint64 `json:"number"` //Uncle block number
 }
 
-// Block block information
+// Block information
 type Block struct {
 	Header
 	Number           types.Uint64 `json:"number" gorm:"uniqueIndex"`               //block number
@@ -79,7 +102,7 @@ type Block struct {
 	TotalTransaction types.Uint64 `json:"totalTransaction"`                        //Number of transactions
 }
 
-// Account account information
+// Account information
 type Account struct {
 	Address   types.Address  `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
 	Balance   types.BigInt   `json:"balance" gorm:"type:VARCHAR(128);index"`  //balance
@@ -92,7 +115,7 @@ type Account struct {
 	CreatedTx *types.Hash    `json:"createdTx" gorm:"type:CHAR(66)"`          //Create transaction
 }
 
-// Transaction transaction information
+// Transaction information
 type Transaction struct {
 	BlockHash   types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`              //Block Hash
 	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:idx_desc,sort:DESC"` //block number
@@ -237,7 +260,7 @@ type NFTTx struct {
 	Fee           *string `json:"fee"`                                      //Transaction fee, in wei (only if there is an exchange and price)
 }
 
-// Collection collection information, user collection: name + creator + hash of the exchange to which they belong, SNFT collection: SNFT address removes the last 3 digits
+// Collection information, user collection: name + creator + hash of the exchange to which they belong, SNFT collection: SNFT address removes the last 3 digits
 type Collection struct {
 	Id          string  `json:"id" gorm:"type:CHAR(66);primary_key"`  //ID
 	MetaUrl     string  `json:"meta_url"`                             //collection meta information URL
@@ -267,6 +290,7 @@ type Exchanger struct {
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
 type Reward struct {
 	Address     string  `json:"address" gorm:"type:CHAR(42)"` //reward address
+	Proxy       string  `json:"proxy" gorm:"type:CHAR(42)"`   //proxy address
 	Identity    uint8   `json:"identity"`                     //Identity, 1: block producer, 2: verifier, 3, exchange
 	BlockNumber uint64  `json:"block_number"`                 //The block number when rewarding
 	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`    //SNFT address
@@ -286,7 +310,7 @@ type ExchangerPledge Pledge
 // ConsensusPledge consensus pledge
 type ConsensusPledge Pledge
 
-// Subscription subscription information
+// Subscription information
 type Subscription struct {
 	Email string `json:"email" gorm:"type:VARCHAR(64);primary_key"` //Email
 }

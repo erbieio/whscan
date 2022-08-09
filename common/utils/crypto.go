@@ -43,7 +43,7 @@ func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (
 			{String: tx["data"]},     //5,data
 			{String: "0x" + hex.EncodeToString(chainId.Bytes())}, //6,V, equal to ChainId before unsigned
 			{String: "0x"}, //7,R
-			{String: "0x"}, //8,V
+			{String: "0x"}, //8,S
 		},
 	}
 	hash, err := msg.HashToBytes()
@@ -54,21 +54,32 @@ func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (
 	if err != nil {
 		return "", err
 	}
-
-	if tx["chainId"] == "0x" {
-		// v + 27
-		msg.List[6] = rlp.Value{String: "0x" + hex.EncodeToString([]byte{sig[64] + 27})}
-	} else {
-		// v + chainId * 2 + 35
-		v := new(big.Int).Set(chainId)
-		v = v.Lsh(v, 1)
-		v = v.Add(v, big.NewInt(int64(sig[64]+35)))
-		msg.List[6] = rlp.Value{String: "0x" + hex.EncodeToString(v.Bytes())}
+	R, S, V, err := DecodeEIP155Sig(sig, chainId)
+	if err != nil {
+		return "", err
 	}
-	msg.List[7] = rlp.Value{String: "0x" + hex.EncodeToString(sig[0:32])}
-	msg.List[8] = rlp.Value{String: "0x" + hex.EncodeToString(sig[32:64])}
+	msg.List[6] = rlp.Value{String: "0x" + hex.EncodeToString(V.Bytes())}
+	msg.List[7] = rlp.Value{String: "0x" + hex.EncodeToString(R.Bytes())}
+	msg.List[8] = rlp.Value{String: "0x" + hex.EncodeToString(S.Bytes())}
 	raw, err := msg.Encode()
 	return types.Data(raw), err
+}
+
+func DecodeEIP155Sig(sig []byte, chainId *big.Int) (R, S, V *big.Int, err error) {
+	if len(sig) != 65 {
+		return nil, nil, nil, fmt.Errorf("sig length is not 65:%d", len(sig))
+	}
+	R, S, V = new(big.Int), new(big.Int), new(big.Int)
+	R.SetBytes(sig[0:32])
+	S.SetBytes(sig[32:64])
+	if chainId.Sign() == 0 {
+		// v + 27
+		V.SetBytes([]byte{sig[64] + 27})
+	} else {
+		// v + chainId * 2 + 35
+		V = V.Lsh(chainId, 1).Add(V, big.NewInt(int64(sig[64]+35)))
+	}
+	return
 }
 
 // Sign signed with the private key, the last bit of the result is v, the value is 0 or 1

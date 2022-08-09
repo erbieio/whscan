@@ -32,7 +32,7 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 		err = db.Count(&res.Total).Error
 	} else {
 		// use cache to speed up queries
-		res.Total = int64(TotalTransaction())
+		res.Total = int64(cache.TotalTransaction)
 	}
 	if err != nil {
 		return

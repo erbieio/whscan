@@ -236,6 +236,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 			}
 			wh.Rewards = append(wh.Rewards, &model.Reward{
 				Address:     rewards[i].Address,
+				Proxy:       rewards[i].Proxy,
 				Identity:    identity,
 				BlockNumber: uint64(wh.Block.Number),
 			})

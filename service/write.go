@@ -106,14 +106,6 @@ func TotalBlock() uint64 {
 	return cache.TotalBlock
 }
 
-func TotalTransaction() uint64 {
-	return cache.TotalTransaction
-}
-
-func TotalSNFT() uint64 {
-	return cache.TotalSNFT
-}
-
 var lastTime = int64(0)
 
 func freshCache() {
@@ -540,7 +532,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			balanceCount.SetString(exchanger.BalanceCount, 10)
 			balanceCount = balanceCount.Add(balanceCount, price)
 			exchanger.BalanceCount = balanceCount.Text(10)
-			err = tx.Select("tx_count", "balance_count").Updates(&exchanger).Error
+			err = tx.Select("balance_count").Updates(&exchanger).Error
 			if err != nil {
 				return err
 			}

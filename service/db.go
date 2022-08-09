@@ -27,6 +27,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	err = model.SetView(DB)
+	if err != nil {
+		panic(err)
+	}
 	err = initCache()
 	if err != nil {
 		panic(err)

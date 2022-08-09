@@ -2504,6 +2504,10 @@ const docTemplate = `{
                     "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
                     "type": "integer"
                 },
+                "proxy": {
+                    "description": "proxy address",
+                    "type": "string"
+                },
                 "snft": {
                     "description": "SNFT address",
                     "type": "string"
@@ -3454,6 +3458,10 @@ const docTemplate = `{
                                 "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
                                 "type": "integer"
                             },
+                            "proxy": {
+                                "description": "proxy address",
+                                "type": "string"
+                            },
                             "snft": {
                                 "description": "SNFT address",
                                 "type": "string"
@@ -3677,6 +3685,7 @@ const docTemplate = `{
                                 "type": "string"
                             },
                             "collectionName": {
+                                "description": "collection name",
                                 "type": "string"
                             },
                             "desc": {
@@ -3684,6 +3693,7 @@ const docTemplate = `{
                                 "type": "string"
                             },
                             "exchanger": {
+                                "description": "exchanger address",
                                 "type": "string"
                             },
                             "id": {
