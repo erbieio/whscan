@@ -128,13 +128,13 @@ func GetNFT(addr string) (res NFT, err error) {
 type SNFT struct {
 	model.SNFT
 	model.FNFT
-	model.Epoch
+	RoyaltyRatio   uint32 `json:"royaltyRatio"`   //The royalty rate of the same period of SNFT, the unit is one ten thousandth
+	Exchanger      string `json:"exchanger"`      //exchanger address
+	CollectionName string `json:"collectionName"` //collection name
 }
 
 func GetSNFT(addr string) (res SNFT, err error) {
-	err = DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts ON LEFT(address,40)=fnfts.id").
-		Joins("LEFT JOIN epoches ON LEFT(address,38)=epoches.id").
-		Where("address=?", addr).Select("snfts.*,fnfts.*,epoches.*").Scan(&res).Error
+	err = DB.Table("v_snfts").Where("address=?", addr).First(&res).Error
 	return
 }
 

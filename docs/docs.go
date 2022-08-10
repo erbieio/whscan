@@ -3494,24 +3494,20 @@ const docTemplate = `{
                     "description": "category",
                     "type": "string"
                 },
-                "creator": {
-                    "description": "Creator address, also the address of royalty income",
+                "collectionName": {
+                    "description": "collection name",
                     "type": "string"
                 },
                 "desc": {
                     "description": "description",
                     "type": "string"
                 },
-                "dir": {
-                    "description": "meta information directory URL",
-                    "type": "string"
-                },
                 "exchanger": {
-                    "description": "Exchange address",
+                    "description": "exchanger address",
                     "type": "string"
                 },
                 "id": {
-                    "description": "period ID",
+                    "description": "FNFT ID",
                     "type": "string"
                 },
                 "last_price": {
@@ -3525,10 +3521,6 @@ const docTemplate = `{
                 "name": {
                     "description": "name",
                     "type": "string"
-                },
-                "number": {
-                    "description": "Starting block height",
-                    "type": "integer"
                 },
                 "owner": {
                     "description": "owner, unallocated and reclaimed are null",
@@ -3548,14 +3540,6 @@ const docTemplate = `{
                 },
                 "source_url": {
                     "description": "Resource links, file links such as pictures or videos",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "Starting timestamp",
-                    "type": "integer"
-                },
-                "voteWeight": {
-                    "description": "Weight",
                     "type": "string"
                 }
             }

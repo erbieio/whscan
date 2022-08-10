@@ -40,15 +40,14 @@ func DropTable(db *gorm.DB) error {
 
 var Views = map[string]string{
 	"v_snfts": `
-CREATE OR REPLACE VIEW vsnfts
+CREATE OR REPLACE VIEW v_snfts
 AS
 SELECT snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio
-     , dir, vote_weight, number, collections.id AS collection_id
-     , collections.name AS collection_name, collections.desc AS collection_desc
+	, vote_weight, number, collections.id AS collection_id, collections.name AS collection_name
 FROM snfts
-         LEFT JOIN fnfts ON LEFT(address, 40) = fnfts.id
-         LEFT JOIN collections ON LEFT(address, 39) = collections.id
-         LEFT JOIN epoches ON LEFT(address, 38) = epoches.id;`,
+	LEFT JOIN fnfts ON LEFT(address, 40) = fnfts.id
+	LEFT JOIN collections ON LEFT(address, 39) = collections.id
+	LEFT JOIN epoches ON LEFT(address, 38) = epoches.id;`,
 }
 
 func SetView(db *gorm.DB) error {
