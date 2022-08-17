@@ -57,6 +57,22 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 	return
 }
 
+// ComSNFTsRes SNFT paging return parameters
+type ComSNFTsRes struct {
+	Total int64           `json:"total"` //The total number of SNFTs
+	NFTs  []model.ComSNFT `json:"nfts"`  //SNFT list
+}
+
+func FetchComSNFTs(owner string, page, size int) (res ComSNFTsRes, err error) {
+	db := DB.Model(&model.ComSNFT{}).Where("owner=?", owner)
+	err = db.Count(&res.Total).Error
+	if err != nil {
+		return
+	}
+	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+	return
+}
+
 // SNFTsRes SNFT paging return parameters
 type SNFTsRes struct {
 	Total int64        `json:"total"` //The total number of SNFTs
@@ -86,6 +102,7 @@ type SNFTsAndMetaRes struct {
 	NFTs  []*struct {
 		model.SNFT
 		model.FNFT
+		Creator        string `json:"creator"`        //creator address, also the address of royalty income
 		Exchanger      string `json:"exchanger"`      //exchanger address
 		CollectionName string `json:"collectionName"` //collection name
 	} `json:"nfts"` //SNFT list
@@ -128,7 +145,8 @@ func GetNFT(addr string) (res NFT, err error) {
 type SNFT struct {
 	model.SNFT
 	model.FNFT
-	RoyaltyRatio   uint32 `json:"royaltyRatio"`   //The royalty rate of the same period of SNFT, the unit is one ten thousandth
+	Creator        string `json:"creator"`        //creator address, also the address of royalty income
+	RoyaltyRatio   uint32 `json:"royaltyRatio"`   //the royalty rate of the same period of SNFT, the unit is one ten thousandth
 	Exchanger      string `json:"exchanger"`      //exchanger address
 	CollectionName string `json:"collectionName"` //collection name
 }

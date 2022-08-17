@@ -1683,6 +1683,56 @@
                 }
             }
         },
+        "/snft_com/page": {
+            "get": {
+                "description": "Query the Composable SNFT list in reverse order of creation time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "query Composable SNFT list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Owner, if empty, query all",
+                        "name": "owner",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.ComSNFTsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/snft_meta/page": {
             "get": {
                 "description": "Query the list of SNFTs with meta information in reverse order of creation time",
@@ -2317,6 +2367,19 @@
                 }
             }
         },
+        "model.ComSNFT": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "synthesize SNFT address",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "owner",
+                    "type": "string"
+                }
+            }
+        },
         "model.Epoch": {
             "type": "object",
             "properties": {
@@ -2807,6 +2870,22 @@
                 },
                 "total": {
                     "description": "The total number of NFT collections",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.ComSNFTsRes": {
+            "type": "object",
+            "properties": {
+                "nfts": {
+                    "description": "SNFT list",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ComSNFT"
+                    }
+                },
+                "total": {
+                    "description": "The total number of SNFTs",
                     "type": "integer"
                 }
             }
@@ -3489,6 +3568,10 @@
                     "description": "collection name",
                     "type": "string"
                 },
+                "creator": {
+                    "description": "creator address, also the address of royalty income",
+                    "type": "string"
+                },
                 "desc": {
                     "description": "description",
                     "type": "string"
@@ -3526,7 +3609,7 @@
                     "type": "integer"
                 },
                 "royaltyRatio": {
-                    "description": "The royalty rate of the same period of SNFT, the unit is one ten thousandth",
+                    "description": "the royalty rate of the same period of SNFT, the unit is one ten thousandth",
                     "type": "integer"
                 },
                 "source_url": {
@@ -3661,6 +3744,10 @@
                             },
                             "collectionName": {
                                 "description": "collection name",
+                                "type": "string"
+                            },
+                            "creator": {
+                                "description": "creator address, also the address of royalty income",
                                 "type": "string"
                             },
                             "desc": {

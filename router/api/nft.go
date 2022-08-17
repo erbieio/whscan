@@ -14,6 +14,7 @@ func NFT(e *gin.Engine) {
 	e.GET("/nft_meta/page", pageNFTAndMeta)
 	e.GET("/nft/tx/page", pageNFTTx)
 	e.GET("/snft/page", pageSNFT)
+	e.GET("/snft_com/page", pageComSNFT)
 	e.GET("/nft/:addr", getNFT)
 	e.GET("/snft/:addr", getSNFT)
 	e.GET("/snft/block", blockSNFT)
@@ -148,6 +149,42 @@ func pageSNFT(c *gin.Context) {
 	}
 
 	res, err := service.FetchSNFTs(strings.ToLower(req.Owner), page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        NFT
+// @Summary     query Composable SNFT list
+// @Description Query the Composable SNFT list in reverse order of creation time
+// @Accept      json
+// @Produce     json
+// @Param       owner     query    string true  "Owner, if empty, query all"
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.ComSNFTsRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /snft_com/page [get]
+func pageComSNFT(c *gin.Context) {
+	req := struct {
+		Page     *int   `form:"page"`
+		PageSize *int   `form:"page_size"`
+		Owner    string `form:"owner"`
+	}{}
+	err := c.BindQuery(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	page, size, err := utils.ParsePage(req.Page, req.PageSize)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	res, err := service.FetchComSNFTs(strings.ToLower(req.Owner), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

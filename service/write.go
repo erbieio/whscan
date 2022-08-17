@@ -40,12 +40,14 @@ type Cache struct {
 	RewardCoinCount     uint64       `json:"rewardCoinCount"`     //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount     uint64       `json:"rewardSNFTCount"`     //Total number of times to get SNFT rewards
 	TotalRecycle        uint64       `json:"totalRecycle"`        //Total number of recycle SNFT
+	fnfts               map[string]int64
 }
 
 var cache = Cache{
 	TotalAmount:     "0",
 	TotalNFTAmount:  "0",
 	TotalSNFTAmount: "0",
+	fnfts:           make(map[string]int64),
 }
 
 // InitCache initializes the query cache from the database
@@ -138,6 +140,13 @@ func freshCache() {
 		if err := DB.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&number).Error; err == nil {
 			cache.RewardCoinCount = number
 		}
+		for fnft := range cache.fnfts {
+			err := DB.Exec("CAll fresh_c_snft(?)", fnft).Error
+			if err != nil {
+				log.Println("fresh com-snft error:", err)
+			}
+		}
+		cache.fnfts = make(map[string]int64)
 		lastTime = now
 	}
 }
@@ -275,6 +284,7 @@ func BlockInsert(block *DecodeRet) error {
 		cache.TotalExchanger += uint64(len(block.Exchangers))
 		cache.TotalExchanger -= uint64(len(block.CloseExchangers))
 		cache.TotalRecycle += uint64(len(block.RecycleSNFTs))
+
 		for _, tx := range block.NFTTxs {
 			if (*tx.NFTAddr)[:3] == "0x0" {
 				cache.TotalNFTTx += 1
@@ -294,6 +304,7 @@ func BlockInsert(block *DecodeRet) error {
 					b.Add(b, price)
 					cache.TotalSNFTAmount = types.BigInt(b.Text(10))
 				}
+				cache.fnfts[(*tx.NFTAddr)[:40]] = 0
 			}
 		}
 		cache.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
@@ -309,8 +320,11 @@ func BlockInsert(block *DecodeRet) error {
 		if len(block.CacheTxs) > 0 {
 			cache.TotalAmount = types.BigInt(totalAmount.Text(10))
 		}
+		for _, snft := range block.RewardSNFTs {
+			cache.fnfts[snft.Address[:40]] = 0
+		}
+		freshCache()
 	}
-	freshCache()
 	return err
 }
 

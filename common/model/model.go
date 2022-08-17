@@ -22,6 +22,7 @@ var Tables = []interface{}{
 	&Epoch{},
 	&FNFT{},
 	&SNFT{},
+	&ComSNFT{},
 	&Collection{},
 	&NFTTx{},
 	&Reward{},
@@ -53,6 +54,88 @@ FROM snfts
 func SetView(db *gorm.DB) error {
 	for _, view := range Views {
 		err := db.Exec(view).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var Procedures = map[string]string{
+	"fresh_c_snft": `
+CREATE PROCEDURE fresh_c_snft (
+	IN fnft CHAR(40)
+)
+BEGIN
+	DECLARE _level INTEGER DEFAULT 1;
+	DECLARE _owner CHAR(42);
+	SELECT owner
+		, IF(COUNT(*) = 256, 2, 1)
+	INTO _owner, _level
+	FROM snfts
+	WHERE LEFT(address, 40) = fnft
+	GROUP BY LEFT(address, 40), owner
+	LIMIT 1;
+	IF _level = 2 THEN
+		SELECT IF(COUNT(*) = 4096, 3, 2)
+		INTO _level
+		FROM snfts
+		WHERE LEFT(address, 39) = LEFT(fnft, 39)
+		GROUP BY LEFT(address, 39), owner
+		LIMIT 1;
+	END IF;
+	IF _level = 3 THEN
+		SELECT IF(COUNT(*) = 65536, 4, 3)
+		INTO _level
+		FROM snfts
+		WHERE LEFT(address, 38) = LEFT(fnft, 38)
+		GROUP BY LEFT(address, 38), owner
+		LIMIT 1;
+	END IF;
+	IF _level = 4 THEN
+		BEGIN
+			DELETE FROM com_snfts
+			WHERE LEFT(address, 38) = LEFT(fnft, 38);
+			INSERT INTO com_snfts
+			VALUES (LEFT(fnft, 38), _owner);
+		END;
+	END IF;
+	IF _level = 3 THEN
+		BEGIN
+			DELETE FROM com_snfts
+			WHERE LEFT(address, 39) = LEFT(fnft, 39);
+			INSERT INTO com_snfts
+			VALUES (LEFT(fnft, 39), _owner);
+		END;
+	END IF;
+	IF _level = 2 THEN
+		BEGIN
+			DELETE FROM com_snfts
+			WHERE LEFT(address, 40) = LEFT(fnft, 40);
+			INSERT INTO com_snfts
+			VALUES (LEFT(fnft, 40), _owner);
+		END;
+	END IF;
+	IF _level = 1 THEN
+		BEGIN
+			DELETE FROM com_snfts
+			WHERE LEFT(address, 40) = LEFT(fnft, 40);
+			INSERT INTO com_snfts
+			SELECT address, owner
+			FROM snfts
+			WHERE LEFT(address, 40) = fnft;
+		END;
+	END IF;
+END;`,
+}
+
+func SetProcedure(db *gorm.DB) error {
+	for name, procedure := range Procedures {
+		err := db.Exec("DROP PROCEDURE IF EXISTS " + name).Error
+		if err != nil {
+			return err
+		}
+		err = db.Exec(procedure).Error
 		if err != nil {
 			return err
 		}
@@ -242,6 +325,12 @@ type SNFT struct {
 	RewardAt     *uint64 `json:"reward_at"`                                //The timestamp of the last rewarded, null if not rewarded
 	RewardNumber *uint64 `json:"reward_number"`                            //The height of the last rewarded block, null if not rewarded
 	Owner        *string `json:"owner" gorm:"type:CHAR(44);index"`         //owner, unallocated and reclaimed are null
+}
+
+// ComSNFT Composable SNFTs
+type ComSNFT struct {
+	Address string `json:"address" gorm:"type:VARCHAR(44);primary_key"` //synthesize SNFT address
+	Owner   string `json:"owner" gorm:"type:CHAR(44);index"`            //owner
 }
 
 // NFTTx NFT transaction attribute information

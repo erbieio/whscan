@@ -31,6 +31,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	err = model.SetProcedure(DB)
+	if err != nil {
+		panic(err)
+	}
 	err = initCache()
 	if err != nil {
 		panic(err)
