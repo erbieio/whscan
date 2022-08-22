@@ -25,6 +25,10 @@ func Loop(ec *node.Client, interval time.Duration) {
 	log.Printf("The query cache was initialized successfully, starting data analysis from the %v block", number)
 	isDebug := ec.IsDebug()
 	isWormholes := ec.IsWormholes()
+	log.Printf("open debug api: %v, wormholes chain: %v", isDebug, isWormholes)
+	if !isDebug {
+		log.Printf("Not open debug api will result in some missing data")
+	}
 	for {
 		err := HandleBlock(ec, number, isDebug, isWormholes)
 		if err != nil {

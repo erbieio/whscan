@@ -2864,6 +2864,10 @@ const docTemplate = `{
                 "totalUncle": {
                     "description": "Number of total uncle blocks",
                     "type": "integer"
+                },
+                "totalValidator": {
+                    "description": "Total number of validator",
+                    "type": "integer"
                 }
             }
         },

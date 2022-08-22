@@ -294,6 +294,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 			Timestamp:    uint64(wh.Block.Timestamp),
 		})
 	}
+	wh.ValidatorLen, _ = c.GetValidatorLen(wh.Block.Number.Hex())
 	return nil
 }
 

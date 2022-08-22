@@ -282,3 +282,8 @@ func (c *Client) GetPledge(addr, number string) (string, error) {
 		return "0", err
 	}
 }
+
+func (c *Client) GetValidatorLen(number string) (ret uint64, err error) {
+	err = c.Call(&ret, "eth_getValidatorLen", number)
+	return
+}

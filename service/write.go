@@ -40,6 +40,7 @@ type Cache struct {
 	RewardCoinCount     uint64       `json:"rewardCoinCount"`     //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount     uint64       `json:"rewardSNFTCount"`     //Total number of times to get SNFT rewards
 	TotalRecycle        uint64       `json:"totalRecycle"`        //Total number of recycle SNFT
+	TotalValidator      uint64       `json:"totalValidator"`      // Total number of validator
 	fnfts               map[string]int64
 }
 
@@ -82,6 +83,12 @@ func initCache() (err error) {
 	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&cache.TotalSNFT).Error; err != nil {
 		return
 	}
+	if err := DB.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&cache.RewardSNFTCount).Error; err != nil {
+		return
+	}
+	if err := DB.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&cache.RewardCoinCount).Error; err == nil {
+		return
+	}
 	if err = DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x0'").Select("COUNT(*)").Scan(&cache.TotalNFTTx).Error; err != nil {
 		return
 	}
@@ -98,6 +105,9 @@ func initCache() (err error) {
 		return
 	}
 	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalRecycle").Select("value").Scan(&cache.TotalRecycle).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalValidator").Select("value").Scan(&cache.TotalValidator).Error; err != nil {
 		return
 	}
 	freshCache()
@@ -134,12 +144,6 @@ func freshCache() {
 		if err := DB.Model(&model.NFT{}).Where("timestamp>?", now-86400).Select("COUNT(*)").Scan(&number).Error; err == nil {
 			cache.Total24HNFT = number
 		}
-		if err := DB.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&number).Error; err == nil {
-			cache.RewardSNFTCount = number
-		}
-		if err := DB.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&number).Error; err == nil {
-			cache.RewardCoinCount = number
-		}
 		for fnft := range cache.fnfts {
 			err := DB.Exec("CAll fresh_c_snft(?)", fnft).Error
 			if err != nil {
@@ -172,6 +176,7 @@ type DecodeRet struct {
 	CacheAccounts    map[types.Address]*model.Account
 	CacheLogs        []*model.Log //Insert after CacheAccounts
 	AddBalance       *big.Int     //The number of coins added by the block
+	ValidatorLen     uint64       //The number of validator
 
 	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
 	Exchangers       []*model.Exchanger       //The created exchange, priority: 1
@@ -258,6 +263,12 @@ func BlockInsert(block *DecodeRet) error {
 		if err != nil {
 			return err
 		}
+		err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
+			Key: "TotalValidator", Value: fmt.Sprintf("%d", block.ValidatorLen),
+		}).Error
+		if err != nil {
+			return err
+		}
 		if len(block.CacheTxs) > 0 {
 			b.SetString(string(cache.TotalAmount), 10)
 			totalAmount = totalAmount.Add(totalAmount, b)
@@ -273,7 +284,7 @@ func BlockInsert(block *DecodeRet) error {
 		return WHInsert(t, block)
 	})
 
-	// If the write to the database is successful, update the query cache
+	// If write to the database is successful, update the query cache
 	if err == nil {
 		cache.TotalBlock++
 		cache.TotalTransaction += uint64(block.TotalTransaction)
@@ -281,9 +292,12 @@ func BlockInsert(block *DecodeRet) error {
 		cache.TotalNFT += uint64(len(block.CreateNFTs))
 		cache.TotalSNFT += uint64(len(block.RewardSNFTs))
 		cache.TotalSNFT -= uint64(len(block.RecycleSNFTs))
+		cache.RewardSNFTCount += uint64(len(block.RewardSNFTs))
+		cache.RewardCoinCount += uint64(len(block.Rewards) - len(block.RewardSNFTs))
 		cache.TotalExchanger += uint64(len(block.Exchangers))
 		cache.TotalExchanger -= uint64(len(block.CloseExchangers))
 		cache.TotalRecycle += uint64(len(block.RecycleSNFTs))
+		cache.TotalValidator = block.ValidatorLen
 
 		for _, tx := range block.NFTTxs {
 			if (*tx.NFTAddr)[:3] == "0x0" {
