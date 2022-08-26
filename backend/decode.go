@@ -276,7 +276,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 	}
 	// Write the current information, once every 65536 SNFT rewards
 	if len(epochId) > 0 {
-		epoch, err := c.GetEpoch((wh.Block.Number - 1).Hex())
+		epoch, err := c.GetEpoch(wh.Block.Number.Hex())
 		if err != nil {
 			return fmt.Errorf("GetEpoch() err:%v", err)
 		}

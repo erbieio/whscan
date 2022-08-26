@@ -41,15 +41,15 @@ type Cache struct {
 	RewardSNFTCount     uint64       `json:"rewardSNFTCount"`     //Total number of times to get SNFT rewards
 	TotalRecycle        uint64       `json:"totalRecycle"`        //Total number of recycle SNFT
 	TotalValidator      uint64       `json:"totalValidator"`      // Total number of validator
-	fnfts               map[string]int64
 }
 
 var cache = Cache{
 	TotalAmount:     "0",
 	TotalNFTAmount:  "0",
 	TotalSNFTAmount: "0",
-	fnfts:           make(map[string]int64),
 }
+
+var fnfts = make(map[string]int64)
 
 // InitCache initializes the query cache from the database
 func initCache() (err error) {
@@ -83,10 +83,10 @@ func initCache() (err error) {
 	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&cache.TotalSNFT).Error; err != nil {
 		return
 	}
-	if err := DB.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&cache.RewardSNFTCount).Error; err != nil {
+	if err = DB.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&cache.RewardSNFTCount).Error; err != nil {
 		return
 	}
-	if err := DB.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&cache.RewardCoinCount).Error; err == nil {
+	if err = DB.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&cache.RewardCoinCount).Error; err != nil {
 		return
 	}
 	if err = DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x0'").Select("COUNT(*)").Scan(&cache.TotalNFTTx).Error; err != nil {
@@ -144,13 +144,13 @@ func freshCache() {
 		if err := DB.Model(&model.NFT{}).Where("timestamp>?", now-86400).Select("COUNT(*)").Scan(&number).Error; err == nil {
 			cache.Total24HNFT = number
 		}
-		for fnft := range cache.fnfts {
+		for fnft := range fnfts {
 			err := DB.Exec("CAll fresh_c_snft(?)", fnft).Error
 			if err != nil {
 				log.Println("fresh com-snft error:", err)
 			}
 		}
-		cache.fnfts = make(map[string]int64)
+		fnfts = make(map[string]int64)
 		lastTime = now
 	}
 }
@@ -306,7 +306,7 @@ func BlockInsert(block *DecodeRet) error {
 					b, price := new(big.Int), new(big.Int)
 					b.SetString(string(cache.TotalNFTAmount), 10)
 					price.SetString(*tx.Price, 10)
-					b.Add(b, price)
+					b = b.Add(b, price)
 					cache.TotalNFTAmount = types.BigInt(b.Text(10))
 				}
 			} else {
@@ -315,10 +315,10 @@ func BlockInsert(block *DecodeRet) error {
 					b, price := new(big.Int), new(big.Int)
 					b.SetString(string(cache.TotalSNFTAmount), 10)
 					price.SetString(*tx.Price, 10)
-					b.Add(b, price)
+					b = b.Add(b, price)
 					cache.TotalSNFTAmount = types.BigInt(b.Text(10))
 				}
-				cache.fnfts[(*tx.NFTAddr)[:40]] = 0
+				fnfts[(*tx.NFTAddr)[:40]] = 0
 			}
 		}
 		cache.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
@@ -335,7 +335,7 @@ func BlockInsert(block *DecodeRet) error {
 			cache.TotalAmount = types.BigInt(totalAmount.Text(10))
 		}
 		for _, snft := range block.RewardSNFTs {
-			cache.fnfts[snft.Address[:40]] = 0
+			fnfts[snft.Address[:40]] = 0
 		}
 		freshCache()
 	}
@@ -427,7 +427,7 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 				b, price := new(big.Int), new(big.Int)
 				b.SetString(string(cache.TotalNFTAmount), 10)
 				price.SetString(*nftTx.Price, 10)
-				b.Add(b, price)
+				b = b.Add(b, price)
 				err = tx.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
 					Key: "TotalNFTAmount", Value: b.Text(10),
 				}).Error
@@ -440,7 +440,7 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 				b, price := new(big.Int), new(big.Int)
 				b.SetString(string(cache.TotalSNFTAmount), 10)
 				price.SetString(*nftTx.Price, 10)
-				b.Add(b, price)
+				b = b.Add(b, price)
 				err = tx.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
 					Key: "TotalSNFTAmount", Value: b.Text(10),
 				}).Error
@@ -550,7 +550,7 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			return err
 		}
 		// todo may not exist on exchange
-		if exchanger.Address == nt.ExchangerAddr && exchanger.FeeRatio > 0 {
+		if exchanger.Address == nt.ExchangerAddr {
 			price, _ := new(big.Int).SetString(*nt.Price, 10)
 			fee := big.NewInt(int64(exchanger.FeeRatio))
 			fee = fee.Mul(fee, price)
