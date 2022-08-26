@@ -363,16 +363,17 @@ type Collection struct {
 
 // Exchanger exchange attribute information
 type Exchanger struct {
-	Address      string `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
-	Name         string `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
-	URL          string `json:"url"`                                      //Exchange URL
-	FeeRatio     uint32 `json:"fee_ratio"`                                //fee rate, unit 1/10,000
-	Creator      string `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
-	Timestamp    uint64 `json:"timestamp" gorm:"index"`                   //Open time
-	BlockNumber  uint64 `json:"block_number" gorm:"index"`                //The block number when created
-	TxHash       string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
-	BalanceCount string `json:"balance_count" gorm:"type:VARCHAR(128)"`   //Total transaction amount, unit wei
-	NFTCount     uint64 `json:"nft_count"`                                //Total NFT count
+	Address      string  `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
+	Name         string  `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
+	URL          string  `json:"url"`                                      //Exchange URL
+	FeeRatio     uint32  `json:"fee_ratio"`                                //fee rate, unit 1/10,000
+	Creator      string  `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
+	Timestamp    uint64  `json:"timestamp" gorm:"index"`                   //Open time
+	BlockNumber  uint64  `json:"block_number" gorm:"index"`                //The block number when created
+	TxHash       string  `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
+	BalanceCount string  `json:"balance_count" gorm:"type:VARCHAR(128)"`   //Total transaction amount, unit wei
+	NFTCount     uint64  `json:"nft_count"`                                //Total NFT count
+	CloseAt      *uint64 `json:"close_at"`                                 //if not null, the exchange is closed
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB

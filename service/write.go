@@ -385,7 +385,9 @@ func SaveTxLog(tx *gorm.DB, cacheLog []*model.Log) error {
 func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 	// exchange creation
 	if wh.Exchangers != nil {
-		err = tx.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(wh.Exchangers).Error
+		err = tx.Clauses(clause.OnConflict{
+			DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "timestamp", "block_number", "tx_hash", "close_at"}),
+		}).Create(wh.Exchangers).Error
 		if err != nil {
 			return
 		}
@@ -451,7 +453,11 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 		}
 	}
 	for _, exchanger := range wh.CloseExchangers {
-		err = tx.Delete(model.Exchanger{}, "address=?", exchanger).Error
+		err = tx.Model(model.Exchanger{}).Where("address=?", exchanger).Update("close_at", wh.Timestamp).Error
+		if err != nil {
+			return
+		}
+		err = tx.Model(model.ExchangerPledge{}).Where("address=?", exchanger).Update("amount", "0").Error
 		if err != nil {
 			return
 		}
