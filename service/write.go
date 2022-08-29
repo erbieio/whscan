@@ -71,10 +71,10 @@ func initCache() (err error) {
 	if err = DB.Model(&model.Exchanger{}).Select("COUNT(*)").Scan(&cache.TotalExchanger).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Collection{}).Where("length(id)!=39").Select("COUNT(*)").Scan(&cache.TotalNFTCollection).Error; err != nil {
+	if err = DB.Model(&model.Collection{}).Where("length(id)!=40").Select("COUNT(*)").Scan(&cache.TotalNFTCollection).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Collection{}).Where("length(id)=39").Select("COUNT(*)").Scan(&cache.TotalSNFTCollection).Error; err != nil {
+	if err = DB.Model(&model.Collection{}).Where("length(id)=40").Select("COUNT(*)").Scan(&cache.TotalSNFTCollection).Error; err != nil {
 		return
 	}
 	if err = DB.Model(&model.NFT{}).Select("COUNT(*)").Scan(&cache.TotalNFT).Error; err != nil {
@@ -335,7 +335,7 @@ func BlockInsert(block *DecodeRet) error {
 			cache.TotalAmount = types.BigInt(totalAmount.Text(10))
 		}
 		for _, snft := range block.RewardSNFTs {
-			fnfts[snft.Address[:40]] = 0
+			fnfts[snft.Address[:41]] = 0
 		}
 		freshCache()
 	}

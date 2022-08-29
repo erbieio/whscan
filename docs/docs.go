@@ -2441,6 +2441,10 @@ const docTemplate = `{
                     "description": "The block number when created",
                     "type": "integer"
                 },
+                "close_at": {
+                    "description": "if not null, the exchange is closed",
+                    "type": "integer"
+                },
                 "creator": {
                     "description": "Creator address",
                     "type": "string"
@@ -2531,7 +2535,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "timestamp": {
-                    "description": "Transaction timestamp",
+                    "description": "transaction timestamp",
                     "type": "integer"
                 },
                 "to": {
@@ -2947,6 +2951,10 @@ const docTemplate = `{
                     "description": "The block number when created",
                     "type": "integer"
                 },
+                "close_at": {
+                    "description": "if not null, the exchange is closed",
+                    "type": "integer"
+                },
                 "collectionCount": {
                     "description": "collection count",
                     "type": "integer"
@@ -3306,6 +3314,10 @@ const docTemplate = `{
                             },
                             "block_number": {
                                 "description": "The block number when created",
+                                "type": "integer"
+                            },
+                            "close_at": {
+                                "description": "if not null, the exchange is closed",
                                 "type": "integer"
                             },
                             "creator": {

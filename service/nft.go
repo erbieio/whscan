@@ -175,19 +175,19 @@ type SNFTGroupsRes struct {
 }
 
 func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error) {
-	err = DB.Model(&model.SNFT{}).Where("owner=?", owner).Select("COUNT(DISTINCT LEFT(address, 39))").Scan(&res.Total).Error
+	err = DB.Model(&model.SNFT{}).Where("owner=?", owner).Select("COUNT(DISTINCT LEFT(address, 40))").Scan(&res.Total).Error
 	if err != nil {
 		return
 	}
 	err = DB.Model(&model.SNFT{}).
-		Joins("LEFT JOIN collections on LEFT(address,39) = id").
+		Joins("LEFT JOIN collections on LEFT(address,40) = id").
 		Select("`collections`.*,COUNT(address) AS total_hold").Where("owner=?", owner).Group("id").
 		Order("id DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Collections).Error
 	for i := range res.Collections {
 		err = DB.Model(&model.SNFT{}).
-			Joins("LEFT JOIN fnfts on LEFT(address,40) = fnfts.id").
+			Joins("LEFT JOIN fnfts on LEFT(address,41) = fnfts.id").
 			Select("fnfts.*,COUNT(*) AS total_hold").
-			Where("LEFT(address, 39)=? AND owner=?", res.Collections[i].Id, owner).Group("id").
+			Where("LEFT(address, 40)=? AND owner=?", res.Collections[i].Id, owner).Group("id").
 			Scan(&res.Collections[i].FullNFTs).Error
 		if err != nil {
 			return
@@ -197,6 +197,6 @@ func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error)
 }
 
 func FNFTs(FNFTId string) (res []model.SNFT, err error) {
-	err = DB.Where("LEFT(address, 40)=?", FNFTId).Find(&res).Error
+	err = DB.Where("LEFT(address, 41)=?", FNFTId).Find(&res).Error
 	return
 }

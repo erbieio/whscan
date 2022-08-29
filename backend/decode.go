@@ -254,8 +254,8 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 				// Parse the new phase ID
 				if len(epochId) == 0 {
 					addr, _ := new(big.Int).SetString(nftAddr[3:], 16)
-					if addr.Mod(addr, big.NewInt(65536)).Uint64() == 0 {
-						epochId = nftAddr[:38]
+					if addr.Mod(addr, big.NewInt(4096)).Uint64() == 0 {
+						epochId = nftAddr[:39]
 					}
 				}
 			} else {
@@ -274,7 +274,7 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 			}
 		}
 	}
-	// Write the current information, once every 65536 SNFT rewards
+	// Write the current information, once every 4096 SNFT rewards
 	if len(epochId) > 0 {
 		epoch, err := c.GetEpoch(wh.Block.Number.Hex())
 		if err != nil {

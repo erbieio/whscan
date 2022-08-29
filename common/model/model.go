@@ -46,9 +46,9 @@ AS
 SELECT snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio
 	, vote_weight, number, collections.id AS collection_id, collections.name AS collection_name
 FROM snfts
-	LEFT JOIN fnfts ON LEFT(address, 40) = fnfts.id
-	LEFT JOIN collections ON LEFT(address, 39) = collections.id
-	LEFT JOIN epoches ON LEFT(address, 38) = epoches.id;`,
+	LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id
+	LEFT JOIN collections ON LEFT(address, 40) = collections.id
+	LEFT JOIN epoches ON LEFT(address, 39) = epoches.id;`,
 }
 
 func SetView(db *gorm.DB) error {
@@ -64,43 +64,35 @@ func SetView(db *gorm.DB) error {
 var Procedures = map[string]string{
 	"fresh_c_snft": `
 CREATE PROCEDURE fresh_c_snft (
-	IN fnft CHAR(40)
+	IN fnft CHAR(41)
 )
 BEGIN
 	DECLARE _level INTEGER DEFAULT 1;
 	DECLARE _owner CHAR(42);
 	SELECT owner
-		, IF(COUNT(*) = 256, 2, 1)
+		, IF(COUNT(*) = 16, 2, 1)
 	INTO _owner, _level
 	FROM snfts
-	WHERE LEFT(address, 40) = fnft
-	GROUP BY LEFT(address, 40), owner
+	WHERE LEFT(address, 41) = fnft
+	GROUP BY LEFT(address, 41), owner
 	LIMIT 1;
 	IF _level = 2 THEN
-		SELECT IF(COUNT(*) = 4096, 3, 2)
+		SELECT IF(COUNT(*) = 256, 3, 2)
+		INTO _level
+		FROM snfts
+		WHERE LEFT(address, 40) = LEFT(fnft, 40)
+		GROUP BY LEFT(address, 40), owner
+		LIMIT 1;
+	END IF;
+	IF _level = 3 THEN
+		SELECT IF(COUNT(*) = 4096, 4, 3)
 		INTO _level
 		FROM snfts
 		WHERE LEFT(address, 39) = LEFT(fnft, 39)
 		GROUP BY LEFT(address, 39), owner
 		LIMIT 1;
 	END IF;
-	IF _level = 3 THEN
-		SELECT IF(COUNT(*) = 65536, 4, 3)
-		INTO _level
-		FROM snfts
-		WHERE LEFT(address, 38) = LEFT(fnft, 38)
-		GROUP BY LEFT(address, 38), owner
-		LIMIT 1;
-	END IF;
 	IF _level = 4 THEN
-		BEGIN
-			DELETE FROM com_snfts
-			WHERE LEFT(address, 38) = LEFT(fnft, 38);
-			INSERT INTO com_snfts
-			VALUES (LEFT(fnft, 38), _owner);
-		END;
-	END IF;
-	IF _level = 3 THEN
 		BEGIN
 			DELETE FROM com_snfts
 			WHERE LEFT(address, 39) = LEFT(fnft, 39);
@@ -108,7 +100,7 @@ BEGIN
 			VALUES (LEFT(fnft, 39), _owner);
 		END;
 	END IF;
-	IF _level = 2 THEN
+	IF _level = 3 THEN
 		BEGIN
 			DELETE FROM com_snfts
 			WHERE LEFT(address, 40) = LEFT(fnft, 40);
@@ -116,14 +108,22 @@ BEGIN
 			VALUES (LEFT(fnft, 40), _owner);
 		END;
 	END IF;
+	IF _level = 2 THEN
+		BEGIN
+			DELETE FROM com_snfts
+			WHERE LEFT(address, 41) = LEFT(fnft, 41);
+			INSERT INTO com_snfts
+			VALUES (LEFT(fnft, 41), _owner);
+		END;
+	END IF;
 	IF _level = 1 THEN
 		BEGIN
 			DELETE FROM com_snfts
-			WHERE LEFT(address, 40) = LEFT(fnft, 40);
+			WHERE LEFT(address, 41) = LEFT(fnft, 41);
 			INSERT INTO com_snfts
 			SELECT address, owner
 			FROM snfts
-			WHERE LEFT(address, 40) = fnft;
+			WHERE LEFT(address, 41) = fnft;
 		END;
 	END IF;
 END;`,
@@ -274,17 +274,17 @@ type ERC1155Transfer struct {
 
 // NFT User NFT attribute information
 type NFT struct {
-	Address       *string `json:"address" gorm:"type:CHAR(44);primary_key"`  //NFT address, grows automatically from 0x1
+	Address       *string `json:"address" gorm:"type:CHAR(42);primary_key"`  //NFT address, grows automatically from 0x1
 	RoyaltyRatio  uint32  `json:"royalty_ratio"`                             //Royalty rate, in ten thousandths
 	MetaUrl       string  `json:"meta_url"`                                  //Real meta information URL
 	RawMetaUrl    string  `json:"raw_meta_url"`                              //Original meta information URL on the chain
-	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(44);index"` //The address of the exchange, if there is none, it can be traded on any exchange
+	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(42);index"` //The address of the exchange, if there is none, it can be traded on any exchange
 	LastPrice     *string `json:"last_price"`                                //The last transaction price (null if the transaction is not completed), the unit is wei
-	Creator       string  `json:"creator" gorm:"type:CHAR(44)"`              //Creator address
+	Creator       string  `json:"creator" gorm:"type:CHAR(42)"`              //Creator address
 	Timestamp     uint64  `json:"timestamp"`                                 //Create timestamp
 	BlockNumber   uint64  `json:"block_number"`                              //The height of the created block
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66)"`              //The transaction hash created
-	Owner         string  `json:"owner" gorm:"type:CHAR(44);index"`          //owner
+	Owner         string  `json:"owner" gorm:"type:CHAR(42);index"`          //owner
 	Name          string  `json:"name"`                                      //name
 	Desc          string  `json:"desc"`                                      //description
 	Attributes    string  `json:"attributes"`                                //Attributes
@@ -296,8 +296,8 @@ type NFT struct {
 // Epoch SNFT Phase 1
 // One SNFT->16 Collections->16 FNFTs->256 SNFTs
 type Epoch struct {
-	ID           string `json:"id" gorm:"type:VARCHAR(38);primary_key"` //period ID
-	Creator      string `json:"creator" gorm:"type:CHAR(44)"`           //Creator address, also the address of royalty income
+	ID           string `json:"id" gorm:"type:VARCHAR(39);primary_key"` //period ID
+	Creator      string `json:"creator" gorm:"type:CHAR(42)"`           //Creator address, also the address of royalty income
 	RoyaltyRatio uint32 `json:"royaltyRatio"`                           //The royalty rate of the same period of SNFT, the unit is one ten thousandth
 	Dir          string `json:"dir"`                                    //meta information directory URL
 	Exchanger    string `json:"exchanger"`                              //Exchange address
@@ -308,7 +308,7 @@ type Epoch struct {
 
 // FNFT full SNFT
 type FNFT struct {
-	ID         string `json:"id" gorm:"type:VARCHAR(40);primary_key"` //FNFT ID
+	ID         string `json:"id" gorm:"type:VARCHAR(41);primary_key"` //FNFT ID
 	MetaUrl    string `json:"meta_url"`                               //FNFT meta information URL
 	Name       string `json:"name"`                                   //name
 	Desc       string `json:"desc"`                                   //description
@@ -319,18 +319,18 @@ type FNFT struct {
 
 // SNFT of SNFT fragments
 type SNFT struct {
-	Address      string  `json:"address" gorm:"type:CHAR(44);primary_key"` //SNFT address
+	Address      string  `json:"address" gorm:"type:CHAR(42);primary_key"` //SNFT address
 	LastPrice    *string `json:"last_price"`                               //The last transaction price, the unit is wei, null if the transaction has not been completed
 	Awardee      *string `json:"awardee"`                                  //The address of the miner that was rewarded last, null if it has not been rewarded
 	RewardAt     *uint64 `json:"reward_at"`                                //The timestamp of the last rewarded, null if not rewarded
 	RewardNumber *uint64 `json:"reward_number"`                            //The height of the last rewarded block, null if not rewarded
-	Owner        *string `json:"owner" gorm:"type:CHAR(44);index"`         //owner, unallocated and reclaimed are null
+	Owner        *string `json:"owner" gorm:"type:CHAR(42);index"`         //owner, unallocated and reclaimed are null
 }
 
 // ComSNFT Composable SNFTs
 type ComSNFT struct {
-	Address string `json:"address" gorm:"type:VARCHAR(44);primary_key"` //synthesize SNFT address
-	Owner   string `json:"owner" gorm:"type:CHAR(44);index"`            //owner
+	Address string `json:"address" gorm:"type:VARCHAR(42);primary_key"` //synthesize SNFT address
+	Owner   string `json:"owner" gorm:"type:CHAR(42);index"`            //owner
 }
 
 // NFTTx NFT transaction attribute information
@@ -342,7 +342,7 @@ type NFTTx struct {
 	From          string  `json:"from" gorm:"type:CHAR(42);index"`          //Seller
 	To            string  `json:"to" gorm:"type:CHAR(42);index"`            //buyer
 	Price         *string `json:"price"`                                    //price, the unit is wei
-	Timestamp     uint64  `json:"timestamp"`                                //Transaction timestamp
+	Timestamp     uint64  `json:"timestamp"`                                //transaction timestamp
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"` //transaction hash
 	BlockNumber   uint64  `json:"block_number"`                             //block number
 	Fee           *string `json:"fee"`                                      //Transaction fee, in wei (only if there is an exchange and price)
@@ -388,7 +388,7 @@ type Reward struct {
 
 // Pledge account pledge amount
 type Pledge struct {
-	Address string `json:"address" gorm:"type:CHAR(44);primary_key"` //staking account
+	Address string `json:"address" gorm:"type:CHAR(42);primary_key"` //staking account
 	Amount  string `json:"amount" gorm:"type:CHAR(64)"`              //Pledge amount
 	Count   uint64 `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
 }

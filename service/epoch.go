@@ -31,6 +31,6 @@ func GetEpoch(id string) (res Epoch, err error) {
 	if err != nil {
 		return
 	}
-	err = DB.Where("LEFT(id,38)=?", res.ID).Find(&res.Collections).Error
+	err = DB.Where("LEFT(id,39)=?", res.ID).Find(&res.Collections).Error
 	return
 }

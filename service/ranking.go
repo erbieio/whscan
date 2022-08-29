@@ -17,8 +17,8 @@ type RankingSNFTRes struct {
 }
 
 func RankingSNFT(limit string, page, size int) (res RankingSNFTRes, err error) {
-	db := DB.Model(&model.NFTTx{}).Joins("LEFT JOIN epoches ON LEFT(nft_addr,38)=epoches.id").
-		Joins("LEFT JOIN fnfts ON LEFT(nft_addr,40)=fnfts.id").
+	db := DB.Model(&model.NFTTx{}).Joins("LEFT JOIN epoches ON LEFT(nft_addr,39)=epoches.id").
+		Joins("LEFT JOIN fnfts ON LEFT(nft_addr,41)=fnfts.id").
 		Joins("LEFT JOIN snfts ON nft_addr=address").
 		Order("tx_count DESC, nft_addr DESC").Select("snfts.*,fnfts.*,creator,COUNT(nft_addr) AS tx_count")
 	switch limit {
