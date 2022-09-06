@@ -52,19 +52,19 @@ type RankingNFTRes struct {
 }
 
 func RankingNFT(limit string, page, size int) (res RankingNFTRes, err error) {
-	db := DB.Model(&model.NFTTx{}).Order("tx_count DESC, address DESC").Select("nfts.*,COUNT(nft_addr) AS tx_count")
+	db := DB.Model(&model.NFTTx{}).Joins("LEFT JOIN nfts ON nft_addr=address").Order("tx_count DESC, address DESC").Select("nfts.*,COUNT(nft_addr) AS tx_count")
 	switch limit {
 	case "24h":
 		start, stop := utils.LastTimeRange(1)
-		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(nft_addr,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	case "7d":
 		start, stop := utils.LastTimeRange(7)
-		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(nft_addr,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	case "30d":
 		start, stop := utils.LastTimeRange(30)
-		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(nft_addr,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	default:
-		db = db.Joins("LEFT JOIN nfts ON LEFT(nft_addr,3)='0x0' AND nft_addr=address")
+		db = db.Where("LEFT(nft_addr,3)='0x0'")
 	}
 	err = db.Count(&res.Total).Error
 	if err != nil {

@@ -339,6 +339,12 @@ func BlockInsert(block *DecodeRet) error {
 		for _, snft := range block.RewardSNFTs {
 			fnfts[snft.Address[:41]] = 0
 		}
+		for _, snft := range block.PledgeSNFT {
+			fnfts[snft[:41]] = 0
+		}
+		for _, snft := range block.UnPledgeSNFT {
+			fnfts[snft[:41]] = 0
+		}
 		freshCache()
 	}
 	return err
