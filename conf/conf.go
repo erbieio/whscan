@@ -33,6 +33,9 @@ var (
 )
 
 func init() {
+	// set log printout to stdout instead of stderr
+	log.SetOutput(os.Stdout)
+
 	// read configuration to override default value
 	setConf()
 

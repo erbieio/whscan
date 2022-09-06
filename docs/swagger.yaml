@@ -825,6 +825,15 @@ definitions:
         description: The transaction hash created
         type: string
     type: object
+  service.NFTChartRes:
+    properties:
+      hour:
+        description: hour
+        type: integer
+      num:
+        description: number of nft
+        type: integer
+    type: object
   service.NFTTxsRes:
     properties:
       nft_txs:
@@ -1423,9 +1432,11 @@ definitions:
     type: object
   service.TxChartRes:
     properties:
-      index:
+      hour:
+        description: hour
         type: integer
       num:
+        description: number of transaction
         type: integer
     type: object
 info:
@@ -1707,11 +1718,30 @@ paths:
       summary: query charts
       tags:
       - chart
+  /chart/nft:
+    get:
+      consumes:
+      - application/json
+      description: query 24h nft growth charts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.NFTChartRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query 24h nft growth charts
+      tags:
+      - chart
   /chart/tx:
     get:
       consumes:
       - application/json
-      description: query tx charts
+      description: query 24h tx growth charts
       produces:
       - application/json
       responses:
@@ -1723,7 +1753,7 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/service.ErrRes'
-      summary: query tx charts
+      summary: query 24h tx growth charts
       tags:
       - chart
   /collection/{id}:
@@ -2251,7 +2281,7 @@ paths:
       - application/json
       description: Exchanger ranking for a specified time range
       parameters:
-      - description: Limit, time range
+      - description: 'Limit, time range: 30d,7d,24h,all,'
         in: query
         name: limit
         type: string
@@ -2283,7 +2313,7 @@ paths:
       - application/json
       description: NFT ranking for a specified time range
       parameters:
-      - description: Limit, time range
+      - description: 'Limit, time range: 30d,7d,24h,all,'
         in: query
         name: limit
         type: string
@@ -2315,7 +2345,7 @@ paths:
       - application/json
       description: SNFT ranking for a specified time range
       parameters:
-      - description: Limit, time range
+      - description: 'Limit, time range: 30d,7d,24h,all,'
         in: query
         name: limit
         type: string

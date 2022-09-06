@@ -11,6 +11,7 @@ import (
 func Chart(e *gin.Engine) {
 	e.GET("/chart/line", lineChart)
 	e.GET("/chart/tx", txChart)
+	e.GET("/chart/nft", nftChart)
 }
 
 // @Tags        chart
@@ -45,15 +46,32 @@ func lineChart(c *gin.Context) {
 }
 
 // @Tags        chart
-// @Summary     query tx charts
-// @Description query tx charts
+// @Summary     query 24h tx growth charts
+// @Description query 24h tx growth charts
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} service.TxChartRes
-// @Failure     400   {object} service.ErrRes
+// @Failure     400 {object} service.ErrRes
 // @Router      /chart/tx [get]
 func txChart(c *gin.Context) {
 	res, err := service.TxChart()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        chart
+// @Summary     query 24h nft growth charts
+// @Description query 24h nft growth charts
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} service.NFTChartRes
+// @Failure     400   {object} service.ErrRes
+// @Router      /chart/nft [get]
+func nftChart(c *gin.Context) {
+	res, err := service.NFTChart()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

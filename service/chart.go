@@ -37,13 +37,25 @@ func LineChart(limit int) (res LineChartRes, err error) {
 }
 
 type TxChartRes struct {
-	Index uint64 `json:"index"`
-	Num   uint64 `json:"num"`
+	Hour uint64 `json:"hour"` // hour
+	Num  uint64 `json:"num"`  // number of transaction
 }
 
 func TxChart() (res []*TxChartRes, err error) {
 	start, stop := utils.LastTimeRange(int64(1))
-	err = DB.Table("(?) A", DB.Model(&model.Block{}).Select("(timestamp-?) DIV 3600 AS `index`,`total_transaction`", start).
-		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`").Order("`index`").Select("`index`, SUM(total_transaction) AS num").Scan(&res).Error
+	err = DB.Table("(?) A", DB.Model(&model.Block{}).Select("(timestamp-?) DIV 3600 AS `hour`,`total_transaction`", start).
+		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`hour`").Order("`hour`").Select("`hour`, SUM(total_transaction) AS num").Scan(&res).Error
+	return
+}
+
+type NFTChartRes struct {
+	Hour uint64 `json:"hour"` // hour
+	Num  uint64 `json:"num"`  // number of nft
+}
+
+func NFTChart() (res []*NFTChartRes, err error) {
+	start, stop := utils.LastTimeRange(int64(1))
+	err = DB.Table("(?) A", DB.Model(&model.NFT{}).Select("(timestamp-?) DIV 3600 AS `hour`,`address`", start).
+		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`hour`").Order("`hour`").Select("`hour`, COUNT(address) AS num").Scan(&res).Error
 	return
 }

@@ -429,9 +429,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/chart/tx": {
+        "/chart/nft": {
             "get": {
-                "description": "query tx charts",
+                "description": "query 24h nft growth charts",
                 "consumes": [
                     "application/json"
                 ],
@@ -441,7 +441,36 @@ const docTemplate = `{
                 "tags": [
                     "chart"
                 ],
-                "summary": "query tx charts",
+                "summary": "query 24h nft growth charts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.NFTChartRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/chart/tx": {
+            "get": {
+                "description": "query 24h tx growth charts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chart"
+                ],
+                "summary": "query 24h tx growth charts",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1259,7 +1288,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Limit, time range",
+                        "description": "Limit, time range: 30d,7d,24h,all,",
                         "name": "limit",
                         "in": "query"
                     },
@@ -1308,7 +1337,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Limit, time range",
+                        "description": "Limit, time range: 30d,7d,24h,all,",
                         "name": "limit",
                         "in": "query"
                     },
@@ -1357,7 +1386,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Limit, time range",
+                        "description": "Limit, time range: 30d,7d,24h,all,",
                         "name": "limit",
                         "in": "query"
                     },
@@ -3204,6 +3233,19 @@ const docTemplate = `{
                 }
             }
         },
+        "service.NFTChartRes": {
+            "type": "object",
+            "properties": {
+                "hour": {
+                    "description": "hour",
+                    "type": "integer"
+                },
+                "num": {
+                    "description": "number of nft",
+                    "type": "integer"
+                }
+            }
+        },
         "service.NFTTxsRes": {
             "type": "object",
             "properties": {
@@ -4011,10 +4053,12 @@ const docTemplate = `{
         "service.TxChartRes": {
             "type": "object",
             "properties": {
-                "index": {
+                "hour": {
+                    "description": "hour",
                     "type": "integer"
                 },
                 "num": {
+                    "description": "number of transaction",
                     "type": "integer"
                 }
             }

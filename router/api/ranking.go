@@ -19,7 +19,7 @@ func Ranking(e *gin.Engine) {
 // @Description SNFT ranking for a specified time range
 // @Accept      json
 // @Produce     json
-// @Param       limit     query    string false "Limit, time range"
+// @Param       limit     query    string false "Limit, time range: 30d,7d,24h,all,"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.RankingSNFTRes
@@ -55,7 +55,7 @@ func rankingSNFT(c *gin.Context) {
 // @Description NFT ranking for a specified time range
 // @Accept      json
 // @Produce     json
-// @Param       limit     query    string false "Limit, time range"
+// @Param       limit     query    string false "Limit, time range: 30d,7d,24h,all,"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.RankingNFTRes
@@ -91,7 +91,7 @@ func rankingNFT(c *gin.Context) {
 // @Description Exchanger ranking for a specified time range
 // @Accept      json
 // @Produce     json
-// @Param       limit     query    string false "Limit, time range"
+// @Param       limit     query    string false "Limit, time range: 30d,7d,24h,all,"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.RankingExchangerRes
