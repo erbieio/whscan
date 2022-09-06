@@ -236,6 +236,9 @@ definitions:
       owner:
         description: owner
         type: string
+      pledge_number:
+        description: The height of the last pledged block, null if not pledge
+        type: integer
     type: object
   model.Epoch:
     properties:
@@ -396,6 +399,9 @@ definitions:
       owner:
         description: owner, unallocated and reclaimed are null
         type: string
+      pledge_number:
+        description: The height of the last pledged block, null if not pledge
+        type: integer
       reward_at:
         description: The timestamp of the last rewarded, null if not rewarded
         type: integer
@@ -1055,6 +1061,9 @@ definitions:
             owner:
               description: owner, unallocated and reclaimed are null
               type: string
+            pledge_number:
+              description: The height of the last pledged block, null if not pledge
+              type: integer
             reward_at:
               description: The timestamp of the last rewarded, null if not rewarded
               type: integer
@@ -1147,6 +1156,9 @@ definitions:
       owner:
         description: owner, unallocated and reclaimed are null
         type: string
+      pledge_number:
+        description: The height of the last pledged block, null if not pledge
+        type: integer
       reward_at:
         description: The timestamp of the last rewarded, null if not rewarded
         type: integer
@@ -1280,6 +1292,9 @@ definitions:
             owner:
               description: owner, unallocated and reclaimed are null
               type: string
+            pledge_number:
+              description: The height of the last pledged block, null if not pledge
+              type: integer
             reward_at:
               description: The timestamp of the last rewarded, null if not rewarded
               type: integer
@@ -2537,6 +2552,10 @@ paths:
         name: owner
         required: true
         type: string
+      - description: 1:pledged, 2:free trade, 3:can pledge, other:all
+        in: query
+        name: status
+        type: number
       - description: Page, default 1
         in: query
         name: page

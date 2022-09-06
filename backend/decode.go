@@ -246,10 +246,10 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 				nftAddr := *rewards[i].NFTAddress
 				wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
 					Address:      nftAddr,
-					Awardee:      &rewards[i].Address,
-					RewardAt:     (*uint64)(&wh.Block.Timestamp),
-					RewardNumber: (*uint64)(&wh.Block.Number),
-					Owner:        &rewards[i].Address,
+					Awardee:      rewards[i].Address,
+					RewardAt:     uint64(wh.Block.Timestamp),
+					RewardNumber: uint64(wh.Block.Number),
+					Owner:        rewards[i].Address,
 				})
 				// Parse the new phase ID
 				if len(epochId) == 0 {
@@ -428,7 +428,28 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 		default:
 			return fmt.Errorf("recycle %s SNFT level not support:%d", w.NFTAddress, level)
 		}
-		return
+
+	case 7: //pledge snft
+		level := 42 - len(w.NFTAddress)
+		if level == 0 {
+			wh.PledgeSNFT = append(wh.PledgeSNFT, w.NFTAddress)
+		} else {
+			for i := 0; i < 1<<(level*4); i++ {
+				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
+				wh.PledgeSNFT = append(wh.PledgeSNFT, address)
+			}
+		}
+
+	case 8: //cancel pledge snft
+		level := 42 - len(w.NFTAddress)
+		if level == 0 {
+			wh.UnPledgeSNFT = append(wh.UnPledgeSNFT, w.NFTAddress)
+		} else {
+			for i := 0; i < 1<<(level*4); i++ {
+				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
+				wh.UnPledgeSNFT = append(wh.UnPledgeSNFT, address)
+			}
+		}
 
 	case 9, 10: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
 		amount, err = c.GetPledge(from, wh.Number.Hex())

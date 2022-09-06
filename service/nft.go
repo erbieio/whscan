@@ -63,8 +63,16 @@ type ComSNFTsRes struct {
 	NFTs  []model.ComSNFT `json:"nfts"`  //SNFT list
 }
 
-func FetchComSNFTs(owner string, page, size int) (res ComSNFTsRes, err error) {
+func FetchComSNFTs(owner string, status int, page, size int) (res ComSNFTsRes, err error) {
 	db := DB.Model(&model.ComSNFT{}).Where("owner=?", owner)
+	switch status {
+	case 1:
+		db = db.Where("pledge_number IS NOT NULL")
+	case 2:
+		db = db.Where("pledge_number IS NULL")
+	case 3:
+		db = db.Where("pledge_number IS NULL AND LENGTH(address)<42")
+	}
 	err = db.Count(&res.Total).Error
 	if err != nil {
 		return

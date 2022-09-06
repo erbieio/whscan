@@ -1714,6 +1714,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "number",
+                        "description": "1:pledged, 2:free trade, 3:can pledge, other:all",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Page, default 1",
                         "name": "page",
@@ -2386,6 +2392,10 @@ const docTemplate = `{
                 "owner": {
                     "description": "owner",
                     "type": "string"
+                },
+                "pledge_number": {
+                    "description": "The height of the last pledged block, null if not pledge",
+                    "type": "integer"
                 }
             }
         },
@@ -2599,6 +2609,10 @@ const docTemplate = `{
                 "owner": {
                     "description": "owner, unallocated and reclaimed are null",
                     "type": "string"
+                },
+                "pledge_number": {
+                    "description": "The height of the last pledged block, null if not pledge",
+                    "type": "integer"
                 },
                 "reward_at": {
                     "description": "The timestamp of the last rewarded, null if not rewarded",
@@ -3501,6 +3515,10 @@ const docTemplate = `{
                                 "description": "owner, unallocated and reclaimed are null",
                                 "type": "string"
                             },
+                            "pledge_number": {
+                                "description": "The height of the last pledged block, null if not pledge",
+                                "type": "integer"
+                            },
                             "reward_at": {
                                 "description": "The timestamp of the last rewarded, null if not rewarded",
                                 "type": "integer"
@@ -3624,6 +3642,10 @@ const docTemplate = `{
                 "owner": {
                     "description": "owner, unallocated and reclaimed are null",
                     "type": "string"
+                },
+                "pledge_number": {
+                    "description": "The height of the last pledged block, null if not pledge",
+                    "type": "integer"
                 },
                 "reward_at": {
                     "description": "The timestamp of the last rewarded, null if not rewarded",
@@ -3802,6 +3824,10 @@ const docTemplate = `{
                             "owner": {
                                 "description": "owner, unallocated and reclaimed are null",
                                 "type": "string"
+                            },
+                            "pledge_number": {
+                                "description": "The height of the last pledged block, null if not pledge",
+                                "type": "integer"
                             },
                             "reward_at": {
                                 "description": "The timestamp of the last rewarded, null if not rewarded",

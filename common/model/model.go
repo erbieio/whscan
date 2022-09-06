@@ -68,36 +68,35 @@ CREATE PROCEDURE fresh_c_snft (
 )
 BEGIN
 	DECLARE _level INTEGER DEFAULT 1;
+	DECLARE _pledge_number INTEGER;
 	DECLARE _owner CHAR(42);
-	SELECT owner
-		, IF(COUNT(*) = 16, 2, 1)
-	INTO _owner, _level
+	SELECT owner, pledge_number
+	INTO _owner, _pledge_number
 	FROM snfts
 	WHERE LEFT(address, 41) = fnft
-	GROUP BY LEFT(address, 41), owner
 	LIMIT 1;
+	SELECT IF(COUNT(DISTINCT CONCAT(owner, IFNULL(pledge_number, 0))) = 1, 2, 1)
+	INTO _level
+	FROM snfts
+	WHERE LEFT(address, 41) = LEFT(fnft, 41);
 	IF _level = 2 THEN
-		SELECT IF(COUNT(*) = 256, 3, 2)
+		SELECT IF(COUNT(DISTINCT CONCAT(owner, IFNULL(pledge_number, 0))) = 1, 3, 2)
 		INTO _level
 		FROM snfts
-		WHERE LEFT(address, 40) = LEFT(fnft, 40)
-		GROUP BY LEFT(address, 40), owner
-		LIMIT 1;
+		WHERE LEFT(address, 40) = LEFT(fnft, 40);
 	END IF;
 	IF _level = 3 THEN
-		SELECT IF(COUNT(*) = 4096, 4, 3)
+		SELECT IF(COUNT(DISTINCT CONCAT(owner, IFNULL(pledge_number, 0))) = 1, 4, 3)
 		INTO _level
 		FROM snfts
-		WHERE LEFT(address, 39) = LEFT(fnft, 39)
-		GROUP BY LEFT(address, 39), owner
-		LIMIT 1;
+		WHERE LEFT(address, 39) = LEFT(fnft, 39);
 	END IF;
 	IF _level = 4 THEN
 		BEGIN
 			DELETE FROM com_snfts
 			WHERE LEFT(address, 39) = LEFT(fnft, 39);
 			INSERT INTO com_snfts
-			VALUES (LEFT(fnft, 39), _owner);
+			VALUES (LEFT(fnft, 39), _pledge_number, _owner);
 		END;
 	END IF;
 	IF _level = 3 THEN
@@ -105,7 +104,7 @@ BEGIN
 			DELETE FROM com_snfts
 			WHERE LEFT(address, 40) = LEFT(fnft, 40);
 			INSERT INTO com_snfts
-			VALUES (LEFT(fnft, 40), _owner);
+			VALUES (LEFT(fnft, 40), _pledge_number, _owner);
 		END;
 	END IF;
 	IF _level = 2 THEN
@@ -113,7 +112,7 @@ BEGIN
 			DELETE FROM com_snfts
 			WHERE LEFT(address, 41) = LEFT(fnft, 41);
 			INSERT INTO com_snfts
-			VALUES (LEFT(fnft, 41), _owner);
+			VALUES (LEFT(fnft, 41), _pledge_number, _owner);
 		END;
 	END IF;
 	IF _level = 1 THEN
@@ -121,7 +120,7 @@ BEGIN
 			DELETE FROM com_snfts
 			WHERE LEFT(address, 41) = LEFT(fnft, 41);
 			INSERT INTO com_snfts
-			SELECT address, owner
+			SELECT address, pledge_number, owner
 			FROM snfts
 			WHERE LEFT(address, 41) = fnft;
 		END;
@@ -321,16 +320,18 @@ type FNFT struct {
 type SNFT struct {
 	Address      string  `json:"address" gorm:"type:CHAR(42);primary_key"` //SNFT address
 	LastPrice    *string `json:"last_price"`                               //The last transaction price, the unit is wei, null if the transaction has not been completed
-	Awardee      *string `json:"awardee"`                                  //The address of the miner that was rewarded last, null if it has not been rewarded
-	RewardAt     *uint64 `json:"reward_at"`                                //The timestamp of the last rewarded, null if not rewarded
-	RewardNumber *uint64 `json:"reward_number"`                            //The height of the last rewarded block, null if not rewarded
-	Owner        *string `json:"owner" gorm:"type:CHAR(42);index"`         //owner, unallocated and reclaimed are null
+	Awardee      string  `json:"awardee"`                                  //The address of the miner that was rewarded last, null if it has not been rewarded
+	RewardAt     uint64  `json:"reward_at"`                                //The timestamp of the last rewarded, null if not rewarded
+	RewardNumber uint64  `json:"reward_number"`                            //The height of the last rewarded block, null if not rewarded
+	PledgeNumber *uint64 `json:"pledge_number,omitempty"`                  //The height of the last pledged block, null if not pledge
+	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`         //owner, unallocated and reclaimed are null
 }
 
 // ComSNFT Composable SNFTs
 type ComSNFT struct {
-	Address string `json:"address" gorm:"type:VARCHAR(42);primary_key"` //synthesize SNFT address
-	Owner   string `json:"owner" gorm:"type:CHAR(42);index"`            //owner
+	Address      string  `json:"address" gorm:"type:VARCHAR(42);primary_key"` //synthesize SNFT address
+	PledgeNumber *uint64 `json:"pledge_number"`                               //The height of the last pledged block, null if not pledge
+	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`            //owner
 }
 
 // NFTTx NFT transaction attribute information

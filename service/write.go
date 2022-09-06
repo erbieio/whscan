@@ -189,6 +189,8 @@ type DecodeRet struct {
 	Rewards          []*model.Reward          //reward record, priority: none
 	ExchangerPledges []*model.ExchangerPledge //Exchange pledge, priority: none
 	ConsensusPledges []*model.ConsensusPledge //Consensus pledge, priority: none
+	PledgeSNFT       []string                 //Pledge SNFT
+	UnPledgeSNFT     []string                 //UnPledge SNFT
 }
 
 func BlockInsert(block *DecodeRet) error {
@@ -478,6 +480,18 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 			return
 		}
 	}
+	for _, snft := range wh.PledgeSNFT {
+		err = tx.Exec("UPDATE snfts SET pledge_number=? WHERE address=?", wh.Number, snft).Error
+		if err != nil {
+			return
+		}
+	}
+	for _, snft := range wh.UnPledgeSNFT {
+		err = tx.Exec("UPDATE snfts SET pledge_number=NULL WHERE address=?", snft).Error
+		if err != nil {
+			return
+		}
+	}
 	if wh.Rewards != nil {
 		err = tx.Create(wh.Rewards).Error
 	}
@@ -540,8 +554,8 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			return err
 		}
 		// populate seller field (if none)
-		if nt.From == "" && nft.Owner != nil {
-			nt.From = *nft.Owner
+		if nt.From == "" {
+			nt.From = nft.Owner
 		}
 		err = tx.Model(&model.SNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
 			"last_price": nt.Price,
