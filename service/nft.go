@@ -182,20 +182,31 @@ type SNFTGroupsRes struct {
 	} `json:"collections"` //collection information
 }
 
-func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error) {
-	err = DB.Model(&model.SNFT{}).Where("owner=?", owner).Select("COUNT(DISTINCT LEFT(address, 40))").Scan(&res.Total).Error
+func FindSNFTGroups(owner string, status, page, size int) (res SNFTGroupsRes, err error) {
+	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN collections on LEFT(address,40) = id AND owner=?", owner)
+	if status == 1 {
+		db = db.Where("pledge_number IS NOT NULL AND `id` IS NOT NULL")
+	}
+	if status == 2 {
+		db = db.Where("pledge_number IS NULL")
+	}
+	err = db.Select("`collections`.*,COUNT(address) AS total_hold").Group("id").
+		Order("id DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Collections).Error
 	if err != nil {
 		return
 	}
-	err = DB.Model(&model.SNFT{}).
-		Joins("LEFT JOIN collections on LEFT(address,40) = id").
-		Select("`collections`.*,COUNT(address) AS total_hold").Where("owner=?", owner).Group("id").
-		Order("id DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Collections).Error
+	if err = db.Count(&res.Total).Error; err != nil {
+		return
+	}
 	for i := range res.Collections {
-		err = DB.Model(&model.SNFT{}).
-			Joins("LEFT JOIN fnfts on LEFT(address,41) = fnfts.id").
-			Select("fnfts.*,COUNT(*) AS total_hold").
-			Where("LEFT(address, 40)=? AND owner=?", res.Collections[i].Id, owner).Group("id").
+		db = DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts on LEFT(address,41) = fnfts.id").Select("fnfts.*,COUNT(*) AS total_hold")
+		if status == 1 {
+			db = db.Where("pledge_number IS NOT NULL")
+		}
+		if status == 2 {
+			db = db.Where("pledge_number IS NULL")
+		}
+		err = db.Where("LEFT(address, 40)=? AND owner=?", res.Collections[i].Id, owner).Group("id").
 			Scan(&res.Collections[i].FullNFTs).Error
 		if err != nil {
 			return

@@ -17,6 +17,8 @@ import (
 type Cache struct {
 	TotalBlock          uint64       `json:"totalBlock"`          //Total number of blocks
 	TotalTransaction    uint64       `json:"totalTransaction"`    //Total number of transactions
+	TotalTransferTx     uint64       `json:"totalTransferTx"`     //Total number of  transfer transactions
+	TotalWormholesTx    uint64       `json:"totalWormholesTx"`    //Total number of  wormholes transactions
 	TotalUncle          uint64       `json:"totalUncle"`          //Number of total uncle blocks
 	TotalAccount        uint64       `json:"totalAccount"`        //Total account number
 	GenesisBalance      types.BigInt `json:"genesisBalance"`      //Total amount of coins created
@@ -57,6 +59,12 @@ func initCache() (err error) {
 		return
 	}
 	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Scan(&cache.TotalTransaction).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Where("input='0x'").Scan(&cache.TotalTransferTx).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Where("LEFT(input,22)='0x776f726d686f6c65733a'").Scan(&cache.TotalWormholesTx).Error; err != nil {
 		return
 	}
 	if err = DB.Model(&model.Uncle{}).Select("COUNT(*)").Scan(&cache.TotalUncle).Error; err != nil {
@@ -320,7 +328,7 @@ func BlockInsert(block *DecodeRet) error {
 					b = b.Add(b, price)
 					cache.TotalSNFTAmount = types.BigInt(b.Text(10))
 				}
-				fnfts[(*tx.NFTAddr)[:40]] = 0
+				fnfts[(*tx.NFTAddr)[:41]] = 0
 			}
 		}
 		cache.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
@@ -332,6 +340,13 @@ func BlockInsert(block *DecodeRet) error {
 			b.SetString(string(cache.TotalBalance), 10)
 			b.Add(b, block.AddBalance)
 			cache.TotalBalance = types.BigInt(b.Text(10))
+		}
+		for _, tx := range block.CacheTxs {
+			if tx.Input == "0x" {
+				cache.TotalTransferTx++
+			} else if len(tx.Input) > 22 && tx.Input == "0x776f726d686f6c65733a" {
+				cache.TotalWormholesTx++
+			}
 		}
 		if len(block.CacheTxs) > 0 {
 			cache.TotalAmount = types.BigInt(totalAmount.Text(10))
@@ -463,6 +478,14 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 			}
 		}
 	}
+	// exchanger pledge
+	for _, pledge := range wh.ExchangerPledges {
+		err = ExchangerPledgeAdd(tx, pledge.Address, pledge.Amount)
+		if err != nil {
+			return
+		}
+	}
+	// close exchanger
 	for _, exchanger := range wh.CloseExchangers {
 		err = tx.Model(model.Exchanger{}).Where("address=?", exchanger).Update("close_at", wh.Timestamp).Error
 		if err != nil {
@@ -473,18 +496,9 @@ func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
 			return
 		}
 	}
-	// Exchange pledge
-	for _, pledge := range wh.ExchangerPledges {
-		err = ExchangerPledgeAdd(tx, pledge.Address, pledge.Amount)
-		if err != nil {
-			return
-		}
-	}
-	// Consensus pledge
+	// consensus pledge
 	for _, pledge := range wh.ConsensusPledges {
-		if err = tx.Create(pledge).Error; err != nil {
-			err = tx.Exec("UPDATE consensus_pledges SET amount=?, count=count+1 WHERE address=?", pledge.Amount, pledge.Address).Error
-		}
+		err = tx.Exec("INSERT INTO consensus_pledges VALUES (@Address,@Amount,1) ON DUPLICATE KEY UPDATE amount=@Amount, count=count+1", pledge).Error
 		if err != nil {
 			return
 		}

@@ -592,11 +592,17 @@ definitions:
       totalTransaction:
         description: Total number of transactions
         type: integer
+      totalTransferTx:
+        description: Total number of  transfer transactions
+        type: integer
       totalUncle:
         description: Number of total uncle blocks
         type: integer
       totalValidator:
         description: Total number of validator
+        type: integer
+      totalWormholesTx:
+        description: Total number of  wormholes transactions
         type: integer
     type: object
   service.CollectionsRes:
@@ -2485,6 +2491,10 @@ paths:
       description: Query the collection list (including 16 FNFT information) held
         by the specified account (with one SNFT in the collection)
       parameters:
+      - description: 1:pledged, 2:unPledged, other:all
+        in: query
+        name: status
+        type: number
       - description: owner
         in: query
         name: owner

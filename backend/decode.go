@@ -225,11 +225,11 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 		for i := range rewards {
 			identity := uint8(0)
 			switch i {
-			case 0, 1, 2, 3:
+			case 7, 8, 9, 10:
 				identity = 3
-			case 4, 5, 6, 7, 8, 9:
+			case 0, 1, 2, 3, 4, 5:
 				identity = 2
-			case 10:
+			case 6:
 				identity = 1
 			default:
 				return fmt.Errorf("reward length more than 11")

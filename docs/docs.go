@@ -1559,6 +1559,12 @@ const docTemplate = `{
                 "summary": "paging query account holding collection list",
                 "parameters": [
                     {
+                        "type": "number",
+                        "description": "1:pledged, 2:unPledged, other:all",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "owner",
                         "name": "owner",
@@ -2908,12 +2914,20 @@ const docTemplate = `{
                     "description": "Total number of transactions",
                     "type": "integer"
                 },
+                "totalTransferTx": {
+                    "description": "Total number of  transfer transactions",
+                    "type": "integer"
+                },
                 "totalUncle": {
                     "description": "Number of total uncle blocks",
                     "type": "integer"
                 },
                 "totalValidator": {
                     "description": "Total number of validator",
+                    "type": "integer"
+                },
+                "totalWormholesTx": {
+                    "description": "Total number of  wormholes transactions",
                     "type": "integer"
                 }
             }

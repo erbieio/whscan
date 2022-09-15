@@ -302,6 +302,7 @@ func blockSNFT(c *gin.Context) {
 // @Description Query the collection list (including 16 FNFT information) held by the specified account (with one SNFT in the collection)
 // @Accept      json
 // @Produce     json
+// @Param       status    query    number false "1:pledged, 2:unPledged, other:all"
 // @Param       owner     query    string false "owner"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
@@ -313,6 +314,7 @@ func pageSNFTGroup(c *gin.Context) {
 		Page     *int   `form:"page"`
 		PageSize *int   `form:"page_size"`
 		Owner    string `form:"owner"`
+		Status   int    `form:"status"`
 	}{}
 	err := c.BindQuery(&req)
 	if err != nil {
@@ -324,7 +326,7 @@ func pageSNFTGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
-	data, err := service.FindSNFTGroups(strings.ToLower(req.Owner), page, size)
+	data, err := service.FindSNFTGroups(strings.ToLower(req.Owner), req.Status, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
