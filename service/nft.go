@@ -141,12 +141,12 @@ func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (r
 
 type NFT struct {
 	model.NFT
-	model.Collection
+	CollectionName string `json:"collectionName"`
 }
 
 func GetNFT(addr string) (res NFT, err error) {
 	err = DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON collection_id=collections.id").
-		Where("address=?", addr).Select("nfts.*,collections.*").Scan(&res).Error
+		Where("address=?", addr).Select("nfts.*,collections.name AS collection_name").Scan(&res).Error
 	return
 }
 

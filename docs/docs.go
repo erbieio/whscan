@@ -3174,11 +3174,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "block_number": {
-                    "description": "Create block height, equal to the first NFT in the collection",
+                    "description": "The height of the created block",
                     "type": "integer"
                 },
                 "category": {
                     "description": "category",
+                    "type": "string"
+                },
+                "collectionName": {
                     "type": "string"
                 },
                 "collection_id": {
@@ -3186,27 +3189,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "creator": {
-                    "description": "Creator",
+                    "description": "Creator address",
                     "type": "string"
                 },
                 "desc": {
                     "description": "description",
                     "type": "string"
                 },
-                "exchanger": {
-                    "description": "belongs to the exchange",
-                    "type": "string"
-                },
                 "exchanger_addr": {
                     "description": "The address of the exchange, if there is none, it can be traded on any exchange",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "ID",
-                    "type": "string"
-                },
-                "img_url": {
-                    "description": "image link",
                     "type": "string"
                 },
                 "last_price": {
@@ -3214,7 +3205,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "meta_url": {
-                    "description": "collection meta information URL",
+                    "description": "Real meta information URL",
                     "type": "string"
                 },
                 "name": {

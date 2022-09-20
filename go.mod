@@ -8,11 +8,11 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/joho/godotenv v1.4.0
 	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
-	github.com/swaggo/gin-swagger v1.5.2
-	github.com/swaggo/swag v1.8.5
-	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
+	github.com/swaggo/gin-swagger v1.5.3
+	github.com/swaggo/swag v1.8.6
+	golang.org/x/crypto v0.0.0-20220919173607-35f4265a4bc0
 	gorm.io/driver/mysql v1.3.6
-	gorm.io/gorm v1.23.8
+	gorm.io/gorm v1.23.9
 )
 
 require (

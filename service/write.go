@@ -344,7 +344,7 @@ func BlockInsert(block *DecodeRet) error {
 		for _, tx := range block.CacheTxs {
 			if tx.Input == "0x" {
 				cache.TotalTransferTx++
-			} else if len(tx.Input) > 22 && tx.Input == "0x776f726d686f6c65733a" {
+			} else if len(tx.Input) > 22 && tx.Input[:22] == "0x776f726d686f6c65733a" {
 				cache.TotalWormholesTx++
 			}
 		}
