@@ -76,7 +76,7 @@ func getBlock(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} service.Cache
-// @Failure     400 {object} service.ErrRes
+// @Failure     400       {object} service.ErrRes
 // @Router      /totals [get]
 func totals(c *gin.Context) {
 	res, err := service.FetchTotals()
@@ -93,11 +93,27 @@ func totals(c *gin.Context) {
 // @Description Query validator's information
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} []model.Pledge
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} []model.Pledge
 // @Failure     400 {object} service.ErrRes
 // @Router      /validators [get]
 func validators(c *gin.Context) {
-	res, err := service.FetchValidator()
+	req := struct {
+		Page     *int `form:"page"`
+		PageSize *int `form:"page_size"`
+	}{}
+	err := c.BindQuery(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	page, size, err := utils.ParsePage(req.Page, req.PageSize)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	res, err := service.FetchValidator(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

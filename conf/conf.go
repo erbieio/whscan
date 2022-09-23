@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -14,7 +13,7 @@ import (
 
 // default allocation
 var (
-	ChainId    int64 = 51888
+	ChainUrl         = "http://localhost:8545"
 	HexKey           = "7b2546a5d4e658d079c6b2755c6d7495edd01a686fddae010830e9c93b23e398"
 	ServerAddr       = ":3000"
 	Interval   int64 = 10
@@ -27,7 +26,6 @@ var (
 
 // globally available object instantiated from config
 var (
-	ChainUrl   string                //Chain node address
 	PrivateKey *secp256k1.PrivateKey //Private key
 	Amount     *big.Int              //Amount of coins (unit: wei)
 )
@@ -45,18 +43,12 @@ func init() {
 	}
 
 	var err error
-	// Blockchain network configuration
-	Network := networks[ChainId]
-	if Network == nil {
-		panic(fmt.Sprintf("Unsupported chainId: %v", ChainId))
-	}
 
 	// Blockchain account private key and RPC client configuration
 	PrivateKey, err = utils.HexToECDSA(HexKey)
 	if err != nil {
 		panic(err)
 	}
-	ChainUrl = Network.Url
 	Amount = new(big.Int)
 	Amount.SetString(AmountStr, 0)
 }
@@ -68,11 +60,8 @@ func setConf() {
 	}
 
 	// Parse the basic configuration of the server
-	if chainId := os.Getenv("CHAIN_ID"); chainId != "" {
-		ChainId, err = strconv.ParseInt(chainId, 0, 64)
-		if err != nil {
-			panic(err)
-		}
+	if chainUrl := os.Getenv("CHAIN_URL"); chainUrl != "" {
+		ChainUrl = chainUrl
 	}
 	if hexKey := os.Getenv("HEX_KEY"); hexKey != "" {
 		HexKey = hexKey

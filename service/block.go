@@ -26,7 +26,7 @@ func FetchTotals() (Cache, error) {
 	return cache, nil
 }
 
-func FetchValidator() (res []model.Pledge, err error) {
-	err = DB.Find(&res).Error
+func FetchValidator(page, size int) (res []model.Pledge, err error) {
+	err = DB.Offset((page - 1) * size).Limit(size).Find(&res).Error
 	return
 }

@@ -48,6 +48,14 @@ func (c *Client) PendingNonceAt(ctx context.Context, account types.Address) (uin
 	return strconv.ParseUint(result[2:], 16, 64)
 }
 
+func (c *Client) ChainId(ctx context.Context) (*big.Int, error) {
+	var hex Big
+	if err := c.CallContext(ctx, &hex, "eth_chainId"); err != nil {
+		return nil, err
+	}
+	return (*big.Int)(&hex), nil
+}
+
 func (c *Client) CallContract(ctx context.Context, msg map[string]interface{}, blockNumber *types.BigInt) (types.Data, error) {
 	var hex types.Data
 	err := c.CallContext(ctx, &hex, "eth_call", msg, toBlockNumArg(blockNumber))

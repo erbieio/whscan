@@ -31,7 +31,10 @@ func init() {
 	}
 	prv = conf.PrivateKey
 	addr = utils.PubkeyToAddress(prv.PubKey())
-	chainId = big.NewInt(conf.ChainId)
+	chainId, err = client.ChainId(context.Background())
+	if err != nil {
+		panic(err)
+	}
 	amount = conf.Amount
 	erbPayAddr = conf.ERBPay
 }
