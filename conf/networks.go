@@ -44,7 +44,7 @@ var networks = map[int64]*network{
 		Name: "wormholes",
 		Url:  "http://43.129.181.130:8561",
 	},
-	51889: {
+	51890: {
 		Name: "wormholes dev",
 		Url:  "https://api.wormholestest.com",
 	},

@@ -91,10 +91,6 @@ func FindExchanger(addr types.Address) (res ExchangerRes, err error) {
 	if err != nil {
 		return
 	}
-	err = DB.Where("address=?", addr).Model(&model.ExchangerPledge{}).Select("amount").Scan(&res.Amount).Error
-	if err != nil {
-		return
-	}
 	err = DB.Where("exchanger=?", addr).Model(&model.Collection{}).Select("COUNT(*)").Scan(&res.CollectionCount).Error
 	if err != nil {
 		return
@@ -106,7 +102,6 @@ func FindExchanger(addr types.Address) (res ExchangerRes, err error) {
 func Exchangers(page, size int) (res []ExchangerRes, err error) {
 	s := "*, (SELECT COUNT(*) FROM collections WHERE exchanger=exchangers.address) AS collection_count"
 	s += ", (SELECT COUNT(*) FROM nft_txes WHERE exchanger_addr=exchangers.address) AS tx_count"
-	s += ", IFNULL((SELECT amount FROM exchanger_pledges WHERE address=exchangers.address),'0') AS amount"
 	err = DB.Model(model.Exchanger{}).Select(s).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Scan(&res).Error
 	return
 }

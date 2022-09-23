@@ -26,8 +26,7 @@ var Tables = []interface{}{
 	&Collection{},
 	&NFTTx{},
 	&Reward{},
-	&ConsensusPledge{},
-	&ExchangerPledge{},
+	&Pledge{},
 	&Subscription{},
 }
 
@@ -372,6 +371,8 @@ type Exchanger struct {
 	Timestamp    uint64  `json:"timestamp" gorm:"index"`                   //Open time
 	BlockNumber  uint64  `json:"block_number" gorm:"index"`                //The block number when created
 	TxHash       string  `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
+	Amount       string  `json:"amount" gorm:"type:VARCHAR(64)"`           //Pledge amount
+	Count        uint64  `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
 	BalanceCount string  `json:"balance_count" gorm:"type:VARCHAR(128)"`   //Total transaction amount, unit wei
 	NFTCount     uint64  `json:"nft_count"`                                //Total NFT count
 	CloseAt      *uint64 `json:"close_at"`                                 //if not null, the exchange is closed
@@ -379,26 +380,23 @@ type Exchanger struct {
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
 type Reward struct {
-	Address     string  `json:"address" gorm:"type:CHAR(42)"` //reward address
-	Proxy       string  `json:"proxy" gorm:"type:CHAR(42)"`   //proxy address
-	Identity    uint8   `json:"identity"`                     //Identity, 1: block producer, 2: verifier, 3, exchange
-	BlockNumber uint64  `json:"block_number"`                 //The block number when rewarding
-	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`    //SNFT address
-	Amount      *string `json:"amount"`                       //Amount of reward
+	Address     string  `json:"address" gorm:"type:CHAR(42)"`   //reward address
+	Proxy       string  `json:"proxy" gorm:"type:CHAR(42)"`     //proxy address
+	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchange
+	BlockNumber uint64  `json:"block_number"`                   //The block number when rewarding
+	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
+	Amount      *string `json:"amount" gorm:"type:VARCHAR(64)"` //Amount of reward
 }
 
-// Pledge account pledge amount
+// Pledge validator pledge information
 type Pledge struct {
-	Address string `json:"address" gorm:"type:CHAR(42);primary_key"` //staking account
-	Amount  string `json:"amount" gorm:"type:CHAR(64)"`              //Pledge amount
-	Count   uint64 `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
+	Address    string `json:"address" gorm:"type:CHAR(42);primary_key"` //staking account
+	Amount     string `json:"amount" gorm:"type:VARCHAR(64)"`           //Pledge amount
+	Count      uint64 `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
+	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`          //Amount of total reward
+	Timestamp  uint64 `json:"timestamp"`                                //The time at latest rewarding
+	LastNumber uint64 `json:"last_number"`                              //The block number at latest rewarding
 }
-
-// ExchangerPledge exchange pledge
-type ExchangerPledge Pledge
-
-// ConsensusPledge consensus pledge
-type ConsensusPledge Pledge
 
 // Subscription information
 type Subscription struct {

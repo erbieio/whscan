@@ -13,6 +13,7 @@ func Block(e *gin.Engine) {
 	e.GET("/block/page", pageBlock)
 	e.GET("/block/:number", getBlock)
 	e.GET("/totals", totals)
+	e.GET("/validators", validators)
 }
 
 // @Tags        block
@@ -79,6 +80,24 @@ func getBlock(c *gin.Context) {
 // @Router      /totals [get]
 func totals(c *gin.Context) {
 	res, err := service.FetchTotals()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        block
+// @Summary     query validator list
+// @Description Query validator's information
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} []model.Pledge
+// @Failure     400 {object} service.ErrRes
+// @Router      /validators [get]
+func validators(c *gin.Context) {
+	res, err := service.FetchValidator()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

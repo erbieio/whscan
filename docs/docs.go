@@ -2087,6 +2087,38 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/validators": {
+            "get": {
+                "description": "Query validator's information",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "block"
+                ],
+                "summary": "query validator list",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Pledge"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2478,6 +2510,10 @@ const docTemplate = `{
                     "description": "Exchange address",
                     "type": "string"
                 },
+                "amount": {
+                    "description": "Pledge amount",
+                    "type": "string"
+                },
                 "balance_count": {
                     "description": "Total transaction amount, unit wei",
                     "type": "string"
@@ -2488,6 +2524,10 @@ const docTemplate = `{
                 },
                 "close_at": {
                     "description": "if not null, the exchange is closed",
+                    "type": "integer"
+                },
+                "count": {
+                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
                     "type": "integer"
                 },
                 "creator": {
@@ -2593,6 +2633,35 @@ const docTemplate = `{
                 },
                 "tx_type": {
                     "description": "Transaction type, 1: transfer, 2: bid transaction, 3: fixed price purchase, 4: lazy price purchase, 5: lazy price purchase, 6: bid transaction, 7: lazy bid transaction, 8: matching transaction",
+                    "type": "integer"
+                }
+            }
+        },
+        "model.Pledge": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "staking account",
+                    "type": "string"
+                },
+                "amount": {
+                    "description": "Pledge amount",
+                    "type": "string"
+                },
+                "count": {
+                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
+                    "type": "integer"
+                },
+                "last_number": {
+                    "description": "The block number at latest rewarding",
+                    "type": "integer"
+                },
+                "reward": {
+                    "description": "Amount of total reward",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "The time at latest rewarding",
                     "type": "integer"
                 }
             }
@@ -2886,6 +2955,10 @@ const docTemplate = `{
                     "description": "Total number of  NFT transactions",
                     "type": "integer"
                 },
+                "totalPledge": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
+                },
                 "totalRecycle": {
                     "description": "Total number of recycle SNFT",
                     "type": "integer"
@@ -3014,6 +3087,10 @@ const docTemplate = `{
                 },
                 "collectionCount": {
                     "description": "collection count",
+                    "type": "integer"
+                },
+                "count": {
+                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
                     "type": "integer"
                 },
                 "creator": {
@@ -3369,6 +3446,10 @@ const docTemplate = `{
                                 "description": "Exchange address",
                                 "type": "string"
                             },
+                            "amount": {
+                                "description": "Pledge amount",
+                                "type": "string"
+                            },
                             "balance_count": {
                                 "description": "Total transaction amount, unit wei",
                                 "type": "string"
@@ -3379,6 +3460,10 @@ const docTemplate = `{
                             },
                             "close_at": {
                                 "description": "if not null, the exchange is closed",
+                                "type": "integer"
+                            },
+                            "count": {
+                                "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
                                 "type": "integer"
                             },
                             "creator": {

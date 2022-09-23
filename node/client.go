@@ -263,36 +263,3 @@ func (c *Client) GetReward(number string) (rewards []*Reward, err error) {
 	}
 	return
 }
-
-type SNFT struct {
-	Owner   string
-	Creator string
-	Royalty uint32
-	MetaURL string
-}
-
-func (c *Client) GetSNFT(addr, number string) (snft SNFT, err error) {
-	err = c.Call(&snft, "eth_getAccountInfo", addr, number)
-	// todo because the chain is wrong, convert the MetaURL
-	if len(snft.MetaURL) == 95 {
-		snft.MetaURL = snft.MetaURL[0:53] + strings.ToLower(snft.MetaURL[91:93])
-	}
-	return
-}
-
-func (c *Client) GetPledge(addr, number string) (string, error) {
-	pledge := struct {
-		PledgedBalance *big.Int
-	}{}
-	err := c.Call(&pledge, "eth_getAccountInfo", addr, number)
-	if pledge.PledgedBalance != nil {
-		return pledge.PledgedBalance.Text(10), err
-	} else {
-		return "0", err
-	}
-}
-
-func (c *Client) GetValidatorLen(number string) (ret uint64, err error) {
-	err = c.Call(&ret, "eth_getValidatorLen", number)
-	return
-}

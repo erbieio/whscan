@@ -273,6 +273,24 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 				return err
 			}
 		}
+	} else {
+		validators := struct {
+			Validators []*struct {
+				Addr    string   `json:"Addr"`
+				Balance *big.Int `json:"Balance"`
+				Proxy   string   `json:"Proxy"`
+			} `json:"Validators"`
+		}{}
+		err := c.Call(&validators, "eth_getValidator", "0x0")
+		if err != nil {
+			return err
+		}
+		for _, validator := range validators.Validators {
+			wh.ConsensusPledges = append(wh.ConsensusPledges, &model.Pledge{
+				Address: validator.Addr,
+				Amount:  validator.Balance.Text(10),
+			})
+		}
 	}
 	// Write the current information, once every 4096 SNFT rewards
 	if len(epochId) > 0 {
@@ -294,7 +312,6 @@ func decodeWH(c *node.Client, wh *service.DecodeRet) error {
 			Timestamp:    uint64(wh.Block.Timestamp),
 		})
 	}
-	wh.ValidatorLen, _ = c.GetValidatorLen(wh.Block.Number.Hex())
 	return nil
 }
 
@@ -452,15 +469,9 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 		}
 
 	case 9, 10: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
-		amount, err = c.GetPledge(from, wh.Number.Hex())
-		if err != nil {
-			return err
-		}
-		wh.ConsensusPledges = append(wh.ConsensusPledges, &model.ConsensusPledge{
+		pledge := &model.Pledge{
 			Address: from,
-			Amount:  amount,
-			Count:   1,
-		})
+		}
 		internalTx := &model.InternalTx{
 			ParentTxHash: Hash(txHash),
 			From:         &tx.From,
@@ -470,16 +481,16 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 		}
 		if w.Type == 9 {
 			internalTx.Op = "pledge_add"
+			pledge.Amount = amount
 		} else {
 			internalTx.Op = "pledge_sub"
+			pledge.Amount = "-" + amount
+
 		}
+		wh.ConsensusPledges = append(wh.ConsensusPledges, pledge)
 		wh.CacheInternalTxs = append(wh.CacheInternalTxs, internalTx)
 
 	case 11: //Open the exchange
-		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.ExchangerPledge{
-			Address: from,
-			Amount:  value,
-		})
 		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{
 			Address:      from,
 			Name:         w.Name,
@@ -489,6 +500,8 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 			Timestamp:    timestamp,
 			BlockNumber:  blockNumber,
 			TxHash:       txHash,
+			Amount:       value,
+			Count:        1,
 			BalanceCount: "0",
 		})
 
@@ -678,13 +691,13 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 		})
 
 	case 21: // Exchange pledge
-		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.ExchangerPledge{
+		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.Exchanger{
 			Address: from,
 			Amount:  value,
 		})
 
 	case 22: //Revoke the exchange pledge
-		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.ExchangerPledge{
+		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.Exchanger{
 			Address: from,
 			Amount:  "-" + value,
 		})

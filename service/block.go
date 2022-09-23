@@ -25,3 +25,8 @@ func GetBlock(number string) (b model.Block, err error) {
 func FetchTotals() (Cache, error) {
 	return cache, nil
 }
+
+func FetchValidator() (res []model.Pledge, err error) {
+	err = DB.Find(&res).Error
+	return
+}
