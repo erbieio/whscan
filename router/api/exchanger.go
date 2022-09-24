@@ -84,6 +84,7 @@ func getExchanger(c *gin.Context) {
 // @Description Query the list of exchanges in reverse order of creation time
 // @Accept      json
 // @Produce     json
+// @Param       order     query    string false "sort by conditions, Support database order statement"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} []service.ExchangerRes
@@ -91,8 +92,9 @@ func getExchanger(c *gin.Context) {
 // @Router      /exchangers [get]
 func exchangers(c *gin.Context) {
 	req := struct {
-		Page     *int `form:"page"`
-		PageSize *int `form:"page_size"`
+		Order    string `form:"order"`
+		Page     *int   `form:"page"`
+		PageSize *int   `form:"page_size"`
 	}{}
 	err := c.BindQuery(&req)
 	if err != nil {
@@ -105,7 +107,7 @@ func exchangers(c *gin.Context) {
 		return
 	}
 
-	res, err := service.Exchangers(page, size)
+	res, err := service.Exchangers(page, size, req.Order)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

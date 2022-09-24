@@ -945,6 +945,12 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "sort by conditions, Support database order statement",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
@@ -3084,7 +3090,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "amount": {
-                    "description": "pledge amount",
+                    "description": "Pledge amount",
                     "type": "string"
                 },
                 "balance_count": {

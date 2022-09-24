@@ -682,7 +682,7 @@ definitions:
         description: Exchange address
         type: string
       amount:
-        description: pledge amount
+        description: Pledge amount
         type: string
       balance_count:
         description: Total transaction amount, unit wei
@@ -2096,6 +2096,10 @@ paths:
       - application/json
       description: Query the list of exchanges in reverse order of creation time
       parameters:
+      - description: sort by conditions, Support database order statement
+        in: query
+        name: order
+        type: string
       - description: Page, default 1
         in: query
         name: page
