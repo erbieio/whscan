@@ -24,15 +24,15 @@ func RankingSNFT(limit string, page, size int) (res RankingSNFTRes, err error) {
 	switch limit {
 	case "24h":
 		start, stop := utils.LastTimeRange(1)
-		db = db.Where("LEFT(nft_addr,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
+		db = db.Where("LEFT(address,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
 	case "7d":
 		start, stop := utils.LastTimeRange(7)
-		db = db.Where("LEFT(nft_addr,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
+		db = db.Where("LEFT(address,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
 	case "30d":
 		start, stop := utils.LastTimeRange(30)
-		db = db.Where("LEFT(nft_addr,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
+		db = db.Where("LEFT(address,3)='0x8' AND epoches.timestamp>=? AND epoches.timestamp<?", start, stop)
 	default:
-		db = db.Where("LEFT(nft_addr,3)='0x8'")
+		db = db.Where("LEFT(address,3)='0x8'")
 	}
 	err = db.Count(&res.Total).Error
 	if err != nil {
@@ -56,15 +56,15 @@ func RankingNFT(limit string, page, size int) (res RankingNFTRes, err error) {
 	switch limit {
 	case "24h":
 		start, stop := utils.LastTimeRange(1)
-		db = db.Where("LEFT(nft_addr,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(address,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	case "7d":
 		start, stop := utils.LastTimeRange(7)
-		db = db.Where("LEFT(nft_addr,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(address,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	case "30d":
 		start, stop := utils.LastTimeRange(30)
-		db = db.Where("LEFT(nft_addr,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
+		db = db.Where("LEFT(address,3)='0x0' AND nft_txes.timestamp>=? AND nft_txes.timestamp<?", start, stop)
 	default:
-		db = db.Where("LEFT(nft_addr,3)='0x0'")
+		db = db.Where("LEFT(address,3)='0x0'")
 	}
 	err = db.Count(&res.Total).Error
 	if err != nil {

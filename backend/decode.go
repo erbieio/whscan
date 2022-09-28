@@ -389,7 +389,6 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 	from := string(tx.From)
 	to := string(*tx.To)
 	value := string(tx.Value)
-	amount := "0"
 	switch w.Type {
 	case 0: //Users mint NFT by themselves
 		nftAddr := "" //Calculate fill in real time when inserting into database
@@ -481,10 +480,10 @@ func decodeWHTx(c *node.Client, block *model.Block, tx *model.Transaction, wh *s
 		}
 		if w.Type == 9 {
 			internalTx.Op = "pledge_add"
-			pledge.Amount = amount
+			pledge.Amount = value
 		} else {
 			internalTx.Op = "pledge_sub"
-			pledge.Amount = "-" + amount
+			pledge.Amount = "-" + value
 
 		}
 		wh.ConsensusPledges = append(wh.ConsensusPledges, pledge)
