@@ -3,6 +3,8 @@ package model
 
 import (
 	"gorm.io/gorm"
+	"math/big"
+
 	"server/common/types"
 )
 
@@ -184,15 +186,15 @@ type Block struct {
 
 // Account information
 type Account struct {
-	Address   types.Address  `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
-	Balance   types.BigInt   `json:"balance" gorm:"type:VARCHAR(128);index"`  //balance
-	Nonce     types.Uint64   `json:"transactionCount"`                        //Transaction random number, transaction volume
-	Code      *string        `json:"code"`                                    //bytecode
-	Name      *string        `json:"name" gorm:"type:VARCHAR(64)"`            //name
-	Symbol    *string        `json:"symbol" gorm:"type:VARCHAR(64)"`          //symbol
-	ERC       types.ERC      `json:"ERC"`                                     //ERC types, ERC20, ERC721, ERC1155
-	Creator   *types.Address `json:"creator" gorm:"type:CHAR(42)"`            //The creator, the contract account has value
-	CreatedTx *types.Hash    `json:"createdTx" gorm:"type:CHAR(66)"`          //Create transaction
+	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
+	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //balance
+	Nonce     types.Uint64        `json:"transactionCount"`                        //Transaction random number, transaction volume
+	Code      *string             `json:"code"`                                    //bytecode
+	Name      *string             `json:"name" gorm:"type:VARCHAR(64)"`            //name
+	Symbol    *string             `json:"symbol" gorm:"type:VARCHAR(64)"`          //symbol
+	Type      *types.ContractType `json:"type"`                                    //contract types, ERC20, ERC721, ERC1155
+	Creator   *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //The creator, the contract account has value
+	CreatedTx *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //Create transaction
 }
 
 // Transaction information
@@ -401,4 +403,30 @@ type Pledge struct {
 // Subscription information
 type Subscription struct {
 	Email string `json:"email" gorm:"type:VARCHAR(64);primary_key"` //Email
+}
+
+// Parsed block parsing result
+type Parsed struct {
+	*Block
+	CacheTxs          []*Transaction `json:"transactions"`
+	CacheInternalTxs  []*InternalTx
+	CacheUncles       []*Uncle
+	CacheTransferLogs []interface{}
+	CacheAccounts     map[types.Address]*Account
+	CacheLogs         []*Log   //Insert after CacheAccounts
+	AddBalance        *big.Int //The number of coins added by the block
+
+	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
+	Exchangers       []*Exchanger //The created exchange, priority: 1
+	Epochs           []*Epoch     //Official injection of the first phase of SNFT, priority: 1
+	CreateNFTs       []*NFT       //Newly created NFT, priority: 2
+	RewardSNFTs      []*SNFT      //Reward information of SNFT, priority: 3
+	NFTTxs           []*NFTTx     //NFT transaction record, priority: 4
+	RecycleSNFTs     []string     //Recycle SNFT, priority: 5
+	CloseExchangers  []string     //Close exchanges, priority: 5
+	Rewards          []*Reward    //reward record, priority: none
+	ExchangerPledges []*Exchanger //Exchange pledge, priority: none
+	ConsensusPledges []*Pledge    //Consensus pledge, priority: none
+	PledgeSNFT       []string     //Pledge SNFT
+	UnPledgeSNFT     []string     //UnPledge SNFT
 }

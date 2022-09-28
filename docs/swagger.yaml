@@ -105,9 +105,6 @@ definitions:
     type: object
   model.Account:
     properties:
-      ERC:
-        description: ERC types, ERC20, ERC721, ERC1155
-        type: integer
       address:
         description: address
         type: string
@@ -131,6 +128,9 @@ definitions:
         type: string
       transactionCount:
         description: Transaction random number, transaction volume
+        type: integer
+      type:
+        description: contract types, ERC20, ERC721, ERC1155
         type: integer
     type: object
   model.Block:
@@ -446,9 +446,6 @@ definitions:
     type: object
   service.AccountRes:
     properties:
-      ERC:
-        description: ERC types, ERC20, ERC721, ERC1155
-        type: integer
       address:
         description: address
         type: string
@@ -487,6 +484,9 @@ definitions:
         type: integer
       transactionCount:
         description: Transaction random number, transaction volume
+        type: integer
+      type:
+        description: contract types, ERC20, ERC721, ERC1155
         type: integer
     type: object
   service.AccountsRes:

@@ -180,32 +180,7 @@ func getNFTAddr(next *big.Int) string {
 	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalNFT+1)))))
 }
 
-// DecodeRet block parsing result
-type DecodeRet struct {
-	*model.Block
-	CacheTxs         []*model.Transaction `json:"transactions"`
-	CacheInternalTxs []*model.InternalTx
-	CacheUncles      []*model.Uncle
-	CacheAccounts    map[types.Address]*model.Account
-	CacheLogs        []*model.Log //Insert after CacheAccounts
-	AddBalance       *big.Int     //The number of coins added by the block
-
-	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
-	Exchangers       []*model.Exchanger //The created exchange, priority: 1
-	Epochs           []*model.Epoch     //Official injection of the first phase of SNFT, priority: 1
-	CreateNFTs       []*model.NFT       //Newly created NFT, priority: 2
-	RewardSNFTs      []*model.SNFT      //Reward information of SNFT, priority: 3
-	NFTTxs           []*model.NFTTx     //NFT transaction record, priority: 4
-	RecycleSNFTs     []string           //Recycle SNFT, priority: 5
-	CloseExchangers  []string           //Close exchanges, priority: 5
-	Rewards          []*model.Reward    //reward record, priority: none
-	ExchangerPledges []*model.Exchanger //Exchange pledge, priority: none
-	ConsensusPledges []*model.Pledge    //Consensus pledge, priority: none
-	PledgeSNFT       []string           //Pledge SNFT
-	UnPledgeSNFT     []string           //UnPledge SNFT
-}
-
-func BlockInsert(block *DecodeRet) error {
+func BlockInsert(block *model.Parsed) error {
 	totalAmount, totalPledge, b := new(big.Int), new(big.Int), new(big.Int)
 	err := DB.Transaction(func(t *gorm.DB) error {
 		for _, tx := range block.CacheTxs {
@@ -239,9 +214,15 @@ func BlockInsert(block *DecodeRet) error {
 		}
 
 		// write transaction log
-		err := SaveTxLog(t, block.CacheLogs)
-		if err != nil {
-			return err
+		for _, log := range block.CacheLogs {
+			if err := t.Create(log).Error; err != nil {
+				return err
+			}
+		}
+		for _, log := range block.CacheTransferLogs {
+			if err := t.Create(log).Error; err != nil {
+				return err
+			}
 		}
 
 		// write block
@@ -251,7 +232,7 @@ func BlockInsert(block *DecodeRet) error {
 
 		if block.AddBalance.Uint64() != 0 {
 			if block.Number == 0 {
-				err = t.Create(model.Cache{
+				err := t.Create(model.Cache{
 					Key:   "GenesisBalance",
 					Value: block.AddBalance.Text(10),
 				}).Error
@@ -262,14 +243,14 @@ func BlockInsert(block *DecodeRet) error {
 			b := new(big.Int)
 			b.SetString(string(cache.TotalBalance), 10)
 			b.Add(b, block.AddBalance)
-			err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
+			err := t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
 				Key: "TotalBalance", Value: b.Text(10),
 			}).Error
 			if err != nil {
 				return err
 			}
 		}
-		err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
+		err := t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
 			Key: "TotalRecycle", Value: fmt.Sprintf("%d", cache.TotalRecycle+uint64(len(block.RecycleSNFTs))),
 		}).Error
 		if err != nil {
@@ -380,47 +361,7 @@ func BlockInsert(block *DecodeRet) error {
 	return err
 }
 
-// SaveTxLog writes the block transaction log and analyzes and stores the ERC token transaction
-func SaveTxLog(tx *gorm.DB, cacheLog []*model.Log) error {
-	for _, cacheLog := range cacheLog {
-		// write transaction log
-		if err := tx.Create(cacheLog).Error; err != nil {
-			return err
-		}
-		// Parse and write ERC contract transfer event
-		account := model.Account{Address: cacheLog.Address}
-		err := DB.Find(&account).Error
-		if err != nil {
-			return err
-		}
-		switch account.ERC {
-		case types.ERC20:
-			if transferLog, err := utils.Unpack20TransferLog(cacheLog); err == nil {
-				err = tx.Create(transferLog).Error
-				if err != nil {
-					return err
-				}
-			}
-		case types.ERC721:
-			if transferLog, err := utils.Unpack721TransferLog(cacheLog); err == nil {
-				err = tx.Create(transferLog).Error
-				if err != nil {
-					return err
-				}
-			}
-		case types.ERC1155:
-			if transferLogs, err := utils.Unpack1155TransferLog(cacheLog); err == nil {
-				err = tx.Create(transferLogs).Error
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func WHInsert(tx *gorm.DB, wh *DecodeRet) (err error) {
+func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 	// exchange creation
 	if wh.Exchangers != nil {
 		err = tx.Clauses(clause.OnConflict{

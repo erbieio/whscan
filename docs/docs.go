@@ -2302,10 +2302,6 @@ const docTemplate = `{
         "model.Account": {
             "type": "object",
             "properties": {
-                "ERC": {
-                    "description": "ERC types, ERC20, ERC721, ERC1155",
-                    "type": "integer"
-                },
                 "address": {
                     "description": "address",
                     "type": "string"
@@ -2336,6 +2332,10 @@ const docTemplate = `{
                 },
                 "transactionCount": {
                     "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "contract types, ERC20, ERC721, ERC1155",
                     "type": "integer"
                 }
             }
@@ -2760,10 +2760,6 @@ const docTemplate = `{
         "service.AccountRes": {
             "type": "object",
             "properties": {
-                "ERC": {
-                    "description": "ERC types, ERC20, ERC721, ERC1155",
-                    "type": "integer"
-                },
                 "address": {
                     "description": "address",
                     "type": "string"
@@ -2814,6 +2810,10 @@ const docTemplate = `{
                 },
                 "transactionCount": {
                     "description": "Transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "contract types, ERC20, ERC721, ERC1155",
                     "type": "integer"
                 }
             }

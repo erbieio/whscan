@@ -180,20 +180,51 @@ func Approve(client ContractClient, address, spender types.Address, amount Uint2
 	return ABIDecodeBool(string(out))
 }
 
-func Property(client ContractClient, address types.Address) (name, symbol *string, err error) {
-	n, err := Name(client, address)
+func Property(c ContractClient, address types.Address) (n, s *string, t *types.ContractType, err error) {
+	name, err := Name(c, address)
 	if err == nil {
-		name = &n
+		n = &name
 	}
-	err = filterContractErr(err)
+	if err = filterContractErr(err); err != nil {
+		return
+	}
+	symbol, err := Symbol(c, address)
+	if err == nil {
+		s = &symbol
+	}
+	if err = filterContractErr(err); err != nil {
+		return
+	}
+	ok, err := IsERC165(c, address)
 	if err != nil {
 		return
 	}
-	s, err := Symbol(client, address)
-	if err == nil {
-		symbol = &s
+	if !ok {
+		ok, err = IsERC20(c, address)
+		if ok {
+			t = new(types.ContractType)
+			*t = types.ERC20
+		}
+		return
 	}
-	err = filterContractErr(err)
+	t = new(types.ContractType)
+	ok, err = IsERC721(c, address)
+	if err != nil {
+		return
+	}
+	if ok {
+		*t = types.ERC721
+		return
+	}
+	ok, err = IsERC1155(c, address)
+	if err != nil {
+		return
+	}
+	if ok {
+		*t = types.ERC1155
+		return
+	}
+	*t = types.ERC165
 	return
 }
 

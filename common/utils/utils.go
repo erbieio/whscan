@@ -21,100 +21,68 @@ var (
 	DaySecond                    = 24 * time.Hour.Milliseconds() / 1000
 )
 
-// Unpack20TransferLog parses ERC20 transfer events
-func Unpack20TransferLog(log *model.Log) (*model.ERC20Transfer, error) {
-	if len(log.Topics) != 3 {
-		return nil, fmt.Errorf("The event subject is not 2")
-	}
-	if log.Topics[0] != erc20TransferEventId {
-		return nil, fmt.Errorf("Event signature does not match")
-	}
-	if len(log.Data) != 66 {
-		return nil, fmt.Errorf("Event data is not 32 bytes")
-	}
-	return &model.ERC20Transfer{
-		TxHash:  log.TxHash,
-		Address: log.Address,
-		From:    types.Address("0x" + log.Topics[1][26:]),
-		To:      types.Address("0x" + log.Topics[2][26:]),
-		Value:   HexToBigInt(log.Data[2:66]),
-	}, nil
-}
-
-// Unpack721TransferLog parses ERC721 transfer events
-func Unpack721TransferLog(log *model.Log) (*model.ERC721Transfer, error) {
-	if len(log.Topics) != 4 {
-		return nil, fmt.Errorf("The event subject is not 3")
-	}
-	if log.Topics[0] != erc721TransferEventId {
-		return nil, fmt.Errorf("Event signature does not match")
-	}
-	if len(log.Data) != 2 {
-		return nil, fmt.Errorf("Event data is not 0 bytes")
-	}
-	return &model.ERC721Transfer{
-		TxHash:  log.TxHash,
-		Address: log.Address,
-		From:    types.Address("0x" + log.Topics[1][26:]),
-		To:      types.Address("0x" + log.Topics[2][26:]),
-		TokenId: HexToBigInt(log.Topics[3][2:]),
-	}, nil
-}
-
-// Unpack1155TransferLog parses ERC1155 transfer (batch) events
-func Unpack1155TransferLog(log *model.Log) ([]*model.ERC1155Transfer, error) {
-	if len(log.Topics) != 4 {
-		return nil, fmt.Errorf("The event subject is not 3")
-	}
-	operator, from, to := types.Address("0x"+log.Topics[1][26:]), types.Address("0x"+log.Topics[2][26:]), types.Address("0x"+log.Topics[3][26:])
-
-	// ERC1155 single transfer event
-	if log.Topics[0] == erc1155TransferSingleEventId {
-		if len(log.Data) != 130 {
-			return nil, fmt.Errorf("Event data is not 64 bytes")
+func UnpackTransferLog(log *model.Log) []interface{} {
+	topicsLen := len(log.Topics)
+	if topicsLen == 3 {
+		if log.Topics[0] == erc20TransferEventId && len(log.Data) == 66 {
+			// 解析ERC20的转移事件
+			return []interface{}{&model.ERC20Transfer{
+				TxHash:  log.TxHash,
+				Address: log.Address,
+				From:    types.Address("0x" + log.Topics[1][26:]),
+				To:      types.Address("0x" + log.Topics[2][26:]),
+				Value:   HexToBigInt(log.Data[2:66]),
+			}}
 		}
-		return []*model.ERC1155Transfer{{
-			TxHash:   log.TxHash,
-			Address:  log.Address,
-			Operator: operator,
-			From:     from,
-			To:       to,
-			TokenId:  HexToBigInt(log.Data[2:66]),
-			Value:    HexToBigInt(log.Data[66:130]),
-		}}, nil
-	}
-
-	// ERC1155 batch transfer event
-	if log.Topics[0] != erc1155TransferBatchEventId {
-		// Dynamic data type encoding and decoding reference https://docs.soliditylang.org/en/v0.8.13/abi-spec.html#argument-encoding
-		// The word length is 256 bits or 32 bytes
-		wordLen := (len(log.Data) - 2) / 64
-		if wordLen < 4 {
-			return nil, fmt.Errorf("The data is less than 4 words")
-		}
-		if wordLen%2 != 0 {
-			return nil, fmt.Errorf("The number of words in the data is not a double number")
-		}
-		if log.Data[2:66] != "0000000000000000000000000000000000000000000000000000000000000040" {
-			return nil, fmt.Errorf("The first word is not 0x40")
-		}
-		transferCount := (wordLen - 4) / 2
-		transferLogs := make([]*model.ERC1155Transfer, transferCount)
-		for i := 0; i < transferCount; i++ {
-			idOffset, valueOffset := 2+(i+3)*64, 2+(transferCount+i+4)*64
-			transferLogs[i] = &model.ERC1155Transfer{
+	} else if topicsLen == 4 {
+		if log.Topics[0] == erc721TransferEventId && len(log.Data) == 2 {
+			// 解析ERC721的转移事件
+			return []interface{}{&model.ERC721Transfer{
+				TxHash:  log.TxHash,
+				Address: log.Address,
+				From:    types.Address("0x" + log.Topics[1][26:]),
+				To:      types.Address("0x" + log.Topics[2][26:]),
+				TokenId: HexToBigInt(log.Topics[3][2:]),
+			}}
+		} else if log.Topics[0] == erc1155TransferSingleEventId && len(log.Data) == 130 {
+			// 解析ERC1155的单个转移事件
+			operator, from, to := types.Address("0x"+log.Topics[1][26:]), types.Address("0x"+log.Topics[2][26:]), types.Address("0x"+log.Topics[3][26:])
+			return []interface{}{&model.ERC1155Transfer{
 				TxHash:   log.TxHash,
 				Address:  log.Address,
 				Operator: operator,
 				From:     from,
 				To:       to,
-				TokenId:  HexToBigInt(log.Data[idOffset : idOffset+64]),
-				Value:    HexToBigInt(log.Data[valueOffset : valueOffset+64]),
+				TokenId:  HexToBigInt(log.Data[2:66]),
+				Value:    HexToBigInt(log.Data[66:130]),
+			}}
+		} else if log.Topics[0] == erc1155TransferBatchEventId {
+			// 解析ERC1155的批量转移事件
+			operator, from, to := types.Address("0x"+log.Topics[1][26:]), types.Address("0x"+log.Topics[2][26:]), types.Address("0x"+log.Topics[3][26:])
+			// 动态数据类型编解码参考https://docs.soliditylang.org/en/v0.8.13/abi-spec.html#argument-encoding
+			// 字长为256位即32个字节
+			wordLen := (len(log.Data) - 2) / 64
+			if wordLen < 4 || wordLen%2 != 0 || log.Data[2:66] != "0000000000000000000000000000000000000000000000000000000000000040" {
+				return nil
 			}
+			transferCount := (wordLen - 4) / 2
+			transferLogs := make([]interface{}, transferCount)
+			for i := 0; i < transferCount; i++ {
+				idOffset, valueOffset := 2+(i+3)*64, 2+(transferCount+i+4)*64
+				transferLogs[i] = &model.ERC1155Transfer{
+					TxHash:   log.TxHash,
+					Address:  log.Address,
+					Operator: operator,
+					From:     from,
+					To:       to,
+					TokenId:  HexToBigInt(log.Data[idOffset : idOffset+64]),
+					Value:    HexToBigInt(log.Data[valueOffset : valueOffset+64]),
+				}
+			}
+			return transferLogs
 		}
-		return transferLogs, nil
 	}
-	return nil, fmt.Errorf("Event signature does not match")
+	return nil
 }
 
 // ABIDecodeString parses the string from the return data with only one return value from the contract
@@ -168,11 +136,14 @@ func HexToBigInt(hex string) types.BigInt {
 }
 
 // HexToAddress converts a hexadecimal string without a 0x prefix to an Address (greater than the truncated front)
-func HexToAddress(hex string) types.Address {
-	if len(hex) < 40 {
-		hex = "0000000000000000000000000000000000000000" + hex
+func HexToAddress(hex string) *types.Address {
+	if len(hex) < 42 {
+		hex = "0x000000000000000000000000000000000000000" + hex[2:]
 	}
-	return types.Address("0x" + hex[len(hex)-40:])
+	if len(hex) > 42 {
+		hex = "0x" + hex[len(hex)-40:]
+	}
+	return (*types.Address)(&hex)
 }
 
 // ParseAddress converts a hexadecimal string prefixed with 0x to an address

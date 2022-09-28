@@ -4,7 +4,9 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/joho/godotenv"
@@ -13,15 +15,16 @@ import (
 
 // default allocation
 var (
-	ChainUrl         = "http://localhost:8545"
-	HexKey           = "7b2546a5d4e658d079c6b2755c6d7495edd01a686fddae010830e9c93b23e398"
-	ServerAddr       = ":3000"
-	Interval   int64 = 10
-	MysqlDsn         = "root:123456@tcp(127.0.0.1:3306)/scan"
-	ResetDB          = false
-	IpfsServer       = "http://localhost:8080"
-	AmountStr        = "1000000000000000000"
-	ERBPay           = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay contract address
+	ChainUrl   = "http://localhost:8545"
+	HexKey     = "7b2546a5d4e658d079c6b2755c6d7495edd01a686fddae010830e9c93b23e398"
+	ServerAddr = ":3000"
+	Interval   = 5 * time.Second
+	Thread     = int64(runtime.NumCPU())
+	MysqlDsn   = "root:123456@tcp(127.0.0.1:3306)/scan"
+	ResetDB    = false
+	IpfsServer = "http://localhost:8080"
+	AmountStr  = "1000000000000000000"
+	ERBPay     = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay contract address
 )
 
 // globally available object instantiated from config
@@ -36,11 +39,6 @@ func init() {
 
 	// read configuration to override default value
 	setConf()
-
-	// check configuration
-	if Interval < 10 {
-		panic("conf.Interval < 5")
-	}
 
 	var err error
 
@@ -70,7 +68,13 @@ func setConf() {
 		ServerAddr = serverAddr
 	}
 	if interval := os.Getenv("INTERVAL"); interval != "" {
-		Interval, err = strconv.ParseInt(interval, 0, 64)
+		Interval, err = time.ParseDuration(interval)
+		if err != nil {
+			panic(err)
+		}
+	}
+	if thread := os.Getenv("THREAD"); thread != "" {
+		Thread, err = strconv.ParseInt(thread, 0, 64)
 		if err != nil {
 			panic(err)
 		}

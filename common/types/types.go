@@ -165,9 +165,6 @@ func (b *Hash) UnmarshalText(input []byte) error {
 
 type Uint256 string
 
-var Big0 Uint256 = "0x0000000000000000000000000000000000000000000000000000000000000000"
-var Big1 Uint256 = "0x0000000000000000000000000000000000000000000000000000000000000001"
-
 // ImplementsGraphQLType returns true if Uint256 implements the provided GraphQL type.
 func (a Uint256) ImplementsGraphQLType(name string) bool { return name == "Uint256" }
 
@@ -254,34 +251,40 @@ func (sa StrArray) Value() (driver.Value, error) {
 	return string(enc), err
 }
 
-type ERC int
+type ContractType int
 
 const (
-	NONE ERC = iota
-	ERC20
+	ERC20 ContractType = iota + 1
 	ERC165
 	ERC721
 	ERC1155
 )
 
 // ImplementsGraphQLType returns true if Long implements the provided GraphQL type.
-func (e ERC) ImplementsGraphQLType(name string) bool { return name == "ERC" }
+func (e *ContractType) ImplementsGraphQLType(name string) bool { return name == "ContractType" }
 
 // UnmarshalGraphQL unmarshals the provided GraphQL query data.
-func (e *ERC) UnmarshalGraphQL(input interface{}) error {
-	var err error
-	switch input := input.(type) {
-	default:
-		err = fmt.Errorf("unexpected type %T for ERC", input)
+func (e *ContractType) UnmarshalGraphQL(input interface{}) error {
+	if text, ok := input.(string); ok {
+		switch text {
+		case "ERC20":
+			*e = ERC20
+		case "ERC165":
+			*e = ERC165
+		case "ERC721":
+			*e = ERC721
+		case "ERC1155":
+			*e = ERC1155
+		}
+		return nil
+	} else {
+		return fmt.Errorf("unexpected type %T for ContractType", input)
 	}
-	return err
 }
 
 // MarshalJSON implements json.Marshaler.
-func (e ERC) MarshalJSON() ([]byte, error) {
-	switch e {
-	case NONE:
-		return []byte("\"NONE\"")[:], nil
+func (e *ContractType) MarshalJSON() ([]byte, error) {
+	switch *e {
 	case ERC20:
 		return []byte("\"ERC20\""), nil
 	case ERC165:
@@ -291,6 +294,6 @@ func (e ERC) MarshalJSON() ([]byte, error) {
 	case ERC1155:
 		return []byte("\"ERC1155\""), nil
 	default:
-		return nil, fmt.Errorf("unexpected value %v for contract type", e)
+		return []byte("\"NONE\"")[:], nil
 	}
 }
