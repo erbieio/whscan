@@ -2,7 +2,7 @@ package service
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"net/http"
 	"strings"
@@ -59,8 +59,8 @@ func GetNFTMeta(url string) (nft NFTMeta, err error) {
 	if err != nil {
 		return
 	}
-	defer resp.Body.Close()
-	data, _ := ioutil.ReadAll(resp.Body)
+	data, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
 	err = json.Unmarshal(data, &nft)
 	return
 }

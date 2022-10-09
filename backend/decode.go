@@ -25,7 +25,7 @@ func decode(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormh
 	} else if len(raw) == 0 {
 		return nil, node.NotFound
 	}
-	parsed := model.Parsed{AddBalance: new(big.Int)}
+	var parsed model.Parsed
 	if err := json.Unmarshal(raw, &parsed); err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	}
@@ -130,7 +130,7 @@ func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *model.Parsed
 			caller = tx.ContractAddress
 		}
 		callers := []*Address{caller}
-		iTx := &model.InternalTx{ParentTxHash: tx.Hash, To: new(Address), Value: "0x0"}
+		iTx := &model.InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(Address), Value: "0x0"}
 		for _, log := range execRet.StructLogs {
 			if len(*caller) == 0 {
 				*caller = *utils.HexToAddress(log.Stack[len(log.Stack)-1])
@@ -164,7 +164,7 @@ func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *model.Parsed
 			iTx.From = callers[log.Depth-1]
 			iTx.GasLimit = Uint64(log.Gas)
 			parsed.CacheInternalTxs = append(parsed.CacheInternalTxs, iTx)
-			iTx = &model.InternalTx{ParentTxHash: tx.Hash, To: new(Address), Value: "0x0"}
+			iTx = &model.InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(Address), Value: "0x0"}
 		}
 	}
 	return nil
@@ -234,7 +234,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			if (tx.Op == "CREATE" || tx.Op == "CREATE2") && parsed.CacheAccounts[*tx.To] != nil {
 				contracts = append(contracts, *tx.To)
 				parsed.CacheAccounts[*tx.To].Creator = tx.From
-				parsed.CacheAccounts[*tx.To].CreatedTx = &tx.ParentTxHash
+				parsed.CacheAccounts[*tx.To].CreatedTx = &tx.TxHash
 			}
 		}
 		if len(contracts) > 0 {
@@ -314,8 +314,6 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			} else {
 				wh.Rewards[i].Amount = new(string)
 				*wh.Rewards[i].Amount = rewards[i].RewardAmount.Text(10)
-				// Reward an ERB equivalent to SNFT
-				wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level0Reward)
 			}
 		}
 
@@ -367,14 +365,6 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 	}
 	return nil
 }
-
-var (
-	level0Reward, _ = new(big.Int).SetString("100000000000000000", 10)       //1
-	level1Reward, _ = new(big.Int).SetString("2400000000000000000", 10)      //16
-	level2Reward, _ = new(big.Int).SetString("57600000000000000000", 10)     //256
-	level3Reward, _ = new(big.Int).SetString("1382400000000000000000", 10)   //4096
-	level4Reward, _ = new(big.Int).SetString("221184000000000000000000", 10) //65536
-)
 
 // decodeWHTx parses the special transaction of the wormholes blockchain
 func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *model.Parsed) (err error) {
@@ -473,30 +463,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 		})
 
 	case 6: //Official NFT exchange, recycling shards to shard pool
-		level := 42 - len(w.NFTAddress)
-		if level == 0 {
-			wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
-		} else {
-			// Synthetic SNFT address processing
-			for i := 0; i < 1<<(level*4); i++ {
-				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
-				wh.RecycleSNFTs = append(wh.RecycleSNFTs, address)
-			}
-		}
-		switch level {
-		case 0:
-			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level0Reward)
-		case 1:
-			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level1Reward)
-		case 2:
-			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level2Reward)
-		case 3:
-			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level3Reward)
-		case 4:
-			wh.AddBalance = wh.AddBalance.Add(wh.AddBalance, level4Reward)
-		default:
-			return fmt.Errorf("recycle %s SNFT level not support:%d", w.NFTAddress, level)
-		}
+		wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
 
 	case 7: //pledge snft
 		level := 42 - len(w.NFTAddress)
@@ -525,11 +492,12 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 			Address: from,
 		}
 		internalTx := &model.InternalTx{
-			ParentTxHash: Hash(txHash),
-			From:         &tx.From,
-			To:           tx.To,
-			Value:        tx.Value,
-			GasLimit:     tx.Gas,
+			TxHash:      Hash(txHash),
+			BlockNumber: wh.Number,
+			From:        &tx.From,
+			To:          tx.To,
+			Value:       tx.Value,
+			GasLimit:    tx.Gas,
 		}
 		if w.Type == 9 {
 			internalTx.Op = "pledge_add"

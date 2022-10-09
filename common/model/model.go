@@ -3,8 +3,6 @@ package model
 
 import (
 	"gorm.io/gorm"
-	"math/big"
-
 	"server/common/types"
 )
 
@@ -179,22 +177,22 @@ type Uncle struct {
 // Block information
 type Block struct {
 	Header
-	Number           types.Uint64 `json:"number" gorm:"uniqueIndex"`               //block number
-	TotalDifficulty  types.BigInt `json:"totalDifficulty" gorm:"type:VARCHAR(64)"` //Total difficulty
-	TotalTransaction types.Uint64 `json:"totalTransaction"`                        //Number of transactions
+	Number           types.Uint64 `json:"number" gorm:"uniqueIndex"`                     //block number
+	TotalDifficulty  types.BigInt `json:"totalDifficulty" gorm:"type:VARCHAR(64);index"` //total difficulty
+	TotalTransaction types.Uint64 `json:"totalTransaction"`                              //number of transactions
 }
 
 // Account information
 type Account struct {
 	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
 	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //balance
-	Nonce     types.Uint64        `json:"transactionCount"`                        //Transaction random number, transaction volume
+	Nonce     types.Uint64        `json:"transactionCount"`                        //transaction random number, transaction volume
 	Code      *string             `json:"code"`                                    //bytecode
 	Name      *string             `json:"name" gorm:"type:VARCHAR(64)"`            //name
 	Symbol    *string             `json:"symbol" gorm:"type:VARCHAR(64)"`          //symbol
 	Type      *types.ContractType `json:"type"`                                    //contract types, ERC20, ERC721, ERC1155
-	Creator   *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //The creator, the contract account has value
-	CreatedTx *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //Create transaction
+	Creator   *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //the creator, the contract account has value
+	CreatedTx *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //create transaction
 }
 
 // Transaction information
@@ -234,13 +232,14 @@ type Log struct {
 
 // InternalTx internal transaction
 type InternalTx struct {
-	ParentTxHash types.Hash     `json:"parentTxHash" gorm:"type:CHAR(66);index"` //The transaction
-	Depth        types.Uint64   `json:"depth"`                                   //call depth
-	Op           string         `json:"op" gorm:"type:VARCHAR(16)"`              //Operation
-	From         *types.Address `json:"from" gorm:"type:CHAR(42);index"`         //Originating address
-	To           *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
-	Value        types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //Amount, unit wei
-	GasLimit     types.Uint64   `json:"gasLimit"`                                //Gas limit
+	TxHash      types.Hash     `json:"txHash" gorm:"type:CHAR(66);index"`           //The transaction
+	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:idx_desc,sort:DESC"` //block number
+	Depth       types.Uint64   `json:"depth"`                                       //call depth
+	Op          string         `json:"op" gorm:"type:VARCHAR(16)"`                  //Operation
+	From        *types.Address `json:"from" gorm:"type:CHAR(42);index"`             //Originating address
+	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`               //Receive address
+	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`              //Amount, unit wei
+	GasLimit    types.Uint64   `json:"gasLimit"`                                    //Gas limit
 }
 
 // ERC20Transfer ERC20 contract transfer event
@@ -413,8 +412,7 @@ type Parsed struct {
 	CacheUncles       []*Uncle
 	CacheTransferLogs []interface{}
 	CacheAccounts     map[types.Address]*Account
-	CacheLogs         []*Log   //Insert after CacheAccounts
-	AddBalance        *big.Int //The number of coins added by the block
+	CacheLogs         []*Log //Insert after CacheAccounts
 
 	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
 	Exchangers       []*Exchanger //The created exchange, priority: 1

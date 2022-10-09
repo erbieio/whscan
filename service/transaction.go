@@ -17,7 +17,7 @@ func GetTransaction(hash string) (res TransactionRes, err error) {
 // TransactionsRes transaction paging return parameters
 type TransactionsRes struct {
 	Total        int64             `json:"total"`        //The total number of transactions
-	Transactions []*TransactionRes `json:"transactions"` //Transaction list
+	Transactions []*TransactionRes `json:"transactions"` //transaction list
 }
 
 func FetchTransactions(page, size int, number, addr *string) (res TransactionsRes, err error) {
@@ -44,5 +44,22 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 
 func GetTransactionLogs(hash string) (t []model.Log, err error) {
 	err = DB.Where("tx_hash=?", hash).Find(&t).Error
+	return
+}
+
+// InternalTxsRes internal transaction paging return parameters
+type InternalTxsRes struct {
+	Total       uint64              `json:"total"`        //The total number
+	InternalTxs []*model.InternalTx `json:"internal_txs"` //transaction list
+}
+
+func GetInternalTransactions(page, size int) (res InternalTxsRes, err error) {
+	err = DB.Order("`block_number` DESC").Offset((page - 1) * size).Limit(size).Find(&res.InternalTxs).Error
+	res.Total = cache.TotalInternalTx
+	return
+}
+
+func GetInternalTransaction(hash string) (t []*model.InternalTx, err error) {
+	err = DB.Where("`tx_hash`=?", hash).Find(&t).Error
 	return
 }

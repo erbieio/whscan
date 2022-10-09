@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strconv"
 	"time"
 
 	"gorm.io/gorm"
@@ -17,6 +18,7 @@ import (
 type Cache struct {
 	TotalBlock          uint64       `json:"totalBlock"`          //Total number of blocks
 	TotalTransaction    uint64       `json:"totalTransaction"`    //Total number of transactions
+	TotalInternalTx     uint64       `json:"totalInternalTx"`     //Total number of internal transactions
 	TotalTransferTx     uint64       `json:"totalTransferTx"`     //Total number of  transfer transactions
 	TotalWormholesTx    uint64       `json:"totalWormholesTx"`    //Total number of  wormholes transactions
 	TotalUncle          uint64       `json:"totalUncle"`          //Number of total uncle blocks
@@ -61,6 +63,9 @@ func initCache() (err error) {
 		return
 	}
 	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Scan(&cache.TotalTransaction).Error; err != nil {
+		return
+	}
+	if err = DB.Model(&model.InternalTx{}).Select("COUNT(*)").Scan(&cache.TotalInternalTx).Error; err != nil {
 		return
 	}
 	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Where("input='0x'").Scan(&cache.TotalTransferTx).Error; err != nil {
@@ -128,10 +133,10 @@ func TotalBlock() uint64 {
 	return cache.TotalBlock
 }
 
-var lastTime = int64(0)
+var lastTime time.Time
 
 func freshCache() {
-	if now := time.Now().Unix(); now-lastTime > 60 {
+	if now := time.Now(); now.Minute() != lastTime.Minute() {
 		var number uint64
 		if err := DB.Model(&model.Pledge{}).Select("COUNT(*)").Scan(&number).Error; err == nil {
 			cache.TotalValidator = number
@@ -145,17 +150,21 @@ func freshCache() {
 		if err := DB.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
 			cache.TotalSNFTCreator = number
 		}
-		if err := DB.Model(&model.Block{}).Where("timestamp>?", now-86400).Select("IFNULL(SUM(total_transaction),0)").Scan(&number).Error; err == nil {
-			cache.Total24HTx = number
-		}
+
 		if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Select("COUNT(*)").Scan(&number).Error; err == nil {
 			cache.TotalExchangerTx = number
 		}
-		if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>?", now-86400).Select("COUNT(*)").Scan(&number).Error; err == nil {
-			cache.Total24HExchangerTx = number
-		}
-		if err := DB.Model(&model.NFT{}).Where("timestamp>?", now-86400).Select("COUNT(*)").Scan(&number).Error; err == nil {
-			cache.Total24HNFT = number
+		if now.Hour() != lastTime.Hour() {
+			start, stop := utils.LastTimeRange(1)
+			if err := DB.Model(&model.Block{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("IFNULL(SUM(total_transaction),0)").Scan(&number).Error; err == nil {
+				cache.Total24HTx = number
+			}
+			if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Select("COUNT(*)").Scan(&number).Error; err == nil {
+				cache.Total24HExchangerTx = number
+			}
+			if err := DB.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("COUNT(*)").Scan(&number).Error; err == nil {
+				cache.Total24HNFT = number
+			}
 		}
 		for fnft := range fnfts {
 			err := DB.Exec("CAll fresh_c_snft(?)", fnft).Error
@@ -180,8 +189,57 @@ func getNFTAddr(next *big.Int) string {
 	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalNFT+1)))))
 }
 
+var (
+	level0Reward, _ = new(big.Int).SetString("100000000000000000", 10)       //1
+	level1Reward, _ = new(big.Int).SetString("2400000000000000000", 10)      //16
+	level2Reward, _ = new(big.Int).SetString("57600000000000000000", 10)     //256
+	level3Reward, _ = new(big.Int).SetString("1382400000000000000000", 10)   //4096
+	level4Reward, _ = new(big.Int).SetString("221184000000000000000000", 10) //65536
+)
+
 func BlockInsert(block *model.Parsed) error {
-	totalAmount, totalPledge, b := new(big.Int), new(big.Int), new(big.Int)
+	totalAmount, addBalance, totalPledge, b := new(big.Int), new(big.Int), new(big.Int), new(big.Int)
+	if block.Number == 0 {
+		for _, account := range block.CacheAccounts {
+			b.SetString(string(account.Balance), 10)
+			addBalance = addBalance.Add(addBalance, b)
+		}
+	} else {
+		for _, reward := range block.Rewards {
+			if reward.Amount != nil {
+				b.SetString(*reward.Amount, 10)
+				addBalance = addBalance.Add(addBalance, b)
+			}
+		}
+		var snfts []string
+		for _, snft := range block.RecycleSNFTs {
+			level := 42 - len(snft)
+			if level == 0 {
+				snfts = append(snfts, snft)
+			} else {
+				// Synthetic SNFT address processing
+				for i := 0; i < 1<<(level*4); i++ {
+					address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", snft, i)
+					snfts = append(snfts, address)
+				}
+			}
+			switch level {
+			case 0:
+				addBalance = addBalance.Add(addBalance, level0Reward)
+			case 1:
+				addBalance = addBalance.Add(addBalance, level1Reward)
+			case 2:
+				addBalance = addBalance.Add(addBalance, level2Reward)
+			case 3:
+				addBalance = addBalance.Add(addBalance, level3Reward)
+			case 4:
+				addBalance = addBalance.Add(addBalance, level4Reward)
+			default:
+				return fmt.Errorf("recycle %s SNFT level not support:%d", snft, level)
+			}
+		}
+		block.RecycleSNFTs = snfts
+	}
 	err := DB.Transaction(func(t *gorm.DB) error {
 		for _, tx := range block.CacheTxs {
 			// write block transaction
@@ -213,14 +271,14 @@ func BlockInsert(block *model.Parsed) error {
 			}
 		}
 
-		// write transaction log
-		for _, log := range block.CacheLogs {
-			if err := t.Create(log).Error; err != nil {
+		// write transaction cacheLog
+		for _, cacheLog := range block.CacheLogs {
+			if err := t.Create(cacheLog).Error; err != nil {
 				return err
 			}
 		}
-		for _, log := range block.CacheTransferLogs {
-			if err := t.Create(log).Error; err != nil {
+		for _, cacheTransferLog := range block.CacheTransferLogs {
+			if err := t.Create(cacheTransferLog).Error; err != nil {
 				return err
 			}
 		}
@@ -230,19 +288,18 @@ func BlockInsert(block *model.Parsed) error {
 			return err
 		}
 
-		if block.AddBalance.Uint64() != 0 {
+		if addBalance.Uint64() != 0 {
 			if block.Number == 0 {
 				err := t.Create(model.Cache{
 					Key:   "GenesisBalance",
-					Value: block.AddBalance.Text(10),
+					Value: addBalance.Text(10),
 				}).Error
 				if err != nil {
 					return err
 				}
 			}
-			b := new(big.Int)
 			b.SetString(string(cache.TotalBalance), 10)
-			b.Add(b, block.AddBalance)
+			b = b.Add(b, addBalance)
 			err := t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
 				Key: "TotalBalance", Value: b.Text(10),
 			}).Error
@@ -289,6 +346,7 @@ func BlockInsert(block *model.Parsed) error {
 	if err == nil {
 		cache.TotalBlock++
 		cache.TotalTransaction += uint64(block.TotalTransaction)
+		cache.TotalInternalTx += uint64(len(block.CacheInternalTxs))
 		cache.TotalUncle += uint64(block.UnclesCount)
 		cache.TotalNFT += uint64(len(block.CreateNFTs))
 		cache.TotalSNFT += uint64(len(block.RewardSNFTs))
@@ -322,13 +380,12 @@ func BlockInsert(block *model.Parsed) error {
 			}
 		}
 		cache.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
-		if block.AddBalance.Uint64() != 0 {
+		if addBalance.Uint64() != 0 {
 			if block.Number == 0 {
-				cache.GenesisBalance = types.BigInt(block.AddBalance.Text(10))
+				cache.GenesisBalance = types.BigInt(addBalance.Text(10))
 			}
-			b := new(big.Int)
 			b.SetString(string(cache.TotalBalance), 10)
-			b.Add(b, block.AddBalance)
+			b = b.Add(b, addBalance)
 			cache.TotalBalance = types.BigInt(b.Text(10))
 		}
 		for _, tx := range block.CacheTxs {
@@ -550,9 +607,18 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			"owner":      nt.To,
 		}).Error
 	} else {
-		// todo processing system SNFT
+		level := 42 - len(*nt.NFTAddr)
+		var nfts []string
+		if level == 0 {
+			nfts = append(nfts, *nt.NFTAddr)
+		} else {
+			for i := 0; i < 1<<(level*4); i++ {
+				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", *nt.NFTAddr, i)
+				nfts = append(nfts, address)
+			}
+		}
 		var nft model.SNFT
-		err := tx.Where("address=?", nt.NFTAddr).First(&nft).Error
+		err := tx.Where("address=?", nfts[0]).First(&nft).Error
 		if err != nil {
 			return err
 		}
@@ -560,10 +626,15 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		if nt.From == "" {
 			nt.From = nft.Owner
 		}
-		err = tx.Model(&model.SNFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
-			"last_price": nt.Price,
-			"owner":      nt.To,
-		}).Error
+		for _, addr := range nfts {
+			err = tx.Model(&model.SNFT{}).Where("address=?", addr).Updates(map[string]interface{}{
+				"last_price": nt.Price,
+				"owner":      nt.To,
+			}).Error
+			if err != nil {
+				return err
+			}
+		}
 	}
 	// Calculate the total number of transactions and the total transaction amount to fill the NFT transaction fee and save the exchange
 	if nt.ExchangerAddr != "" && nt.Price != nil && *nt.Price != "0" {

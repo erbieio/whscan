@@ -115,7 +115,7 @@ definitions:
         description: bytecode
         type: string
       createdTx:
-        description: Create transaction
+        description: create transaction
         type: string
       creator:
         description: address
@@ -127,7 +127,7 @@ definitions:
         description: symbol
         type: string
       transactionCount:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       type:
         description: contract types, ERC20, ERC721, ERC1155
@@ -136,58 +136,58 @@ definitions:
   model.Block:
     properties:
       difficulty:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       extraData:
         description: Extra data
         type: string
       gasLimit:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       gasUsed:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       hash:
-        description: Create transaction
+        description: create transaction
         type: string
       miner:
         description: address
         type: string
       mixHash:
-        description: Create transaction
+        description: create transaction
         type: string
       nonce:
         description: difficulty random number
         type: string
       number:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       parentHash:
-        description: Create transaction
+        description: create transaction
         type: string
       receiptsRoot:
-        description: Create transaction
+        description: create transaction
         type: string
       sha3Uncles:
-        description: Create transaction
+        description: create transaction
         type: string
       size:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       stateRoot:
-        description: Create transaction
+        description: create transaction
         type: string
       timestamp:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       totalDifficulty:
         description: The total amount of coins in the chain
         type: string
       totalTransaction:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       transactionsRoot:
-        description: Create transaction
+        description: create transaction
         type: string
       uncles:
         description: Uncle block hash
@@ -195,7 +195,7 @@ definitions:
           type: string
         type: array
       unclesCount:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
     type: object
   model.Collection:
@@ -311,6 +311,33 @@ definitions:
         description: Exchange URL
         type: string
     type: object
+  model.InternalTx:
+    properties:
+      blockNumber:
+        description: transaction random number, transaction volume
+        type: integer
+      depth:
+        description: transaction random number, transaction volume
+        type: integer
+      from:
+        description: address
+        type: string
+      gasLimit:
+        description: transaction random number, transaction volume
+        type: integer
+      op:
+        description: Operation
+        type: string
+      to:
+        description: address
+        type: string
+      txHash:
+        description: create transaction
+        type: string
+      value:
+        description: The total amount of coins in the chain
+        type: string
+    type: object
   model.Log:
     properties:
       address:
@@ -320,7 +347,7 @@ definitions:
         description: data
         type: string
       logIndex:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       removed:
         description: whether to remove
@@ -331,7 +358,7 @@ definitions:
           type: string
         type: array
       transactionHash:
-        description: Create transaction
+        description: create transaction
         type: string
     type: object
   model.NFTTx:
@@ -456,7 +483,7 @@ definitions:
         description: bytecode
         type: string
       createdTx:
-        description: Create transaction
+        description: create transaction
         type: string
       creator:
         description: address
@@ -483,7 +510,7 @@ definitions:
         description: Number of SNFTs held
         type: integer
       transactionCount:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       type:
         description: contract types, ERC20, ERC721, ERC1155
@@ -584,6 +611,9 @@ definitions:
         type: integer
       totalExchangerTx:
         description: Total number of exchanger  transactions
+        type: integer
+      totalInternalTx:
+        description: Total number of internal transactions
         type: integer
       totalNFT:
         description: Total number of NFTs
@@ -756,6 +786,17 @@ definitions:
         type: integer
       total:
         description: Total number of exchanges
+        type: integer
+    type: object
+  service.InternalTxsRes:
+    properties:
+      internal_txs:
+        description: transaction list
+        items:
+          $ref: '#/definitions/model.InternalTx'
+        type: array
+      total:
+        description: The total number
         type: integer
     type: object
   service.LineChartRes:
@@ -1410,31 +1451,31 @@ definitions:
   service.TransactionRes:
     properties:
       blockHash:
-        description: Create transaction
+        description: create transaction
         type: string
       blockNumber:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       contractAddress:
         description: address
         type: string
       cumulativeGasUsed:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       from:
         description: address
         type: string
       gas:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       gasPrice:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       gasUsed:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       hash:
-        description: Create transaction
+        description: create transaction
         type: string
       input:
         description: Additional input data, contract call encoded data
@@ -1443,10 +1484,10 @@ definitions:
         description: difficulty random number
         type: string
       nonce:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       status:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       timestamp:
         description: The event stamp of the block it is in
@@ -1455,7 +1496,7 @@ definitions:
         description: address
         type: string
       transactionIndex:
-        description: Transaction random number, transaction volume
+        description: transaction random number, transaction volume
         type: integer
       value:
         description: The total amount of coins in the chain
@@ -1467,7 +1508,7 @@ definitions:
         description: The total number of transactions
         type: integer
       transactions:
-        description: Transaction list
+        description: transaction list
         items:
           $ref: '#/definitions/service.TransactionRes'
         type: array
@@ -2794,6 +2835,57 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: query transaction
+      tags:
+      - transaction
+  /transaction/internal/{hash}:
+    get:
+      description: specifies the hash query internal transaction
+      parameters:
+      - description: tx hash
+        in: path
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.InternalTx'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query internal transaction list
+      tags:
+      - transaction
+  /transaction/internal/page:
+    get:
+      description: query internal transaction list in reverse order
+      parameters:
+      - description: Page, default 1
+        in: query
+        name: page
+        type: string
+      - description: Page size, default 10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.InternalTxsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query internal transaction list
       tags:
       - transaction
   /transaction/page:

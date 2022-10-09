@@ -89,12 +89,12 @@ func UnpackTransferLog(log *model.Log) []interface{} {
 func ABIDecodeString(hexStr string) (string, error) {
 	hexLen := len(hexStr)
 	if hexLen < 130 || (hexLen-2)%64 != 0 || hexStr[64:66] != "20" {
-		return "", fmt.Errorf("Return data format error")
+		return "", fmt.Errorf("return data format error")
 	}
 	strLen := new(big.Int)
 	strLen.SetString(hexStr[66:130], 16)
 	if (hexLen-130)/64 != int(strLen.Int64())/32 {
-		return "", fmt.Errorf("Return data string length error")
+		return "", fmt.Errorf("return data string length error")
 	}
 	data, err := hex.DecodeString(hexStr[130:int(130+strLen.Int64()*2)])
 	return string(data), err
@@ -104,7 +104,7 @@ func ABIDecodeString(hexStr string) (string, error) {
 func ABIDecodeUint8(hexStr string) (uint8, error) {
 	hexLen := len(hexStr)
 	if hexLen != 66 || hexStr[:50] != "0x0000000000000000000000000000000000000000000000000" {
-		return 0, fmt.Errorf("Return data format error")
+		return 0, fmt.Errorf("return data format error")
 	}
 	data, err := strconv.ParseUint(hexStr[50:], 16, 8)
 	return uint8(data), err
@@ -113,7 +113,7 @@ func ABIDecodeUint8(hexStr string) (uint8, error) {
 // ABIDecodeUint256 parses uint256 from the return data with only one return value from the contract
 func ABIDecodeUint256(hexStr string) (Uint256, error) {
 	if len(hexStr) != 66 {
-		return "", fmt.Errorf("Return data format error")
+		return "", fmt.Errorf("return data format error")
 	}
 
 	return Uint256(hexStr), nil
@@ -123,7 +123,7 @@ func ABIDecodeUint256(hexStr string) (Uint256, error) {
 func ABIDecodeBool(hexStr string) (bool, error) {
 	hexLen := len(hexStr)
 	if hexLen != 66 || hexStr[:65] != "0x000000000000000000000000000000000000000000000000000000000000000" {
-		return false, fmt.Errorf("Return data format error")
+		return false, fmt.Errorf("return data format error")
 	}
 	return hexStr[65] == '1', nil
 }
@@ -184,16 +184,16 @@ func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
 	if pagePtr != nil {
 		page = *pagePtr
 		if page <= 0 {
-			return 0, 0, fmt.Errorf("Number of paging pages is less than 1")
+			return 0, 0, fmt.Errorf("number of paging pages is less than 1")
 		}
 	}
 	if sizePtr != nil {
 		size = *sizePtr
 		if size <= 0 {
-			return 0, 0, fmt.Errorf("The page size is less than 1")
+			return 0, 0, fmt.Errorf("the page size is less than 1")
 		}
 		if size > 100 {
-			return 0, 0, fmt.Errorf("Page size is greater than 100")
+			return 0, 0, fmt.Errorf("page size is greater than 100")
 		}
 	}
 	return page, size, nil

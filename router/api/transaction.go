@@ -13,6 +13,8 @@ func Transaction(e *gin.Engine) {
 	e.GET("/transaction/page", pageTransaction)
 	e.GET("/transaction/:hash", getTransaction)
 	e.GET("/transaction_logs/:hash", getTransactionLogs)
+	e.GET("/transaction/internal/page", pageInternalTransaction)
+	e.GET("/transaction/internal/:hash", getInternalTransaction)
 }
 
 // @Tags        transaction
@@ -86,6 +88,56 @@ func getTransactionLogs(c *gin.Context) {
 	hash := c.Param("hash")
 
 	data, err := service.GetTransactionLogs(hash)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+// @Tags        transaction
+// @Summary     query internal transaction list
+// @Description query internal transaction list in reverse order
+// @Produce     json
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.InternalTxsRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /transaction/internal/page [get]
+func pageInternalTransaction(c *gin.Context) {
+	req := struct {
+		Page *int `form:"page"`
+		Size *int `form:"size"`
+	}{}
+	err := c.BindQuery(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	page, size, err := utils.ParsePage(req.Page, req.Size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	data, err := service.GetInternalTransactions(page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+// @Tags        transaction
+// @Summary     query internal transaction list
+// @Description specifies the hash query internal transaction
+// @Produce     json
+// @Param       hash path     string true "tx hash"
+// @Success     200  {object} []model.InternalTx
+// @Failure     400  {object} service.ErrRes
+// @Router      /transaction/internal/{hash} [get]
+func getInternalTransaction(c *gin.Context) {
+	data, err := service.GetInternalTransaction(c.Param("hash"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

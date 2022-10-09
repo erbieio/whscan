@@ -35,15 +35,15 @@ func NewTx(nonce uint64, to types.Address, amount *big.Int, gasLimit uint64, gas
 func SignTx(tx map[string]string, chainId *big.Int, prv *secp256k1.PrivateKey) (types.Data, error) {
 	msg := rlp.Value{
 		List: []rlp.Value{
-			{String: tx["nonce"]},    //0,nonce
-			{String: tx["gasPrice"]}, //1,gasPrice
-			{String: tx["gas"]},      //2,gas
-			{String: tx["to"]},       //3,to
-			{String: tx["value"]},    //4,value
-			{String: tx["data"]},     //5,data
-			{String: "0x" + hex.EncodeToString(chainId.Bytes())}, //6,V, equal to ChainId before unsigned
-			{String: "0x"}, //7,R
-			{String: "0x"}, //8,S
+			{String: tx["nonce"]},    //0:nonce
+			{String: tx["gasPrice"]}, //1:gasPrice
+			{String: tx["gas"]},      //2:gas
+			{String: tx["to"]},       //3:to
+			{String: tx["value"]},    //4:value
+			{String: tx["data"]},     //5:data
+			{String: "0x" + hex.EncodeToString(chainId.Bytes())}, //6:V, equal to ChainId before unsigned
+			{String: "0x"}, //7:R
+			{String: "0x"}, //8:S
 		},
 	}
 	hash, err := msg.HashToBytes()
@@ -85,7 +85,7 @@ func DecodeEIP155Sig(sig []byte, chainId *big.Int) (R, S, V *big.Int, err error)
 // Sign signed with the private key, the last bit of the result is v, the value is 0 or 1
 func Sign(digestHash []byte, prv *secp256k1.PrivateKey) ([]byte, error) {
 	if len(digestHash) != 32 {
-		return nil, fmt.Errorf("Hash requires 32 bytes: %d", len(digestHash))
+		return nil, fmt.Errorf("hash requires 32 bytes: %d", len(digestHash))
 	}
 	sig := ecdsa.SignCompact(prv, digestHash, false)
 	// Subtract 27 from v and put it at the end

@@ -1960,6 +1960,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/transaction/internal/page": {
+            "get": {
+                "description": "query internal transaction list in reverse order",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaction"
+                ],
+                "summary": "query internal transaction list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.InternalTxsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaction/internal/{hash}": {
+            "get": {
+                "description": "specifies the hash query internal transaction",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaction"
+                ],
+                "summary": "query internal transaction list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "tx hash",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.InternalTx"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/transaction/page": {
             "get": {
                 "description": "query transaction list in reverse order",
@@ -2315,7 +2393,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "createdTx": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "creator": {
@@ -2331,7 +2409,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "transactionCount": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "type": {
@@ -2344,7 +2422,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "difficulty": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "extraData": {
@@ -2352,15 +2430,15 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gasLimit": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "gasUsed": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "hash": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "miner": {
@@ -2368,7 +2446,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "mixHash": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "nonce": {
@@ -2376,31 +2454,31 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "number": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "parentHash": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "receiptsRoot": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "sha3Uncles": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "size": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "stateRoot": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "timestamp": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "totalDifficulty": {
@@ -2408,11 +2486,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "totalTransaction": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "transactionsRoot": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "uncles": {
@@ -2423,7 +2501,7 @@ const docTemplate = `{
                     }
                 },
                 "unclesCount": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 }
             }
@@ -2580,6 +2658,43 @@ const docTemplate = `{
                 }
             }
         },
+        "model.InternalTx": {
+            "type": "object",
+            "properties": {
+                "blockNumber": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "depth": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "from": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "gasLimit": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "op": {
+                    "description": "Operation",
+                    "type": "string"
+                },
+                "to": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "txHash": {
+                    "description": "create transaction",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
+                }
+            }
+        },
         "model.Log": {
             "type": "object",
             "properties": {
@@ -2592,7 +2707,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "logIndex": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "removed": {
@@ -2607,7 +2722,7 @@ const docTemplate = `{
                     }
                 },
                 "transactionHash": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 }
             }
@@ -2773,7 +2888,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "createdTx": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "creator": {
@@ -2809,7 +2924,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "transactionCount": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "type": {
@@ -2953,6 +3068,10 @@ const docTemplate = `{
                 },
                 "totalExchangerTx": {
                     "description": "Total number of exchanger  transactions",
+                    "type": "integer"
+                },
+                "totalInternalTx": {
+                    "description": "Total number of internal transactions",
                     "type": "integer"
                 },
                 "totalNFT": {
@@ -3188,6 +3307,22 @@ const docTemplate = `{
                 },
                 "total": {
                     "description": "Total number of exchanges",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.InternalTxsRes": {
+            "type": "object",
+            "properties": {
+                "internal_txs": {
+                    "description": "transaction list",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.InternalTx"
+                    }
+                },
+                "total": {
+                    "description": "The total number",
                     "type": "integer"
                 }
             }
@@ -4075,11 +4210,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "blockHash": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "blockNumber": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "contractAddress": {
@@ -4087,7 +4222,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "cumulativeGasUsed": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "from": {
@@ -4095,19 +4230,19 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "gas": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "gasPrice": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "gasUsed": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "hash": {
-                    "description": "Create transaction",
+                    "description": "create transaction",
                     "type": "string"
                 },
                 "input": {
@@ -4119,11 +4254,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "nonce": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "status": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "timestamp": {
@@ -4135,7 +4270,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "transactionIndex": {
-                    "description": "Transaction random number, transaction volume",
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "value": {
@@ -4152,7 +4287,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "transactions": {
-                    "description": "Transaction list",
+                    "description": "transaction list",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/service.TransactionRes"
