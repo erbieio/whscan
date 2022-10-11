@@ -153,7 +153,6 @@ type Header struct {
 	ExtraData        string         `json:"extraData"`                             //Extra data
 	GasLimit         types.Uint64   `json:"gasLimit"`                              //Gas limit
 	GasUsed          types.Uint64   `json:"gasUsed"`                               //Gas consumption
-	Hash             types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`  //Hash
 	Miner            types.Address  `json:"miner" gorm:"type:CHAR(42)"`            //miner
 	MixHash          types.Hash     `json:"mixHash" gorm:"type:CHAR(66)"`          //Mixed hash
 	Nonce            types.Data8    `json:"nonce" gorm:"type:CHAR(18)"`            //difficulty random number
@@ -171,13 +170,15 @@ type Header struct {
 // Uncle block information
 type Uncle struct {
 	Header
-	Number types.Uint64 `json:"number"` //Uncle block number
+	Hash   types.Hash   `json:"hash" gorm:"type:CHAR(66);primaryKey"` //hash
+	Number types.Uint64 `json:"number"`                               //uncle block number
 }
 
 // Block information
 type Block struct {
 	Header
-	Number           types.Uint64 `json:"number" gorm:"uniqueIndex"`                     //block number
+	Hash             types.Hash   `json:"hash" gorm:"type:CHAR(66)"`                     //hash
+	Number           types.Uint64 `json:"number" gorm:"primaryKey"`                      //block number
 	TotalDifficulty  types.BigInt `json:"totalDifficulty" gorm:"type:VARCHAR(64);index"` //total difficulty
 	TotalTransaction types.Uint64 `json:"totalTransaction"`                              //number of transactions
 }
@@ -222,12 +223,13 @@ type Receipt struct {
 
 // Log transaction log
 type Log struct {
-	Address types.Address  `json:"address" gorm:"type:CHAR(42)"`                          //The contract address
-	Topics  types.StrArray `json:"topics" gorm:"type:VARCHAR(277)"`                       //topic
-	Data    string         `json:"data"`                                                  //data
-	Removed bool           `json:"removed"`                                               //whether to remove
-	TxHash  types.Hash     `json:"transactionHash" gorm:"type:CHAR(66);primaryKey;index"` //The transaction hash
-	Index   types.Uint64   `json:"logIndex" gorm:"primaryKey"`                            //The serial number in the transaction
+	Address     types.Address  `json:"address" gorm:"type:CHAR(42)"`                          //The contract address
+	Topics      types.StrArray `json:"topics" gorm:"type:VARCHAR(277)"`                       //topic
+	Data        string         `json:"data"`                                                  //data
+	Removed     bool           `json:"removed"`                                               //whether to remove
+	BlockNumber types.Uint64   `json:"blockNumber"`                                           //block number
+	TxHash      types.Hash     `json:"transactionHash" gorm:"type:CHAR(66);primaryKey;index"` //The transaction hash
+	Index       types.Uint64   `json:"logIndex" gorm:"primaryKey"`                            //The serial number in the transaction
 }
 
 // InternalTx internal transaction

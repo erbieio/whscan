@@ -2702,6 +2702,10 @@ const docTemplate = `{
                     "description": "address",
                     "type": "string"
                 },
+                "blockNumber": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
                 "data": {
                     "description": "data",
                     "type": "string"

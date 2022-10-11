@@ -3,6 +3,7 @@ package backend
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	. "server/common/model"
@@ -11,6 +12,10 @@ import (
 	"server/node"
 	"server/service"
 )
+
+var task = &sync.WaitGroup{}
+var headCh = make(chan Uint64)
+var runCh = make(chan int)
 
 func Run() {
 	client, err := node.Dial(ChainUrl)
@@ -25,7 +30,7 @@ func Run() {
 		log.Printf("Not open debug api will result in some missing data")
 	}
 	taskCh := make(chan Uint64, Thread)
-	parsedCh := make(chan *Parsed, Thread)
+	parsedCh := make(chan *Parsed, 2*Thread)
 	go writeLoop(number, parsedCh)
 	go decodeLoop(client, taskCh, parsedCh, isDebug, isWormholes)
 	go dispatchLoop(client, number, taskCh)
@@ -42,7 +47,14 @@ func dispatchLoop(client *node.Client, number Uint64, taskCh chan<- Uint64) {
 			time.Sleep(Interval)
 		}
 		for ; number < max; number++ {
-			taskCh <- number
+			select {
+			case head := <-headCh:
+				task.Wait()
+				runCh <- 0
+				number = head
+			case taskCh <- number:
+				task.Add(1)
+			}
 		}
 	}
 }
@@ -58,6 +70,7 @@ func decodeLoop(client *node.Client, taskCh <-chan Uint64, parsedCh chan<- *Pars
 						time.Sleep(10 * Interval)
 					} else {
 						parsedCh <- parsed
+						task.Done()
 						break
 					}
 				}
@@ -71,12 +84,26 @@ func writeLoop(number Uint64, parsedCh <-chan *Parsed) {
 	for parsed := range parsedCh {
 		cache[parsed.Number] = parsed
 		for cache[number] != nil {
-			err := service.BlockInsert(cache[number])
+			head, err := service.BlockInsert(cache[number])
 			if err != nil {
 				log.Printf("%v block write error: %v\n", number, err)
 				time.Sleep(Interval)
 			} else {
-				delete(cache, number)
+				if head != cache[number].Number {
+					headCh <- head
+					for {
+						select {
+						case <-parsedCh:
+						case <-runCh:
+							goto end
+						}
+					}
+				end:
+					number = head
+					cache = make(map[Uint64]*Parsed)
+				} else {
+					delete(cache, number)
+				}
 				number++
 			}
 		}

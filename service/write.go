@@ -197,7 +197,89 @@ var (
 	level4Reward, _ = new(big.Int).SetString("221184000000000000000000", 10) //65536
 )
 
-func BlockInsert(block *model.Parsed) error {
+func fixHead(block *model.Parsed) (head types.Uint64, err error) {
+	head = block.Number - 1
+	if block.Number > 0 {
+		err = DB.First(&Block{}, "number=? AND hash=?", block.Number-1, block.ParentHash).Error
+		if err == gorm.ErrRecordNotFound {
+			head = block.Number - 10
+			if head > block.Number {
+				head = 0
+			}
+			err = DB.Transaction(func(tx *gorm.DB) error {
+				// reset head, todo pledges,cache
+				if err := tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
+					tx.Model(&model.Epoch{}).Select("id").Where("number>?", head),
+				).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.Epoch{}, "number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.Collection{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.Exchanger{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Model(&model.Exchanger{}).Where("close_at>?", head).Update("close_at", nil).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.ERC20Transfer{}, "tx_hash IN (?)",
+					tx.Model(&model.Transaction{}).Select("hash").Where("block_number>?", head),
+				).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.ERC721Transfer{}, "tx_hash IN (?)",
+					tx.Model(&model.Transaction{}).Select("hash").Where("block_number>?", head),
+				).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.ERC1155Transfer{}, "tx_hash IN (?)",
+					tx.Model(&model.Transaction{}).Select("hash").Where("block_number>?", head),
+				).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.InternalTx{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.Log{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.NFTTx{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.NFT{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.SNFT{}, "reward_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.Reward{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.Transaction{}, "block_number>?", head).Error; err != nil {
+					return err
+				}
+				if err := tx.Delete(&model.Block{}, "number>?", head).Error; err != nil {
+					return err
+				}
+				return initCache()
+			})
+		}
+	}
+	return
+}
+
+func BlockInsert(block *model.Parsed) (types.Uint64, error) {
+	head, err := fixHead(block)
+	if err != nil {
+		return 0, err
+	}
+	if head+1 != block.Number {
+		return head, nil
+	}
+
 	totalAmount, addBalance, totalPledge, b := new(big.Int), new(big.Int), new(big.Int), new(big.Int)
 	if block.Number == 0 {
 		for _, account := range block.CacheAccounts {
@@ -235,12 +317,12 @@ func BlockInsert(block *model.Parsed) error {
 			case 4:
 				addBalance = addBalance.Add(addBalance, level4Reward)
 			default:
-				return fmt.Errorf("recycle %s SNFT level not support:%d", snft, level)
+				return 0, fmt.Errorf("recycle %s SNFT level not support:%d", snft, level)
 			}
 		}
 		block.RecycleSNFTs = snfts
 	}
-	err := DB.Transaction(func(t *gorm.DB) error {
+	err = DB.Transaction(func(t *gorm.DB) error {
 		for _, tx := range block.CacheTxs {
 			// write block transaction
 			if err := t.Create(tx).Error; err != nil {
@@ -415,7 +497,7 @@ func BlockInsert(block *model.Parsed) error {
 		}
 		freshCache()
 	}
-	return err
+	return block.Number, err
 }
 
 func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {

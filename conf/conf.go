@@ -18,7 +18,7 @@ var (
 	ChainUrl   = "http://localhost:8545"
 	HexKey     = "7b2546a5d4e658d079c6b2755c6d7495edd01a686fddae010830e9c93b23e398"
 	ServerAddr = ":3000"
-	Interval   = 5 * time.Second
+	Interval   = time.Second
 	Thread     = int64(runtime.NumCPU())
 	MysqlDsn   = "root:123456@tcp(127.0.0.1:3306)/scan"
 	ResetDB    = false

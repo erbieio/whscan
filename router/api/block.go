@@ -76,7 +76,7 @@ func getBlock(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} service.Cache
-// @Failure     400       {object} service.ErrRes
+// @Failure     400 {object} service.ErrRes
 // @Router      /totals [get]
 func totals(c *gin.Context) {
 	res, err := service.FetchTotals()
@@ -96,7 +96,7 @@ func totals(c *gin.Context) {
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} []model.Pledge
-// @Failure     400 {object} service.ErrRes
+// @Failure     400       {object} service.ErrRes
 // @Router      /validators [get]
 func validators(c *gin.Context) {
 	req := struct {
