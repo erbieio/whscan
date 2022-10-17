@@ -14,8 +14,8 @@ import (
 	"server/common/utils"
 )
 
-// Cache caches some database queries to speed up queries
-type Cache struct {
+// Stats caches some database queries to speed up queries
+type Stats struct {
 	TotalBlock          uint64       `json:"totalBlock"`          //Total number of blocks
 	TotalTransaction    uint64       `json:"totalTransaction"`    //Total number of transactions
 	TotalInternalTx     uint64       `json:"totalInternalTx"`     //Total number of internal transactions
@@ -48,7 +48,7 @@ type Cache struct {
 	TotalPledge         types.BigInt `json:"totalPledge"`         //Total amount of validator pledge
 }
 
-var cache = Cache{
+var stats = Stats{
 	TotalAmount:     "0",
 	TotalNFTAmount:  "0",
 	TotalSNFTAmount: "0",
@@ -57,72 +57,72 @@ var cache = Cache{
 
 var fnfts = make(map[string]int64)
 
-// InitCache initializes the query cache from the database
+// InitCache initializes the query stats from the database
 func initCache() (err error) {
-	if err = DB.Model(&model.Block{}).Select("COUNT(*)").Scan(&cache.TotalBlock).Error; err != nil {
+	if err = DB.Model(&model.Block{}).Select("COUNT(*)").Scan(&stats.TotalBlock).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Scan(&cache.TotalTransaction).Error; err != nil {
+	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Scan(&stats.TotalTransaction).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.InternalTx{}).Select("COUNT(*)").Scan(&cache.TotalInternalTx).Error; err != nil {
+	if err = DB.Model(&model.InternalTx{}).Select("COUNT(*)").Scan(&stats.TotalInternalTx).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Where("input='0x'").Scan(&cache.TotalTransferTx).Error; err != nil {
+	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Where("input='0x'").Scan(&stats.TotalTransferTx).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Where("LEFT(input,22)='0x776f726d686f6c65733a'").Scan(&cache.TotalWormholesTx).Error; err != nil {
+	if err = DB.Model(&model.Transaction{}).Select("COUNT(*)").Where("LEFT(input,22)='0x776f726d686f6c65733a'").Scan(&stats.TotalWormholesTx).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Uncle{}).Select("COUNT(*)").Scan(&cache.TotalUncle).Error; err != nil {
+	if err = DB.Model(&model.Uncle{}).Select("COUNT(*)").Scan(&stats.TotalUncle).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Cache{}).Where("`key`=?", "GenesisBalance").Select("value").Scan(&cache.GenesisBalance).Error; err != nil {
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "GenesisBalance").Select("value").Scan(&stats.GenesisBalance).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalBalance").Select("value").Scan(&cache.TotalBalance).Error; err != nil {
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalBalance").Select("value").Scan(&stats.TotalBalance).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Exchanger{}).Select("COUNT(*)").Scan(&cache.TotalExchanger).Error; err != nil {
+	if err = DB.Model(&model.Exchanger{}).Select("COUNT(*)").Scan(&stats.TotalExchanger).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Collection{}).Where("length(id)!=40").Select("COUNT(*)").Scan(&cache.TotalNFTCollection).Error; err != nil {
+	if err = DB.Model(&model.Collection{}).Where("length(id)!=40").Select("COUNT(*)").Scan(&stats.TotalNFTCollection).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Collection{}).Where("length(id)=40").Select("COUNT(*)").Scan(&cache.TotalSNFTCollection).Error; err != nil {
+	if err = DB.Model(&model.Collection{}).Where("length(id)=40").Select("COUNT(*)").Scan(&stats.TotalSNFTCollection).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.NFT{}).Select("COUNT(*)").Scan(&cache.TotalNFT).Error; err != nil {
+	if err = DB.Model(&model.NFT{}).Select("COUNT(*)").Scan(&stats.TotalNFT).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&cache.TotalSNFT).Error; err != nil {
+	if err = DB.Model(&model.SNFT{}).Select("COUNT(*)").Scan(&stats.TotalSNFT).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&cache.RewardSNFTCount).Error; err != nil {
+	if err = DB.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&stats.RewardSNFTCount).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&cache.RewardCoinCount).Error; err != nil {
+	if err = DB.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&stats.RewardCoinCount).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x0'").Select("COUNT(*)").Scan(&cache.TotalNFTTx).Error; err != nil {
+	if err = DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x0'").Select("COUNT(*)").Scan(&stats.TotalNFTTx).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x8'").Select("COUNT(*)").Scan(&cache.TotalSNFTTx).Error; err != nil {
+	if err = DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x8'").Select("COUNT(*)").Scan(&stats.TotalSNFTTx).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalAmount").Select("value").Scan(&cache.TotalAmount).Error; err != nil {
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalAmount").Select("value").Scan(&stats.TotalAmount).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalNFTAmount").Select("value").Scan(&cache.TotalNFTAmount).Error; err != nil {
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalNFTAmount").Select("value").Scan(&stats.TotalNFTAmount).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalSNFTAmount").Select("value").Scan(&cache.TotalSNFTAmount).Error; err != nil {
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalSNFTAmount").Select("value").Scan(&stats.TotalSNFTAmount).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalRecycle").Select("value").Scan(&cache.TotalRecycle).Error; err != nil {
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalRecycle").Select("value").Scan(&stats.TotalRecycle).Error; err != nil {
 		return
 	}
-	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalPledge").Select("value").Scan(&cache.TotalPledge).Error; err != nil {
+	if err = DB.Model(&model.Cache{}).Where("`key`=?", "TotalPledge").Select("value").Scan(&stats.TotalPledge).Error; err != nil {
 		return
 	}
 	freshCache()
@@ -130,7 +130,7 @@ func initCache() (err error) {
 }
 
 func TotalBlock() uint64 {
-	return cache.TotalBlock
+	return stats.TotalBlock
 }
 
 var lastTime time.Time
@@ -139,31 +139,31 @@ func freshCache() {
 	if now := time.Now(); now.Minute() != lastTime.Minute() {
 		var number uint64
 		if err := DB.Model(&model.Pledge{}).Select("COUNT(*)").Scan(&number).Error; err == nil {
-			cache.TotalValidator = number
+			stats.TotalValidator = number
 		}
 		if err := DB.Model(&model.Account{}).Select("COUNT(*)").Scan(&number).Error; err == nil {
-			cache.TotalAccount = number
+			stats.TotalAccount = number
 		}
 		if err := DB.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
-			cache.TotalNFTCreator = number
+			stats.TotalNFTCreator = number
 		}
 		if err := DB.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
-			cache.TotalSNFTCreator = number
+			stats.TotalSNFTCreator = number
 		}
 
 		if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Select("COUNT(*)").Scan(&number).Error; err == nil {
-			cache.TotalExchangerTx = number
+			stats.TotalExchangerTx = number
 		}
 		if now.Hour() != lastTime.Hour() {
 			start, stop := utils.LastTimeRange(1)
 			if err := DB.Model(&model.Block{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("IFNULL(SUM(total_transaction),0)").Scan(&number).Error; err == nil {
-				cache.Total24HTx = number
+				stats.Total24HTx = number
 			}
 			if err := DB.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Select("COUNT(*)").Scan(&number).Error; err == nil {
-				cache.Total24HExchangerTx = number
+				stats.Total24HExchangerTx = number
 			}
 			if err := DB.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("COUNT(*)").Scan(&number).Error; err == nil {
-				cache.Total24HNFT = number
+				stats.Total24HNFT = number
 			}
 		}
 		for fnft := range fnfts {
@@ -178,15 +178,15 @@ func freshCache() {
 }
 
 func TotalBalance() types.BigInt {
-	if cache.TotalBalance == "" {
-		cache.TotalBalance = "0"
+	if stats.TotalBalance == "" {
+		stats.TotalBalance = "0"
 	}
-	return cache.TotalBalance
+	return stats.TotalBalance
 }
 
 // getNFTAddr Get the NFT address
 func getNFTAddr(next *big.Int) string {
-	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(cache.TotalNFT+1)))))
+	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(stats.TotalNFT+1)))))
 }
 
 var (
@@ -207,7 +207,7 @@ func fixHead(block *model.Parsed) (head types.Uint64, err error) {
 				head = 0
 			}
 			err = DB.Transaction(func(tx *gorm.DB) error {
-				// reset head, todo pledges,cache
+				// reset head, todo pledges,stats
 				if err := tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
 					tx.Model(&model.Epoch{}).Select("id").Where("number>?", head),
 				).Error; err != nil {
@@ -380,7 +380,7 @@ func BlockInsert(block *model.Parsed) (types.Uint64, error) {
 					return err
 				}
 			}
-			b.SetString(string(cache.TotalBalance), 10)
+			b.SetString(string(stats.TotalBalance), 10)
 			b = b.Add(b, addBalance)
 			err := t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
 				Key: "TotalBalance", Value: b.Text(10),
@@ -390,13 +390,13 @@ func BlockInsert(block *model.Parsed) (types.Uint64, error) {
 			}
 		}
 		err := t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
-			Key: "TotalRecycle", Value: fmt.Sprintf("%d", cache.TotalRecycle+uint64(len(block.RecycleSNFTs))),
+			Key: "TotalRecycle", Value: fmt.Sprintf("%d", stats.TotalRecycle+uint64(len(block.RecycleSNFTs))),
 		}).Error
 		if err != nil {
 			return err
 		}
 		if len(block.CacheTxs) > 0 {
-			totalAmount.SetString(string(cache.TotalAmount), 10)
+			totalAmount.SetString(string(stats.TotalAmount), 10)
 			for _, tx := range block.CacheTxs {
 				b.SetString(string(tx.Value), 10)
 				totalAmount = totalAmount.Add(totalAmount, b)
@@ -408,7 +408,7 @@ func BlockInsert(block *model.Parsed) (types.Uint64, error) {
 			}
 		}
 		if len(block.ConsensusPledges) > 0 {
-			totalPledge.SetString(string(cache.TotalPledge), 10)
+			totalPledge.SetString(string(stats.TotalPledge), 10)
 			for _, pledge := range block.ConsensusPledges {
 				b.SetString(pledge.Amount, 10)
 				totalPledge = totalPledge.Add(totalPledge, b)
@@ -424,64 +424,64 @@ func BlockInsert(block *model.Parsed) (types.Uint64, error) {
 		return WHInsert(t, block)
 	})
 
-	// If write to the database is successful, update the query cache
+	// If write to the database is successful, update the query stats
 	if err == nil {
-		cache.TotalBlock++
-		cache.TotalTransaction += uint64(block.TotalTransaction)
-		cache.TotalInternalTx += uint64(len(block.CacheInternalTxs))
-		cache.TotalUncle += uint64(block.UnclesCount)
-		cache.TotalNFT += uint64(len(block.CreateNFTs))
-		cache.TotalSNFT += uint64(len(block.RewardSNFTs))
-		cache.TotalSNFT -= uint64(len(block.RecycleSNFTs))
-		cache.RewardSNFTCount += uint64(len(block.RewardSNFTs))
-		cache.RewardCoinCount += uint64(len(block.Rewards) - len(block.RewardSNFTs))
-		cache.TotalExchanger += uint64(len(block.Exchangers))
-		cache.TotalExchanger -= uint64(len(block.CloseExchangers))
-		cache.TotalRecycle += uint64(len(block.RecycleSNFTs))
+		stats.TotalBlock++
+		stats.TotalTransaction += uint64(block.TotalTransaction)
+		stats.TotalInternalTx += uint64(len(block.CacheInternalTxs))
+		stats.TotalUncle += uint64(block.UnclesCount)
+		stats.TotalNFT += uint64(len(block.CreateNFTs))
+		stats.TotalSNFT += uint64(len(block.RewardSNFTs))
+		stats.TotalSNFT -= uint64(len(block.RecycleSNFTs))
+		stats.RewardSNFTCount += uint64(len(block.RewardSNFTs))
+		stats.RewardCoinCount += uint64(len(block.Rewards) - len(block.RewardSNFTs))
+		stats.TotalExchanger += uint64(len(block.Exchangers))
+		stats.TotalExchanger -= uint64(len(block.CloseExchangers))
+		stats.TotalRecycle += uint64(len(block.RecycleSNFTs))
 
 		for _, tx := range block.NFTTxs {
 			if (*tx.NFTAddr)[:3] == "0x0" {
-				cache.TotalNFTTx += 1
+				stats.TotalNFTTx += 1
 				if tx.Price != nil {
 					b, price := new(big.Int), new(big.Int)
-					b.SetString(string(cache.TotalNFTAmount), 10)
+					b.SetString(string(stats.TotalNFTAmount), 10)
 					price.SetString(*tx.Price, 10)
 					b = b.Add(b, price)
-					cache.TotalNFTAmount = types.BigInt(b.Text(10))
+					stats.TotalNFTAmount = types.BigInt(b.Text(10))
 				}
 			} else {
-				cache.TotalSNFTTx += 1
+				stats.TotalSNFTTx += 1
 				if tx.Price != nil {
 					b, price := new(big.Int), new(big.Int)
-					b.SetString(string(cache.TotalSNFTAmount), 10)
+					b.SetString(string(stats.TotalSNFTAmount), 10)
 					price.SetString(*tx.Price, 10)
 					b = b.Add(b, price)
-					cache.TotalSNFTAmount = types.BigInt(b.Text(10))
+					stats.TotalSNFTAmount = types.BigInt(b.Text(10))
 				}
 				fnfts[(*tx.NFTAddr)[:41]] = 0
 			}
 		}
-		cache.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
+		stats.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
 		if addBalance.Uint64() != 0 {
 			if block.Number == 0 {
-				cache.GenesisBalance = types.BigInt(addBalance.Text(10))
+				stats.GenesisBalance = types.BigInt(addBalance.Text(10))
 			}
-			b.SetString(string(cache.TotalBalance), 10)
+			b.SetString(string(stats.TotalBalance), 10)
 			b = b.Add(b, addBalance)
-			cache.TotalBalance = types.BigInt(b.Text(10))
+			stats.TotalBalance = types.BigInt(b.Text(10))
 		}
 		for _, tx := range block.CacheTxs {
 			if tx.Input == "0x" {
-				cache.TotalTransferTx++
+				stats.TotalTransferTx++
 			} else if len(tx.Input) > 22 && tx.Input[:22] == "0x776f726d686f6c65733a" {
-				cache.TotalWormholesTx++
+				stats.TotalWormholesTx++
 			}
 		}
 		if len(block.CacheTxs) > 0 {
-			cache.TotalAmount = types.BigInt(totalAmount.Text(10))
+			stats.TotalAmount = types.BigInt(totalAmount.Text(10))
 		}
 		if len(block.ConsensusPledges) > 0 {
-			cache.TotalPledge = types.BigInt(totalPledge.Text(10))
+			stats.TotalPledge = types.BigInt(totalPledge.Text(10))
 		}
 		for _, snft := range block.RewardSNFTs {
 			fnfts[snft.Address[:41]] = 0
@@ -545,7 +545,7 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 		if (*nftTx.NFTAddr)[:3] == "0x0" {
 			if nftTx.Price != nil {
 				b, price := new(big.Int), new(big.Int)
-				b.SetString(string(cache.TotalNFTAmount), 10)
+				b.SetString(string(stats.TotalNFTAmount), 10)
 				price.SetString(*nftTx.Price, 10)
 				b = b.Add(b, price)
 				err = tx.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
@@ -558,7 +558,7 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 		} else {
 			if nftTx.Price != nil {
 				b, price := new(big.Int), new(big.Int)
-				b.SetString(string(cache.TotalSNFTAmount), 10)
+				b.SetString(string(stats.TotalSNFTAmount), 10)
 				price.SetString(*nftTx.Price, 10)
 				b = b.Add(b, price)
 				err = tx.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
@@ -881,6 +881,6 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 			Exchanger:   &nftMeta.CollectionsExchanger,
 		})
 		err = result.Error
-		cache.TotalNFTCollection += uint64(result.RowsAffected)
+		stats.TotalNFTCollection += uint64(result.RowsAffected)
 	}
 }

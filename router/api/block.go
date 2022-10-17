@@ -75,7 +75,7 @@ func getBlock(c *gin.Context) {
 // @Description Query the total number of blocks, transactions, accounts, etc.
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} service.Cache
+// @Success     200 {object} service.Stats
 // @Failure     400 {object} service.ErrRes
 // @Router      /totals [get]
 func totals(c *gin.Context) {
@@ -95,7 +95,7 @@ func totals(c *gin.Context) {
 // @Produce     json
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} []model.Pledge
+// @Success     200       {object} []service.Validator
 // @Failure     400       {object} service.ErrRes
 // @Router      /validators [get]
 func validators(c *gin.Context) {

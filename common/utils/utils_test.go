@@ -17,6 +17,7 @@ func TestBigToAddress(t *testing.T) {
 	t.Log(a.SetString("0aabbb", 16))
 	t.Log(fmt.Sprintf("%s%x", "0x1234", 0))
 	t.Log(fmt.Sprintf("%s%x", "0x1234", 13))
+	t.Log(IP2Location("4.4.4.4"))
 }
 
 func TestKeccak256Hash(t *testing.T) {

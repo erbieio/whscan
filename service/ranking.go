@@ -100,6 +100,6 @@ func RankingExchanger(limit string, page, size int) (res RankingExchangerRes, er
 		db = db.Joins("LEFT JOIN nft_txes ON exchanger_addr=address")
 	}
 	err = db.Scan(&res.Exchangers).Error
-	res.Total = cache.TotalExchanger
+	res.Total = stats.TotalExchanger
 	return
 }

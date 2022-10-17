@@ -30,7 +30,7 @@ func Run() {
 		log.Printf("Not open debug api will result in some missing data")
 	}
 	taskCh := make(chan Uint64, Thread)
-	parsedCh := make(chan *Parsed, 2*Thread)
+	parsedCh := make(chan *Parsed, Thread)
 	go writeLoop(number, parsedCh)
 	go decodeLoop(client, taskCh, parsedCh, isDebug, isWormholes)
 	go dispatchLoop(client, number, taskCh)

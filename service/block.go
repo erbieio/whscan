@@ -12,7 +12,7 @@ type BlocksRes struct {
 
 func FetchBlocks(page, size int) (res BlocksRes, err error) {
 	err = DB.Order("number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Blocks).Error
-	// use cache to speed up queries
+	// use stats to speed up queries
 	res.Total = int64(TotalBlock())
 	return
 }
@@ -22,11 +22,17 @@ func GetBlock(number string) (b model.Block, err error) {
 	return
 }
 
-func FetchTotals() (Cache, error) {
-	return cache, nil
+func FetchTotals() (Stats, error) {
+	return stats, nil
 }
 
-func FetchValidator(page, size int) (res []model.Pledge, err error) {
-	err = DB.Offset((page - 1) * size).Limit(size).Find(&res).Error
+type Validator struct {
+	model.Pledge
+	Location model.Location `json:"location" gorm:"embedded"`
+}
+
+func FetchValidator(page, size int) (res []*Validator, err error) {
+	err = DB.Model(&model.Pledge{}).Joins("LEFT JOIN `locations` ON `pledges`.`address`=`locations`.`address`").
+		Offset((page - 1) * size).Limit(size).Select("`pledges`.*,`locations`.*").Scan(&res).Error
 	return
 }

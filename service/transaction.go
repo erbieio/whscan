@@ -31,8 +31,8 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 	if number != nil || addr != nil {
 		err = db.Count(&res.Total).Error
 	} else {
-		// use cache to speed up queries
-		res.Total = int64(cache.TotalTransaction)
+		// use stats to speed up queries
+		res.Total = int64(stats.TotalTransaction)
 	}
 	if err != nil {
 		return
@@ -55,7 +55,7 @@ type InternalTxsRes struct {
 
 func GetInternalTransactions(page, size int) (res InternalTxsRes, err error) {
 	err = DB.Order("`block_number` DESC").Offset((page - 1) * size).Limit(size).Find(&res.InternalTxs).Error
-	res.Total = cache.TotalInternalTx
+	res.Total = stats.TotalInternalTx
 	return
 }
 

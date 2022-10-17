@@ -27,6 +27,7 @@ var Tables = []interface{}{
 	&NFTTx{},
 	&Reward{},
 	&Pledge{},
+	&Location{},
 	&Subscription{},
 }
 
@@ -153,9 +154,11 @@ type Header struct {
 	ExtraData        string         `json:"extraData"`                             //Extra data
 	GasLimit         types.Uint64   `json:"gasLimit"`                              //Gas limit
 	GasUsed          types.Uint64   `json:"gasUsed"`                               //Gas consumption
+	Hash             types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`  //Hash
 	Miner            types.Address  `json:"miner" gorm:"type:CHAR(42)"`            //miner
 	MixHash          types.Hash     `json:"mixHash" gorm:"type:CHAR(66)"`          //Mixed hash
 	Nonce            types.Data8    `json:"nonce" gorm:"type:CHAR(18)"`            //difficulty random number
+	Number           types.Uint64   `json:"number" gorm:"index"`                   //block number
 	ParentHash       types.Hash     `json:"parentHash" gorm:"type:CHAR(66)"`       //parent block hash
 	ReceiptsRoot     types.Hash     `json:"receiptsRoot" gorm:"type:CHAR(66)"`     //Transaction receipt root hash
 	Sha3Uncles       types.Hash     `json:"sha3Uncles" gorm:"type:CHAR(66)"`       //Uncle root hash
@@ -168,17 +171,11 @@ type Header struct {
 }
 
 // Uncle block information
-type Uncle struct {
-	Header
-	Hash   types.Hash   `json:"hash" gorm:"type:CHAR(66);primaryKey"` //hash
-	Number types.Uint64 `json:"number"`                               //uncle block number
-}
+type Uncle Header
 
 // Block information
 type Block struct {
 	Header
-	Hash             types.Hash   `json:"hash" gorm:"type:CHAR(66)"`                     //hash
-	Number           types.Uint64 `json:"number" gorm:"primaryKey"`                      //block number
 	TotalDifficulty  types.BigInt `json:"totalDifficulty" gorm:"type:VARCHAR(64);index"` //total difficulty
 	TotalTransaction types.Uint64 `json:"totalTransaction"`                              //number of transactions
 }
@@ -399,6 +396,14 @@ type Pledge struct {
 	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`          //Amount of total reward
 	Timestamp  uint64 `json:"timestamp"`                                //The time at latest rewarding
 	LastNumber uint64 `json:"last_number"`                              //The block number at latest rewarding
+}
+
+type Location struct {
+	Address   string  `json:"address" gorm:"type:CHAR(42);primary_key"` //account address
+	IP        string  `json:"ip" gorm:"type:VARCHAR(15)"`               //account ip
+	Name      string  `json:"name" gorm:"type:VARCHAR(256)"`            //the location name
+	Latitude  float64 `json:"latitude"`                                 //latitude
+	Longitude float64 `json:"longitude"`                                //longitude
 }
 
 // Subscription information
