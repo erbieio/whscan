@@ -15,7 +15,7 @@ import (
 
 // getNFTAddr Get the NFT address
 func getNFTAddr(next *big.Int) string {
-	return string(utils.BigToAddress(next.Add(next, big.NewInt(int64(stats.TotalNFT+1)))))
+	return string(utils.BigToAddress(next.Add(next, big.NewInt(stats.TotalNFT+1))))
 }
 
 func FixHead(parsed *model.Parsed) (err error) {
@@ -85,56 +85,39 @@ func FixHead(parsed *model.Parsed) (err error) {
 	})
 }
 
-func BlockInsert(block *model.Parsed) (blocks []types.Hash, err error) {
-	if block.Number > 0 {
-		err = DB.Take(&model.Block{}, "number=? AND hash=?", block.Number-1, block.ParentHash).Error
+func BlockInsert(parsed *model.Parsed) (blocks []types.Hash, err error) {
+	if parsed.Number > 0 {
+		err = DB.Take(&model.Block{}, "number=? AND hash=?", parsed.Number-1, parsed.ParentHash).Error
 		if err == gorm.ErrRecordNotFound {
 			err = DB.Model(&model.Block{}).Order("number DESC").Limit(1000).Pluck("hash", &blocks).Error
 			return
 		}
 	}
-	totalAmount, totalPledge, b := new(big.Int), new(big.Int), new(big.Int)
-	if block.Number > 0 {
-		var snfts []string
-		for _, snft := range block.RecycleSNFTs {
-			level := 42 - len(snft)
-			if level == 0 {
-				snfts = append(snfts, snft)
-			} else {
-				// Synthetic SNFT address processing
-				for i := 0; i < 1<<(level*4); i++ {
-					address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", snft, i)
-					snfts = append(snfts, address)
-				}
-			}
-		}
-		block.RecycleSNFTs = snfts
-	}
-	err = DB.Transaction(func(t *gorm.DB) error {
-		for _, tx := range block.CacheTxs {
+	err = DB.Transaction(func(db *gorm.DB) error {
+		for _, tx := range parsed.CacheTxs {
 			// write block transaction
-			if err := t.Create(tx).Error; err != nil {
+			if err := db.Create(tx).Error; err != nil {
 				return err
 			}
 		}
 
-		for _, internalTx := range block.CacheInternalTxs {
+		for _, internalTx := range parsed.CacheInternalTxs {
 			// write internal transaction
-			if err := t.Create(internalTx).Error; err != nil {
+			if err := db.Create(internalTx).Error; err != nil {
 				return err
 			}
 		}
 
-		for _, uncle := range block.CacheUncles {
+		for _, uncle := range parsed.CacheUncles {
 			// write uncle block
-			if err := t.Create(uncle).Error; err != nil {
+			if err := db.Create(uncle).Error; err != nil {
 				return err
 			}
 		}
 
-		for _, account := range block.CacheAccounts {
+		for _, account := range parsed.CacheAccounts {
 			// write account information
-			if err := t.Clauses(clause.OnConflict{
+			if err := db.Clauses(clause.OnConflict{
 				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce"}),
 			}).Create(account).Error; err != nil {
 				return err
@@ -142,121 +125,31 @@ func BlockInsert(block *model.Parsed) (blocks []types.Hash, err error) {
 		}
 
 		// write transaction cacheLog
-		for _, cacheLog := range block.CacheLogs {
-			if err := t.Create(cacheLog).Error; err != nil {
+		for _, cacheLog := range parsed.CacheLogs {
+			if err := db.Create(cacheLog).Error; err != nil {
 				return err
 			}
 		}
-		for _, cacheTransferLog := range block.CacheTransferLogs {
-			if err := t.Create(cacheTransferLog).Error; err != nil {
+		for _, cacheTransferLog := range parsed.CacheTransferLogs {
+			if err := db.Create(cacheTransferLog).Error; err != nil {
 				return err
 			}
 		}
 
 		// write block
-		if err := t.Create(block.Block).Error; err != nil {
+		if err := db.Create(parsed.Block).Error; err != nil {
 			return err
-		}
-		err := t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
-			Key: "TotalRecycle", Value: fmt.Sprintf("%d", stats.TotalRecycle+uint64(len(block.RecycleSNFTs))),
-		}).Error
-		if err != nil {
-			return err
-		}
-		if len(block.CacheTxs) > 0 {
-			totalAmount.SetString(string(stats.TotalAmount), 10)
-			for _, tx := range block.CacheTxs {
-				b.SetString(string(tx.Value), 10)
-				totalAmount = totalAmount.Add(totalAmount, b)
-			}
-			err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
-				Key: "TotalAmount", Value: totalAmount.Text(10)}).Error
-			if err != nil {
-				return err
-			}
-		}
-		if len(block.ConsensusPledges) > 0 {
-			totalPledge.SetString(string(stats.TotalPledge), 10)
-			for _, pledge := range block.ConsensusPledges {
-				b.SetString(pledge.Amount, 10)
-				totalPledge = totalPledge.Add(totalPledge, b)
-			}
-			err = t.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
-				Key: "TotalPledge", Value: totalPledge.Text(10)}).Error
-			if err != nil {
-				return err
-			}
 		}
 
 		// wormholes unique data write
-		return WHInsert(t, block)
+		if err := WHInsert(db, parsed); err != nil {
+			return err
+		}
+
+		// update the query stats
+		return updateStats(db, parsed)
 	})
-
-	// If write to the database is successful, update the query stats
-	if err == nil {
-		stats.TotalBlock++
-		stats.TotalTransaction += uint64(block.TotalTransaction)
-		stats.TotalInternalTx += uint64(len(block.CacheInternalTxs))
-		stats.TotalUncle += uint64(block.UnclesCount)
-		stats.TotalNFT += uint64(len(block.CreateNFTs))
-		stats.TotalSNFT += uint64(len(block.RewardSNFTs))
-		stats.TotalSNFT -= uint64(len(block.RecycleSNFTs))
-		stats.RewardSNFTCount += uint64(len(block.RewardSNFTs))
-		stats.RewardCoinCount += uint64(len(block.Rewards) - len(block.RewardSNFTs))
-		stats.TotalExchanger += uint64(len(block.Exchangers))
-		stats.TotalExchanger -= uint64(len(block.CloseExchangers))
-		stats.TotalRecycle += uint64(len(block.RecycleSNFTs))
-
-		for _, tx := range block.NFTTxs {
-			if (*tx.NFTAddr)[:3] == "0x0" {
-				stats.TotalNFTTx += 1
-				if tx.Price != nil {
-					b, price := new(big.Int), new(big.Int)
-					b.SetString(string(stats.TotalNFTAmount), 10)
-					price.SetString(*tx.Price, 10)
-					b = b.Add(b, price)
-					stats.TotalNFTAmount = types.BigInt(b.Text(10))
-				}
-			} else {
-				stats.TotalSNFTTx += 1
-				if tx.Price != nil {
-					b, price := new(big.Int), new(big.Int)
-					b.SetString(string(stats.TotalSNFTAmount), 10)
-					price.SetString(*tx.Price, 10)
-					b = b.Add(b, price)
-					stats.TotalSNFTAmount = types.BigInt(b.Text(10))
-				}
-				stats.fnfts[(*tx.NFTAddr)[:41]] = 0
-			}
-		}
-		stats.TotalSNFTCollection += uint64(len(block.Epochs) * 16)
-		for _, tx := range block.CacheTxs {
-			if tx.Input == "0x" {
-				stats.TotalTransferTx++
-			} else if len(tx.Input) > 22 && tx.Input[:22] == "0x776f726d686f6c65733a" {
-				stats.TotalWormholesTx++
-			}
-		}
-		if len(block.CacheTxs) > 0 {
-			stats.TotalAmount = types.BigInt(totalAmount.Text(10))
-		}
-		if len(block.ConsensusPledges) > 0 {
-			stats.TotalPledge = types.BigInt(totalPledge.Text(10))
-		}
-		for _, snft := range block.RewardSNFTs {
-			stats.fnfts[snft.Address[:41]] = 0
-		}
-		for _, snft := range block.PledgeSNFT {
-			stats.fnfts[snft[:41]] = 0
-		}
-		for _, snft := range block.UnPledgeSNFT {
-			stats.fnfts[snft[:41]] = 0
-		}
-		for _, snft := range block.RecycleSNFTs {
-			stats.fnfts[snft[:41]] = 0
-		}
-		updateStats(DB, block)
-	}
+	freshStats(DB)
 	return
 }
 
@@ -298,36 +191,8 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 	}
 	// NFT transactions, including user and official types of NFTs
 	for _, nftTx := range wh.NFTTxs {
-		err = SaveNFTTx(tx, nftTx)
-		if err != nil {
+		if err = SaveNFTTx(tx, nftTx); err != nil {
 			return
-		}
-		if (*nftTx.NFTAddr)[:3] == "0x0" {
-			if nftTx.Price != nil {
-				b, price := new(big.Int), new(big.Int)
-				b.SetString(string(stats.TotalNFTAmount), 10)
-				price.SetString(*nftTx.Price, 10)
-				b = b.Add(b, price)
-				err = tx.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
-					Key: "TotalNFTAmount", Value: b.Text(10),
-				}).Error
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			if nftTx.Price != nil {
-				b, price := new(big.Int), new(big.Int)
-				b.SetString(string(stats.TotalSNFTAmount), 10)
-				price.SetString(*nftTx.Price, 10)
-				b = b.Add(b, price)
-				err = tx.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
-					Key: "TotalSNFTAmount", Value: b.Text(10),
-				}).Error
-				if err != nil {
-					return err
-				}
-			}
 		}
 	}
 	// exchanger pledge
@@ -641,6 +506,5 @@ func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
 			Exchanger:   &nftMeta.CollectionsExchanger,
 		})
 		err = result.Error
-		stats.TotalNFTCollection += uint64(result.RowsAffected)
 	}
 }

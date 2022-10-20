@@ -352,9 +352,6 @@ definitions:
       longitude:
         description: longitude
         type: number
-      name:
-        description: the location name
-        type: string
     type: object
   model.Log:
     properties:
@@ -1327,11 +1324,14 @@ definitions:
         description: Total account number
         type: integer
       totalAmount:
-        description: The total amount of coins in the chain
+        description: total transaction volume
         type: string
       totalBalance:
         description: The total amount of coins in the chain
         type: string
+      totalBlackHole:
+        description: Total number of BlackHole blocks
+        type: integer
       totalBlock:
         description: Total number of blocks
         type: integer
@@ -1348,7 +1348,7 @@ definitions:
         description: Total number of NFTs
         type: integer
       totalNFTAmount:
-        description: The total amount of coins in the chain
+        description: Total transaction volume of NFTs
         type: string
       totalNFTCollection:
         description: Total number of NFT collections
@@ -1360,7 +1360,7 @@ definitions:
         description: Total number of  NFT transactions
         type: integer
       totalPledge:
-        description: The total amount of coins in the chain
+        description: Total amount of validator pledge
         type: string
       totalRecycle:
         description: Total number of recycle SNFT
@@ -1369,7 +1369,7 @@ definitions:
         description: Total number of SNFTs
         type: integer
       totalSNFTAmount:
-        description: The total amount of coins in the chain
+        description: Total transaction volume of SNFTs
         type: string
       totalSNFTCollection:
         description: Total number of SNFT collections

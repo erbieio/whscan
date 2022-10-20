@@ -18,7 +18,7 @@ import (
 var NotFound = fmt.Errorf("not found")
 
 // decode parses the block
-func decode(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormholes bool) (*Parsed, error) {
+func decode(c *node.Client, ctx context.Context, number Uint64) (*Parsed, error) {
 	var raw json.RawMessage
 	// Get the block (including the transaction)
 	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
@@ -82,20 +82,17 @@ func decode(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormh
 		}
 	}
 	// Parse changed account properties and internal transactions
-	if isDebug {
-		err = decodeAccounts(c, ctx, &parsed)
-		if err != nil {
-			return nil, fmt.Errorf("decodeAccounts err:%v", err)
-		}
-		err = decodeInternalTxs(c, ctx, &parsed)
-		if err != nil {
-			return nil, fmt.Errorf("decodeInternalTxs err:%v", err)
-		}
+	err = decodeAccounts(c, ctx, &parsed)
+	if err != nil {
+		return nil, fmt.Errorf("decodeAccounts err:%v", err)
+	}
+	err = decodeInternalTxs(c, ctx, &parsed)
+	if err != nil {
+		return nil, fmt.Errorf("decodeInternalTxs err:%v", err)
 	}
 	// Parse things specific to wormholes
-	if isWormholes {
-		err = decodeWH(c, &parsed)
-	}
+	err = decodeWH(c, &parsed)
+
 	return &parsed, err
 }
 
@@ -182,7 +179,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *Parsed) (err er
 			return
 		}
 		for _, address := range modifiedAccounts {
-			if address[:14] != "0x000000000000" && address[:14] != "0x800000000000" {
+			if address[:12] != "0x0000000000" && address[:12] != "0x8000000000" {
 				parsed.CacheAccounts[address] = &Account{Address: address}
 			}
 		}
@@ -360,22 +357,37 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 			}
 		}
 	} else {
-		validators := struct {
-			Validators []*struct {
-				Addr    string   `json:"Addr"`
-				Balance *big.Int `json:"Balance"`
-				Proxy   string   `json:"Proxy"`
-			} `json:"Validators"`
+		info := struct {
+			PledgedBalance   *big.Int `json:"PledgedBalance"`
+			ExchangerBalance *big.Int `json:"ExchangerBalance"`
+			FeeRate          uint32   `json:"FeeRate"`
+			ExchangerName    string   `json:"ExchangerName"`
+			ExchangerURL     string   `json:"ExchangerURL"`
 		}{}
-		err := c.Call(&validators, "eth_getValidator", "0x0")
-		if err != nil {
-			return err
-		}
-		for _, validator := range validators.Validators {
-			wh.ConsensusPledges = append(wh.ConsensusPledges, &Pledge{
-				Address: validator.Addr,
-				Amount:  validator.Balance.Text(10),
-			})
+		for address := range wh.CacheAccounts {
+			if err := c.Call(&info, "eth_getAccountInfo", address, "0x0"); err != nil {
+				return err
+			}
+			if balance := info.PledgedBalance.Text(10); balance != "0" {
+				wh.ConsensusPledges = append(wh.ConsensusPledges, &Pledge{
+					Address: string(address),
+					Amount:  balance,
+				})
+			}
+			if balance := info.ExchangerBalance.Text(10); balance != "0" {
+				wh.Exchangers = append(wh.Exchangers, &Exchanger{
+					Address:      string(address),
+					Name:         info.ExchangerName,
+					URL:          info.ExchangerURL,
+					FeeRatio:     info.FeeRate,
+					Creator:      string(address),
+					Timestamp:    uint64(wh.Timestamp),
+					TxHash:       "0x0",
+					Amount:       balance,
+					Count:        1,
+					BalanceCount: "0",
+				})
+			}
 		}
 	}
 	// Write the current information, once every 4096 SNFT rewards
@@ -498,7 +510,16 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		})
 
 	case 6: //Official NFT exchange, recycling shards to shard pool
-		wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
+		level := 42 - len(w.NFTAddress)
+		if level == 0 {
+			wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
+		} else {
+			// Synthetic SNFT address processing
+			for i := 0; i < 1<<(level*4); i++ {
+				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
+				wh.RecycleSNFTs = append(wh.RecycleSNFTs, address)
+			}
+		}
 
 	case 7: //pledge snft
 		level := 42 - len(w.NFTAddress)

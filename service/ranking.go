@@ -76,7 +76,7 @@ func RankingNFT(limit string, page, size int) (res RankingNFTRes, err error) {
 
 // RankingExchangerRes Exchanger ranking return parameters
 type RankingExchangerRes struct {
-	Total      uint64 `json:"total"` //The total number of Exchanger
+	Total      int64 `json:"total"` //The total number of Exchanger
 	Exchangers []struct {
 		model.Exchanger
 		TxCount uint64 `json:"txCount"`

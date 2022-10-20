@@ -27,15 +27,12 @@ func Run(chainUrl string, thread int64, interval time.Duration) {
 	if err = service.CheckStats(chainId, genesis); err != nil {
 		panic(err)
 	}
-	isDebug := client.IsDebug()
-	isWormholes := client.IsWormholes()
-	log.Printf("open debug api: %v, wormholes chain: %v", isDebug, isWormholes)
-	if !isDebug {
-		log.Printf("not open debug api will result in some missing data\n")
+	if !client.IsDebug() || !client.IsWormholes() {
+		panic("not open debug api or not exist wormholes api\n")
 	}
 	taskCh := make(chan Uint64, thread)
 	parsedCh := make(chan *Parsed, thread)
-	go taskLoop(client, thread, interval, taskCh, parsedCh, isDebug, isWormholes)
+	go taskLoop(client, thread, interval, taskCh, parsedCh)
 	go mainLoop(client, thread, interval, taskCh, parsedCh)
 }
 
@@ -89,12 +86,12 @@ func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh 
 	}
 }
 
-func taskLoop(client *node.Client, thread int64, interval time.Duration, taskCh <-chan Uint64, parsedCh chan<- *Parsed, isDebug, isWormholes bool) {
+func taskLoop(client *node.Client, thread int64, interval time.Duration, taskCh <-chan Uint64, parsedCh chan<- *Parsed) {
 	for ; thread > 0; thread-- {
 		go func() {
 			for number := range taskCh {
 				for {
-					parsed, err := decode(client, context.Background(), number, isDebug, isWormholes)
+					parsed, err := decode(client, context.Background(), number)
 					if err != nil {
 						log.Printf("%v block parsing error: %v\n", number, err)
 						time.Sleep(interval)

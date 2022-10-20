@@ -32,7 +32,7 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 		err = db.Count(&res.Total).Error
 	} else {
 		// use stats to speed up queries
-		res.Total = int64(stats.TotalTransaction)
+		res.Total = stats.TotalTransaction
 	}
 	if err != nil {
 		return
@@ -49,7 +49,7 @@ func GetTransactionLogs(hash string) (t []model.Log, err error) {
 
 // InternalTxsRes internal transaction paging return parameters
 type InternalTxsRes struct {
-	Total       uint64              `json:"total"`        //The total number
+	Total       int64               `json:"total"`        //The total number
 	InternalTxs []*model.InternalTx `json:"internal_txs"` //transaction list
 }
 

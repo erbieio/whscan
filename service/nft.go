@@ -93,7 +93,7 @@ func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 		db = db.Where("owner=?", owner)
 	}
 	if owner == "" {
-		res.Total = int64(stats.TotalSNFT)
+		res.Total = stats.TotalSNFT
 	} else {
 		err = db.Model(&model.SNFT{}).Count(&res.Total).Error
 	}
@@ -128,7 +128,7 @@ func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (r
 		db = db.Where("exchanger=?", exchanger)
 	}
 	if owner == "" && collectionId == "" && exchanger == "" {
-		res.Total = int64(stats.TotalSNFT)
+		res.Total = stats.TotalSNFT
 	} else {
 		err = db.Count(&res.Total).Error
 	}

@@ -2713,10 +2713,6 @@ const docTemplate = `{
                 "longitude": {
                     "description": "longitude",
                     "type": "number"
-                },
-                "name": {
-                    "description": "the location name",
-                    "type": "string"
                 }
             }
         },
@@ -4038,12 +4034,16 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalAmount": {
-                    "description": "The total amount of coins in the chain",
+                    "description": "total transaction volume",
                     "type": "string"
                 },
                 "totalBalance": {
                     "description": "The total amount of coins in the chain",
                     "type": "string"
+                },
+                "totalBlackHole": {
+                    "description": "Total number of BlackHole blocks",
+                    "type": "integer"
                 },
                 "totalBlock": {
                     "description": "Total number of blocks",
@@ -4066,7 +4066,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalNFTAmount": {
-                    "description": "The total amount of coins in the chain",
+                    "description": "Total transaction volume of NFTs",
                     "type": "string"
                 },
                 "totalNFTCollection": {
@@ -4082,7 +4082,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalPledge": {
-                    "description": "The total amount of coins in the chain",
+                    "description": "Total amount of validator pledge",
                     "type": "string"
                 },
                 "totalRecycle": {
@@ -4094,7 +4094,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalSNFTAmount": {
-                    "description": "The total amount of coins in the chain",
+                    "description": "Total transaction volume of SNFTs",
                     "type": "string"
                 },
                 "totalSNFTCollection": {
