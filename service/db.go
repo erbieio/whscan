@@ -35,7 +35,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = initCache()
+	err = initStats(DB)
 	if err != nil {
 		panic(err)
 	}

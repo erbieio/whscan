@@ -15,7 +15,7 @@ import (
 // @version     1.0
 // @description Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, NFT collections, and exchanges
 func main() {
-	backend.Run()
+	backend.Run(ChainUrl, Thread, Interval)
 	r := router.Init()
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	if err := r.Run(ServerAddr); err != nil {

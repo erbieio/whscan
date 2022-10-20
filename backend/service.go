@@ -3,109 +3,107 @@ package backend
 import (
 	"context"
 	"log"
-	"sync"
 	"time"
 
 	. "server/common/model"
 	. "server/common/types"
-	. "server/conf"
 	"server/node"
 	"server/service"
 )
 
-var task = &sync.WaitGroup{}
-var headCh = make(chan Uint64)
-var runCh = make(chan int)
-
-func Run() {
-	client, err := node.Dial(ChainUrl)
+func Run(chainUrl string, thread int64, interval time.Duration) {
+	client, err := node.Dial(chainUrl)
 	if err != nil {
 		panic(err)
 	}
-	number := Uint64(service.TotalBlock())
+	chainId, err := client.ChainId(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	genesis, err := client.Genesis(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	if err = service.CheckStats(chainId, genesis); err != nil {
+		panic(err)
+	}
 	isDebug := client.IsDebug()
 	isWormholes := client.IsWormholes()
 	log.Printf("open debug api: %v, wormholes chain: %v", isDebug, isWormholes)
 	if !isDebug {
-		log.Printf("Not open debug api will result in some missing data")
+		log.Printf("not open debug api will result in some missing data\n")
 	}
-	taskCh := make(chan Uint64, Thread)
-	parsedCh := make(chan *Parsed, Thread)
-	go writeLoop(number, parsedCh)
-	go decodeLoop(client, taskCh, parsedCh, isDebug, isWormholes)
-	go dispatchLoop(client, number, taskCh)
-	log.Printf("Start data analysis from %v block using %v coroutines\n", Thread, number)
+	taskCh := make(chan Uint64, thread)
+	parsedCh := make(chan *Parsed, thread)
+	go taskLoop(client, thread, interval, taskCh, parsedCh, isDebug, isWormholes)
+	go mainLoop(client, thread, interval, taskCh, parsedCh)
 }
 
-func dispatchLoop(client *node.Client, number Uint64, taskCh chan<- Uint64) {
+func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh chan<- Uint64, parsedCh <-chan *Parsed) {
+	number := service.TotalBlock()
+	cache := make(map[Uint64]*Parsed)
+	taskNum := int64(0)
+	log.Printf("using %v coroutines, starting data analysis from %v blockn\n", thread, number)
 	for {
 		max, err := client.BlockNumber(context.Background())
 		if err != nil {
-			log.Printf("Error getting block height: %v\n", err)
+			log.Printf("get block height error: %v\n", err)
 		}
-		if err != nil || number >= max {
-			time.Sleep(Interval)
+		if err != nil || (max <= number && taskNum == 0) {
+			time.Sleep(interval)
 		}
-		for ; number < max; number++ {
-			select {
-			case head := <-headCh:
-				task.Wait()
-				runCh <- 0
-				number = head
-			case taskCh <- number:
-				task.Add(1)
+		for number <= max || taskNum > 0 {
+			for number <= max && taskNum < thread {
+				taskCh <- number
+				taskNum++
+				number++
+			}
+			parsed := <-parsedCh
+			taskNum--
+			cache[parsed.Number] = parsed
+			for i := service.TotalBlock(); cache[i] != nil; i++ {
+				badBlocks, err := service.BlockInsert(cache[i])
+				if err == nil {
+					if badBlocks != nil {
+						head, err := checkHead(client, context.Background(), i-1, badBlocks)
+						if err != nil {
+							break
+						}
+						err = service.FixHead(head)
+						if err != nil {
+							break
+						}
+						for ; taskNum > 0; taskNum-- {
+							<-parsedCh
+						}
+						number = head.Number + 1
+						cache = make(map[Uint64]*Parsed)
+						log.Printf("fork fallback, starting data analysis from %v blockn\n", number)
+					}
+					delete(cache, i)
+				} else {
+					break
+				}
 			}
 		}
 	}
 }
 
-func decodeLoop(client *node.Client, taskCh <-chan Uint64, parsedCh chan<- *Parsed, isDebug, isWormholes bool) {
-	for i := int64(0); i < Thread; i++ {
+func taskLoop(client *node.Client, thread int64, interval time.Duration, taskCh <-chan Uint64, parsedCh chan<- *Parsed, isDebug, isWormholes bool) {
+	for ; thread > 0; thread-- {
 		go func() {
 			for number := range taskCh {
 				for {
 					parsed, err := decode(client, context.Background(), number, isDebug, isWormholes)
 					if err != nil {
 						log.Printf("%v block parsing error: %v\n", number, err)
-						time.Sleep(10 * Interval)
+						time.Sleep(interval)
 					} else {
 						parsedCh <- parsed
-						task.Done()
 						break
 					}
 				}
 			}
 		}()
-	}
-}
-
-func writeLoop(number Uint64, parsedCh <-chan *Parsed) {
-	cache := make(map[Uint64]*Parsed)
-	for parsed := range parsedCh {
-		cache[parsed.Number] = parsed
-		for cache[number] != nil {
-			head, err := service.BlockInsert(cache[number])
-			if err != nil {
-				log.Printf("%v block write error: %v\n", number, err)
-				time.Sleep(Interval)
-			} else {
-				if head != cache[number].Number {
-					headCh <- head
-					for {
-						select {
-						case <-parsedCh:
-						case <-runCh:
-							goto end
-						}
-					}
-				end:
-					number = head
-					cache = make(map[Uint64]*Parsed)
-				} else {
-					delete(cache, number)
-				}
-				number++
-			}
-		}
 	}
 }

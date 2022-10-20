@@ -54,7 +54,7 @@ func pageReward(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       block path     string true "Block height"
-// @Success     200   {object} []model.Reward
+// @Success     200   {object} []service.Reward
 // @Failure     400   {object} service.ErrRes
 // @Router      /reward/{block} [get]
 func blockReward(c *gin.Context) {

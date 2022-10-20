@@ -9,23 +9,25 @@ import (
 	"strconv"
 	"strings"
 
-	"server/common/model"
+	. "server/common/model"
 	. "server/common/types"
-	"server/common/utils"
+	. "server/common/utils"
 	"server/node"
 )
 
+var NotFound = fmt.Errorf("not found")
+
 // decode parses the block
-func decode(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormholes bool) (*model.Parsed, error) {
+func decode(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormholes bool) (*Parsed, error) {
 	var raw json.RawMessage
 	// Get the block (including the transaction)
 	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
 	if err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	} else if len(raw) == 0 {
-		return nil, node.NotFound
+		return nil, NotFound
 	}
-	var parsed model.Parsed
+	var parsed Parsed
 	if err := json.Unmarshal(raw, &parsed); err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
 	}
@@ -56,7 +58,7 @@ func decode(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormh
 	}
 	// get uncle block
 	if parsed.UnclesCount = Uint64(len(parsed.UncleHashes)); parsed.UnclesCount > 0 {
-		parsed.CacheUncles = make([]*model.Uncle, parsed.UnclesCount)
+		parsed.CacheUncles = make([]*Uncle, parsed.UnclesCount)
 		reqs := make([]node.BatchElem, parsed.UnclesCount)
 		for i := range reqs {
 			reqs[i] = node.BatchElem{
@@ -75,7 +77,7 @@ func decode(c *node.Client, ctx context.Context, number Uint64, isDebug, isWormh
 		}
 	}
 	for _, log := range parsed.CacheLogs {
-		if transferLog := utils.UnpackTransferLog(log); transferLog != nil {
+		if transferLog := UnpackTransferLog(log); transferLog != nil {
 			parsed.CacheTransferLogs = append(parsed.CacheTransferLogs, transferLog...)
 		}
 	}
@@ -116,7 +118,7 @@ var params = struct {
 	Limit          int  `json:"limit"`
 }{true, true, 81920}
 
-func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *model.Parsed) (err error) {
+func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *Parsed) (err error) {
 	for _, tx := range parsed.CacheTxs {
 		var execRet ExecutionResult
 		if err = c.CallContext(ctx, &execRet, "debug_traceTransaction", tx.Hash, params); err != nil {
@@ -130,27 +132,27 @@ func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *model.Parsed
 			caller = tx.ContractAddress
 		}
 		callers := []*Address{caller}
-		iTx := &model.InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(Address), Value: "0x0"}
+		iTx := &InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(Address), Value: "0x0"}
 		for _, log := range execRet.StructLogs {
 			if len(*caller) == 0 {
-				*caller = *utils.HexToAddress(log.Stack[len(log.Stack)-1])
+				*caller = *HexToAddress(log.Stack[len(log.Stack)-1])
 			}
 			switch log.Op {
 			case "CALL", "CALLCODE":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-2])
-				iTx.Value = utils.HexToBigInt(log.Stack[len(log.Stack)-3][2:])
+				iTx.To = HexToAddress(log.Stack[len(log.Stack)-2])
+				iTx.Value = HexToBigInt(log.Stack[len(log.Stack)-3][2:])
 				callers = append(callers, iTx.To)
 			case "DELEGATECALL":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-2])
+				iTx.To = HexToAddress(log.Stack[len(log.Stack)-2])
 				callers = append(callers, callers[log.Depth-1])
 			case "STATICCALL":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-2])
+				iTx.To = HexToAddress(log.Stack[len(log.Stack)-2])
 				callers = append(callers, iTx.To)
 			case "CREATE", "CREATE2":
-				iTx.Value = utils.HexToBigInt(log.Stack[len(log.Stack)-1][2:])
+				iTx.Value = HexToBigInt(log.Stack[len(log.Stack)-1][2:])
 				callers = append(callers, iTx.To)
 			case "SELFDESTRUCT":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-1])
+				iTx.To = HexToAddress(log.Stack[len(log.Stack)-1])
 				caller = callers[len(callers)-1]
 			case "RETURN", "STOP", "REVERT":
 				caller = callers[len(callers)-1]
@@ -164,15 +166,15 @@ func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *model.Parsed
 			iTx.From = callers[log.Depth-1]
 			iTx.GasLimit = Uint64(log.Gas)
 			parsed.CacheInternalTxs = append(parsed.CacheInternalTxs, iTx)
-			iTx = &model.InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(Address), Value: "0x0"}
+			iTx = &InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(Address), Value: "0x0"}
 		}
 	}
 	return nil
 }
 
 // decodeAccount to get account related properties
-func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (err error) {
-	parsed.CacheAccounts = make(map[Address]*model.Account)
+func decodeAccounts(c *node.Client, ctx context.Context, parsed *Parsed) (err error) {
+	parsed.CacheAccounts = make(map[Address]*Account)
 	if parsed.Number > 0 {
 		// Get the change account address
 		var modifiedAccounts []Address
@@ -181,7 +183,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 		}
 		for _, address := range modifiedAccounts {
 			if address[:14] != "0x000000000000" && address[:14] != "0x800000000000" {
-				parsed.CacheAccounts[address] = &model.Account{Address: address}
+				parsed.CacheAccounts[address] = &Account{Address: address}
 			}
 		}
 	} else {
@@ -195,7 +197,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 				return
 			}
 			for address := range genesis.Accounts {
-				parsed.CacheAccounts[address] = &model.Account{Address: address}
+				parsed.CacheAccounts[address] = &Account{Address: address}
 			}
 		}
 	}
@@ -256,7 +258,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			}
 			for _, contract := range contracts {
 				account := parsed.CacheAccounts[contract]
-				account.Name, account.Symbol, account.Type, err = utils.Property(c, contract)
+				account.Name, account.Symbol, account.Type, err = Property(c, contract)
 				if err != nil {
 					return
 				}
@@ -266,8 +268,41 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 	return
 }
 
+func checkHead(c *node.Client, ctx context.Context, number Uint64, badBlocks []Hash) (parsed *Parsed, err error) {
+	for i := 0; i < len(badBlocks); i++ {
+		err = c.CallContext(ctx, &parsed, "eth_getBlockByNumber", number.Hex(), true)
+		if err != nil {
+			return
+		} else if parsed == nil {
+			return nil, NotFound
+		}
+		if parsed.Hash == badBlocks[i] {
+			break
+		}
+		number--
+	}
+	if number == ^Uint64(0) {
+		return &Parsed{Block: &Block{Header: Header{Number: ^Uint64(0)}}}, nil
+	}
+	parsed.CacheAccounts = make(map[Address]*Account)
+	status := &struct {
+		Accounts map[Address]*Account `json:"accounts"`
+		Next     *string              `json:"next"`
+	}{}
+	for next := new(string); next != nil; next = status.Next {
+		status = nil
+		if err = c.CallContext(ctx, &status, "debug_accountRange", parsed.Number.Hex(), next, nil, true, true, true); err != nil {
+			return
+		}
+		for address, account := range status.Accounts {
+			parsed.CacheAccounts[address] = &Account{Address: address, Balance: account.Balance, Nonce: account.Nonce}
+		}
+	}
+	return
+}
+
 // decodeWH Imports the underlying NFT transaction of the SNFT meta information distributed by the block
-func decodeWH(c *node.Client, wh *model.Parsed) error {
+func decodeWH(c *node.Client, wh *Parsed) error {
 	epochId := ""
 	if wh.Number > 0 {
 		// Miner reward SNFT processing
@@ -287,7 +322,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			default:
 				return fmt.Errorf("reward length more than 11")
 			}
-			wh.Rewards = append(wh.Rewards, &model.Reward{
+			wh.Rewards = append(wh.Rewards, &Reward{
 				Address:     rewards[i].Address,
 				Proxy:       rewards[i].Proxy,
 				Identity:    identity,
@@ -297,7 +332,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 				// Note that when NFTAddress is zero address error
 				wh.Rewards[i].SNFT = rewards[i].NFTAddress
 				nftAddr := *rewards[i].NFTAddress
-				wh.RewardSNFTs = append(wh.RewardSNFTs, &model.SNFT{
+				wh.RewardSNFTs = append(wh.RewardSNFTs, &SNFT{
 					Address:      nftAddr,
 					Awardee:      rewards[i].Address,
 					RewardAt:     uint64(wh.Block.Timestamp),
@@ -337,7 +372,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			return err
 		}
 		for _, validator := range validators.Validators {
-			wh.ConsensusPledges = append(wh.ConsensusPledges, &model.Pledge{
+			wh.ConsensusPledges = append(wh.ConsensusPledges, &Pledge{
 				Address: validator.Addr,
 				Amount:  validator.Balance.Text(10),
 			})
@@ -352,7 +387,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 		if len(epoch.Dir) == 52 {
 			epoch.Dir = epoch.Dir + "/"
 		}
-		wh.Epochs = append(wh.Epochs, &model.Epoch{
+		wh.Epochs = append(wh.Epochs, &Epoch{
 			ID:           epochId,
 			Creator:      strings.ToLower(epoch.Creator),
 			RoyaltyRatio: epoch.Royalty,
@@ -367,7 +402,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 }
 
 // decodeWHTx parses the special transaction of the wormholes blockchain
-func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *model.Parsed) (err error) {
+func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
 	// Non-wormholes and failed transactions are not resolved
 	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
@@ -435,7 +470,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 	switch w.Type {
 	case 0: //Users mint NFT by themselves
 		nftAddr := "" //Calculate fill in real time when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.NFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  w.Royalty, //The unit is one ten thousandth
 			MetaUrl:       realMeatUrl(w.MetaURL),
@@ -450,7 +485,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 
 	case 1: //Users transfer NFT by themselves
 		w.NFTAddress = strings.ToLower(w.NFTAddress)
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        1,
 			NFTAddr:       &w.NFTAddress,
 			ExchangerAddr: "", //Self-transfer without exchange
@@ -488,10 +523,10 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 		}
 
 	case 9, 10: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
-		pledge := &model.Pledge{
+		pledge := &Pledge{
 			Address: from,
 		}
-		internalTx := &model.InternalTx{
+		internalTx := &InternalTx{
 			TxHash:      Hash(txHash),
 			BlockNumber: wh.Number,
 			From:        &tx.From,
@@ -511,7 +546,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 		wh.CacheInternalTxs = append(wh.CacheInternalTxs, internalTx)
 
 	case 11: //Open the exchange
-		wh.Exchangers = append(wh.Exchangers, &model.Exchanger{
+		wh.Exchangers = append(wh.Exchangers, &Exchanger{
 			Address:      from,
 			Name:         w.Name,
 			URL:          w.Url,
@@ -531,7 +566,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        2,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: w.Buyer.Exchanger,
@@ -546,7 +581,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 	case 15: //NFT pricing purchase transaction (buyer initiates, seller signs price)
 		w.Seller1.NFTAddress = strings.ToLower(w.Seller1.NFTAddress)
 		w.Seller1.Exchanger = strings.ToLower(w.Seller1.Exchanger)
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        3,
 			NFTAddr:       &w.Seller1.NFTAddress,
 			ExchangerAddr: w.Seller1.Exchanger,
@@ -561,7 +596,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 	case 16: //NFT lazy pricing purchase transaction, the buyer initiates (the NFT is minted first, and the seller signs the price)
 		// Restore NFT creator address (also seller address) from signature
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
+		creator, err := RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
@@ -572,7 +607,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 		}
 		w.Seller2.Exchanger = strings.ToLower(w.Seller2.Exchanger)
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.NFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -584,7 +619,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 			TxHash:        txHash,
 			Owner:         string(creator),
 		})
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        4,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: w.Seller2.Exchanger,
@@ -599,7 +634,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 	case 17: //NFT lazy pricing purchase transaction, initiated by the exchange (mint NFT first, and the seller signs the price)
 		// Restore NFT creator address (also seller address) from signature
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
+		creator, err := RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
@@ -609,7 +644,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.NFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -621,7 +656,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 			TxHash:        txHash,
 			Owner:         string(creator),
 		})
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        5,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: from, //The transaction initiator is the exchange address
@@ -636,12 +671,12 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 	case 18: //The NFT bid transaction is initiated by the address authorized by the exchange (the buyer signs the price)
 		// restore the exchange address from the authorized signature
 		msg := w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
-		exchangerAddr, err := utils.RecoverAddress(msg, w.ExchangerAuth.Sig)
+		exchangerAddr, err := RecoverAddress(msg, w.ExchangerAuth.Sig)
 		if err != nil {
 			return err
 		}
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        6,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: string(exchangerAddr),
@@ -656,13 +691,13 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 	case 19: //NFT lazy bid transaction, initiated by the address authorized by the exchange (the buyer signs the price)
 		// Restore NFT creator address (also seller address) from signature
 		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
+		creator, err := RecoverAddress(msg, w.Seller2.Sig)
 		if err != nil {
 			return err
 		}
 		// restore the exchange address from the authorized signature
 		msg = w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
-		exchangerAddr, err := utils.RecoverAddress(msg, w.ExchangerAuth.Sig)
+		exchangerAddr, err := RecoverAddress(msg, w.ExchangerAuth.Sig)
 		if err != nil {
 			return err
 		}
@@ -672,7 +707,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &model.NFT{
+		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -684,7 +719,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 			TxHash:        txHash,
 			Owner:         string(creator),
 		})
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        7,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: string(exchangerAddr),
@@ -698,7 +733,7 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 
 	case 20: //NFT matches the transaction, and the exchange initiates it
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
-		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        8,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: from,
@@ -711,13 +746,13 @@ func decodeWHTx(_ *node.Client, block *model.Block, tx *model.Transaction, wh *m
 		})
 
 	case 21: // Exchange pledge
-		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.Exchanger{
+		wh.ExchangerPledges = append(wh.ExchangerPledges, &Exchanger{
 			Address: from,
 			Amount:  value,
 		})
 
 	case 22: //Revoke the exchange pledge
-		wh.ExchangerPledges = append(wh.ExchangerPledges, &model.Exchanger{
+		wh.ExchangerPledges = append(wh.ExchangerPledges, &Exchanger{
 			Address: from,
 			Amount:  "-" + value,
 		})

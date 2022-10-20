@@ -417,27 +417,6 @@ definitions:
           7: lazy bid transaction, 8: matching transaction'
         type: integer
     type: object
-  model.Reward:
-    properties:
-      address:
-        description: reward address
-        type: string
-      amount:
-        description: Amount of reward
-        type: string
-      block_number:
-        description: The block number when rewarding
-        type: integer
-      identity:
-        description: 'Identity, 1: block producer, 2: verifier, 3, exchange'
-        type: integer
-      proxy:
-        description: proxy address
-        type: string
-      snft:
-        description: SNFT address
-        type: string
-    type: object
   model.SNFT:
     properties:
       address:
@@ -1079,33 +1058,35 @@ definitions:
         description: The total number of SNFTs
         type: integer
     type: object
+  service.Reward:
+    properties:
+      address:
+        description: reward address
+        type: string
+      amount:
+        description: Amount of reward
+        type: string
+      block_number:
+        description: The block number when rewarding
+        type: integer
+      collectionName:
+        type: string
+      identity:
+        description: 'Identity, 1: block producer, 2: verifier, 3, exchange'
+        type: integer
+      proxy:
+        description: proxy address
+        type: string
+      snft:
+        description: SNFT address
+        type: string
+    type: object
   service.RewardsRes:
     properties:
       rewards:
         description: Rewards list
         items:
-          properties:
-            address:
-              description: reward address
-              type: string
-            amount:
-              description: Amount of reward
-              type: string
-            block_number:
-              description: The block number when rewarding
-              type: integer
-            collectionName:
-              type: string
-            identity:
-              description: 'Identity, 1: block producer, 2: verifier, 3, exchange'
-              type: integer
-            proxy:
-              description: proxy address
-              type: string
-            snft:
-              description: SNFT address
-              type: string
-          type: object
+          $ref: '#/definitions/service.Reward'
         type: array
       total:
         description: The total number of rewards
@@ -1321,8 +1302,11 @@ definitions:
     type: object
   service.Stats:
     properties:
+      chainId:
+        description: chain id
+        type: integer
       genesisBalance:
-        description: The total amount of coins in the chain
+        description: Total amount of coins created
         type: string
       rewardCoinCount:
         description: Total number of times to get coin rewards, 0.1ERB once
@@ -2527,7 +2511,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Reward'
+              $ref: '#/definitions/service.Reward'
             type: array
         "400":
           description: Bad Request

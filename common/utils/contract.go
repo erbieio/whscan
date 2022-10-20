@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"server/common/types"
+	. "server/common/types"
 )
 
 var (
@@ -24,20 +24,17 @@ var (
 	erc721InterfaceId  = "0x80ac58cd"
 	erc1155InterfaceId = "0xd9b67a26"
 
-	Addr1 = types.Address("0x0000000000000000000000000000000000000001")
-	Addr2 = types.Address("0x0000000000000000000000000000000000000002")
+	Addr1 = Address("0x0000000000000000000000000000000000000001")
+	Addr2 = Address("0x0000000000000000000000000000000000000002")
 	Big0  = Uint256("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
 
-// Uint256 hexadecimal string uint256 with prefix 0x and leading 0
-type Uint256 string
-
 type ContractClient interface {
-	CallContract(ctx context.Context, msg map[string]interface{}, number *types.BigInt) (types.Data, error)
+	CallContract(ctx context.Context, msg map[string]interface{}, number *BigInt) (Data, error)
 }
 
 // SupportsInterface Query whether the given contract supports interfaceId
-func SupportsInterface(client ContractClient, address types.Address, interfaceId string) (bool, error) {
+func SupportsInterface(client ContractClient, address Address, interfaceId string) (bool, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": supportsInterfaceSelector + interfaceId[2:10] + "000000000000000000000000000000000000000000000000000000",
@@ -51,7 +48,7 @@ func SupportsInterface(client ContractClient, address types.Address, interfaceId
 }
 
 // Name Query the token name of the given ERC20 contract (optional interface)
-func Name(client ContractClient, address types.Address) (string, error) {
+func Name(client ContractClient, address Address) (string, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": nameSelector,
@@ -65,7 +62,7 @@ func Name(client ContractClient, address types.Address) (string, error) {
 }
 
 // Symbol Query the token symbol of the given ERC20 contract (optional interface)
-func Symbol(client ContractClient, address types.Address) (string, error) {
+func Symbol(client ContractClient, address Address) (string, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": symbolSelector,
@@ -79,7 +76,7 @@ func Symbol(client ContractClient, address types.Address) (string, error) {
 }
 
 // Decimals query the token symbol of a given ERC20 contract (optional interface)
-func Decimals(client ContractClient, address types.Address) (uint8, error) {
+func Decimals(client ContractClient, address Address) (uint8, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": decimalsSelector,
@@ -93,7 +90,7 @@ func Decimals(client ContractClient, address types.Address) (uint8, error) {
 }
 
 // TotalSupply Query the total amount of tokens issued for a given ERC20 contract (required interface)
-func TotalSupply(client ContractClient, address types.Address) (Uint256, error) {
+func TotalSupply(client ContractClient, address Address) (Uint256, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": totalSupplySelector,
@@ -106,7 +103,7 @@ func TotalSupply(client ContractClient, address types.Address) (Uint256, error) 
 	return ABIDecodeUint256(string(out))
 }
 
-func Allowance(client ContractClient, address, owner, spender types.Address) (Uint256, error) {
+func Allowance(client ContractClient, address, owner, spender Address) (Uint256, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": allowanceSelector + "000000000000000000000000" + string(owner[2:]) + "000000000000000000000000" + string(spender[2:]),
@@ -119,7 +116,7 @@ func Allowance(client ContractClient, address, owner, spender types.Address) (Ui
 	return ABIDecodeUint256(string(out))
 }
 
-func BalanceOf(client ContractClient, address, account types.Address) (Uint256, error) {
+func BalanceOf(client ContractClient, address, account Address) (Uint256, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": balanceOfSelector + "000000000000000000000000" + string(account[2:]),
@@ -132,7 +129,7 @@ func BalanceOf(client ContractClient, address, account types.Address) (Uint256, 
 	return ABIDecodeUint256(string(out))
 }
 
-func Transfer(client ContractClient, address, to types.Address, amount Uint256, caller *types.Address) (bool, error) {
+func Transfer(client ContractClient, address, to Address, amount Uint256, caller *Address) (bool, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": transferSelector + "000000000000000000000000" + string(to[2:]) + string(amount[2:]),
@@ -148,7 +145,7 @@ func Transfer(client ContractClient, address, to types.Address, amount Uint256, 
 	return ABIDecodeBool(string(out))
 }
 
-func TransferFrom(client ContractClient, address, from, to types.Address, amount Uint256, caller *types.Address) (bool, error) {
+func TransferFrom(client ContractClient, address, from, to Address, amount Uint256, caller *Address) (bool, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": transferFromSelector + "000000000000000000000000" + string(from[2:]) + "000000000000000000000000" + string(to[2:]) + string(amount[2:]),
@@ -164,7 +161,7 @@ func TransferFrom(client ContractClient, address, from, to types.Address, amount
 	return ABIDecodeBool(string(out))
 }
 
-func Approve(client ContractClient, address, spender types.Address, amount Uint256, caller *types.Address) (bool, error) {
+func Approve(client ContractClient, address, spender Address, amount Uint256, caller *Address) (bool, error) {
 	msg := map[string]interface{}{
 		"to":   address,
 		"data": approveSelector + "000000000000000000000000" + string(spender[2:]) + string(amount[2:]),
@@ -180,7 +177,7 @@ func Approve(client ContractClient, address, spender types.Address, amount Uint2
 	return ABIDecodeBool(string(out))
 }
 
-func Property(c ContractClient, address types.Address) (n, s *string, t *types.ContractType, err error) {
+func Property(c ContractClient, address Address) (n, s *string, t *ContractType, err error) {
 	name, err := Name(c, address)
 	if err == nil {
 		n = &name
@@ -202,18 +199,18 @@ func Property(c ContractClient, address types.Address) (n, s *string, t *types.C
 	if !ok {
 		ok, err = IsERC20(c, address)
 		if ok {
-			t = new(types.ContractType)
-			*t = types.ERC20
+			t = new(ContractType)
+			*t = ERC20
 		}
 		return
 	}
-	t = new(types.ContractType)
+	t = new(ContractType)
 	ok, err = IsERC721(c, address)
 	if err != nil {
 		return
 	}
 	if ok {
-		*t = types.ERC721
+		*t = ERC721
 		return
 	}
 	ok, err = IsERC1155(c, address)
@@ -221,14 +218,14 @@ func Property(c ContractClient, address types.Address) (n, s *string, t *types.C
 		return
 	}
 	if ok {
-		*t = types.ERC1155
+		*t = ERC1155
 		return
 	}
-	*t = types.ERC165
+	*t = ERC165
 	return
 }
 
-func IsERC165(client ContractClient, address types.Address) (bool, error) {
+func IsERC165(client ContractClient, address Address) (bool, error) {
 	support, err := SupportsInterface(client, address, erc165InterfaceId)
 	if !support || err != nil {
 		return false, filterContractErr(err)
@@ -237,17 +234,17 @@ func IsERC165(client ContractClient, address types.Address) (bool, error) {
 	return !support, filterContractErr(err)
 }
 
-func IsERC721(client ContractClient, address types.Address) (bool, error) {
+func IsERC721(client ContractClient, address Address) (bool, error) {
 	support, err := SupportsInterface(client, address, erc721InterfaceId)
 	return support, filterContractErr(err)
 }
 
-func IsERC1155(client ContractClient, address types.Address) (bool, error) {
+func IsERC1155(client ContractClient, address Address) (bool, error) {
 	support, err := SupportsInterface(client, address, erc1155InterfaceId)
 	return support, filterContractErr(err)
 }
 
-func IsERC20(client ContractClient, address types.Address) (bool, error) {
+func IsERC20(client ContractClient, address Address) (bool, error) {
 	_, err := TotalSupply(client, address)
 	if err != nil {
 		return false, filterContractErr(err)

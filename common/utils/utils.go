@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"server/common/model"
-	"server/common/types"
+	. "server/common/model"
+	. "server/common/types"
 )
 
 var (
@@ -21,33 +21,33 @@ var (
 	DaySecond                    = 24 * time.Hour.Milliseconds() / 1000
 )
 
-func UnpackTransferLog(log *model.Log) []interface{} {
+func UnpackTransferLog(log *Log) []interface{} {
 	topicsLen := len(log.Topics)
 	if topicsLen == 3 {
 		if log.Topics[0] == erc20TransferEventId && len(log.Data) == 66 {
 			// 解析ERC20的转移事件
-			return []interface{}{&model.ERC20Transfer{
+			return []interface{}{&ERC20Transfer{
 				TxHash:  log.TxHash,
 				Address: log.Address,
-				From:    types.Address("0x" + log.Topics[1][26:]),
-				To:      types.Address("0x" + log.Topics[2][26:]),
+				From:    Address("0x" + log.Topics[1][26:]),
+				To:      Address("0x" + log.Topics[2][26:]),
 				Value:   HexToBigInt(log.Data[2:66]),
 			}}
 		}
 	} else if topicsLen == 4 {
 		if log.Topics[0] == erc721TransferEventId && len(log.Data) == 2 {
 			// 解析ERC721的转移事件
-			return []interface{}{&model.ERC721Transfer{
+			return []interface{}{&ERC721Transfer{
 				TxHash:  log.TxHash,
 				Address: log.Address,
-				From:    types.Address("0x" + log.Topics[1][26:]),
-				To:      types.Address("0x" + log.Topics[2][26:]),
+				From:    Address("0x" + log.Topics[1][26:]),
+				To:      Address("0x" + log.Topics[2][26:]),
 				TokenId: HexToBigInt(log.Topics[3][2:]),
 			}}
 		} else if log.Topics[0] == erc1155TransferSingleEventId && len(log.Data) == 130 {
 			// 解析ERC1155的单个转移事件
-			operator, from, to := types.Address("0x"+log.Topics[1][26:]), types.Address("0x"+log.Topics[2][26:]), types.Address("0x"+log.Topics[3][26:])
-			return []interface{}{&model.ERC1155Transfer{
+			operator, from, to := Address("0x"+log.Topics[1][26:]), Address("0x"+log.Topics[2][26:]), Address("0x"+log.Topics[3][26:])
+			return []interface{}{&ERC1155Transfer{
 				TxHash:   log.TxHash,
 				Address:  log.Address,
 				Operator: operator,
@@ -58,7 +58,7 @@ func UnpackTransferLog(log *model.Log) []interface{} {
 			}}
 		} else if log.Topics[0] == erc1155TransferBatchEventId {
 			// 解析ERC1155的批量转移事件
-			operator, from, to := types.Address("0x"+log.Topics[1][26:]), types.Address("0x"+log.Topics[2][26:]), types.Address("0x"+log.Topics[3][26:])
+			operator, from, to := Address("0x"+log.Topics[1][26:]), Address("0x"+log.Topics[2][26:]), Address("0x"+log.Topics[3][26:])
 			// 动态数据类型编解码参考https://docs.soliditylang.org/en/v0.8.13/abi-spec.html#argument-encoding
 			// 字长为256位即32个字节
 			wordLen := (len(log.Data) - 2) / 64
@@ -69,7 +69,7 @@ func UnpackTransferLog(log *model.Log) []interface{} {
 			transferLogs := make([]interface{}, transferCount)
 			for i := 0; i < transferCount; i++ {
 				idOffset, valueOffset := 2+(i+3)*64, 2+(transferCount+i+4)*64
-				transferLogs[i] = &model.ERC1155Transfer{
+				transferLogs[i] = &ERC1155Transfer{
 					TxHash:   log.TxHash,
 					Address:  log.Address,
 					Operator: operator,
@@ -129,25 +129,25 @@ func ABIDecodeBool(hexStr string) (bool, error) {
 }
 
 // HexToBigInt converts a hexadecimal string without 0x prefix to a big number BigInt (illegal input will return 0)
-func HexToBigInt(hex string) types.BigInt {
+func HexToBigInt(hex string) BigInt {
 	b := new(big.Int)
 	b.SetString(hex, 16)
-	return types.BigInt(b.Text(10))
+	return BigInt(b.Text(10))
 }
 
 // HexToAddress converts a hexadecimal string without a 0x prefix to an Address (greater than the truncated front)
-func HexToAddress(hex string) *types.Address {
+func HexToAddress(hex string) *Address {
 	if len(hex) < 42 {
 		hex = "0x000000000000000000000000000000000000000" + hex[2:]
 	}
 	if len(hex) > 42 {
 		hex = "0x" + hex[len(hex)-40:]
 	}
-	return (*types.Address)(&hex)
+	return (*Address)(&hex)
 }
 
 // ParseAddress converts a hexadecimal string prefixed with 0x to an address
-func ParseAddress(hex []byte) (types.Address, error) {
+func ParseAddress(hex []byte) (Address, error) {
 	if len(hex) != 42 {
 		return "", fmt.Errorf("length is not 42")
 	}
@@ -166,16 +166,16 @@ func ParseAddress(hex []byte) (types.Address, error) {
 		}
 		return "", fmt.Errorf("illegal character: %v", c)
 	}
-	return types.Address(hex), nil
+	return Address(hex), nil
 }
 
 // BigToAddress converts large numbers into addresses (too large numbers will truncate the previous ones)
-func BigToAddress(big *big.Int) types.Address {
+func BigToAddress(big *big.Int) Address {
 	addr := "0000000000000000000000000000000000000000"
 	if big != nil {
 		addr += big.Text(16)
 	}
-	return types.Address("0x" + addr[len(addr)-40:])
+	return Address("0x" + addr[len(addr)-40:])
 }
 
 // ParsePage parses the paging parameters, the default value is 10 records on the first page

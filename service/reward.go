@@ -2,13 +2,15 @@ package service
 
 import "server/common/model"
 
+type Reward struct {
+	model.Reward
+	CollectionName string `json:"collectionName"`
+}
+
 // RewardsRes reward paging return parameters
 type RewardsRes struct {
-	Total   int64 `json:"total"` //The total number of rewards
-	Rewards []*struct {
-		model.Reward
-		CollectionName string `json:"collectionName"`
-	} `json:"rewards"` //Rewards list
+	Total   int64     `json:"total"`   //The total number of rewards
+	Rewards []*Reward `json:"rewards"` //Rewards list
 }
 
 func FetchRewards(page, size int) (res RewardsRes, err error) {
@@ -18,7 +20,8 @@ func FetchRewards(page, size int) (res RewardsRes, err error) {
 	return
 }
 
-func BlockRewards(block string) (res []model.Reward, err error) {
-	err = DB.Where("block_number=?", block).Find(&res).Error
+func BlockRewards(block string) (res []*Reward, err error) {
+	err = DB.Model(&model.Reward{}).Joins("LEFT JOIN collections ON id=LEFT(snft,40)").
+		Where("rewards.block_number=?", block).Select("rewards.*, name AS collection_name").Scan(&res).Error
 	return
 }

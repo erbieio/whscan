@@ -39,6 +39,16 @@ func DropTable(db *gorm.DB) error {
 	return db.Migrator().DropTable(Tables...)
 }
 
+func ClearTable(db *gorm.DB) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		err := tx.AutoMigrate(Tables...)
+		if err == nil {
+			err = tx.Migrator().DropTable(Tables...)
+		}
+		return err
+	})
+}
+
 var Views = map[string]string{
 	"v_snfts": `
 CREATE OR REPLACE VIEW v_snfts
@@ -150,24 +160,23 @@ type Cache struct {
 
 // Header block header information
 type Header struct {
-	Difficulty       types.Uint64   `json:"difficulty"`                            //difficulty
-	ExtraData        string         `json:"extraData"`                             //Extra data
-	GasLimit         types.Uint64   `json:"gasLimit"`                              //Gas limit
-	GasUsed          types.Uint64   `json:"gasUsed"`                               //Gas consumption
-	Hash             types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`  //Hash
-	Miner            types.Address  `json:"miner" gorm:"type:CHAR(42)"`            //miner
-	MixHash          types.Hash     `json:"mixHash" gorm:"type:CHAR(66)"`          //Mixed hash
-	Nonce            types.Data8    `json:"nonce" gorm:"type:CHAR(18)"`            //difficulty random number
-	Number           types.Uint64   `json:"number" gorm:"index"`                   //block number
-	ParentHash       types.Hash     `json:"parentHash" gorm:"type:CHAR(66)"`       //parent block hash
-	ReceiptsRoot     types.Hash     `json:"receiptsRoot" gorm:"type:CHAR(66)"`     //Transaction receipt root hash
-	Sha3Uncles       types.Hash     `json:"sha3Uncles" gorm:"type:CHAR(66)"`       //Uncle root hash
-	Size             types.Uint64   `json:"size"`                                  //size
-	StateRoot        types.Hash     `json:"stateRoot" gorm:"type:CHAR(66)"`        //World tree root hash
-	Timestamp        types.Uint64   `json:"timestamp"`                             //timestamp
-	TransactionsRoot types.Hash     `json:"transactionsRoot" gorm:"type:CHAR(66)"` //transaction root hash
-	UncleHashes      types.StrArray `json:"uncles" gorm:"type:TEXT"`               //Uncle block hash
-	UnclesCount      types.Uint64   `json:"unclesCount"`                           //Number of uncle blocks
+	Difficulty       types.Uint64  `json:"difficulty"`                                    //difficulty
+	ExtraData        string        `json:"extraData"`                                     //Extra data
+	GasLimit         types.Uint64  `json:"gasLimit"`                                      //Gas limit
+	GasUsed          types.Uint64  `json:"gasUsed"`                                       //Gas consumption
+	Hash             types.Hash    `json:"hash" gorm:"type:CHAR(66);primaryKey"`          //Hash
+	Miner            types.Address `json:"miner" gorm:"type:CHAR(42)"`                    //miner
+	MixHash          types.Hash    `json:"mixHash" gorm:"type:CHAR(66)"`                  //Mixed hash
+	Nonce            types.Data8   `json:"nonce" gorm:"type:CHAR(18)"`                    //difficulty random number
+	Number           types.Uint64  `json:"number" gorm:"index"`                           //block number
+	ParentHash       types.Hash    `json:"parentHash" gorm:"type:CHAR(66)"`               //parent block hash
+	ReceiptsRoot     types.Hash    `json:"receiptsRoot" gorm:"type:CHAR(66)"`             //Transaction receipt root hash
+	Sha3Uncles       types.Hash    `json:"sha3Uncles" gorm:"type:CHAR(66)"`               //Uncle root hash
+	Size             types.Uint64  `json:"size"`                                          //size
+	StateRoot        types.Hash    `json:"stateRoot" gorm:"type:CHAR(66)"`                //World tree root hash
+	Timestamp        types.Uint64  `json:"timestamp"`                                     //timestamp
+	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:VARCHAR(64);index"` //total difficulty
+	TransactionsRoot types.Hash    `json:"transactionsRoot" gorm:"type:CHAR(66)"`         //transaction root hash
 }
 
 // Uncle block information
@@ -176,14 +185,15 @@ type Uncle Header
 // Block information
 type Block struct {
 	Header
-	TotalDifficulty  types.BigInt `json:"totalDifficulty" gorm:"type:VARCHAR(64);index"` //total difficulty
-	TotalTransaction types.Uint64 `json:"totalTransaction"`                              //number of transactions
+	UncleHashes      types.StrArray `json:"uncles" gorm:"type:TEXT"` //Uncle block hash
+	UnclesCount      types.Uint64   `json:"unclesCount"`             //Number of uncle blocks
+	TotalTransaction types.Uint64   `json:"totalTransaction"`        //number of transactions
 }
 
 // Account information
 type Account struct {
 	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
-	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //balance
+	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //The total amount of coins in the chain
 	Nonce     types.Uint64        `json:"transactionCount"`                        //transaction random number, transaction volume
 	Code      *string             `json:"code"`                                    //bytecode
 	Name      *string             `json:"name" gorm:"type:VARCHAR(64)"`            //name
@@ -401,7 +411,6 @@ type Pledge struct {
 type Location struct {
 	Address   string  `json:"address" gorm:"type:CHAR(42);primary_key"` //account address
 	IP        string  `json:"ip" gorm:"type:VARCHAR(15)"`               //account ip
-	Name      string  `json:"name" gorm:"type:VARCHAR(256)"`            //the location name
 	Latitude  float64 `json:"latitude"`                                 //latitude
 	Longitude float64 `json:"longitude"`                                //longitude
 }

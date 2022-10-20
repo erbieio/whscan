@@ -2,14 +2,12 @@ package node
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"strconv"
 
+	"server/common/model"
 	"server/common/types"
 )
-
-var NotFound = fmt.Errorf("not found")
 
 // Client defines typed wrappers for the Ethereum RPC API.
 type Client struct {
@@ -45,12 +43,14 @@ func (c *Client) PendingNonceAt(ctx context.Context, account types.Address) (uin
 	return strconv.ParseUint(result[2:], 16, 64)
 }
 
-func (c *Client) ChainId(ctx context.Context) (*big.Int, error) {
-	var hex Big
-	if err := c.CallContext(ctx, &hex, "eth_chainId"); err != nil {
-		return nil, err
-	}
-	return (*big.Int)(&hex), nil
+func (c *Client) ChainId(ctx context.Context) (result types.Uint64, err error) {
+	err = c.CallContext(ctx, &result, "eth_chainId")
+	return
+}
+
+func (c *Client) Genesis(ctx context.Context) (result *model.Header, err error) {
+	err = c.CallContext(ctx, &result, "eth_getBlockByNumber", "0x0", false)
+	return
 }
 
 func (c *Client) BlockNumber(ctx context.Context) (types.Uint64, error) {

@@ -1496,7 +1496,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Reward"
+                                "$ref": "#/definitions/service.Reward"
                             }
                         }
                     },
@@ -2801,35 +2801,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Reward": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "reward address",
-                    "type": "string"
-                },
-                "amount": {
-                    "description": "Amount of reward",
-                    "type": "string"
-                },
-                "block_number": {
-                    "description": "The block number when rewarding",
-                    "type": "integer"
-                },
-                "identity": {
-                    "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
-                    "type": "integer"
-                },
-                "proxy": {
-                    "description": "proxy address",
-                    "type": "string"
-                },
-                "snft": {
-                    "description": "SNFT address",
-                    "type": "string"
-                }
-            }
-        },
         "model.SNFT": {
             "type": "object",
             "properties": {
@@ -3705,6 +3676,38 @@ const docTemplate = `{
                 }
             }
         },
+        "service.Reward": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "reward address",
+                    "type": "string"
+                },
+                "amount": {
+                    "description": "Amount of reward",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "The block number when rewarding",
+                    "type": "integer"
+                },
+                "collectionName": {
+                    "type": "string"
+                },
+                "identity": {
+                    "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
+                    "type": "integer"
+                },
+                "proxy": {
+                    "description": "proxy address",
+                    "type": "string"
+                },
+                "snft": {
+                    "description": "SNFT address",
+                    "type": "string"
+                }
+            }
+        },
         "service.RewardsRes": {
             "type": "object",
             "properties": {
@@ -3712,36 +3715,7 @@ const docTemplate = `{
                     "description": "Rewards list",
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "address": {
-                                "description": "reward address",
-                                "type": "string"
-                            },
-                            "amount": {
-                                "description": "Amount of reward",
-                                "type": "string"
-                            },
-                            "block_number": {
-                                "description": "The block number when rewarding",
-                                "type": "integer"
-                            },
-                            "collectionName": {
-                                "type": "string"
-                            },
-                            "identity": {
-                                "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
-                                "type": "integer"
-                            },
-                            "proxy": {
-                                "description": "proxy address",
-                                "type": "string"
-                            },
-                            "snft": {
-                                "description": "SNFT address",
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/service.Reward"
                     }
                 },
                 "total": {
@@ -4031,8 +4005,12 @@ const docTemplate = `{
         "service.Stats": {
             "type": "object",
             "properties": {
+                "chainId": {
+                    "description": "chain id",
+                    "type": "integer"
+                },
                 "genesisBalance": {
-                    "description": "The total amount of coins in the chain",
+                    "description": "Total amount of coins created",
                     "type": "string"
                 },
                 "rewardCoinCount": {
