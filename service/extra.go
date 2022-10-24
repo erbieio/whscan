@@ -31,7 +31,7 @@ func init() {
 	}
 	prv = conf.PrivateKey
 	addr = utils.PubkeyToAddress(prv.PubKey())
-	id, err := client.ChainId(context.Background())
+	id, err := client.ChainId()
 	chainId = new(big.Int).SetUint64(uint64(id))
 	if err != nil {
 		panic(err)

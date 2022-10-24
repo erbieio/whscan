@@ -1057,6 +1057,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/last_msg": {
+            "get": {
+                "description": "Query validator's last msg list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "block"
+                ],
+                "summary": "query validator msg list",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.Msg"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/nft/page": {
             "get": {
                 "description": "Query the NFT list in reverse order of creation time",
@@ -1684,6 +1710,49 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/service.SNFTsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/snft/recycle_tx": {
+            "get": {
+                "description": "Query one SNFT recycle transaction by address or tx hash",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "query recycle transaction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "recycle tx hash",
+                        "name": "hash",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "recycle address",
+                        "name": "addr",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.RecycleTx"
                         }
                     },
                     "400": {
@@ -2797,6 +2866,27 @@ const docTemplate = `{
                 }
             }
         },
+        "model.RecycleTx": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "the SNFT address",
+                    "type": "string"
+                },
+                "count": {
+                    "description": "snft count",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "description": "transaction timestamp",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "transaction hash",
+                    "type": "string"
+                }
+            }
+        },
         "model.SNFT": {
             "type": "object",
             "properties": {
@@ -2862,6 +2952,10 @@ const docTemplate = `{
                     "description": "address",
                     "type": "string"
                 },
+                "exchangerAmount": {
+                    "description": "exchanger amount",
+                    "type": "string"
+                },
                 "name": {
                     "description": "name",
                     "type": "string"
@@ -2877,6 +2971,10 @@ const docTemplate = `{
                 "rewardSNFTCount": {
                     "description": "Number of times to get SNFT rewards",
                     "type": "integer"
+                },
+                "snftAmount": {
+                    "description": "snft amount",
+                    "type": "string"
                 },
                 "symbol": {
                     "description": "symbol",
@@ -3232,6 +3330,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tx_hash": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.Msg": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "to": {
                     "type": "string"
                 }
             }

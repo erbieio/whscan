@@ -222,6 +222,18 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			return
 		}
 	}
+	if len(parsed.NFTTxs) > 0 {
+		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
+			Key: "TotalNFTAmount", Value: totalNFTAmount.Text(10)}).Error
+		if err != nil {
+			return
+		}
+		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
+			Key: "TotalSNFTAmount", Value: totalSNFTAmount.Text(10)}).Error
+		if err != nil {
+			return
+		}
+	}
 	for _, account := range parsed.CacheAccounts {
 		stats.balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
 	}
@@ -330,14 +342,14 @@ func freshStats(db *gorm.DB) {
 	}
 }
 
-func CheckStats(chainId types.Uint64, genesis *model.Header) (err error) {
+func CheckStats(chainId types.Uint64, genesis *model.Header) bool {
 	if stats.TotalBlock == 0 {
 		stats.ChainId = int64(chainId)
 		stats.genesis = *genesis
 	} else if stats.ChainId != int64(chainId) || stats.genesis != *genesis {
-		err = fmt.Errorf("database and chain information do not match, chain ID: %v %v, genesis block: %v %v", stats.ChainId, chainId, stats.genesis, genesis)
+		return false
 	}
-	return
+	return true
 }
 
 func TotalBlock() types.Uint64 {

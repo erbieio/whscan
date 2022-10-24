@@ -18,10 +18,9 @@ func getNFTAddr(next *big.Int) string {
 	return string(utils.BigToAddress(next.Add(next, big.NewInt(stats.TotalNFT+1))))
 }
 
-func FixHead(parsed *model.Parsed) (err error) {
-	return DB.Transaction(func(tx *gorm.DB) (err error) {
+func FixHead(parsed *model.Parsed) (types.Uint64, error) {
+	return parsed.Number + 1, DB.Transaction(func(tx *gorm.DB) (err error) {
 		if head := parsed.Number; head != ^types.Uint64(0) {
-			// reset head, todo pledges,stats
 			if err := tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
 				tx.Model(&model.Epoch{}).Select("id").Where("number>?", head),
 			).Error; err != nil {
@@ -171,9 +170,17 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 		}
 	}
 	// Recycle SNFT
-	for _, snft := range wh.RecycleSNFTs {
-		err = tx.Delete(model.SNFT{}, "address=?", snft).Error
-		if err != nil {
+	for _, snftTx := range wh.RecycleTxs {
+		var snfts []string
+		if err = tx.Model(model.SNFT{}).Where("LEFT(address,?)=?", len(snftTx.Address), snftTx.Address).Pluck("address", &snfts).Error; err != nil {
+			return
+		}
+		snftTx.Count = int64(len(snfts))
+		if err = tx.Create(snftTx).Error; err != nil {
+			return
+		}
+		wh.RecycleSNFTs = append(wh.RecycleSNFTs, snfts...)
+		if err = tx.Delete(model.SNFT{}, "address IN (?)", snfts).Error; err != nil {
 			return
 		}
 	}

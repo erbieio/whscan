@@ -150,6 +150,11 @@ func GetNFT(addr string) (res NFT, err error) {
 	return
 }
 
+func GetRecycleTx(hash, addr string) (res *model.RecycleTx, err error) {
+	err = DB.Where("tx_hash=? OR address=?", hash, addr).Take(&res).Error
+	return
+}
+
 type SNFT struct {
 	model.SNFT
 	model.FNFT

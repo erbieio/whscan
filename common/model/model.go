@@ -25,6 +25,7 @@ var Tables = []interface{}{
 	&ComSNFT{},
 	&Collection{},
 	&NFTTx{},
+	&RecycleTx{},
 	&Reward{},
 	&Pledge{},
 	&Location{},
@@ -358,6 +359,14 @@ type NFTTx struct {
 	Fee           *string `json:"fee"`                                      //Transaction fee, in wei (only if there is an exchange and price)
 }
 
+// RecycleTx SNFT recycle transaction
+type RecycleTx struct {
+	Address   string `json:"address" gorm:"type:VARCHAR(42);primaryKey"` //the SNFT address
+	Timestamp int64  `json:"timestamp"`                                  //transaction timestamp
+	TxHash    string `json:"tx_hash" gorm:"type:CHAR(66);index"`         //transaction hash
+	Count     int64  `json:"count"`                                      //snft count
+}
+
 // Collection information, user collection: name + creator + hash of the exchange to which they belong, SNFT collection: SNFT address removes the last 3 digits
 type Collection struct {
 	Id          string  `json:"id" gorm:"type:CHAR(66);primary_key"`  //ID
@@ -400,24 +409,24 @@ type Reward struct {
 
 // Pledge validator pledge information
 type Pledge struct {
-	Address    string `json:"address" gorm:"type:CHAR(42);primary_key"` //staking account
-	Amount     string `json:"amount" gorm:"type:VARCHAR(64)"`           //Pledge amount
-	Count      uint64 `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
-	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`          //Amount of total reward
-	Timestamp  uint64 `json:"timestamp"`                                //The time at latest rewarding
-	LastNumber uint64 `json:"last_number"`                              //The block number at latest rewarding
+	Address    string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
+	Amount     string `json:"amount" gorm:"type:VARCHAR(64)"`          //Pledge amount
+	Count      uint64 `json:"count"`                                   //The number of pledges, both PledgeAdd and PledgeSub are added once
+	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`         //Amount of total reward
+	Timestamp  uint64 `json:"timestamp"`                               //The time at latest rewarding
+	LastNumber uint64 `json:"last_number"`                             //The block number at latest rewarding
 }
 
 type Location struct {
-	Address   string  `json:"address" gorm:"type:CHAR(42);primary_key"` //account address
-	IP        string  `json:"ip" gorm:"type:VARCHAR(15)"`               //account ip
-	Latitude  float64 `json:"latitude"`                                 //latitude
-	Longitude float64 `json:"longitude"`                                //longitude
+	Address   string  `json:"address" gorm:"type:CHAR(42);primaryKey"` //account address
+	IP        string  `json:"ip" gorm:"type:VARCHAR(15)"`              //account ip
+	Latitude  float64 `json:"latitude"`                                //latitude
+	Longitude float64 `json:"longitude"`                               //longitude
 }
 
 // Subscription information
 type Subscription struct {
-	Email string `json:"email" gorm:"type:VARCHAR(64);primary_key"` //Email
+	Email string `json:"email" gorm:"type:VARCHAR(64);primaryKey"` //Email
 }
 
 // Parsed block parsing result
@@ -436,6 +445,7 @@ type Parsed struct {
 	CreateNFTs       []*NFT       //Newly created NFT, priority: 2
 	RewardSNFTs      []*SNFT      //Reward information of SNFT, priority: 3
 	NFTTxs           []*NFTTx     //NFT transaction record, priority: 4
+	RecycleTxs       []*RecycleTx //Recycle SNFT transaction, priority: 5
 	RecycleSNFTs     []string     //Recycle SNFT, priority: 5
 	CloseExchangers  []string     //Close exchanges, priority: 5
 	Rewards          []*Reward    //reward record, priority: none

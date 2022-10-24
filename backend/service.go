@@ -16,16 +16,16 @@ func Run(chainUrl string, thread int64, interval time.Duration) {
 	if err != nil {
 		panic(err)
 	}
-	chainId, err := client.ChainId(context.Background())
+	chainId, err := client.ChainId()
 	if err != nil {
 		panic(err)
 	}
-	genesis, err := client.Genesis(context.Background())
+	genesis, err := client.Genesis()
 	if err != nil {
 		panic(err)
 	}
-	if err = service.CheckStats(chainId, genesis); err != nil {
-		panic(err)
+	if !service.CheckStats(chainId, genesis) {
+		panic("Stored data and chain node information do not match")
 	}
 	if !client.IsDebug() || !client.IsWormholes() {
 		panic("not open debug api or not exist wormholes api\n")
@@ -46,14 +46,13 @@ func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh 
 		if err != nil {
 			log.Printf("get block height error: %v\n", err)
 		}
-		if err != nil || (max <= number && taskNum == 0) {
+		if err != nil || (number > max && taskNum == 0) {
 			time.Sleep(interval)
 		}
 		for number <= max || taskNum > 0 {
-			for number <= max && taskNum < thread {
+			for ; number <= max && taskNum < thread; number++ {
 				taskCh <- number
 				taskNum++
-				number++
 			}
 			parsed := <-parsedCh
 			taskNum--
@@ -66,14 +65,12 @@ func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh 
 						if err != nil {
 							break
 						}
-						err = service.FixHead(head)
-						if err != nil {
+						if number, err = service.FixHead(head); err != nil {
 							break
 						}
 						for ; taskNum > 0; taskNum-- {
 							<-parsedCh
 						}
-						number = head.Number + 1
 						cache = make(map[Uint64]*Parsed)
 						log.Printf("fork fallback, starting data analysis from %v blockn\n", number)
 					}

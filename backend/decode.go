@@ -266,33 +266,28 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *Parsed) (err er
 }
 
 func checkHead(c *node.Client, ctx context.Context, number Uint64, badBlocks []Hash) (parsed *Parsed, err error) {
-	for i := 0; i < len(badBlocks); i++ {
-		err = c.CallContext(ctx, &parsed, "eth_getBlockByNumber", number.Hex(), true)
-		if err != nil {
+	for _, block := range badBlocks {
+		if err = c.CallContext(ctx, &parsed, "eth_getBlockByNumber", number.Hex(), true); err != nil {
 			return
-		} else if parsed == nil {
-			return nil, NotFound
 		}
-		if parsed.Hash == badBlocks[i] {
+		if parsed != nil && parsed.Hash == block {
 			break
 		}
 		number--
 	}
-	if number == ^Uint64(0) {
-		return &Parsed{Block: &Block{Header: Header{Number: ^Uint64(0)}}}, nil
-	}
-	parsed.CacheAccounts = make(map[Address]*Account)
-	status := &struct {
-		Accounts map[Address]*Account `json:"accounts"`
-		Next     *string              `json:"next"`
-	}{}
-	for next := new(string); next != nil; next = status.Next {
-		status = nil
-		if err = c.CallContext(ctx, &status, "debug_accountRange", parsed.Number.Hex(), next, nil, true, true, true); err != nil {
-			return
-		}
-		for address, account := range status.Accounts {
-			parsed.CacheAccounts[address] = &Account{Address: address, Balance: account.Balance, Nonce: account.Nonce}
+	parsed = &Parsed{Block: &Block{Header: Header{Number: number}}, CacheAccounts: map[Address]*Account{}}
+	if number != ^Uint64(0) {
+		status := &struct {
+			Accounts map[Address]*Account `json:"accounts"`
+			Next     *string              `json:"next"`
+		}{}
+		for next := new(string); next != nil; next, status = status.Next, nil {
+			if err = c.CallContext(ctx, &status, "debug_accountRange", number.Hex(), next, nil, true, true, true); err != nil {
+				return
+			}
+			for address, account := range status.Accounts {
+				parsed.CacheAccounts[address] = &Account{Address: address, Balance: account.Balance, Nonce: account.Nonce}
+			}
 		}
 	}
 	return
@@ -510,16 +505,11 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		})
 
 	case 6: //Official NFT exchange, recycling shards to shard pool
-		level := 42 - len(w.NFTAddress)
-		if level == 0 {
-			wh.RecycleSNFTs = append(wh.RecycleSNFTs, w.NFTAddress)
-		} else {
-			// Synthetic SNFT address processing
-			for i := 0; i < 1<<(level*4); i++ {
-				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
-				wh.RecycleSNFTs = append(wh.RecycleSNFTs, address)
-			}
-		}
+		wh.RecycleTxs = append(wh.RecycleTxs, &RecycleTx{
+			Address:   w.NFTAddress,
+			Timestamp: int64(timestamp),
+			TxHash:    txHash,
+		})
 
 	case 7: //pledge snft
 		level := 42 - len(w.NFTAddress)

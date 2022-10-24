@@ -14,6 +14,7 @@ func Block(e *gin.Engine) {
 	e.GET("/block/:number", getBlock)
 	e.GET("/totals", totals)
 	e.GET("/validators", validators)
+	e.GET("/last_msg", lastMsg)
 }
 
 // @Tags        block
@@ -120,4 +121,15 @@ func validators(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        block
+// @Summary     query validator msg list
+// @Description Query validator's last msg list
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} []service.Msg
+// @Router      /last_msg [get]
+func lastMsg(c *gin.Context) {
+	c.JSON(http.StatusOK, service.GetLastMsg())
 }

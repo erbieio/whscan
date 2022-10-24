@@ -414,6 +414,21 @@ definitions:
           7: lazy bid transaction, 8: matching transaction'
         type: integer
     type: object
+  model.RecycleTx:
+    properties:
+      address:
+        description: the SNFT address
+        type: string
+      count:
+        description: snft count
+        type: integer
+      timestamp:
+        description: transaction timestamp
+        type: integer
+      tx_hash:
+        description: transaction hash
+        type: string
+    type: object
   model.SNFT:
     properties:
       address:
@@ -463,6 +478,9 @@ definitions:
       creator:
         description: address
         type: string
+      exchangerAmount:
+        description: exchanger amount
+        type: string
       name:
         description: name
         type: string
@@ -475,6 +493,9 @@ definitions:
       rewardSNFTCount:
         description: Number of times to get SNFT rewards
         type: integer
+      snftAmount:
+        description: snft amount
+        type: string
       symbol:
         description: symbol
         type: string
@@ -722,6 +743,15 @@ definitions:
       topics:
         type: string
       tx_hash:
+        type: string
+    type: object
+  service.Msg:
+    properties:
+      from:
+        type: string
+      timestamp:
+        type: integer
+      to:
         type: string
     type: object
   service.NFT:
@@ -2222,6 +2252,23 @@ paths:
       summary: request ERB test coin (new /erb_faucet)
       tags:
       - obsolete interface
+  /last_msg:
+    get:
+      consumes:
+      - application/json
+      description: Query validator's last msg list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.Msg'
+            type: array
+      summary: query validator msg list
+      tags:
+      - block
   /nft/{addr}:
     get:
       consumes:
@@ -2667,6 +2714,34 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: query SNFT list
+      tags:
+      - NFT
+  /snft/recycle_tx:
+    get:
+      consumes:
+      - application/json
+      description: Query one SNFT recycle transaction by address or tx hash
+      parameters:
+      - description: recycle tx hash
+        in: query
+        name: hash
+        type: string
+      - description: recycle address
+        in: query
+        name: addr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.RecycleTx'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query recycle transaction
       tags:
       - NFT
   /snft_com/page:
