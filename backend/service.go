@@ -76,6 +76,8 @@ func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh 
 					}
 					delete(cache, i)
 				} else {
+					time.Sleep(interval)
+					log.Printf("write block error: %v\n", err)
 					break
 				}
 			}

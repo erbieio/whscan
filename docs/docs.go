@@ -1320,12 +1320,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Limit, time range: 30d,7d,24h,all,",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
@@ -1369,12 +1363,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Limit, time range: 30d,7d,24h,all,",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
@@ -1416,12 +1404,6 @@ const docTemplate = `{
                 ],
                 "summary": "query SNFT ranking",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Limit, time range: 30d,7d,24h,all,",
-                        "name": "limit",
-                        "in": "query"
-                    },
                     {
                         "type": "string",
                         "description": "Page, default 1",
@@ -2473,6 +2455,10 @@ const docTemplate = `{
                     "description": "name",
                     "type": "string"
                 },
+                "snftAmount": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
+                },
                 "symbol": {
                     "description": "symbol",
                     "type": "string"
@@ -2681,10 +2667,6 @@ const docTemplate = `{
                     "description": "Pledge amount",
                     "type": "string"
                 },
-                "balance_count": {
-                    "description": "Total transaction amount, unit wei",
-                    "type": "string"
-                },
                 "block_number": {
                     "description": "The block number when created",
                     "type": "integer"
@@ -2716,6 +2698,10 @@ const docTemplate = `{
                 "timestamp": {
                     "description": "Open time",
                     "type": "integer"
+                },
+                "tx_amount": {
+                    "description": "Total transaction amount, unit wei",
+                    "type": "string"
                 },
                 "tx_hash": {
                     "description": "The transaction created",
@@ -2821,6 +2807,83 @@ const docTemplate = `{
                 }
             }
         },
+        "model.NFT": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "NFT address, grows automatically from 0x1",
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "Attributes",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "The height of the created block",
+                    "type": "integer"
+                },
+                "category": {
+                    "description": "category",
+                    "type": "string"
+                },
+                "collection_id": {
+                    "description": "The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "Creator address",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "description",
+                    "type": "string"
+                },
+                "exchanger_addr": {
+                    "description": "The address of the exchange, if there is none, it can be traded on any exchange",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "The last transaction price (null if the transaction is not completed), the unit is wei",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "Real meta information URL",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "name",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "owner",
+                    "type": "string"
+                },
+                "raw_meta_url": {
+                    "description": "Original meta information URL on the chain",
+                    "type": "string"
+                },
+                "royalty_ratio": {
+                    "description": "Royalty rate, in ten thousandths",
+                    "type": "integer"
+                },
+                "source_url": {
+                    "description": "Resource links, file links such as pictures or videos",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Create timestamp",
+                    "type": "integer"
+                },
+                "tx_amount": {
+                    "description": "the total transaction volume of this NFT",
+                    "type": "string"
+                },
+                "tx_hash": {
+                    "description": "The transaction hash created",
+                    "type": "string"
+                }
+            }
+        },
         "model.NFTTx": {
             "type": "object",
             "properties": {
@@ -2917,6 +2980,10 @@ const docTemplate = `{
                 "reward_number": {
                     "description": "The height of the last rewarded block, null if not rewarded",
                     "type": "integer"
+                },
+                "tx_amount": {
+                    "description": "the total transaction volume of this SNFT",
+                    "type": "string"
                 }
             }
         },
@@ -2953,15 +3020,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "exchangerAmount": {
-                    "description": "exchanger amount",
+                    "description": "exchanger pledge amount",
                     "type": "string"
                 },
                 "name": {
                     "description": "name",
-                    "type": "string"
-                },
-                "pledgeAmount": {
-                    "description": "pledge amount",
                     "type": "string"
                 },
                 "rewardCoinCount": {
@@ -2973,7 +3036,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "snftAmount": {
-                    "description": "snft amount",
+                    "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
                 "symbol": {
@@ -2995,6 +3058,10 @@ const docTemplate = `{
                 "type": {
                     "description": "contract types, ERC20, ERC721, ERC1155",
                     "type": "integer"
+                },
+                "validatorAmount": {
+                    "description": "validator pledge amount",
+                    "type": "string"
                 }
             }
         },
@@ -3152,10 +3219,6 @@ const docTemplate = `{
                     "description": "Pledge amount",
                     "type": "string"
                 },
-                "balance_count": {
-                    "description": "Total transaction amount, unit wei",
-                    "type": "string"
-                },
                 "block_number": {
                     "description": "The block number when created",
                     "type": "integer"
@@ -3195,6 +3258,10 @@ const docTemplate = `{
                 "txCount": {
                     "description": "transaction count",
                     "type": "integer"
+                },
+                "tx_amount": {
+                    "description": "Total transaction amount, unit wei",
+                    "type": "string"
                 },
                 "tx_hash": {
                     "description": "The transaction created",
@@ -3418,6 +3485,10 @@ const docTemplate = `{
                     "description": "Create timestamp",
                     "type": "integer"
                 },
+                "tx_amount": {
+                    "description": "the total transaction volume of this NFT",
+                    "type": "string"
+                },
                 "tx_hash": {
                     "description": "The transaction hash created",
                     "type": "string"
@@ -3529,6 +3600,10 @@ const docTemplate = `{
                                 "description": "Create timestamp",
                                 "type": "integer"
                             },
+                            "tx_amount": {
+                                "description": "the total transaction volume of this NFT",
+                                "type": "string"
+                            },
                             "tx_hash": {
                                 "description": "The transaction hash created",
                                 "type": "string"
@@ -3549,64 +3624,7 @@ const docTemplate = `{
                     "description": "Exchanger list",
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "address": {
-                                "description": "Exchange address",
-                                "type": "string"
-                            },
-                            "amount": {
-                                "description": "Pledge amount",
-                                "type": "string"
-                            },
-                            "balance_count": {
-                                "description": "Total transaction amount, unit wei",
-                                "type": "string"
-                            },
-                            "block_number": {
-                                "description": "The block number when created",
-                                "type": "integer"
-                            },
-                            "close_at": {
-                                "description": "if not null, the exchange is closed",
-                                "type": "integer"
-                            },
-                            "count": {
-                                "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
-                                "type": "integer"
-                            },
-                            "creator": {
-                                "description": "Creator address",
-                                "type": "string"
-                            },
-                            "fee_ratio": {
-                                "description": "fee rate, unit 1/10,000",
-                                "type": "integer"
-                            },
-                            "name": {
-                                "description": "Exchange name",
-                                "type": "string"
-                            },
-                            "nft_count": {
-                                "description": "Total NFT count",
-                                "type": "integer"
-                            },
-                            "timestamp": {
-                                "description": "Open time",
-                                "type": "integer"
-                            },
-                            "txCount": {
-                                "type": "integer"
-                            },
-                            "tx_hash": {
-                                "description": "The transaction created",
-                                "type": "string"
-                            },
-                            "url": {
-                                "description": "Exchange URL",
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/model.Exchanger"
                     }
                 },
                 "total": {
@@ -3622,80 +3640,7 @@ const docTemplate = `{
                     "description": "NFT list",
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "address": {
-                                "description": "NFT address, grows automatically from 0x1",
-                                "type": "string"
-                            },
-                            "attributes": {
-                                "description": "Attributes",
-                                "type": "string"
-                            },
-                            "block_number": {
-                                "description": "The height of the created block",
-                                "type": "integer"
-                            },
-                            "category": {
-                                "description": "category",
-                                "type": "string"
-                            },
-                            "collection_id": {
-                                "description": "The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located",
-                                "type": "string"
-                            },
-                            "creator": {
-                                "description": "Creator address",
-                                "type": "string"
-                            },
-                            "desc": {
-                                "description": "description",
-                                "type": "string"
-                            },
-                            "exchanger_addr": {
-                                "description": "The address of the exchange, if there is none, it can be traded on any exchange",
-                                "type": "string"
-                            },
-                            "last_price": {
-                                "description": "The last transaction price (null if the transaction is not completed), the unit is wei",
-                                "type": "string"
-                            },
-                            "meta_url": {
-                                "description": "Real meta information URL",
-                                "type": "string"
-                            },
-                            "name": {
-                                "description": "name",
-                                "type": "string"
-                            },
-                            "owner": {
-                                "description": "owner",
-                                "type": "string"
-                            },
-                            "raw_meta_url": {
-                                "description": "Original meta information URL on the chain",
-                                "type": "string"
-                            },
-                            "royalty_ratio": {
-                                "description": "Royalty rate, in ten thousandths",
-                                "type": "integer"
-                            },
-                            "source_url": {
-                                "description": "Resource links, file links such as pictures or videos",
-                                "type": "string"
-                            },
-                            "timestamp": {
-                                "description": "Create timestamp",
-                                "type": "integer"
-                            },
-                            "txCount": {
-                                "type": "integer"
-                            },
-                            "tx_hash": {
-                                "description": "The transaction hash created",
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/model.NFT"
                     }
                 },
                 "total": {
@@ -3727,9 +3672,6 @@ const docTemplate = `{
                             },
                             "category": {
                                 "description": "category",
-                                "type": "string"
-                            },
-                            "creator": {
                                 "type": "string"
                             },
                             "desc": {
@@ -3772,8 +3714,9 @@ const docTemplate = `{
                                 "description": "Resource links, file links such as pictures or videos",
                                 "type": "string"
                             },
-                            "txCount": {
-                                "type": "integer"
+                            "tx_amount": {
+                                "description": "the total transaction volume of this SNFT",
+                                "type": "string"
                             }
                         }
                     }
@@ -3905,6 +3848,10 @@ const docTemplate = `{
                 },
                 "source_url": {
                     "description": "Resource links, file links such as pictures or videos",
+                    "type": "string"
+                },
+                "tx_amount": {
+                    "description": "the total transaction volume of this SNFT",
                     "type": "string"
                 }
             }
@@ -4084,6 +4031,10 @@ const docTemplate = `{
                             "source_url": {
                                 "description": "Resource links, file links such as pictures or videos",
                                 "type": "string"
+                            },
+                            "tx_amount": {
+                                "description": "the total transaction volume of this SNFT",
+                                "type": "string"
                             }
                         }
                     }
@@ -4113,6 +4064,10 @@ const docTemplate = `{
         "service.Stats": {
             "type": "object",
             "properties": {
+                "avgBlockTime": {
+                    "description": "average block time, ms",
+                    "type": "integer"
+                },
                 "chainId": {
                     "description": "chain id",
                     "type": "integer"
@@ -4406,7 +4361,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "amount": {
-                    "description": "Pledge amount",
+                    "description": "pledge amount",
                     "type": "string"
                 },
                 "count": {
@@ -4421,7 +4376,7 @@ const docTemplate = `{
                     "$ref": "#/definitions/model.Location"
                 },
                 "reward": {
-                    "description": "Amount of total reward",
+                    "description": "amount of total reward",
                     "type": "string"
                 },
                 "timestamp": {

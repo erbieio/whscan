@@ -151,7 +151,7 @@ func GetNFT(addr string) (res NFT, err error) {
 }
 
 func GetRecycleTx(hash, addr string) (res *model.RecycleTx, err error) {
-	err = DB.Where("tx_hash=? OR address=?", hash, addr).Take(&res).Error
+	err = DB.Where("tx_hash=? OR address=?", hash, addr).Limit(1).Find(&res).Error
 	return
 }
 

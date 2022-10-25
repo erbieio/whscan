@@ -4,8 +4,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"os"
+	"os/user"
+	"path"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	. "server/common/model"
@@ -176,6 +180,25 @@ func BigToAddress(big *big.Int) Address {
 		addr += big.Text(16)
 	}
 	return Address("0x" + addr[len(addr)-40:])
+}
+
+func ExpandPath(p string) string {
+	if strings.HasPrefix(p, "~/") || strings.HasPrefix(p, "~\\") {
+		if home := HomeDir(); home != "" {
+			p = home + p[1:]
+		}
+	}
+	return path.Clean(os.ExpandEnv(p))
+}
+
+func HomeDir() string {
+	if home := os.Getenv("HOME"); home != "" {
+		return home
+	}
+	if usr, err := user.Current(); err == nil {
+		return usr.HomeDir
+	}
+	return ""
 }
 
 // ParsePage parses the paging parameters, the default value is 10 records on the first page

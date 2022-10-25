@@ -19,7 +19,6 @@ func Ranking(e *gin.Engine) {
 // @Description SNFT ranking for a specified time range
 // @Accept      json
 // @Produce     json
-// @Param       limit     query    string false "Limit, time range: 30d,7d,24h,all,"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.RankingSNFTRes
@@ -27,9 +26,8 @@ func Ranking(e *gin.Engine) {
 // @Router      /ranking/snft [get]
 func rankingSNFT(c *gin.Context) {
 	req := struct {
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-		Limit    string `form:"limit"`
+		Page     *int `form:"page"`
+		PageSize *int `form:"page_size"`
 	}{}
 	err := c.BindQuery(&req)
 	if err != nil {
@@ -42,7 +40,7 @@ func rankingSNFT(c *gin.Context) {
 		return
 	}
 
-	res, err := service.RankingSNFT(req.Limit, page, size)
+	res, err := service.RankingSNFT(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -55,7 +53,6 @@ func rankingSNFT(c *gin.Context) {
 // @Description NFT ranking for a specified time range
 // @Accept      json
 // @Produce     json
-// @Param       limit     query    string false "Limit, time range: 30d,7d,24h,all,"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.RankingNFTRes
@@ -63,9 +60,8 @@ func rankingSNFT(c *gin.Context) {
 // @Router      /ranking/nft [get]
 func rankingNFT(c *gin.Context) {
 	req := struct {
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-		Limit    string `form:"limit"`
+		Page     *int `form:"page"`
+		PageSize *int `form:"page_size"`
 	}{}
 	err := c.BindQuery(&req)
 	if err != nil {
@@ -78,7 +74,7 @@ func rankingNFT(c *gin.Context) {
 		return
 	}
 
-	res, err := service.RankingNFT(req.Limit, page, size)
+	res, err := service.RankingNFT(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -91,7 +87,6 @@ func rankingNFT(c *gin.Context) {
 // @Description Exchanger ranking for a specified time range
 // @Accept      json
 // @Produce     json
-// @Param       limit     query    string false "Limit, time range: 30d,7d,24h,all,"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.RankingExchangerRes
@@ -99,9 +94,8 @@ func rankingNFT(c *gin.Context) {
 // @Router      /ranking/exchanger [get]
 func rankingExchanger(c *gin.Context) {
 	req := struct {
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-		Limit    string `form:"limit"`
+		Page     *int `form:"page"`
+		PageSize *int `form:"page_size"`
 	}{}
 	err := c.BindQuery(&req)
 	if err != nil {
@@ -114,7 +108,7 @@ func rankingExchanger(c *gin.Context) {
 		return
 	}
 
-	res, err := service.RankingExchanger(req.Limit, page, size)
+	res, err := service.RankingExchanger(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

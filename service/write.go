@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"strconv"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -172,7 +171,7 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 	// Recycle SNFT
 	for _, snftTx := range wh.RecycleTxs {
 		var snfts []string
-		if err = tx.Model(model.SNFT{}).Where("LEFT(address,?)=?", len(snftTx.Address), snftTx.Address).Pluck("address", &snfts).Error; err != nil {
+		if err = tx.Model(&model.SNFT{}).Where("LEFT(address,?)=?", len(snftTx.Address), snftTx.Address).Pluck("address", &snfts).Error; err != nil {
 			return
 		}
 		snftTx.Count = int64(len(snfts))
@@ -180,7 +179,7 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 			return
 		}
 		wh.RecycleSNFTs = append(wh.RecycleSNFTs, snfts...)
-		if err = tx.Delete(model.SNFT{}, "address IN (?)", snfts).Error; err != nil {
+		if err = tx.Delete(&model.SNFT{}, "address IN (?)", snfts).Error; err != nil {
 			return
 		}
 	}
@@ -211,29 +210,29 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 	}
 	// close exchanger
 	for _, exchanger := range wh.CloseExchangers {
-		err = tx.Model(model.Exchanger{}).Where("address=?", exchanger).Updates(map[string]interface{}{"close_at": wh.Timestamp, "amount": "0"}).Error
+		err = tx.Model(&model.Exchanger{}).Where("address=?", exchanger).Updates(map[string]interface{}{"close_at": wh.Timestamp, "amount": "0"}).Error
 		if err != nil {
 			return
 		}
 	}
-	// consensus pledge
+	// validator pledge
 	for _, pledge := range wh.ConsensusPledges {
-		var _pledge model.Pledge
-		if err = tx.Find(&_pledge, "address=?", pledge.Address).Error; err != nil {
+		var validator model.Validator
+		if err = tx.Find(&validator, "address=?", pledge.Address).Error; err != nil {
 			return
 		}
-		if len(_pledge.Address) == 0 {
-			_pledge.Address = pledge.Address
-			_pledge.Amount = "0"
-			_pledge.Reward = "0"
+		if len(validator.Address) == 0 {
+			validator.Address = pledge.Address
+			validator.Amount = "0"
+			validator.Reward = "0"
 		}
-		_pledge.Amount = BigIntAdd(_pledge.Amount, pledge.Amount)
-		_pledge.Count++
-		_pledge.Timestamp = uint64(wh.Timestamp)
-		_pledge.LastNumber = uint64(wh.Number)
+		validator.Amount = BigIntAdd(validator.Amount, pledge.Amount)
+		validator.Count++
+		validator.Timestamp = uint64(wh.Timestamp)
+		validator.LastNumber = uint64(wh.Number)
 		err = tx.Clauses(clause.OnConflict{
 			DoUpdates: clause.AssignmentColumns([]string{"amount", "count", "timestamp", "last_number"}),
-		}).Create(&_pledge).Error
+		}).Create(&validator).Error
 		if err != nil {
 			return
 		}
@@ -255,7 +254,7 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 			return
 		}
 		if reward.Identity == 2 {
-			var pledge model.Pledge
+			var pledge model.Validator
 			if err = tx.Find(&pledge, "address=?", reward.Address).Error; err != nil {
 				return
 			}
@@ -316,35 +315,32 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 		if nt.From == "" {
 			nt.From = nft.Owner
 		}
-		err = tx.Model(&model.NFT{}).Where("address=?", nft.Address).Updates(map[string]interface{}{
-			"last_price": nt.Price,
-			"owner":      nt.To,
-		}).Error
-	} else {
-		level := 42 - len(*nt.NFTAddr)
-		var nfts []string
-		if level == 0 {
-			nfts = append(nfts, *nt.NFTAddr)
-		} else {
-			for i := 0; i < 1<<(level*4); i++ {
-				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", *nt.NFTAddr, i)
-				nfts = append(nfts, address)
-			}
+		if nt.Price != nil {
+			nft.LastPrice = nt.Price
+			nft.TxAmount = BigIntAdd(nft.TxAmount, *nt.Price)
 		}
-		var nft model.SNFT
-		err := tx.Where("address=?", nfts[0]).First(&nft).Error
+		nft.Owner = nt.To
+		err = tx.Select("last_price", "tx_amount", "owner").Updates(&nft).Error
+		if err != nil {
+			return err
+		}
+	} else {
+		var snfts []*model.SNFT
+		err := tx.Where("LEFT(address,?)=?", len(*nt.NFTAddr), *nt.NFTAddr).Find(&snfts).Error
 		if err != nil {
 			return err
 		}
 		// populate seller field (if none)
 		if nt.From == "" {
-			nt.From = nft.Owner
+			nt.From = snfts[0].Owner
 		}
-		for _, addr := range nfts {
-			err = tx.Model(&model.SNFT{}).Where("address=?", addr).Updates(map[string]interface{}{
-				"last_price": nt.Price,
-				"owner":      nt.To,
-			}).Error
+		for _, snft := range snfts {
+			if nt.Price != nil {
+				snft.TxAmount = BigIntAdd(snft.TxAmount, *nt.Price)
+				snft.LastPrice = nt.Price
+			}
+			snft.Owner = nt.To
+			err = tx.Select("last_price", "tx_amount", "owner").Updates(snft).Error
 			if err != nil {
 				return err
 			}
@@ -364,11 +360,8 @@ func SaveNFTTx(tx *gorm.DB, nt *model.NFTTx) error {
 			fee = fee.Mul(fee, price)
 			feeStr := fee.Div(fee, big.NewInt(10000)).Text(10)
 			nt.Fee = &feeStr
-			balanceCount := new(big.Int)
-			balanceCount.SetString(exchanger.BalanceCount, 10)
-			balanceCount = balanceCount.Add(balanceCount, price)
-			exchanger.BalanceCount = balanceCount.Text(10)
-			err = tx.Select("balance_count").Updates(&exchanger).Error
+			exchanger.TxAmount = BigIntAdd(exchanger.TxAmount, *nt.Price)
+			err = tx.Select("tx_amount").Updates(&exchanger).Error
 			if err != nil {
 				return err
 			}

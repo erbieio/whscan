@@ -180,7 +180,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *Parsed) (err er
 		}
 		for _, address := range modifiedAccounts {
 			if address[:12] != "0x0000000000" && address[:12] != "0x8000000000" {
-				parsed.CacheAccounts[address] = &Account{Address: address}
+				parsed.CacheAccounts[address] = &Account{Address: address, SNFTAmount: "0"}
 			}
 		}
 	} else {
@@ -194,7 +194,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *Parsed) (err er
 				return
 			}
 			for address := range genesis.Accounts {
-				parsed.CacheAccounts[address] = &Account{Address: address}
+				parsed.CacheAccounts[address] = &Account{Address: address, SNFTAmount: "0"}
 			}
 		}
 	}
@@ -326,6 +326,7 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 				nftAddr := *rewards[i].NFTAddress
 				wh.RewardSNFTs = append(wh.RewardSNFTs, &SNFT{
 					Address:      nftAddr,
+					TxAmount:     "0",
 					Awardee:      rewards[i].Address,
 					RewardAt:     uint64(wh.Block.Timestamp),
 					RewardNumber: uint64(wh.Block.Number),
@@ -364,23 +365,23 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 				return err
 			}
 			if balance := info.PledgedBalance.Text(10); balance != "0" {
-				wh.ConsensusPledges = append(wh.ConsensusPledges, &Pledge{
+				wh.ConsensusPledges = append(wh.ConsensusPledges, &Validator{
 					Address: string(address),
 					Amount:  balance,
 				})
 			}
 			if balance := info.ExchangerBalance.Text(10); balance != "0" {
 				wh.Exchangers = append(wh.Exchangers, &Exchanger{
-					Address:      string(address),
-					Name:         info.ExchangerName,
-					URL:          info.ExchangerURL,
-					FeeRatio:     info.FeeRate,
-					Creator:      string(address),
-					Timestamp:    uint64(wh.Timestamp),
-					TxHash:       "0x0",
-					Amount:       balance,
-					Count:        1,
-					BalanceCount: "0",
+					Address:   string(address),
+					Name:      info.ExchangerName,
+					URL:       info.ExchangerURL,
+					FeeRatio:  info.FeeRate,
+					Creator:   string(address),
+					Timestamp: uint64(wh.Timestamp),
+					TxHash:    "0x0",
+					Amount:    balance,
+					Count:     1,
+					TxAmount:  "0",
 				})
 			}
 		}
@@ -483,6 +484,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			MetaUrl:       realMeatUrl(w.MetaURL),
 			RawMetaUrl:    w.MetaURL,
 			ExchangerAddr: strings.ToLower(w.Exchanger),
+			TxAmount:      "0",
 			Creator:       to,
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
@@ -533,8 +535,8 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			}
 		}
 
-	case 9, 10: //Consensus pledge, can be pledged multiple times, starting at 100000ERB
-		pledge := &Pledge{
+	case 9, 10: //validator pledge, can be pledged multiple times, starting at 100000ERB
+		pledge := &Validator{
 			Address: from,
 		}
 		internalTx := &InternalTx{
@@ -558,17 +560,17 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 
 	case 11: //Open the exchange
 		wh.Exchangers = append(wh.Exchangers, &Exchanger{
-			Address:      from,
-			Name:         w.Name,
-			URL:          w.Url,
-			FeeRatio:     w.FeeRate, //unit 1/10,000
-			Creator:      from,
-			Timestamp:    timestamp,
-			BlockNumber:  blockNumber,
-			TxHash:       txHash,
-			Amount:       value,
-			Count:        1,
-			BalanceCount: "0",
+			Address:     from,
+			Name:        w.Name,
+			URL:         w.Url,
+			FeeRatio:    w.FeeRate, //unit 1/10,000
+			Creator:     from,
+			Timestamp:   timestamp,
+			BlockNumber: blockNumber,
+			TxHash:      txHash,
+			Amount:      value,
+			Count:       1,
+			TxAmount:    "0",
 		})
 
 	case 12: //Close the exchange
@@ -624,6 +626,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: w.Seller2.Exchanger,
+			TxAmount:      "0",
 			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
@@ -661,6 +664,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: from, //The transaction initiator is the exchange address
+			TxAmount:      "0",
 			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,
@@ -724,6 +728,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: string(exchangerAddr), //The transaction initiator is the exchange address
+			TxAmount:      "0",
 			Creator:       string(creator),
 			Timestamp:     timestamp,
 			BlockNumber:   blockNumber,

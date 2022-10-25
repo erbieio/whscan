@@ -27,7 +27,7 @@ var Tables = []interface{}{
 	&NFTTx{},
 	&RecycleTx{},
 	&Reward{},
-	&Pledge{},
+	&Validator{},
 	&Location{},
 	&Subscription{},
 }
@@ -193,15 +193,16 @@ type Block struct {
 
 // Account information
 type Account struct {
-	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
-	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //The total amount of coins in the chain
-	Nonce     types.Uint64        `json:"transactionCount"`                        //transaction random number, transaction volume
-	Code      *string             `json:"code"`                                    //bytecode
-	Name      *string             `json:"name" gorm:"type:VARCHAR(64)"`            //name
-	Symbol    *string             `json:"symbol" gorm:"type:VARCHAR(64)"`          //symbol
-	Type      *types.ContractType `json:"type"`                                    //contract types, ERC20, ERC721, ERC1155
-	Creator   *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //the creator, the contract account has value
-	CreatedTx *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //create transaction
+	Address    types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
+	Balance    types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //The total amount of coins in the chain
+	Nonce      types.Uint64        `json:"transactionCount"`                        //transaction random number, transaction volume
+	SNFTAmount types.BigInt        `json:"snftAmount"`                              //account snft pledge amount
+	Code       *string             `json:"code"`                                    //bytecode
+	Name       *string             `json:"name" gorm:"type:VARCHAR(64)"`            //name
+	Symbol     *string             `json:"symbol" gorm:"type:VARCHAR(64)"`          //symbol
+	Type       *types.ContractType `json:"type"`                                    //contract types, ERC20, ERC721, ERC1155
+	Creator    *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //the creator, the contract account has value
+	CreatedTx  *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //create transaction
 }
 
 // Transaction information
@@ -289,6 +290,7 @@ type NFT struct {
 	RawMetaUrl    string  `json:"raw_meta_url"`                              //Original meta information URL on the chain
 	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(42);index"` //The address of the exchange, if there is none, it can be traded on any exchange
 	LastPrice     *string `json:"last_price"`                                //The last transaction price (null if the transaction is not completed), the unit is wei
+	TxAmount      string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"`  //the total transaction volume of this NFT
 	Creator       string  `json:"creator" gorm:"type:CHAR(42)"`              //Creator address
 	Timestamp     uint64  `json:"timestamp"`                                 //Create timestamp
 	BlockNumber   uint64  `json:"block_number"`                              //The height of the created block
@@ -328,8 +330,9 @@ type FNFT struct {
 
 // SNFT of SNFT fragments
 type SNFT struct {
-	Address      string  `json:"address" gorm:"type:CHAR(42);primary_key"` //SNFT address
+	Address      string  `json:"address" gorm:"type:CHAR(42);primaryKey"`  //SNFT address
 	LastPrice    *string `json:"last_price"`                               //The last transaction price, the unit is wei, null if the transaction has not been completed
+	TxAmount     string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //the total transaction volume of this SNFT
 	Awardee      string  `json:"awardee"`                                  //The address of the miner that was rewarded last, null if it has not been rewarded
 	RewardAt     uint64  `json:"reward_at"`                                //The timestamp of the last rewarded, null if not rewarded
 	RewardNumber uint64  `json:"reward_number"`                            //The height of the last rewarded block, null if not rewarded
@@ -382,19 +385,19 @@ type Collection struct {
 
 // Exchanger exchange attribute information
 type Exchanger struct {
-	Address      string  `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
-	Name         string  `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
-	URL          string  `json:"url"`                                      //Exchange URL
-	FeeRatio     uint32  `json:"fee_ratio"`                                //fee rate, unit 1/10,000
-	Creator      string  `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
-	Timestamp    uint64  `json:"timestamp" gorm:"index"`                   //Open time
-	BlockNumber  uint64  `json:"block_number" gorm:"index"`                //The block number when created
-	TxHash       string  `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
-	Amount       string  `json:"amount" gorm:"type:VARCHAR(64)"`           //Pledge amount
-	Count        uint64  `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
-	BalanceCount string  `json:"balance_count" gorm:"type:VARCHAR(128)"`   //Total transaction amount, unit wei
-	NFTCount     uint64  `json:"nft_count"`                                //Total NFT count
-	CloseAt      *uint64 `json:"close_at"`                                 //if not null, the exchange is closed
+	Address     string  `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
+	Name        string  `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
+	URL         string  `json:"url"`                                      //Exchange URL
+	FeeRatio    uint32  `json:"fee_ratio"`                                //fee rate, unit 1/10,000
+	Creator     string  `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
+	Timestamp   uint64  `json:"timestamp" gorm:"index"`                   //Open time
+	BlockNumber uint64  `json:"block_number" gorm:"index"`                //The block number when created
+	TxHash      string  `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
+	Amount      string  `json:"amount" gorm:"type:VARCHAR(64)"`           //Pledge amount
+	Count       uint64  `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
+	TxAmount    string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //Total transaction amount, unit wei
+	NFTCount    uint64  `json:"nft_count"`                                //Total NFT count
+	CloseAt     *uint64 `json:"close_at"`                                 //if not null, the exchange is closed
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
@@ -407,12 +410,12 @@ type Reward struct {
 	Amount      *string `json:"amount" gorm:"type:VARCHAR(64)"` //Amount of reward
 }
 
-// Pledge validator pledge information
-type Pledge struct {
+// Validator pledge information
+type Validator struct {
 	Address    string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
-	Amount     string `json:"amount" gorm:"type:VARCHAR(64)"`          //Pledge amount
+	Amount     string `json:"amount" gorm:"type:VARCHAR(64)"`          //pledge amount
 	Count      uint64 `json:"count"`                                   //The number of pledges, both PledgeAdd and PledgeSub are added once
-	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`         //Amount of total reward
+	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
 	Timestamp  uint64 `json:"timestamp"`                               //The time at latest rewarding
 	LastNumber uint64 `json:"last_number"`                             //The block number at latest rewarding
 }
@@ -450,7 +453,7 @@ type Parsed struct {
 	CloseExchangers  []string     //Close exchanges, priority: 5
 	Rewards          []*Reward    //reward record, priority: none
 	ExchangerPledges []*Exchanger //Exchange pledge, priority: none
-	ConsensusPledges []*Pledge    //Consensus pledge, priority: none
+	ConsensusPledges []*Validator //Consensus pledge, priority: none
 	PledgeSNFT       []string     //Pledge SNFT
 	UnPledgeSNFT     []string     //UnPledge SNFT
 }
