@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"math/big"
 	"time"
 
@@ -52,7 +51,6 @@ type Stats struct {
 	genesis    model.Header
 	firstBlock model.Header
 	balances   map[types.Address]*big.Int
-	fnfts      map[string]int64
 }
 
 var stats = Stats{
@@ -61,7 +59,6 @@ var stats = Stats{
 	TotalSNFTAmount: "0",
 	TotalPledge:     "0",
 	balances:        make(map[types.Address]*big.Int),
-	fnfts:           make(map[string]int64),
 }
 
 // initStats initializes the query stats from the database
@@ -162,6 +159,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
 	value, totalNFTTx, totalSNFTTx := new(big.Int), stats.TotalNFTTx, stats.TotalSNFTTx
+	fnfts := make(map[string]int64)
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
 		totalBalance = totalBalance.Add(totalBalance, value)
@@ -190,7 +188,25 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 				value.SetString(*tx.Price, 0)
 				totalSNFTAmount = totalSNFTAmount.Add(totalSNFTAmount, value)
 			}
-			stats.fnfts[(*tx.NFTAddr)[:41]] = 0
+			fnfts[(*tx.NFTAddr + "00")[:41]] = 0
+		}
+	}
+	for _, snft := range parsed.RewardSNFTs {
+		fnfts[snft.Address[:41]] = 0
+	}
+	for _, snft := range parsed.PledgeSNFT {
+		fnfts[(snft + "00")[42:83]] = 0
+	}
+	for _, snft := range parsed.UnPledgeSNFT {
+		fnfts[(snft + "00")[42:83]] = 0
+	}
+	for _, snft := range parsed.RecycleSNFTs {
+		fnfts[(snft + "00")[:41]] = 0
+	}
+	for fnft := range fnfts {
+		err = db.Exec("CAll fresh_c_snft(?)", fnft).Error
+		if err != nil {
+			return
 		}
 	}
 	if parsed.Number == 0 {
@@ -273,18 +289,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			stats.TotalWormholesTx++
 		}
 	}
-	for _, snft := range parsed.RewardSNFTs {
-		stats.fnfts[snft.Address[:41]] = 0
-	}
-	for _, snft := range parsed.PledgeSNFT {
-		stats.fnfts[snft[:41]] = 0
-	}
-	for _, snft := range parsed.UnPledgeSNFT {
-		stats.fnfts[snft[:41]] = 0
-	}
-	for _, snft := range parsed.RecycleSNFTs {
-		stats.fnfts[snft[:41]] = 0
-	}
 	return
 }
 
@@ -340,13 +344,6 @@ func freshStats(db *gorm.DB) {
 				stats.Total24HNFT = number
 			}
 		}
-		for fnft := range stats.fnfts {
-			err := db.Exec("CAll fresh_c_snft(?)", fnft).Error
-			if err != nil {
-				log.Println("fresh com-snft error:", err)
-			}
-		}
-		stats.fnfts = make(map[string]int64)
 		lastTime = now
 	}
 }

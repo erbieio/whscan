@@ -24,13 +24,13 @@ type price struct {
 
 // @Tags        other interfaces
 // @Summary     query ERB price
-// @Description Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=1USD
+// @Description Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=0.5USD
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} price
 // @Router      /erb_price [get]
 func erbPrice(c *gin.Context) {
-	c.JSON(http.StatusOK, price{CNY: 6.3, USD: 1})
+	c.JSON(http.StatusOK, price{CNY: 3.2, USD: 0.5})
 }
 
 // @Tags        other interfaces

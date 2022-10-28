@@ -26,13 +26,12 @@ func FetchTotals() (Stats, error) {
 	return stats, nil
 }
 
-type Validator struct {
-	model.Validator
-	Location model.Location `json:"location" gorm:"embedded"`
+func FetchValidator(page, size int) (res []*model.Validator, err error) {
+	err = DB.Offset((page - 1) * size).Limit(size).Find(&res).Error
+	return
 }
 
-func FetchValidator(page, size int) (res []*Validator, err error) {
-	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`address`=`locations`.`address`").
-		Offset((page - 1) * size).Limit(size).Select("`validators`.*,`locations`.*").Scan(&res).Error
+func FetchLocations() (res []*model.Location, err error) {
+	err = DB.Find(&res).Error
 	return
 }

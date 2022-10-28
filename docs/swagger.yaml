@@ -527,6 +527,28 @@ definitions:
         description: Email
         type: string
     type: object
+  model.Validator:
+    properties:
+      address:
+        description: staking account
+        type: string
+      amount:
+        description: pledge amount
+        type: string
+      count:
+        description: The number of pledges, both PledgeAdd and PledgeSub are added
+          once
+        type: integer
+      last_number:
+        description: The block number at latest rewarding
+        type: integer
+      reward:
+        description: amount of total reward
+        type: string
+      timestamp:
+        description: The time at latest rewarding
+        type: integer
+    type: object
   service.AccountRes:
     properties:
       address:
@@ -1514,30 +1536,6 @@ definitions:
         description: number of transaction
         type: integer
     type: object
-  service.Validator:
-    properties:
-      address:
-        description: staking account
-        type: string
-      amount:
-        description: pledge amount
-        type: string
-      count:
-        description: The number of pledges, both PledgeAdd and PledgeSub are added
-          once
-        type: integer
-      last_number:
-        description: The block number at latest rewarding
-        type: integer
-      location:
-        $ref: '#/definitions/model.Location'
-      reward:
-        description: amount of total reward
-        type: string
-      timestamp:
-        description: The time at latest rewarding
-        type: integer
-    type: object
 info:
   contact: {}
   description: Block browser back-end interface, parses data from the blockchain,
@@ -2246,6 +2244,27 @@ paths:
               $ref: '#/definitions/service.Msg'
             type: array
       summary: query validator msg list
+      tags:
+      - block
+  /locations:
+    get:
+      consumes:
+      - application/json
+      description: Query validator's locations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Location'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query validator locations
       tags:
       - block
   /nft/{addr}:
@@ -3021,7 +3040,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/service.Validator'
+              $ref: '#/definitions/model.Validator'
             type: array
         "400":
           description: Bad Request

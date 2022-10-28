@@ -37,12 +37,10 @@ func Run(chainUrl string, thread int64, interval time.Duration) {
 }
 
 func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh chan<- Uint64, parsedCh <-chan *Parsed) {
-	number := service.TotalBlock()
-	cache := make(map[Uint64]*Parsed)
-	taskNum := int64(0)
-	log.Printf("using %v coroutines, starting data analysis from %v blockn\n", thread, number)
+	number, cache, taskNum := service.TotalBlock(), make(map[Uint64]*Parsed), int64(0)
+	log.Printf("using %v coroutines, starting data analysis from %v block\n", thread, number)
 	for {
-		max, err := client.BlockNumber(context.Background())
+		max, err := client.BlockNumber()
 		if err != nil {
 			log.Printf("get block height error: %v\n", err)
 		}
@@ -55,29 +53,28 @@ func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh 
 				taskNum++
 			}
 			parsed := <-parsedCh
-			taskNum--
-			cache[parsed.Number] = parsed
-			for i := service.TotalBlock(); cache[i] != nil; i++ {
-				badBlocks, err := service.BlockInsert(cache[i])
-				if err == nil {
-					if badBlocks != nil {
-						head, err := checkHead(client, context.Background(), i-1, badBlocks)
-						if err != nil {
-							break
-						}
-						if number, err = service.FixHead(head); err != nil {
-							break
-						}
-						for ; taskNum > 0; taskNum-- {
-							<-parsedCh
-						}
-						cache = make(map[Uint64]*Parsed)
-						log.Printf("fork fallback, starting data analysis from %v blockn\n", number)
-					}
-					delete(cache, i)
-				} else {
+			taskNum, cache[parsed.Number] = taskNum-1, parsed
+			for i := service.TotalBlock(); cache[i] != nil; {
+				if badBlocks, err := service.BlockInsert(cache[i]); err != nil {
+					log.Printf("%v block write error: %v\n", number, err)
 					time.Sleep(interval)
-					log.Printf("write block error: %v\n", err)
+				} else if badBlocks == nil {
+					delete(cache, i)
+					i++
+				} else {
+					for {
+						if head, err := checkHead(client, context.Background(), i-1, badBlocks); err == nil {
+							if number, err = service.FixHead(head); err == nil {
+								for ; taskNum > 0; taskNum-- {
+									<-parsedCh
+								}
+								cache = make(map[Uint64]*Parsed)
+								log.Printf("fork fallback %v, starting data analysis from %v blockn\n", i-number, number)
+								break
+							}
+						}
+						time.Sleep(interval)
+					}
 					break
 				}
 			}

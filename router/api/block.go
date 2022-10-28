@@ -14,6 +14,7 @@ func Block(e *gin.Engine) {
 	e.GET("/block/:number", getBlock)
 	e.GET("/totals", totals)
 	e.GET("/validators", validators)
+	e.GET("/locations", locations)
 	e.GET("/last_msg", lastMsg)
 }
 
@@ -96,7 +97,7 @@ func totals(c *gin.Context) {
 // @Produce     json
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} []service.Validator
+// @Success     200       {object} []model.Validator
 // @Failure     400       {object} service.ErrRes
 // @Router      /validators [get]
 func validators(c *gin.Context) {
@@ -115,6 +116,24 @@ func validators(c *gin.Context) {
 		return
 	}
 	res, err := service.FetchValidator(page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        block
+// @Summary     query validator locations
+// @Description Query validator's locations
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} []model.Location
+// @Failure     400 {object} service.ErrRes
+// @Router      /locations [get]
+func locations(c *gin.Context) {
+	res, err := service.FetchLocations()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

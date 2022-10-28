@@ -278,15 +278,18 @@ func checkHead(c *node.Client, ctx context.Context, number Uint64, badBlocks []H
 	parsed = &Parsed{Block: &Block{Header: Header{Number: number}}, CacheAccounts: map[Address]*Account{}}
 	if number != ^Uint64(0) {
 		status := &struct {
-			Accounts map[Address]*Account `json:"accounts"`
-			Next     *string              `json:"next"`
+			Accounts map[Address]*struct {
+				Balance string `json:"balance"`
+				Nonce   int64  `json:"nonce"`
+			} `json:"accounts"`
+			Next *string `json:"next"`
 		}{}
 		for next := new(string); next != nil; next, status = status.Next, nil {
 			if err = c.CallContext(ctx, &status, "debug_accountRange", number.Hex(), next, nil, true, true, true); err != nil {
 				return
 			}
 			for address, account := range status.Accounts {
-				parsed.CacheAccounts[address] = &Account{Address: address, Balance: account.Balance, Nonce: account.Nonce}
+				parsed.CacheAccounts[address] = &Account{Address: address, Balance: BigInt(account.Balance), Nonce: Uint64(account.Nonce)}
 			}
 		}
 	}
@@ -514,26 +517,10 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		})
 
 	case 7: //pledge snft
-		level := 42 - len(w.NFTAddress)
-		if level == 0 {
-			wh.PledgeSNFT = append(wh.PledgeSNFT, w.NFTAddress)
-		} else {
-			for i := 0; i < 1<<(level*4); i++ {
-				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
-				wh.PledgeSNFT = append(wh.PledgeSNFT, address)
-			}
-		}
+		wh.PledgeSNFT = append(wh.PledgeSNFT, from+w.NFTAddress)
 
 	case 8: //cancel pledge snft
-		level := 42 - len(w.NFTAddress)
-		if level == 0 {
-			wh.UnPledgeSNFT = append(wh.UnPledgeSNFT, w.NFTAddress)
-		} else {
-			for i := 0; i < 1<<(level*4); i++ {
-				address := fmt.Sprintf("%s%0"+strconv.Itoa(level)+"x", w.NFTAddress, i)
-				wh.UnPledgeSNFT = append(wh.UnPledgeSNFT, address)
-			}
-		}
+		wh.UnPledgeSNFT = append(wh.UnPledgeSNFT, from+w.NFTAddress)
 
 	case 9, 10: //validator pledge, can be pledged multiple times, starting at 100000ERB
 		pledge := &Validator{

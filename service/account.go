@@ -32,7 +32,7 @@ type AccountRes struct {
 func GetAccount(addr string) (res AccountRes, err error) {
 	s := "*, (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS total_nft"
 	s += ", (SELECT COUNT(*) FROM snfts WHERE owner=accounts.address) AS total_snft"
-	s += ", IFNULL((SELECT amount FROM validators WHERE address=accounts.address),'0') AS validatorAmount"
+	s += ", IFNULL((SELECT amount FROM validators WHERE address=accounts.address),'0') AS validator_amount"
 	s += ", IFNULL((SELECT amount FROM exchangers WHERE address=accounts.address),'0') AS exchanger_amount"
 	s += ", (SELECT COUNT(amount) FROM rewards WHERE address=accounts.address) AS reward_coin_count"
 	s += ", (SELECT COUNT(snft) FROM rewards WHERE address=accounts.address) AS reward_snft_count"

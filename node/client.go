@@ -53,10 +53,9 @@ func (c *Client) Genesis() (result *model.Header, err error) {
 	return
 }
 
-func (c *Client) BlockNumber(ctx context.Context) (types.Uint64, error) {
-	var result types.Uint64
-	err := c.CallContext(ctx, &result, "eth_blockNumber")
-	return result, err
+func (c *Client) BlockNumber() (result types.Uint64, err error) {
+	err = c.Call(&result, "eth_blockNumber")
+	return
 }
 
 func (c *Client) CallContract(ctx context.Context, msg map[string]interface{}, blockNumber *types.BigInt) (types.Data, error) {

@@ -42,10 +42,6 @@ func (b *Uint64) UnmarshalText(input []byte) error {
 	return err
 }
 
-func (b Uint64) String() string {
-	return b.Hex()
-}
-
 func (b Uint64) Hex() string {
 	return "0x" + strconv.FormatUint(uint64(b), 16)
 }

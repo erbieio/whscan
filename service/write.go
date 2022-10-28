@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -18,6 +19,11 @@ func getNFTAddr(next *big.Int) string {
 }
 
 func FixHead(parsed *model.Parsed) (types.Uint64, error) {
+	var errBlocks model.Block
+	if DB.Find(&errBlocks, "number>?", parsed.Number).Error == nil {
+		data, _ := json.Marshal(errBlocks)
+		log.Printf("err block: %s", string(data))
+	}
 	return parsed.Number + 1, DB.Transaction(func(tx *gorm.DB) (err error) {
 		if head := parsed.Number; head != ^types.Uint64(0) {
 			if err := tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
@@ -37,7 +43,7 @@ func FixHead(parsed *model.Parsed) (types.Uint64, error) {
 			if err := tx.Model(&model.Exchanger{}).Where("close_at>?", head).Update("close_at", nil).Error; err != nil {
 				return err
 			}
-			hashes := tx.Select("hash").Find(&model.Transaction{}, "block_number>?", head)
+			hashes := tx.Model(&model.Transaction{}).Select("hash").Where("block_number>?", head)
 			if err = tx.Delete(&model.Account{}, "created_tx IN (?)", hashes).Error; err != nil {
 				return
 			}
@@ -238,14 +244,12 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 		}
 	}
 	for _, snft := range wh.PledgeSNFT {
-		err = tx.Exec("UPDATE snfts SET pledge_number=? WHERE address=?", wh.Number, snft).Error
-		if err != nil {
+		if err = SaveSNFTPledge(tx, snft[:42], snft[42:], wh.Number, true); err != nil {
 			return
 		}
 	}
 	for _, snft := range wh.UnPledgeSNFT {
-		err = tx.Exec("UPDATE snfts SET pledge_number=NULL WHERE address=?", snft).Error
-		if err != nil {
+		if err = SaveSNFTPledge(tx, snft[:42], snft[42:], wh.Number, false); err != nil {
 			return
 		}
 	}
@@ -253,7 +257,7 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 		if err = tx.Create(reward).Error; err != nil {
 			return
 		}
-		if reward.Identity == 2 {
+		if reward.Amount != nil {
 			var pledge model.Validator
 			if err = tx.Find(&pledge, "address=?", reward.Address).Error; err != nil {
 				return
@@ -268,6 +272,44 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 			}
 		}
 	}
+	return
+}
+
+func SaveSNFTPledge(tx *gorm.DB, owner, snft string, number types.Uint64, isPledge bool) (err error) {
+	var db *gorm.DB
+	if isPledge {
+		db = tx.Model(&model.SNFT{}).Where("LEFT(address,?)=?", len(snft), snft).Update("pledge_number", number)
+	} else {
+		db = tx.Model(&model.SNFT{}).Where("LEFT(address,?)=?", len(snft), snft).Update("pledge_number", nil)
+	}
+	if err = db.Error; err != nil {
+		return
+	}
+	count, pledgeAmount := db.RowsAffected, "0"
+	switch 42 - len(snft) {
+	case 0:
+		b := big.NewInt(95 * count)
+		pledgeAmount = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+	case 1:
+		b := big.NewInt(143 * count)
+		pledgeAmount = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+	case 2:
+		b := big.NewInt(271 * count)
+		pledgeAmount = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+	default:
+		b := big.NewInt(650 * count)
+		pledgeAmount = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+	}
+	amount := "0"
+	if err = tx.Model(&model.Account{}).Where("address=?", owner).Pluck("snft_amount", &amount).Error; err != nil {
+		return
+	}
+	if isPledge {
+		amount = BigIntAdd(amount, pledgeAmount)
+	} else {
+		amount = BigIntAdd(amount, "-"+pledgeAmount)
+	}
+	err = tx.Model(&model.Account{}).Where("address=?", owner).Update("snft_amount", amount).Error
 	return
 }
 

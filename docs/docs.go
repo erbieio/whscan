@@ -1083,6 +1083,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/locations": {
+            "get": {
+                "description": "Query validator's locations",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "block"
+                ],
+                "summary": "query validator locations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Location"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/nft/page": {
             "get": {
                 "description": "Query the NFT list in reverse order of creation time",
@@ -2256,7 +2288,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/service.Validator"
+                                "$ref": "#/definitions/model.Validator"
                             }
                         }
                     },
@@ -2993,6 +3025,35 @@ const docTemplate = `{
                 "email": {
                     "description": "Email",
                     "type": "string"
+                }
+            }
+        },
+        "model.Validator": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "staking account",
+                    "type": "string"
+                },
+                "amount": {
+                    "description": "pledge amount",
+                    "type": "string"
+                },
+                "count": {
+                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
+                    "type": "integer"
+                },
+                "last_number": {
+                    "description": "The block number at latest rewarding",
+                    "type": "integer"
+                },
+                "reward": {
+                    "description": "amount of total reward",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "The time at latest rewarding",
+                    "type": "integer"
                 }
             }
         },
@@ -4349,38 +4410,6 @@ const docTemplate = `{
                 },
                 "num": {
                     "description": "number of transaction",
-                    "type": "integer"
-                }
-            }
-        },
-        "service.Validator": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "staking account",
-                    "type": "string"
-                },
-                "amount": {
-                    "description": "pledge amount",
-                    "type": "string"
-                },
-                "count": {
-                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
-                    "type": "integer"
-                },
-                "last_number": {
-                    "description": "The block number at latest rewarding",
-                    "type": "integer"
-                },
-                "location": {
-                    "$ref": "#/definitions/model.Location"
-                },
-                "reward": {
-                    "description": "amount of total reward",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "The time at latest rewarding",
                     "type": "integer"
                 }
             }
