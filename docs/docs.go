@@ -703,7 +703,7 @@ const docTemplate = `{
         },
         "/erb_price": {
             "get": {
-                "description": "Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=1USD",
+                "description": "Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=0.5USD",
                 "consumes": [
                     "application/json"
                 ],
@@ -3046,6 +3046,10 @@ const docTemplate = `{
                 "last_number": {
                     "description": "The block number at latest rewarding",
                     "type": "integer"
+                },
+                "proxy": {
+                    "description": "proxy address",
+                    "type": "string"
                 },
                 "reward": {
                     "description": "amount of total reward",

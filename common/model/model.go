@@ -403,7 +403,7 @@ type Exchanger struct {
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
 type Reward struct {
 	Address     string  `json:"address" gorm:"type:CHAR(42)"`   //reward address
-	Proxy       string  `json:"proxy" gorm:"type:CHAR(42)"`     //proxy address
+	Proxy       *string `json:"proxy" gorm:"type:CHAR(42)"`     //proxy address
 	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchange
 	BlockNumber uint64  `json:"block_number"`                   //The block number when rewarding
 	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
@@ -412,12 +412,13 @@ type Reward struct {
 
 // Validator pledge information
 type Validator struct {
-	Address    string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
-	Amount     string `json:"amount" gorm:"type:VARCHAR(64)"`          //pledge amount
-	Count      uint64 `json:"count"`                                   //The number of pledges, both PledgeAdd and PledgeSub are added once
-	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
-	Timestamp  uint64 `json:"timestamp"`                               //The time at latest rewarding
-	LastNumber uint64 `json:"last_number"`                             //The block number at latest rewarding
+	Address    string  `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
+	Proxy      *string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
+	Amount     string  `json:"amount" gorm:"type:VARCHAR(64)"`          //pledge amount
+	Count      uint64  `json:"count"`                                   //The number of pledges, both PledgeAdd and PledgeSub are added once
+	Reward     string  `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
+	Timestamp  uint64  `json:"timestamp"`                               //The time at latest rewarding
+	LastNumber uint64  `json:"last_number"`                             //The block number at latest rewarding
 }
 
 type Location struct {
@@ -453,7 +454,7 @@ type Parsed struct {
 	CloseExchangers  []string     //Close exchanges, priority: 5
 	Rewards          []*Reward    //reward record, priority: none
 	ExchangerPledges []*Exchanger //Exchange pledge, priority: none
-	ConsensusPledges []*Validator //Consensus pledge, priority: none
+	ChangeValidators []*Validator //Consensus pledge, priority: none
 	PledgeSNFT       []string     //Pledge SNFT
 	UnPledgeSNFT     []string     //UnPledge SNFT
 }

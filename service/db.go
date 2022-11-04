@@ -40,7 +40,4 @@ func init() {
 		panic(err)
 	}
 	err = initValidator(DB)
-	if err != nil {
-		panic(err)
-	}
 }

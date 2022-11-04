@@ -27,9 +27,22 @@ func BigIntAdd(a, b string) string {
 	}
 	cc := aa.Add(aa, bb)
 	if cc.Sign() == -1 {
-		panic("big add err:" + a + " " + b)
+		panic("big add err:" + cc.String())
 	}
 	return cc.Text(10)
+}
+
+func TxFee(price string, ratio uint32) *string {
+	value, ok := new(big.Int).SetString(price, 0)
+	if !ok {
+		return nil
+	}
+	value = value.Mul(value, big.NewInt(int64(ratio)))
+	if value.Sign() == -1 {
+		return nil
+	}
+	fee := value.Div(value, big.NewInt(10000)).Text(10)
+	return &fee
 }
 
 // NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored

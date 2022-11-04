@@ -171,7 +171,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		value.SetString(string(tx.Value), 0)
 		totalAmount = totalAmount.Add(totalAmount, value)
 	}
-	for _, pledge := range parsed.ConsensusPledges {
+	for _, pledge := range parsed.ChangeValidators {
 		value.SetString(pledge.Amount, 0)
 		totalPledge = totalPledge.Add(totalPledge, value)
 	}
@@ -233,7 +233,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			return
 		}
 	}
-	if len(parsed.ConsensusPledges) > 0 {
+	if len(parsed.ChangeValidators) > 0 && totalPledge.Text(10) != stats.TotalPledge {
 		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
 			Key: "TotalPledge", Value: totalPledge.Text(10)}).Error
 		if err != nil {

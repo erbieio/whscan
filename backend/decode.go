@@ -301,7 +301,12 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 	epochId := ""
 	if wh.Number > 0 {
 		// Miner reward SNFT processing
-		rewards, err := c.GetReward(wh.Block.Number.Hex())
+		var rewards []*struct {
+			Address      string   `json:"Address"`
+			NFTAddress   *string  `json:"NftAddress"`
+			RewardAmount *big.Int `json:"RewardAmount"`
+		}
+		err := c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", wh.Number.Hex(), true)
 		if err != nil {
 			return fmt.Errorf("GetReward() err:%v", err)
 		}
@@ -319,7 +324,6 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 			}
 			wh.Rewards = append(wh.Rewards, &Reward{
 				Address:     rewards[i].Address,
-				Proxy:       rewards[i].Proxy,
 				Identity:    identity,
 				BlockNumber: uint64(wh.Block.Number),
 			})
@@ -357,7 +361,6 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 		}
 	} else {
 		info := struct {
-			PledgedBalance   *big.Int `json:"PledgedBalance"`
 			ExchangerBalance *big.Int `json:"ExchangerBalance"`
 			FeeRate          uint32   `json:"FeeRate"`
 			ExchangerName    string   `json:"ExchangerName"`
@@ -366,12 +369,6 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 		for address := range wh.CacheAccounts {
 			if err := c.Call(&info, "eth_getAccountInfo", address, "0x0"); err != nil {
 				return err
-			}
-			if balance := info.PledgedBalance.Text(10); balance != "0" {
-				wh.ConsensusPledges = append(wh.ConsensusPledges, &Validator{
-					Address: string(address),
-					Amount:  balance,
-				})
 			}
 			if balance := info.ExchangerBalance.Text(10); balance != "0" {
 				wh.Exchangers = append(wh.Exchangers, &Exchanger{
@@ -383,10 +380,26 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 					Timestamp: uint64(wh.Timestamp),
 					TxHash:    "0x0",
 					Amount:    balance,
-					Count:     1,
 					TxAmount:  "0",
 				})
 			}
+		}
+		result := struct {
+			Validators []*struct {
+				Addr    string   `json:"Addr"`
+				Balance *big.Int `json:"Balance"`
+				Proxy   string   `json:"Proxy"`
+			} `json:"Validators"`
+		}{}
+		if err := c.Call(&result, "eth_getValidator", "0x0"); err != nil {
+			return err
+		}
+		for _, validator := range result.Validators {
+			wh.ChangeValidators = append(wh.ChangeValidators, &Validator{
+				Address: validator.Addr,
+				Amount:  validator.Balance.Text(10),
+				Proxy:   &validator.Proxy,
+			})
 		}
 	}
 	// Write the current information, once every 4096 SNFT rewards
@@ -523,40 +536,26 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.UnPledgeSNFT = append(wh.UnPledgeSNFT, from+w.NFTAddress)
 
 	case 9, 10: //validator pledge, can be pledged multiple times, starting at 100000ERB
-		pledge := &Validator{
-			Address: from,
+		validator := &Validator{Address: from, Amount: value}
+		if w.Type == 10 && value != "0" {
+			validator.Amount = "-" + value
 		}
-		internalTx := &InternalTx{
-			TxHash:      Hash(txHash),
-			BlockNumber: wh.Number,
-			From:        &tx.From,
-			To:          tx.To,
-			Value:       tx.Value,
-			GasLimit:    tx.Gas,
+		if len(w.ProxyAddress) == 42 && w.ProxyAddress != "0x0000000000000000000000000000000000000000" {
+			validator.Proxy = &w.ProxyAddress
 		}
-		if w.Type == 9 {
-			internalTx.Op = "pledge_add"
-			pledge.Amount = value
-		} else {
-			internalTx.Op = "pledge_sub"
-			pledge.Amount = "-" + value
-
-		}
-		wh.ConsensusPledges = append(wh.ConsensusPledges, pledge)
-		wh.CacheInternalTxs = append(wh.CacheInternalTxs, internalTx)
+		wh.ChangeValidators = append(wh.ChangeValidators, validator)
 
 	case 11: //Open the exchange
 		wh.Exchangers = append(wh.Exchangers, &Exchanger{
 			Address:     from,
 			Name:        w.Name,
 			URL:         w.Url,
-			FeeRatio:    w.FeeRate, //unit 1/10,000
+			FeeRatio:    w.FeeRate,
 			Creator:     from,
 			Timestamp:   timestamp,
 			BlockNumber: blockNumber,
 			TxHash:      txHash,
 			Amount:      value,
-			Count:       1,
 			TxAmount:    "0",
 		})
 
@@ -759,6 +758,8 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			Address: from,
 			Amount:  "-" + value,
 		})
+	case 31:
+		wh.ChangeValidators = append(wh.ChangeValidators, &Validator{Address: from, Proxy: &w.ProxyAddress, Amount: "0"})
 	}
 	return
 }

@@ -46,7 +46,7 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 		db = db.Where("`from`=? OR `to`=?", account, account)
 	}
 	if address != "" {
-		db = db.Where("nft_addr=?", address)
+		db = db.Where("locate(nft_addr,?)", address)
 	}
 
 	err = db.Model(&model.NFTTx{}).Count(&res.Total).Error
