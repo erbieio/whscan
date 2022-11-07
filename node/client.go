@@ -84,26 +84,3 @@ func (c *Client) IsDebug() bool {
 func (c *Client) IsWormholes() bool {
 	return c.Call(&struct{}{}, "eth_getAccountInfo", "0x0000000000000000000000000000000000000000", "0x0") == nil
 }
-
-type Epoch struct {
-	Dir        string   `json:"dir"`
-	Royalty    uint32   `json:"royalty"`
-	Creator    string   `json:"creator"`
-	Address    string   `json:"address"` //Exchange address
-	VoteWeight *big.Int `json:"vote_weight"`
-}
-
-func (c *Client) GetEpoch(number string) (*Epoch, error) {
-	var epoches = struct {
-		InjectedOfficialNFTs []*Epoch `json:"InjectedOfficialNFTs"`
-	}{}
-	err := c.Call(&epoches, "eth_getInjectedNFTInfo", number)
-	if err != nil {
-		return nil, err
-	}
-	if len(epoches.InjectedOfficialNFTs) == 2 {
-		return epoches.InjectedOfficialNFTs[1], nil
-	} else {
-		return epoches.InjectedOfficialNFTs[0], nil
-	}
-}

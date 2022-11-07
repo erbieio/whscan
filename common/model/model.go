@@ -25,7 +25,6 @@ var Tables = []interface{}{
 	&ComSNFT{},
 	&Collection{},
 	&NFTTx{},
-	&RecycleTx{},
 	&Reward{},
 	&Validator{},
 	&Location{},
@@ -351,23 +350,15 @@ type ComSNFT struct {
 type NFTTx struct {
 	//Transaction type, 1: transfer, 2: bid transaction, 3: fixed price purchase, 4: lazy price purchase, 5: lazy price purchase, 6: bid transaction, 7: lazy bid transaction, 8: matching transaction
 	TxType        int32   `json:"tx_type"`
-	NFTAddr       *string `json:"nft_addr" gorm:"type:CHAR(42);index"`      //The NFT address of the transaction
-	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(42)"`      //Exchange address
-	From          string  `json:"from" gorm:"type:CHAR(42);index"`          //Seller
-	To            string  `json:"to" gorm:"type:CHAR(42);index"`            //buyer
-	Price         *string `json:"price"`                                    //price, the unit is wei
-	Timestamp     uint64  `json:"timestamp"`                                //transaction timestamp
-	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"` //transaction hash
-	BlockNumber   uint64  `json:"block_number"`                             //block number
-	Fee           *string `json:"fee"`                                      //Transaction fee, in wei (only if there is an exchange and price)
-}
-
-// RecycleTx SNFT recycle transaction
-type RecycleTx struct {
-	Address   string `json:"address" gorm:"type:VARCHAR(42);primaryKey"` //the SNFT address
-	Timestamp int64  `json:"timestamp"`                                  //transaction timestamp
-	TxHash    string `json:"tx_hash" gorm:"type:CHAR(66);index"`         //transaction hash
-	Count     int64  `json:"count"`                                      //snft count
+	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`        //The NFT address of the transaction
+	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42)"` //Exchange address
+	From          string  `json:"from,omitempty" gorm:"type:CHAR(42);index"`     //Seller
+	To            string  `json:"to,omitempty" gorm:"type:CHAR(42);index"`       //buyer
+	Price         string  `json:"price"`                                         //price, the unit is wei
+	Timestamp     uint64  `json:"timestamp"`                                     //transaction timestamp
+	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`      //transaction hash
+	BlockNumber   uint64  `json:"block_number"`                                  //block number
+	Fee           *string `json:"fee,omitempty"`                                 //Transaction fee, in wei (only if there is an exchange and price)
 }
 
 // Collection information, user collection: name + creator + hash of the exchange to which they belong, SNFT collection: SNFT address removes the last 3 digits
@@ -444,17 +435,13 @@ type Parsed struct {
 	CacheLogs         []*Log //Insert after CacheAccounts
 
 	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
-	Exchangers       []*Exchanger //The created exchange, priority: 1
-	Epochs           []*Epoch     //Official injection of the first phase of SNFT, priority: 1
-	CreateNFTs       []*NFT       //Newly created NFT, priority: 2
-	RewardSNFTs      []*SNFT      //Reward information of SNFT, priority: 3
+	Epoch            *Epoch       //Official injection of the first phase of SNFT, priority: 1
+	NFTs             []*NFT       //Newly created NFT, priority: 2
 	NFTTxs           []*NFTTx     //NFT transaction record, priority: 4
-	RecycleTxs       []*RecycleTx //Recycle SNFT transaction, priority: 5
 	RecycleSNFTs     []string     //Recycle SNFT, priority: 5
-	CloseExchangers  []string     //Close exchanges, priority: 5
 	Rewards          []*Reward    //reward record, priority: none
-	ExchangerPledges []*Exchanger //Exchange pledge, priority: none
-	ChangeValidators []*Validator //Consensus pledge, priority: none
+	ChangeExchangers []*Exchanger //modify the exchanger, including opening, closing, staking and other operations
+	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
 	PledgeSNFT       []string     //Pledge SNFT
 	UnPledgeSNFT     []string     //UnPledge SNFT
 }

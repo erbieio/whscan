@@ -150,8 +150,8 @@ func GetNFT(addr string) (res NFT, err error) {
 	return
 }
 
-func GetRecycleTx(hash, addr string) (res *model.RecycleTx, err error) {
-	err = DB.Where("tx_hash=? OR address=?", hash, addr).Limit(1).Find(&res).Error
+func GetRecycleTx(hash, addr string) (res *model.NFTTx, err error) {
+	err = DB.Model(&model.NFTTx{}).Where("tx_type=6 AND (tx_hash=? OR nft_addr=?)", hash, addr).Limit(1).Scan(&res).Error
 	return
 }
 

@@ -298,7 +298,6 @@ func checkHead(c *node.Client, ctx context.Context, number Uint64, badBlocks []H
 
 // decodeWH Imports the underlying NFT transaction of the SNFT meta information distributed by the block
 func decodeWH(c *node.Client, wh *Parsed) error {
-	epochId := ""
 	if wh.Number > 0 {
 		// Miner reward SNFT processing
 		var rewards []*struct {
@@ -325,25 +324,41 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 			wh.Rewards = append(wh.Rewards, &Reward{
 				Address:     rewards[i].Address,
 				Identity:    identity,
-				BlockNumber: uint64(wh.Block.Number),
+				BlockNumber: uint64(wh.Number),
 			})
 			if rewards[i].RewardAmount == nil {
 				// Note that when NFTAddress is zero address error
 				wh.Rewards[i].SNFT = rewards[i].NFTAddress
 				nftAddr := *rewards[i].NFTAddress
-				wh.RewardSNFTs = append(wh.RewardSNFTs, &SNFT{
-					Address:      nftAddr,
-					TxAmount:     "0",
-					Awardee:      rewards[i].Address,
-					RewardAt:     uint64(wh.Block.Timestamp),
-					RewardNumber: uint64(wh.Block.Number),
-					Owner:        rewards[i].Address,
-				})
 				// Parse the new phase ID
-				if len(epochId) == 0 {
-					addr, _ := new(big.Int).SetString(nftAddr[3:], 16)
-					if addr.Mod(addr, big.NewInt(4096)).Uint64() == 0 {
-						epochId = nftAddr[:39]
+				addr, _ := new(big.Int).SetString(nftAddr[3:], 16)
+				if addr.Mod(addr, big.NewInt(4096)).Uint64() == 0 {
+					epochId := nftAddr[:39]
+					// Write the current information, once every 4096 SNFT rewards
+					if len(epochId) > 0 {
+						epoch := struct {
+							Dir        string   `json:"dir"`
+							Royalty    uint32   `json:"royalty"`
+							Creator    string   `json:"creator"`
+							Address    string   `json:"address"` //Exchange address
+							VoteWeight *big.Int `json:"vote_weight"`
+						}{}
+						if err = c.Call(&epoch, "eth_getCurrentNFTInfo", wh.Number.Hex()); err != nil {
+							return fmt.Errorf("GetEpoch() err:%v", err)
+						}
+						if len(epoch.Dir) == 52 {
+							epoch.Dir = epoch.Dir + "/"
+						}
+						wh.Epoch = &Epoch{
+							ID:           epochId,
+							Creator:      strings.ToLower(epoch.Creator),
+							RoyaltyRatio: epoch.Royalty,
+							Dir:          epoch.Dir,
+							Exchanger:    epoch.Address,
+							VoteWeight:   epoch.VoteWeight.Text(10),
+							Number:       uint64(wh.Number),
+							Timestamp:    uint64(wh.Timestamp),
+						}
 					}
 				}
 			} else {
@@ -354,7 +369,7 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 
 		// wormholes transaction processing
 		for _, tx := range wh.CacheTxs {
-			err = decodeWHTx(c, wh.Block, tx, wh)
+			err = decodeWHTx(c, wh, tx)
 			if err != nil {
 				return err
 			}
@@ -371,7 +386,7 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 				return err
 			}
 			if balance := info.ExchangerBalance.Text(10); balance != "0" {
-				wh.Exchangers = append(wh.Exchangers, &Exchanger{
+				wh.ChangeExchangers = append(wh.ChangeExchangers, &Exchanger{
 					Address:   string(address),
 					Name:      info.ExchangerName,
 					URL:       info.ExchangerURL,
@@ -380,7 +395,6 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 					Timestamp: uint64(wh.Timestamp),
 					TxHash:    "0x0",
 					Amount:    balance,
-					TxAmount:  "0",
 				})
 			}
 		}
@@ -402,31 +416,11 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 			})
 		}
 	}
-	// Write the current information, once every 4096 SNFT rewards
-	if len(epochId) > 0 {
-		epoch, err := c.GetEpoch(wh.Block.Number.Hex())
-		if err != nil {
-			return fmt.Errorf("GetEpoch() err:%v", err)
-		}
-		if len(epoch.Dir) == 52 {
-			epoch.Dir = epoch.Dir + "/"
-		}
-		wh.Epochs = append(wh.Epochs, &Epoch{
-			ID:           epochId,
-			Creator:      strings.ToLower(epoch.Creator),
-			RoyaltyRatio: epoch.Royalty,
-			Dir:          epoch.Dir,
-			Exchanger:    epoch.Address,
-			VoteWeight:   epoch.VoteWeight.Text(10),
-			Number:       uint64(wh.Block.Number),
-			Timestamp:    uint64(wh.Block.Timestamp),
-		})
-	}
 	return nil
 }
 
 // decodeWHTx parses the special transaction of the wormholes blockchain
-func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err error) {
+func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
 	// Non-wormholes and failed transactions are not resolved
 	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
@@ -485,8 +479,8 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		return
 	}
 
-	blockNumber := uint64(block.Number)
-	timestamp := uint64(block.Timestamp)
+	blockNumber := uint64(wh.Number)
+	timestamp := uint64(wh.Timestamp)
 	txHash := string(tx.Hash)
 	from := string(tx.From)
 	to := string(*tx.To)
@@ -494,7 +488,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 	switch w.Type {
 	case 0: //Users mint NFT by themselves
 		nftAddr := "" //Calculate fill in real time when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
+		wh.NFTs = append(wh.NFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  w.Royalty, //The unit is one ten thousandth
 			MetaUrl:       realMeatUrl(w.MetaURL),
@@ -511,22 +505,22 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 	case 1: //Users transfer NFT by themselves
 		w.NFTAddress = strings.ToLower(w.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        1,
-			NFTAddr:       &w.NFTAddress,
-			ExchangerAddr: "", //Self-transfer without exchange
-			From:          "", //The original owner is populated in real time when inserting into the database
-			To:            to,
-			Price:         nil,
-			Timestamp:     timestamp,
-			TxHash:        txHash,
-			BlockNumber:   blockNumber,
+			TxType:      1,
+			NFTAddr:     &w.NFTAddress,
+			To:          to,
+			Price:       value,
+			Timestamp:   timestamp,
+			TxHash:      txHash,
+			BlockNumber: blockNumber,
 		})
 
 	case 6: //Official NFT exchange, recycling shards to shard pool
-		wh.RecycleTxs = append(wh.RecycleTxs, &RecycleTx{
-			Address:   w.NFTAddress,
-			Timestamp: int64(timestamp),
-			TxHash:    txHash,
+		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
+			TxType:      6,
+			NFTAddr:     &w.NFTAddress,
+			Timestamp:   timestamp,
+			TxHash:      txHash,
+			BlockNumber: blockNumber,
 		})
 
 	case 7: //pledge snft
@@ -546,7 +540,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.ChangeValidators = append(wh.ChangeValidators, validator)
 
 	case 11: //Open the exchange
-		wh.Exchangers = append(wh.Exchangers, &Exchanger{
+		wh.ChangeExchangers = append(wh.ChangeExchangers, &Exchanger{
 			Address:     from,
 			Name:        w.Name,
 			URL:         w.Url,
@@ -556,11 +550,10 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			BlockNumber: blockNumber,
 			TxHash:      txHash,
 			Amount:      value,
-			TxAmount:    "0",
 		})
 
 	case 12: //Close the exchange
-		wh.CloseExchangers = append(wh.CloseExchangers, from)
+		wh.ChangeExchangers = append(wh.ChangeExchangers, &Exchanger{Address: from, Amount: "0", CloseAt: &timestamp})
 
 	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
@@ -568,10 +561,9 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        2,
 			NFTAddr:       &w.Buyer.NFTAddress,
-			ExchangerAddr: w.Buyer.Exchanger,
-			From:          "", //The original owner is populated in real time when inserting into the database
+			ExchangerAddr: &w.Buyer.Exchanger,
 			To:            to,
-			Price:         &value, //The unit is wei
+			Price:         value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
@@ -583,10 +575,9 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        3,
 			NFTAddr:       &w.Seller1.NFTAddress,
-			ExchangerAddr: w.Seller1.Exchanger,
-			From:          "",     //The original owner is populated in real time when inserting into the database
-			To:            from,   //The transaction initiator is the buyer
-			Price:         &value, //The unit is wei
+			ExchangerAddr: &w.Seller1.Exchanger,
+			To:            from,  //The transaction initiator is the buyer
+			Price:         value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
@@ -606,7 +597,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		}
 		w.Seller2.Exchanger = strings.ToLower(w.Seller2.Exchanger)
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
+		wh.NFTs = append(wh.NFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -622,10 +613,10 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        4,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: w.Seller2.Exchanger,
+			ExchangerAddr: &w.Seller2.Exchanger,
 			From:          string(creator),
-			To:            from,   //The transaction initiator is the buyer
-			Price:         &value, //The unit is wei
+			To:            from,  //The transaction initiator is the buyer
+			Price:         value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
@@ -644,7 +635,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
+		wh.NFTs = append(wh.NFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -660,10 +651,10 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        5,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: from, //The transaction initiator is the exchange address
+			ExchangerAddr: &from, //The transaction initiator is the exchange address
 			From:          string(creator),
 			To:            to,
-			Price:         &value, //The unit is wei
+			Price:         value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
@@ -680,10 +671,9 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        6,
 			NFTAddr:       &w.Buyer.NFTAddress,
-			ExchangerAddr: string(exchangerAddr),
-			From:          "", //The original owner is populated in real time when inserting into the database
+			ExchangerAddr: (*string)(&exchangerAddr),
 			To:            to,
-			Price:         &value, //The unit is wei
+			Price:         value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
@@ -708,7 +698,7 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
-		wh.CreateNFTs = append(wh.CreateNFTs, &NFT{
+		wh.NFTs = append(wh.NFTs, &NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  uint32(royaltyRatio),
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
@@ -724,10 +714,10 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        7,
 			NFTAddr:       &nftAddr,
-			ExchangerAddr: string(exchangerAddr),
+			ExchangerAddr: (*string)(&exchangerAddr),
 			From:          string(creator),
 			To:            to,
-			Price:         &value, //The unit is wei
+			Price:         value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
@@ -738,23 +728,22 @@ func decodeWHTx(_ *node.Client, block *Block, tx *Transaction, wh *Parsed) (err 
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
 			TxType:        8,
 			NFTAddr:       &w.Buyer.NFTAddress,
-			ExchangerAddr: from,
-			From:          "", //The original owner is populated in real time when inserting into the database
+			ExchangerAddr: &from,
 			To:            to,
-			Price:         &value, //The unit is wei
+			Price:         value, //The unit is wei
 			Timestamp:     timestamp,
 			TxHash:        txHash,
 			BlockNumber:   blockNumber,
 		})
 
 	case 21: // Exchange pledge
-		wh.ExchangerPledges = append(wh.ExchangerPledges, &Exchanger{
+		wh.ChangeExchangers = append(wh.ChangeExchangers, &Exchanger{
 			Address: from,
 			Amount:  value,
 		})
 
 	case 22: //Revoke the exchange pledge
-		wh.ExchangerPledges = append(wh.ExchangerPledges, &Exchanger{
+		wh.ChangeExchangers = append(wh.ChangeExchangers, &Exchanger{
 			Address: from,
 			Amount:  "-" + value,
 		})

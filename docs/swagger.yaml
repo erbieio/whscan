@@ -477,21 +477,6 @@ definitions:
           7: lazy bid transaction, 8: matching transaction'
         type: integer
     type: object
-  model.RecycleTx:
-    properties:
-      address:
-        description: the SNFT address
-        type: string
-      count:
-        description: snft count
-        type: integer
-      timestamp:
-        description: transaction timestamp
-        type: integer
-      tx_hash:
-        description: transaction hash
-        type: string
-    type: object
   model.SNFT:
     properties:
       address:
@@ -1372,6 +1357,9 @@ definitions:
       totalExchanger:
         description: Total number of exchanges
         type: integer
+      totalExchangerPledge:
+        description: Total amount of exchanger pledge
+        type: string
       totalExchangerTx:
         description: Total number of exchanger  transactions
         type: integer
@@ -1393,9 +1381,6 @@ definitions:
       totalNFTTx:
         description: Total number of  NFT transactions
         type: integer
-      totalPledge:
-        description: Total amount of validator pledge
-        type: string
       totalRecycle:
         description: Total number of recycle SNFT
         type: integer
@@ -1411,6 +1396,9 @@ definitions:
       totalSNFTCreator:
         description: Total creator of SNFTs
         type: integer
+      totalSNFTPledge:
+        description: Total amount of snft pledge
+        type: string
       totalSNFTTx:
         description: Total number of  SNFT transactions
         type: integer
@@ -1426,6 +1414,9 @@ definitions:
       totalValidator:
         description: Total number of validator
         type: integer
+      totalValidatorPledge:
+        description: Total amount of validator pledge
+        type: string
       totalWormholesTx:
         description: Total number of  wormholes transactions
         type: integer
@@ -2725,7 +2716,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.RecycleTx'
+            $ref: '#/definitions/model.NFTTx'
         "400":
           description: Bad Request
           schema:

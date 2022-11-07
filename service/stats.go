@@ -14,39 +14,41 @@ import (
 
 // Stats caches some database queries to speed up queries
 type Stats struct {
-	ChainId             int64  `json:"chainId"`             //chain id
-	GenesisBalance      string `json:"genesisBalance"`      //Total amount of coins created
-	AvgBlockTime        int64  `json:"avgBlockTime"`        //average block time, ms
-	TotalBlock          int64  `json:"totalBlock"`          //Total number of blocks
-	TotalBlackHole      int64  `json:"totalBlackHole"`      //Total number of BlackHole blocks
-	TotalTransaction    int64  `json:"totalTransaction"`    //Total number of transactions
-	TotalInternalTx     int64  `json:"totalInternalTx"`     //Total number of internal transactions
-	TotalTransferTx     int64  `json:"totalTransferTx"`     //Total number of  transfer transactions
-	TotalWormholesTx    int64  `json:"totalWormholesTx"`    //Total number of  wormholes transactions
-	TotalUncle          int64  `json:"totalUncle"`          //Number of total uncle blocks
-	TotalAccount        int64  `json:"totalAccount"`        //Total account number
-	TotalBalance        string `json:"totalBalance"`        //The total amount of coins in the chain
-	TotalExchanger      int64  `json:"totalExchanger"`      //Total number of exchanges
-	TotalNFTCollection  int64  `json:"totalNFTCollection"`  //Total number of NFT collections
-	TotalSNFTCollection int64  `json:"totalSNFTCollection"` //Total number of SNFT collections
-	TotalNFT            int64  `json:"totalNFT"`            //Total number of NFTs
-	TotalSNFT           int64  `json:"totalSNFT"`           //Total number of SNFTs
-	TotalNFTTx          int64  `json:"totalNFTTx"`          //Total number of  NFT transactions
-	TotalSNFTTx         int64  `json:"totalSNFTTx"`         //Total number of  SNFT transactions
-	TotalAmount         string `json:"totalAmount"`         //total transaction volume
-	TotalNFTAmount      string `json:"totalNFTAmount"`      //Total transaction volume of NFTs
-	TotalSNFTAmount     string `json:"totalSNFTAmount"`     //Total transaction volume of SNFTs
-	TotalValidator      int64  `json:"totalValidator"`      //Total number of validator
-	TotalNFTCreator     int64  `json:"totalNFTCreator"`     //Total creator of NFTs
-	TotalSNFTCreator    int64  `json:"totalSNFTCreator"`    //Total creator of SNFTs
-	TotalExchangerTx    int64  `json:"totalExchangerTx"`    //Total number of exchanger  transactions
-	RewardCoinCount     int64  `json:"rewardCoinCount"`     //Total number of times to get coin rewards, 0.1ERB once
-	RewardSNFTCount     int64  `json:"rewardSNFTCount"`     //Total number of times to get SNFT rewards
-	TotalRecycle        uint64 `json:"totalRecycle"`        //Total number of recycle SNFT
-	TotalPledge         string `json:"totalPledge"`         //Total amount of validator pledge
-	Total24HExchangerTx int64  `json:"total24HExchangerTx"` //Total number of exchanger  transactions within 24 hours
-	Total24HNFT         int64  `json:"total24HNFT"`         //Total number of NFT within 24 hours
-	Total24HTx          int64  `json:"total24HTx"`          //Total number of transactions within 24 hours
+	ChainId              int64  `json:"chainId"`              //chain id
+	GenesisBalance       string `json:"genesisBalance"`       //Total amount of coins created
+	AvgBlockTime         int64  `json:"avgBlockTime"`         //average block time, ms
+	TotalBlock           int64  `json:"totalBlock"`           //Total number of blocks
+	TotalBlackHole       int64  `json:"totalBlackHole"`       //Total number of BlackHole blocks
+	TotalTransaction     int64  `json:"totalTransaction"`     //Total number of transactions
+	TotalInternalTx      int64  `json:"totalInternalTx"`      //Total number of internal transactions
+	TotalTransferTx      int64  `json:"totalTransferTx"`      //Total number of  transfer transactions
+	TotalWormholesTx     int64  `json:"totalWormholesTx"`     //Total number of  wormholes transactions
+	TotalUncle           int64  `json:"totalUncle"`           //Number of total uncle blocks
+	TotalAccount         int64  `json:"totalAccount"`         //Total account number
+	TotalBalance         string `json:"totalBalance"`         //The total amount of coins in the chain
+	TotalExchanger       int64  `json:"totalExchanger"`       //Total number of exchanges
+	TotalNFTCollection   int64  `json:"totalNFTCollection"`   //Total number of NFT collections
+	TotalSNFTCollection  int64  `json:"totalSNFTCollection"`  //Total number of SNFT collections
+	TotalNFT             int64  `json:"totalNFT"`             //Total number of NFTs
+	TotalSNFT            int64  `json:"totalSNFT"`            //Total number of SNFTs
+	TotalNFTTx           int64  `json:"totalNFTTx"`           //Total number of  NFT transactions
+	TotalSNFTTx          int64  `json:"totalSNFTTx"`          //Total number of  SNFT transactions
+	TotalAmount          string `json:"totalAmount"`          //total transaction volume
+	TotalNFTAmount       string `json:"totalNFTAmount"`       //Total transaction volume of NFTs
+	TotalSNFTAmount      string `json:"totalSNFTAmount"`      //Total transaction volume of SNFTs
+	TotalValidator       int64  `json:"totalValidator"`       //Total number of validator
+	TotalNFTCreator      int64  `json:"totalNFTCreator"`      //Total creator of NFTs
+	TotalSNFTCreator     int64  `json:"totalSNFTCreator"`     //Total creator of SNFTs
+	TotalExchangerTx     int64  `json:"totalExchangerTx"`     //Total number of exchanger  transactions
+	RewardCoinCount      int64  `json:"rewardCoinCount"`      //Total number of times to get coin rewards, 0.1ERB once
+	RewardSNFTCount      int64  `json:"rewardSNFTCount"`      //Total number of times to get SNFT rewards
+	TotalRecycle         uint64 `json:"totalRecycle"`         //Total number of recycle SNFT
+	TotalValidatorPledge string `json:"totalValidatorPledge"` //Total amount of validator pledge
+	TotalExchangerPledge string `json:"totalExchangerPledge"` //Total amount of exchanger pledge
+	TotalSNFTPledge      string `json:"totalSNFTPledge"`      //Total amount of snft pledge
+	Total24HExchangerTx  int64  `json:"total24HExchangerTx"`  //Total number of exchanger  transactions within 24 hours
+	Total24HNFT          int64  `json:"total24HNFT"`          //Total number of NFT within 24 hours
+	Total24HTx           int64  `json:"total24HTx"`           //Total number of transactions within 24 hours
 
 	genesis    model.Header
 	firstBlock model.Header
@@ -57,7 +59,6 @@ var stats = Stats{
 	TotalAmount:     "0",
 	TotalNFTAmount:  "0",
 	TotalSNFTAmount: "0",
-	TotalPledge:     "0",
 	balances:        make(map[types.Address]*big.Int),
 }
 
@@ -134,9 +135,6 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Cache{}).Where("`key`=?", "TotalRecycle").Select("value").Scan(&stats.TotalRecycle).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Cache{}).Where("`key`=?", "TotalPledge").Select("value").Scan(&stats.TotalPledge).Error; err != nil {
-		return
-	}
 	if err = db.Model(&model.Block{}).Find(&stats.genesis, "number=0").Error; err != nil {
 		return
 	}
@@ -149,16 +147,48 @@ func loadStats(db *gorm.DB) (err error) {
 		totalBalance = totalBalance.Add(totalBalance, balance)
 	}
 	stats.TotalBalance = totalBalance.Text(10)
+
+	value, totalSNFTPledge, snftAmounts := new(big.Int), new(big.Int), make([]string, 0)
+	if err = db.Model(&model.Account{}).Where("`snft_amount`!='0'").Pluck("snft_amount", &snftAmounts).Error; err != nil {
+		return
+	}
+	for _, snftAmount := range snftAmounts {
+		value.SetString(snftAmount, 0)
+		totalSNFTPledge = totalSNFTPledge.Add(totalSNFTPledge, value)
+	}
+	stats.TotalSNFTPledge = totalSNFTPledge.Text(10)
+
+	totalExchangerPledge, exchangerAmounts := new(big.Int), make([]string, 0)
+	if err = db.Model(&model.Exchanger{}).Where("`amount`!='0'").Pluck("amount", &exchangerAmounts).Error; err != nil {
+		return
+	}
+	for _, exchangerAmount := range exchangerAmounts {
+		value.SetString(exchangerAmount, 0)
+		totalExchangerPledge = totalExchangerPledge.Add(totalExchangerPledge, value)
+	}
+	stats.TotalExchangerPledge = totalExchangerPledge.Text(10)
+
+	totalValidatorPledge, validatorAmounts := new(big.Int), make([]string, 0)
+	if err = db.Model(&model.Validator{}).Where("`amount`!='0'").Pluck("amount", &validatorAmounts).Error; err != nil {
+		return
+	}
+	for _, validatorAmount := range validatorAmounts {
+		value.SetString(validatorAmount, 0)
+		totalValidatorPledge = totalValidatorPledge.Add(totalValidatorPledge, value)
+	}
+	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
 	return
 }
 
 func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
-	totalPledge, _ := new(big.Int).SetString(stats.TotalPledge, 0)
+	totalValidatorPledge, _ := new(big.Int).SetString(stats.TotalValidatorPledge, 0)
+	totalExchangerPledge, _ := new(big.Int).SetString(stats.TotalExchangerPledge, 0)
+	totalSNFTPledge, _ := new(big.Int).SetString(stats.TotalSNFTPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
-	value, totalNFTTx, totalSNFTTx := new(big.Int), stats.TotalNFTTx, stats.TotalSNFTTx
+	rewardSNFT, value, totalNFTTx, totalSNFTTx := 0, new(big.Int), stats.TotalNFTTx, stats.TotalSNFTTx
 	fnfts := make(map[string]int64)
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
@@ -173,26 +203,33 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	}
 	for _, pledge := range parsed.ChangeValidators {
 		value.SetString(pledge.Amount, 0)
-		totalPledge = totalPledge.Add(totalPledge, value)
+		totalValidatorPledge = totalValidatorPledge.Add(totalValidatorPledge, value)
+	}
+	for _, pledge := range parsed.ChangeExchangers {
+		value.SetString(pledge.Amount, 0)
+		totalExchangerPledge = totalExchangerPledge.Add(totalExchangerPledge, value)
 	}
 	for _, tx := range parsed.NFTTxs {
 		if (*tx.NFTAddr)[:3] == "0x0" {
 			totalNFTTx++
-			if tx.Price != nil {
-				value.SetString(*tx.Price, 0)
+			if tx.Price != "0" {
+				value.SetString(tx.Price, 0)
 				totalNFTAmount = totalNFTAmount.Add(totalNFTAmount, value)
 			}
 		} else {
 			totalSNFTTx++
-			if tx.Price != nil {
-				value.SetString(*tx.Price, 0)
+			if tx.Price != "0" {
+				value.SetString(tx.Price, 0)
 				totalSNFTAmount = totalSNFTAmount.Add(totalSNFTAmount, value)
 			}
 			fnfts[(*tx.NFTAddr + "00")[:41]] = 0
 		}
 	}
-	for _, snft := range parsed.RewardSNFTs {
-		fnfts[snft.Address[:41]] = 0
+	for _, reward := range parsed.Rewards {
+		if reward.SNFT != nil {
+			fnfts[(*reward.SNFT)[:41]] = 0
+			rewardSNFT++
+		}
 	}
 	for _, snft := range parsed.PledgeSNFT {
 		fnfts[(snft + "00")[42:83]] = 0
@@ -233,13 +270,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			return
 		}
 	}
-	if len(parsed.ChangeValidators) > 0 && totalPledge.Text(10) != stats.TotalPledge {
-		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
-			Key: "TotalPledge", Value: totalPledge.Text(10)}).Error
-		if err != nil {
-			return
-		}
-	}
 	if len(parsed.NFTTxs) > 0 {
 		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
 			Key: "TotalNFTAmount", Value: totalNFTAmount.Text(10)}).Error
@@ -265,20 +295,22 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
 	stats.TotalUncle += int64(parsed.UnclesCount)
-	stats.TotalNFT += int64(len(parsed.CreateNFTs))
-	stats.TotalSNFT += int64(len(parsed.RewardSNFTs) - len(parsed.RecycleSNFTs))
-	stats.RewardSNFTCount += int64(len(parsed.RewardSNFTs))
-	stats.RewardCoinCount += int64(len(parsed.Rewards) - len(parsed.RewardSNFTs))
+	stats.TotalNFT += int64(len(parsed.NFTs))
+	stats.TotalSNFT += int64(rewardSNFT - len(parsed.RecycleSNFTs))
+	stats.RewardSNFTCount += int64(rewardSNFT)
+	stats.RewardCoinCount += int64(len(parsed.Rewards) - rewardSNFT)
 	stats.TotalAccount = int64(len(stats.balances))
 	stats.TotalRecycle += uint64(len(parsed.RecycleSNFTs))
 	stats.TotalBalance = totalBalance.Text(10)
 	stats.TotalAmount = totalAmount.Text(10)
-	stats.TotalPledge = totalPledge.Text(10)
+	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
+	stats.TotalExchangerPledge = totalExchangerPledge.Text(10)
+	stats.TotalSNFTPledge = totalSNFTPledge.Text(10)
 	stats.TotalNFTTx = totalNFTTx
 	stats.TotalSNFTTx = totalSNFTTx
 	stats.TotalNFTAmount = totalNFTAmount.Text(10)
 	stats.TotalSNFTAmount = totalSNFTAmount.Text(10)
-	stats.TotalSNFTCollection += int64(len(parsed.Epochs) * 16)
+	stats.TotalSNFTCollection = (stats.RewardSNFTCount/4096 + 1) * 16
 	if parsed.Number > 0 && parsed.Miner == "0x0000000000000000000000000000000000000000" {
 		stats.TotalBlackHole++
 	}

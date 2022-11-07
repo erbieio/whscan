@@ -202,7 +202,7 @@ func pageComSNFT(c *gin.Context) {
 // @Produce     json
 // @Param       hash query    string false "recycle tx hash"
 // @Param       addr query    string false "recycle address"
-// @Success     200  {object} model.RecycleTx
+// @Success     200  {object} model.NFTTx
 // @Failure     400  {object} service.ErrRes
 // @Router      /snft/recycle_tx [get]
 func getRecycleTx(c *gin.Context) {

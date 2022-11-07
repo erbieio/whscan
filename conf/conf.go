@@ -38,20 +38,6 @@ func init() {
 	log.SetOutput(os.Stdout)
 
 	// read configuration to override default value
-	setConf()
-
-	var err error
-
-	// Blockchain account private key and RPC client configuration
-	PrivateKey, err = utils.HexToECDSA(HexKey)
-	if err != nil {
-		panic(err)
-	}
-	Amount = new(big.Int)
-	Amount.SetString(AmountStr, 0)
-}
-
-func setConf() {
 	err := godotenv.Load("scan.env")
 	if err != nil {
 		log.Println("Failed to load environment variables from .env file,", err)
@@ -94,4 +80,12 @@ func setConf() {
 	if erbPay := os.Getenv("ERB_PAY"); erbPay != "" {
 		ERBPay = erbPay
 	}
+
+	// Blockchain account private key and RPC client configuration
+	PrivateKey, err = utils.HexToECDSA(HexKey)
+	if err != nil {
+		panic(err)
+	}
+	Amount = new(big.Int)
+	Amount.SetString(AmountStr, 0)
 }

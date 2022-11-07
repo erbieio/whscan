@@ -1766,7 +1766,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.RecycleTx"
+                            "$ref": "#/definitions/model.NFTTx"
                         }
                     },
                     "400": {
@@ -2958,27 +2958,6 @@ const docTemplate = `{
                 "tx_type": {
                     "description": "Transaction type, 1: transfer, 2: bid transaction, 3: fixed price purchase, 4: lazy price purchase, 5: lazy price purchase, 6: bid transaction, 7: lazy bid transaction, 8: matching transaction",
                     "type": "integer"
-                }
-            }
-        },
-        "model.RecycleTx": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "the SNFT address",
-                    "type": "string"
-                },
-                "count": {
-                    "description": "snft count",
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "description": "transaction timestamp",
-                    "type": "integer"
-                },
-                "tx_hash": {
-                    "description": "transaction hash",
-                    "type": "string"
                 }
             }
         },
@@ -4185,6 +4164,10 @@ const docTemplate = `{
                     "description": "Total number of exchanges",
                     "type": "integer"
                 },
+                "totalExchangerPledge": {
+                    "description": "Total amount of exchanger pledge",
+                    "type": "string"
+                },
                 "totalExchangerTx": {
                     "description": "Total number of exchanger  transactions",
                     "type": "integer"
@@ -4213,10 +4196,6 @@ const docTemplate = `{
                     "description": "Total number of  NFT transactions",
                     "type": "integer"
                 },
-                "totalPledge": {
-                    "description": "Total amount of validator pledge",
-                    "type": "string"
-                },
                 "totalRecycle": {
                     "description": "Total number of recycle SNFT",
                     "type": "integer"
@@ -4237,6 +4216,10 @@ const docTemplate = `{
                     "description": "Total creator of SNFTs",
                     "type": "integer"
                 },
+                "totalSNFTPledge": {
+                    "description": "Total amount of snft pledge",
+                    "type": "string"
+                },
                 "totalSNFTTx": {
                     "description": "Total number of  SNFT transactions",
                     "type": "integer"
@@ -4256,6 +4239,10 @@ const docTemplate = `{
                 "totalValidator": {
                     "description": "Total number of validator",
                     "type": "integer"
+                },
+                "totalValidatorPledge": {
+                    "description": "Total amount of validator pledge",
+                    "type": "string"
                 },
                 "totalWormholesTx": {
                     "description": "Total number of  wormholes transactions",
