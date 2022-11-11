@@ -32,6 +32,6 @@ func FetchValidator(page, size int) (res []*model.Validator, err error) {
 }
 
 func FetchLocations() (res []*model.Location, err error) {
-	err = DB.Find(&res).Error
+	err = DB.Where("`address` IN (?)", DB.Model(&model.Validator{}).Select("proxy")).Find(&res).Error
 	return
 }

@@ -44,6 +44,9 @@ func mainLoop(client *node.Client, thread int64, interval time.Duration, taskCh 
 		if err != nil {
 			log.Printf("get block height error: %v\n", err)
 		}
+		if max == number {
+			service.UpdateComSNFT = true
+		}
 		if err != nil || (number > max && taskNum == 0) {
 			time.Sleep(interval)
 		}

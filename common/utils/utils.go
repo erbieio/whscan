@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fsnotify/fsnotify"
 	. "server/common/model"
 	. "server/common/types"
 )
@@ -199,6 +200,20 @@ func HomeDir() string {
 		return usr.HomeDir
 	}
 	return ""
+}
+
+func NewWatcher(files []string) (*fsnotify.Watcher, error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range files {
+		err = watcher.Add(file)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return watcher, nil
 }
 
 // ParsePage parses the paging parameters, the default value is 10 records on the first page

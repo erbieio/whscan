@@ -36,6 +36,7 @@ type Stats struct {
 	TotalAmount          string `json:"totalAmount"`          //total transaction volume
 	TotalNFTAmount       string `json:"totalNFTAmount"`       //Total transaction volume of NFTs
 	TotalSNFTAmount      string `json:"totalSNFTAmount"`      //Total transaction volume of SNFTs
+	TotalValidatorOnline int64  `json:"totalValidatorOnline"` //Total amount of validator online
 	TotalValidator       int64  `json:"totalValidator"`       //Total number of validator
 	TotalNFTCreator      int64  `json:"totalNFTCreator"`      //Total creator of NFTs
 	TotalSNFTCreator     int64  `json:"totalSNFTCreator"`     //Total creator of SNFTs
@@ -149,7 +150,7 @@ func loadStats(db *gorm.DB) (err error) {
 	stats.TotalBalance = totalBalance.Text(10)
 
 	value, totalSNFTPledge, snftAmounts := new(big.Int), new(big.Int), make([]string, 0)
-	if err = db.Model(&model.Account{}).Where("`snft_amount`!='0'").Pluck("snft_amount", &snftAmounts).Error; err != nil {
+	if err = db.Model(&model.User{}).Pluck("amount", &snftAmounts).Error; err != nil {
 		return
 	}
 	for _, snftAmount := range snftAmounts {
@@ -179,6 +180,8 @@ func loadStats(db *gorm.DB) (err error) {
 	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
 	return
 }
+
+var UpdateComSNFT = false
 
 func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
@@ -240,10 +243,12 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	for _, snft := range parsed.RecycleSNFTs {
 		fnfts[(snft + "00")[:41]] = 0
 	}
-	for fnft := range fnfts {
-		err = db.Exec("CAll fresh_c_snft(?)", fnft).Error
-		if err != nil {
-			return
+	if UpdateComSNFT {
+		for fnft := range fnfts {
+			err = db.Exec("CAll fresh_c_snft(?)", fnft).Error
+			if err != nil {
+				return
+			}
 		}
 	}
 	if parsed.Number == 0 {

@@ -180,7 +180,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *Parsed) (err er
 		}
 		for _, address := range modifiedAccounts {
 			if address[:12] != "0x0000000000" && address[:12] != "0x8000000000" {
-				parsed.CacheAccounts[address] = &Account{Address: address, SNFTAmount: "0"}
+				parsed.CacheAccounts[address] = &Account{Address: address}
 			}
 		}
 	} else {
@@ -194,7 +194,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *Parsed) (err er
 				return
 			}
 			for address := range genesis.Accounts {
-				parsed.CacheAccounts[address] = &Account{Address: address, SNFTAmount: "0"}
+				parsed.CacheAccounts[address] = &Account{Address: address}
 			}
 		}
 	}
@@ -412,7 +412,7 @@ func decodeWH(c *node.Client, wh *Parsed) error {
 			wh.ChangeValidators = append(wh.ChangeValidators, &Validator{
 				Address: validator.Addr,
 				Amount:  validator.Balance.Text(10),
-				Proxy:   &validator.Proxy,
+				Proxy:   validator.Proxy,
 			})
 		}
 	}
@@ -535,7 +535,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 			validator.Amount = "-" + value
 		}
 		if len(w.ProxyAddress) == 42 && w.ProxyAddress != "0x0000000000000000000000000000000000000000" {
-			validator.Proxy = &w.ProxyAddress
+			validator.Proxy = w.ProxyAddress
 		}
 		wh.ChangeValidators = append(wh.ChangeValidators, validator)
 
@@ -559,7 +559,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        2,
+			TxType:        14,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: &w.Buyer.Exchanger,
 			To:            to,
@@ -573,7 +573,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 		w.Seller1.NFTAddress = strings.ToLower(w.Seller1.NFTAddress)
 		w.Seller1.Exchanger = strings.ToLower(w.Seller1.Exchanger)
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        3,
+			TxType:        15,
 			NFTAddr:       &w.Seller1.NFTAddress,
 			ExchangerAddr: &w.Seller1.Exchanger,
 			To:            from,  //The transaction initiator is the buyer
@@ -611,7 +611,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 			Owner:         string(creator),
 		})
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        4,
+			TxType:        16,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: &w.Seller2.Exchanger,
 			From:          string(creator),
@@ -649,7 +649,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 			Owner:         string(creator),
 		})
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        5,
+			TxType:        17,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: &from, //The transaction initiator is the exchange address
 			From:          string(creator),
@@ -669,7 +669,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 		}
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        6,
+			TxType:        18,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: (*string)(&exchangerAddr),
 			To:            to,
@@ -712,7 +712,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 			Owner:         string(creator),
 		})
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        7,
+			TxType:        19,
 			NFTAddr:       &nftAddr,
 			ExchangerAddr: (*string)(&exchangerAddr),
 			From:          string(creator),
@@ -726,7 +726,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 	case 20: //NFT matches the transaction, and the exchange initiates it
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &NFTTx{
-			TxType:        8,
+			TxType:        20,
 			NFTAddr:       &w.Buyer.NFTAddress,
 			ExchangerAddr: &from,
 			To:            to,
@@ -748,7 +748,7 @@ func decodeWHTx(_ *node.Client, wh *Parsed, tx *Transaction) (err error) {
 			Amount:  "-" + value,
 		})
 	case 31:
-		wh.ChangeValidators = append(wh.ChangeValidators, &Validator{Address: from, Proxy: &w.ProxyAddress, Amount: "0"})
+		wh.ChangeValidators = append(wh.ChangeValidators, &Validator{Address: from, Proxy: w.ProxyAddress, Amount: "0"})
 	}
 	return
 }

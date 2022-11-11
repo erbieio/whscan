@@ -32,6 +32,9 @@ func init() {
 		panic(err)
 	}
 	err = model.SetProcedure(DB)
+	if err = DB.Exec("UPDATE `validators` SET `proxy`=`validators`.address WHERE `proxy` IS NULL").Error; err != nil {
+		panic(err)
+	}
 	if err != nil {
 		panic(err)
 	}

@@ -21,6 +21,7 @@ func FetchAccounts(page, size int) (res AccountsRes, err error) {
 
 type AccountRes struct {
 	model.Account
+	SNFTAmount      string `json:"snftAmount"`      // account snft pledge amount
 	ValidatorAmount string `json:"validatorAmount"` // validator pledge amount
 	ExchangerAmount string `json:"exchangerAmount"` // exchanger pledge amount
 	TotalNFT        uint64 `json:"totalNFT"`        // Number of NFTs held
@@ -32,6 +33,7 @@ type AccountRes struct {
 func GetAccount(addr string) (res AccountRes, err error) {
 	s := "*, (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS total_nft"
 	s += ", (SELECT COUNT(*) FROM snfts WHERE owner=accounts.address) AS total_snft"
+	s += ", IFNULL((SELECT amount FROM users WHERE address=accounts.address),'0') AS snft_amount"
 	s += ", IFNULL((SELECT amount FROM validators WHERE address=accounts.address),'0') AS validator_amount"
 	s += ", IFNULL((SELECT amount FROM exchangers WHERE address=accounts.address),'0') AS exchanger_amount"
 	s += ", (SELECT COUNT(amount) FROM rewards WHERE address=accounts.address) AS reward_coin_count"

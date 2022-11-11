@@ -2487,10 +2487,6 @@ const docTemplate = `{
                     "description": "name",
                     "type": "string"
                 },
-                "snftAmount": {
-                    "description": "The total amount of coins in the chain",
-                    "type": "string"
-                },
                 "symbol": {
                     "description": "symbol",
                     "type": "string"
@@ -2707,10 +2703,6 @@ const docTemplate = `{
                     "description": "if not null, the exchange is closed",
                     "type": "integer"
                 },
-                "count": {
-                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
-                    "type": "integer"
-                },
                 "creator": {
                     "description": "Creator address",
                     "type": "string"
@@ -2726,6 +2718,10 @@ const docTemplate = `{
                 "nft_count": {
                     "description": "Total NFT count",
                     "type": "integer"
+                },
+                "reward": {
+                    "description": "amount of total reward",
+                    "type": "string"
                 },
                 "timestamp": {
                     "description": "Open time",
@@ -2956,7 +2952,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tx_type": {
-                    "description": "Transaction type, 1: transfer, 2: bid transaction, 3: fixed price purchase, 4: lazy price purchase, 5: lazy price purchase, 6: bid transaction, 7: lazy bid transaction, 8: matching transaction",
+                    "description": "Transaction type, 1: transfer, 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction",
                     "type": "integer"
                 }
             }
@@ -3018,13 +3014,13 @@ const docTemplate = `{
                     "description": "pledge amount",
                     "type": "string"
                 },
-                "count": {
-                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
-                    "type": "integer"
-                },
                 "last_number": {
                     "description": "The block number at latest rewarding",
                     "type": "integer"
+                },
+                "online": {
+                    "description": "online",
+                    "type": "boolean"
                 },
                 "proxy": {
                     "description": "proxy address",
@@ -3080,7 +3076,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "snftAmount": {
-                    "description": "The total amount of coins in the chain",
+                    "description": "account snft pledge amount",
                     "type": "string"
                 },
                 "symbol": {
@@ -3275,10 +3271,6 @@ const docTemplate = `{
                     "description": "collection count",
                     "type": "integer"
                 },
-                "count": {
-                    "description": "The number of pledges, both PledgeAdd and PledgeSub are added once",
-                    "type": "integer"
-                },
                 "creator": {
                     "description": "Creator address",
                     "type": "string"
@@ -3294,6 +3286,10 @@ const docTemplate = `{
                 "nft_count": {
                     "description": "Total NFT count",
                     "type": "integer"
+                },
+                "reward": {
+                    "description": "amount of total reward",
+                    "type": "string"
                 },
                 "timestamp": {
                     "description": "Open time",
@@ -3450,9 +3446,6 @@ const docTemplate = `{
             "properties": {
                 "from": {
                     "type": "string"
-                },
-                "timestamp": {
-                    "type": "integer"
                 },
                 "to": {
                     "type": "string"
@@ -4238,6 +4231,10 @@ const docTemplate = `{
                 },
                 "totalValidator": {
                     "description": "Total number of validator",
+                    "type": "integer"
+                },
+                "totalValidatorOnline": {
+                    "description": "Total amount of validator online",
                     "type": "integer"
                 },
                 "totalValidatorPledge": {

@@ -27,6 +27,7 @@ var Tables = []interface{}{
 	&NFTTx{},
 	&Reward{},
 	&Validator{},
+	&User{},
 	&Location{},
 	&Subscription{},
 }
@@ -154,7 +155,7 @@ func SetProcedure(db *gorm.DB) error {
 
 // Cache stores some statistical data
 type Cache struct {
-	Key   string `gorm:"type:VARCHAR(64);primaryKey"` //Key
+	Key   string `gorm:"type:VARCHAR(66);primaryKey"` //Key
 	Value string `gorm:"type:VARCHAR(128)"`           //value
 }
 
@@ -175,7 +176,7 @@ type Header struct {
 	Size             types.Uint64  `json:"size"`                                          //size
 	StateRoot        types.Hash    `json:"stateRoot" gorm:"type:CHAR(66)"`                //World tree root hash
 	Timestamp        types.Uint64  `json:"timestamp"`                                     //timestamp
-	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:VARCHAR(64);index"` //total difficulty
+	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:VARCHAR(66);index"` //total difficulty
 	TransactionsRoot types.Hash    `json:"transactionsRoot" gorm:"type:CHAR(66)"`         //transaction root hash
 }
 
@@ -192,41 +193,40 @@ type Block struct {
 
 // Account information
 type Account struct {
-	Address    types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
-	Balance    types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //The total amount of coins in the chain
-	Nonce      types.Uint64        `json:"transactionCount"`                        //transaction random number, transaction volume
-	SNFTAmount types.BigInt        `json:"snftAmount"`                              //account snft pledge amount
-	Code       *string             `json:"code"`                                    //bytecode
-	Name       *string             `json:"name" gorm:"type:VARCHAR(64)"`            //name
-	Symbol     *string             `json:"symbol" gorm:"type:VARCHAR(64)"`          //symbol
-	Type       *types.ContractType `json:"type"`                                    //contract types, ERC20, ERC721, ERC1155
-	Creator    *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //the creator, the contract account has value
-	CreatedTx  *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //create transaction
+	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
+	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //The total amount of coins in the chain
+	Nonce     types.Uint64        `json:"transactionCount"`                        //transaction random number, transaction volume
+	Code      *string             `json:"code"`                                    //bytecode
+	Name      *string             `json:"name" gorm:"type:VARCHAR(66)"`            //name
+	Symbol    *string             `json:"symbol" gorm:"type:VARCHAR(66)"`          //symbol
+	Type      *types.ContractType `json:"type"`                                    //contract types, ERC20, ERC721, ERC1155
+	Creator   *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //the creator, the contract account has value
+	CreatedTx *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //create transaction
 }
 
 // Transaction information
 type Transaction struct {
-	BlockHash   types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`              //Block Hash
-	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:idx_desc,sort:DESC"` //block number
-	From        types.Address  `json:"from" gorm:"type:CHAR(42);index"`             //Send address
-	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`               //Receive address
-	Input       string         `json:"input"`                                       //Additional input data, contract call encoded data
-	MethodId    *types.Data8   `json:"methodId,omitempty" gorm:"type:CHAR(18)"`     //Method ID, normal transaction is empty
-	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`              //Amount, unit wei
-	Nonce       types.Uint64   `json:"nonce"`                                       //Random number, the number of transactions initiated by the account
-	Gas         types.Uint64   `json:"gas"`                                         // fuel
-	GasPrice    types.Uint64   `json:"gasPrice"`                                    //Gas price
-	Hash        types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`        //Hash
+	BlockHash   types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
+	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index"`                //block number
+	From        types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
+	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
+	Input       string         `json:"input"`                                   //Additional input data, contract call encoded data
+	MethodId    *types.Data8   `json:"methodId,omitempty" gorm:"type:CHAR(18)"` //Method ID, normal transaction is empty
+	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //Amount, unit wei
+	Nonce       types.Uint64   `json:"nonce"`                                   //Random number, the number of transactions initiated by the account
+	Gas         types.Uint64   `json:"gas"`                                     // fuel
+	GasPrice    types.Uint64   `json:"gasPrice"`                                //Gas price
+	Hash        types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //Hash
 	Receipt
 }
 
 // Receipt transaction receipt
 type Receipt struct {
-	Status            *types.Uint64  `json:"status,omitempty"`                                 //Status, 1: success; 0: failure
-	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`                                //Cumulative gas consumption
-	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"`             //The created contract address
-	GasUsed           types.Uint64   `json:"gasUsed"`                                          //Gas consumption
-	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index:idx_desc,sort:DESC"` //The serial number in the block
+	Status            *types.Uint64  `json:"status,omitempty"`                     //Status, 1: success; 0: failure
+	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`                    //Cumulative gas consumption
+	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"` //The created contract address
+	GasUsed           types.Uint64   `json:"gasUsed"`                              //Gas consumption
+	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index"`        //The serial number in the block
 }
 
 // Log transaction log
@@ -242,14 +242,14 @@ type Log struct {
 
 // InternalTx internal transaction
 type InternalTx struct {
-	TxHash      types.Hash     `json:"txHash" gorm:"type:CHAR(66);index"`           //The transaction
-	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index:idx_desc,sort:DESC"` //block number
-	Depth       types.Uint64   `json:"depth"`                                       //call depth
-	Op          string         `json:"op" gorm:"type:VARCHAR(16)"`                  //Operation
-	From        *types.Address `json:"from" gorm:"type:CHAR(42);index"`             //Originating address
-	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`               //Receive address
-	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`              //Amount, unit wei
-	GasLimit    types.Uint64   `json:"gasLimit"`                                    //Gas limit
+	TxHash      types.Hash     `json:"txHash" gorm:"type:CHAR(66);index"` //The transaction
+	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index"`          //block number
+	Depth       types.Uint64   `json:"depth"`                             //call depth
+	Op          string         `json:"op" gorm:"type:VARCHAR(16)"`        //Operation
+	From        *types.Address `json:"from" gorm:"type:CHAR(42);index"`   //Originating address
+	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`     //Receive address
+	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`    //Amount, unit wei
+	GasLimit    types.Uint64   `json:"gasLimit"`                          //Gas limit
 }
 
 // ERC20Transfer ERC20 contract transfer event
@@ -348,7 +348,7 @@ type ComSNFT struct {
 
 // NFTTx NFT transaction attribute information
 type NFTTx struct {
-	//Transaction type, 1: transfer, 2: bid transaction, 3: fixed price purchase, 4: lazy price purchase, 5: lazy price purchase, 6: bid transaction, 7: lazy bid transaction, 8: matching transaction
+	//Transaction type, 1: transfer, 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction
 	TxType        int32   `json:"tx_type"`
 	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`        //The NFT address of the transaction
 	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42)"` //Exchange address
@@ -384,8 +384,8 @@ type Exchanger struct {
 	Timestamp   uint64  `json:"timestamp" gorm:"index"`                   //Open time
 	BlockNumber uint64  `json:"block_number" gorm:"index"`                //The block number when created
 	TxHash      string  `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
-	Amount      string  `json:"amount" gorm:"type:VARCHAR(64)"`           //Pledge amount
-	Count       uint64  `json:"count"`                                    //The number of pledges, both PledgeAdd and PledgeSub are added once
+	Amount      string  `json:"amount" gorm:"type:VARCHAR(66)"`           //Pledge amount
+	Reward      string  `json:"reward" gorm:"type:VARCHAR(66)"`           //amount of total reward
 	TxAmount    string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //Total transaction amount, unit wei
 	NFTCount    uint64  `json:"nft_count"`                                //Total NFT count
 	CloseAt     *uint64 `json:"close_at"`                                 //if not null, the exchange is closed
@@ -398,18 +398,24 @@ type Reward struct {
 	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchange
 	BlockNumber uint64  `json:"block_number"`                   //The block number when rewarding
 	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
-	Amount      *string `json:"amount" gorm:"type:VARCHAR(64)"` //Amount of reward
+	Amount      *string `json:"amount" gorm:"type:VARCHAR(66)"` //Amount of reward
+}
+
+type User struct {
+	Address string `json:"address" gorm:"type:CHAR(42);primaryKey"` //user account
+	Amount  string `json:"amount" gorm:"type:VARCHAR(66)"`          //snft pledge amount
+	Reward  string `json:"reward" gorm:"type:VARCHAR(66)"`          //amount of total reward
 }
 
 // Validator pledge information
 type Validator struct {
-	Address    string  `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
-	Proxy      *string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
-	Amount     string  `json:"amount" gorm:"type:VARCHAR(64)"`          //pledge amount
-	Count      uint64  `json:"count"`                                   //The number of pledges, both PledgeAdd and PledgeSub are added once
-	Reward     string  `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
-	Timestamp  uint64  `json:"timestamp"`                               //The time at latest rewarding
-	LastNumber uint64  `json:"last_number"`                             //The block number at latest rewarding
+	Address    string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
+	Proxy      string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
+	Amount     string `json:"amount" gorm:"type:VARCHAR(66)"`          //pledge amount
+	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
+	Timestamp  uint64 `json:"timestamp"`                               //The time at latest rewarding
+	LastNumber uint64 `json:"last_number"`                             //The block number at latest rewarding
+	Online     bool   `json:"online"`                                  //online
 }
 
 type Location struct {
@@ -421,7 +427,7 @@ type Location struct {
 
 // Subscription information
 type Subscription struct {
-	Email string `json:"email" gorm:"type:VARCHAR(64);primaryKey"` //Email
+	Email string `json:"email" gorm:"type:VARCHAR(66);primaryKey"` //Email
 }
 
 // Parsed block parsing result

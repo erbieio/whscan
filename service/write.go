@@ -174,38 +174,6 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 	if err = SaveNFTTx(tx, wh); err != nil {
 		return
 	}
-	for _, change := range wh.ChangeExchangers {
-		exchanger := model.Exchanger{Address: change.Address, Creator: change.Address, Amount: "0", TxAmount: "0"}
-		if err = tx.Where("address=?", change.Address).Find(&exchanger).Error; err != nil {
-			return
-		}
-		if change.CloseAt != nil && exchanger.Amount != "0" {
-			// close exchanger
-			err = tx.Select("amount", "close_at").Updates(change).Error
-			change.Amount = "-" + exchanger.Amount
-		} else {
-			// open exchanger
-			if change.Creator != "" {
-				exchanger.Name = change.Name
-				exchanger.URL = change.URL
-				exchanger.FeeRatio = change.FeeRatio
-				exchanger.Timestamp = change.Timestamp
-				exchanger.BlockNumber = change.BlockNumber
-				exchanger.TxHash = change.TxHash
-			}
-			// exchanger pledge
-			if change.Amount != "0" {
-				exchanger.Count++
-				exchanger.Amount = BigIntAdd(exchanger.Amount, change.Amount)
-			}
-			err = tx.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "timestamp", "block_number", "tx_hash", "amount", "count"}),
-			}).Create(&exchanger).Error
-		}
-		if err != nil {
-			return
-		}
-	}
 	// validator change
 	for _, change := range wh.ChangeValidators {
 		var validator model.Validator
@@ -217,21 +185,20 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 			validator.Amount = "0"
 			validator.Reward = "0"
 		}
-		if change.Proxy != nil {
-			if *change.Proxy == "0x0000000000000000000000000000000000000000" || *change.Proxy == change.Address {
-				validator.Proxy = nil
+		if change.Proxy != "" {
+			if change.Proxy == "0x0000000000000000000000000000000000000000" {
+				validator.Proxy = change.Address
 			} else {
 				validator.Proxy = change.Proxy
 			}
 		}
 		if change.Amount != "0" {
 			validator.Amount = BigIntAdd(validator.Amount, change.Amount)
-			validator.Count++
 		}
 		validator.Timestamp = uint64(wh.Timestamp)
 		validator.LastNumber = uint64(wh.Number)
 		err = tx.Clauses(clause.OnConflict{
-			DoUpdates: clause.AssignmentColumns([]string{"proxy", "amount", "count", "timestamp", "last_number"}),
+			DoUpdates: clause.AssignmentColumns([]string{"proxy", "amount", "timestamp", "last_number"}),
 		}).Create(&validator).Error
 		if err != nil {
 			return
@@ -265,6 +232,25 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 			if err != nil {
 				return
 			}
+			var user *model.User
+			var exchanger *model.Exchanger
+			if err = tx.Model(&model.User{}).Where("`amount`!='0' AND `address`=?", reward.Address).Scan(&user).Error; err != nil {
+				return
+			}
+			if err = tx.Model(&model.Exchanger{}).Where("`amount`!='0' AND `address`=?", reward.Address).Scan(&exchanger).Error; err != nil {
+				return
+			}
+			user, exchanger = updateReward(big.NewInt(95000000000000000), user, exchanger)
+			if user != nil {
+				if err = tx.Updates(user).Error; err != nil {
+					return
+				}
+			}
+			if exchanger != nil {
+				if err = tx.Updates(exchanger).Error; err != nil {
+					return
+				}
+			}
 		} else {
 			var pledge model.Validator
 			if err = tx.Find(&pledge, "address=?", reward.Address).Error; err != nil {
@@ -280,26 +266,52 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 			}
 		}
 	}
+	for _, change := range wh.ChangeExchangers {
+		exchanger := model.Exchanger{Address: change.Address, Creator: change.Address, Amount: "0", Reward: "0", TxAmount: "0"}
+		if err = tx.Where("address=?", change.Address).Find(&exchanger).Error; err != nil {
+			return
+		}
+		if change.CloseAt != nil && exchanger.Amount != "0" {
+			// close exchanger
+			err = tx.Select("amount", "close_at").Updates(change).Error
+			change.Amount = "-" + exchanger.Amount
+		} else {
+			// open exchanger
+			if change.Creator != "" {
+				exchanger.Name = change.Name
+				exchanger.URL = change.URL
+				exchanger.FeeRatio = change.FeeRatio
+				exchanger.Timestamp = change.Timestamp
+				exchanger.BlockNumber = change.BlockNumber
+				exchanger.TxHash = change.TxHash
+			}
+			// exchanger pledge
+			if change.Amount != "0" {
+				exchanger.Amount = BigIntAdd(exchanger.Amount, change.Amount)
+			}
+			err = tx.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "timestamp", "block_number", "tx_hash", "amount"}),
+			}).Create(&exchanger).Error
+		}
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
 func snftValue(snft string, count int64) string {
-	value := "0"
+	b := big.NewInt(count)
 	switch 42 - len(snft) {
 	case 0:
-		b := big.NewInt(95 * count)
-		value = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+		return b.Mul(b, big.NewInt(95000000000000000)).Text(10)
 	case 1:
-		b := big.NewInt(143 * count)
-		value = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+		return b.Mul(b, big.NewInt(143000000000000000)).Text(10)
 	case 2:
-		b := big.NewInt(271 * count)
-		value = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+		return b.Mul(b, big.NewInt(271000000000000000)).Text(10)
 	default:
-		b := big.NewInt(650 * count)
-		value = b.Mul(b, big.NewInt(1000000000000000)).Text(10)
+		return b.Mul(b, big.NewInt(650000000000000000)).Text(10)
 	}
-	return value
 }
 
 func SaveSNFTPledge(tx *gorm.DB, owner, snft string, number types.Uint64, isPledge bool) (err error) {
@@ -313,7 +325,7 @@ func SaveSNFTPledge(tx *gorm.DB, owner, snft string, number types.Uint64, isPled
 		return
 	}
 	amount, pledgeAmount := "0", snftValue(snft, db.RowsAffected)
-	if err = tx.Model(&model.Account{}).Where("address=?", owner).Pluck("snft_amount", &amount).Error; err != nil {
+	if err = tx.Model(&model.User{}).Where("address=?", owner).Pluck("amount", &amount).Error; err != nil {
 		return
 	}
 	if isPledge {
@@ -321,7 +333,11 @@ func SaveSNFTPledge(tx *gorm.DB, owner, snft string, number types.Uint64, isPled
 	} else {
 		amount = BigIntAdd(amount, "-"+pledgeAmount)
 	}
-	err = tx.Model(&model.Account{}).Where("address=?", owner).Update("snft_amount", amount).Error
+	if err = tx.Clauses(clause.OnConflict{
+		DoUpdates: clause.AssignmentColumns([]string{"amount"}),
+	}).Create(&model.User{Address: owner, Amount: amount, Reward: "0"}).Error; err != nil {
+		return
+	}
 	return
 }
 
