@@ -77,17 +77,11 @@ func getBlock(c *gin.Context) {
 // @Description Query the total number of blocks, transactions, accounts, etc.
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} service.Stats
+// @Success     200 {object} model.Stats
 // @Failure     400 {object} service.ErrRes
 // @Router      /totals [get]
 func totals(c *gin.Context) {
-	res, err := service.FetchTotals()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, res)
+	c.JSON(http.StatusOK, service.GetStats())
 }
 
 // @Tags        block

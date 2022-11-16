@@ -19,7 +19,7 @@ type Block struct {
 }
 
 func FetchBlocks_(page, size int) (data []Block, count int64, err error) {
-	count = int64(TotalBlock())
+	count = stats.TotalBlock
 	err = DB.Model(&Block{}).Limit(size).Offset((page - 1) * size).Order("number DESC").Find(&data).Error
 	return data, count, err
 }

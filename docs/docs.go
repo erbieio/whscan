@@ -2031,7 +2031,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.Stats"
+                            "$ref": "#/definitions/model.Stats"
                         }
                     },
                     "400": {
@@ -2487,13 +2487,13 @@ const docTemplate = `{
                     "description": "name",
                     "type": "string"
                 },
+                "nonce": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
                 "symbol": {
                     "description": "symbol",
                     "type": "string"
-                },
-                "transactionCount": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
                 },
                 "type": {
                     "description": "contract types, ERC20, ERC721, ERC1155",
@@ -2994,6 +2994,159 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Stats": {
+            "type": "object",
+            "properties": {
+                "avgBlockTime": {
+                    "description": "average block time, ms",
+                    "type": "integer"
+                },
+                "chainId": {
+                    "description": "chain id",
+                    "type": "integer"
+                },
+                "genesisBalance": {
+                    "description": "Total amount of coins created",
+                    "type": "string"
+                },
+                "ready": {
+                    "description": "ready, sync latest block",
+                    "type": "boolean"
+                },
+                "rewardCoinCount": {
+                    "description": "Total number of times to get coin rewards, 0.1ERB once",
+                    "type": "integer"
+                },
+                "rewardSNFTCount": {
+                    "description": "Total number of times to get SNFT rewards",
+                    "type": "integer"
+                },
+                "total24HExchangerTx": {
+                    "description": "Total number of exchanger  transactions within 24 hours",
+                    "type": "integer"
+                },
+                "total24HNFT": {
+                    "description": "Total number of NFT within 24 hours",
+                    "type": "integer"
+                },
+                "total24HTx": {
+                    "description": "Total number of transactions within 24 hours",
+                    "type": "integer"
+                },
+                "totalAccount": {
+                    "description": "Total account number",
+                    "type": "integer"
+                },
+                "totalAmount": {
+                    "description": "total transaction volume",
+                    "type": "string"
+                },
+                "totalBalance": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
+                },
+                "totalBlackHole": {
+                    "description": "Total number of BlackHole blocks",
+                    "type": "integer"
+                },
+                "totalBlock": {
+                    "description": "Total number of blocks",
+                    "type": "integer"
+                },
+                "totalExchanger": {
+                    "description": "Total number of exchanges",
+                    "type": "integer"
+                },
+                "totalExchangerPledge": {
+                    "description": "Total amount of exchanger pledge",
+                    "type": "string"
+                },
+                "totalExchangerTx": {
+                    "description": "Total number of exchanger  transactions",
+                    "type": "integer"
+                },
+                "totalInternalTx": {
+                    "description": "Total number of internal transactions",
+                    "type": "integer"
+                },
+                "totalNFT": {
+                    "description": "Total number of NFTs",
+                    "type": "integer"
+                },
+                "totalNFTAmount": {
+                    "description": "Total transaction volume of NFTs",
+                    "type": "string"
+                },
+                "totalNFTCollection": {
+                    "description": "Total number of NFT collections",
+                    "type": "integer"
+                },
+                "totalNFTCreator": {
+                    "description": "Total creator of NFTs",
+                    "type": "integer"
+                },
+                "totalNFTTx": {
+                    "description": "Total number of  NFT transactions",
+                    "type": "integer"
+                },
+                "totalRecycle": {
+                    "description": "Total number of recycle SNFT",
+                    "type": "integer"
+                },
+                "totalSNFT": {
+                    "description": "Total number of SNFTs",
+                    "type": "integer"
+                },
+                "totalSNFTAmount": {
+                    "description": "Total transaction volume of SNFTs",
+                    "type": "string"
+                },
+                "totalSNFTCollection": {
+                    "description": "Total number of SNFT collections",
+                    "type": "integer"
+                },
+                "totalSNFTCreator": {
+                    "description": "Total creator of SNFTs",
+                    "type": "integer"
+                },
+                "totalSNFTPledge": {
+                    "description": "Total amount of snft pledge",
+                    "type": "string"
+                },
+                "totalSNFTTx": {
+                    "description": "Total number of  SNFT transactions",
+                    "type": "integer"
+                },
+                "totalTransaction": {
+                    "description": "Total number of transactions",
+                    "type": "integer"
+                },
+                "totalTransferTx": {
+                    "description": "Total number of  transfer transactions",
+                    "type": "integer"
+                },
+                "totalUncle": {
+                    "description": "Number of total uncle blocks",
+                    "type": "integer"
+                },
+                "totalValidator": {
+                    "description": "Total number of validator",
+                    "type": "integer"
+                },
+                "totalValidatorOnline": {
+                    "description": "Total amount of validator online",
+                    "type": "integer"
+                },
+                "totalValidatorPledge": {
+                    "description": "Total amount of validator pledge",
+                    "type": "string"
+                },
+                "totalWormholesTx": {
+                    "description": "Total number of  wormholes transactions",
+                    "type": "integer"
+                }
+            }
+        },
         "model.Subscription": {
             "type": "object",
             "properties": {
@@ -3067,6 +3220,10 @@ const docTemplate = `{
                     "description": "name",
                     "type": "string"
                 },
+                "nonce": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
                 "rewardCoinCount": {
                     "description": "Number of times to get coin rewards, 0.1ERB once",
                     "type": "integer"
@@ -3089,10 +3246,6 @@ const docTemplate = `{
                 },
                 "totalSNFT": {
                     "description": "Number of SNFTs held",
-                    "type": "integer"
-                },
-                "transactionCount": {
-                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
                 "type": {
@@ -4094,155 +4247,6 @@ const docTemplate = `{
                 },
                 "total": {
                     "description": "The total number of SNFTs",
-                    "type": "integer"
-                }
-            }
-        },
-        "service.Stats": {
-            "type": "object",
-            "properties": {
-                "avgBlockTime": {
-                    "description": "average block time, ms",
-                    "type": "integer"
-                },
-                "chainId": {
-                    "description": "chain id",
-                    "type": "integer"
-                },
-                "genesisBalance": {
-                    "description": "Total amount of coins created",
-                    "type": "string"
-                },
-                "rewardCoinCount": {
-                    "description": "Total number of times to get coin rewards, 0.1ERB once",
-                    "type": "integer"
-                },
-                "rewardSNFTCount": {
-                    "description": "Total number of times to get SNFT rewards",
-                    "type": "integer"
-                },
-                "total24HExchangerTx": {
-                    "description": "Total number of exchanger  transactions within 24 hours",
-                    "type": "integer"
-                },
-                "total24HNFT": {
-                    "description": "Total number of NFT within 24 hours",
-                    "type": "integer"
-                },
-                "total24HTx": {
-                    "description": "Total number of transactions within 24 hours",
-                    "type": "integer"
-                },
-                "totalAccount": {
-                    "description": "Total account number",
-                    "type": "integer"
-                },
-                "totalAmount": {
-                    "description": "total transaction volume",
-                    "type": "string"
-                },
-                "totalBalance": {
-                    "description": "The total amount of coins in the chain",
-                    "type": "string"
-                },
-                "totalBlackHole": {
-                    "description": "Total number of BlackHole blocks",
-                    "type": "integer"
-                },
-                "totalBlock": {
-                    "description": "Total number of blocks",
-                    "type": "integer"
-                },
-                "totalExchanger": {
-                    "description": "Total number of exchanges",
-                    "type": "integer"
-                },
-                "totalExchangerPledge": {
-                    "description": "Total amount of exchanger pledge",
-                    "type": "string"
-                },
-                "totalExchangerTx": {
-                    "description": "Total number of exchanger  transactions",
-                    "type": "integer"
-                },
-                "totalInternalTx": {
-                    "description": "Total number of internal transactions",
-                    "type": "integer"
-                },
-                "totalNFT": {
-                    "description": "Total number of NFTs",
-                    "type": "integer"
-                },
-                "totalNFTAmount": {
-                    "description": "Total transaction volume of NFTs",
-                    "type": "string"
-                },
-                "totalNFTCollection": {
-                    "description": "Total number of NFT collections",
-                    "type": "integer"
-                },
-                "totalNFTCreator": {
-                    "description": "Total creator of NFTs",
-                    "type": "integer"
-                },
-                "totalNFTTx": {
-                    "description": "Total number of  NFT transactions",
-                    "type": "integer"
-                },
-                "totalRecycle": {
-                    "description": "Total number of recycle SNFT",
-                    "type": "integer"
-                },
-                "totalSNFT": {
-                    "description": "Total number of SNFTs",
-                    "type": "integer"
-                },
-                "totalSNFTAmount": {
-                    "description": "Total transaction volume of SNFTs",
-                    "type": "string"
-                },
-                "totalSNFTCollection": {
-                    "description": "Total number of SNFT collections",
-                    "type": "integer"
-                },
-                "totalSNFTCreator": {
-                    "description": "Total creator of SNFTs",
-                    "type": "integer"
-                },
-                "totalSNFTPledge": {
-                    "description": "Total amount of snft pledge",
-                    "type": "string"
-                },
-                "totalSNFTTx": {
-                    "description": "Total number of  SNFT transactions",
-                    "type": "integer"
-                },
-                "totalTransaction": {
-                    "description": "Total number of transactions",
-                    "type": "integer"
-                },
-                "totalTransferTx": {
-                    "description": "Total number of  transfer transactions",
-                    "type": "integer"
-                },
-                "totalUncle": {
-                    "description": "Number of total uncle blocks",
-                    "type": "integer"
-                },
-                "totalValidator": {
-                    "description": "Total number of validator",
-                    "type": "integer"
-                },
-                "totalValidatorOnline": {
-                    "description": "Total amount of validator online",
-                    "type": "integer"
-                },
-                "totalValidatorPledge": {
-                    "description": "Total amount of validator pledge",
-                    "type": "string"
-                },
-                "totalWormholesTx": {
-                    "description": "Total number of  wormholes transactions",
                     "type": "integer"
                 }
             }

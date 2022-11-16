@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"strconv"
 
-	"server/common/model"
 	"server/common/types"
 )
 
@@ -48,13 +47,8 @@ func (c *Client) ChainId() (result types.Uint64, err error) {
 	return
 }
 
-func (c *Client) Genesis() (result *model.Header, err error) {
-	err = c.Call(&result, "eth_getBlockByNumber", "0x0", false)
-	return
-}
-
-func (c *Client) BlockNumber() (result types.Uint64, err error) {
-	err = c.Call(&result, "eth_blockNumber")
+func (c *Client) BlockNumber(ctx context.Context) (result types.Uint64, err error) {
+	err = c.CallContext(ctx, &result, "eth_blockNumber")
 	return
 }
 
@@ -75,12 +69,4 @@ func toBlockNumArg(number *types.BigInt) string {
 		return "pending"
 	}
 	return number.Hex()
-}
-
-func (c *Client) IsDebug() bool {
-	return c.Call(&struct{}{}, "debug_gcStats") == nil
-}
-
-func (c *Client) IsWormholes() bool {
-	return c.Call(&struct{}{}, "eth_getAccountInfo", "0x0000000000000000000000000000000000000000", "0x0") == nil
 }

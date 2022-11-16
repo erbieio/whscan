@@ -19,13 +19,13 @@ func getNFTAddr(next *big.Int) string {
 	return string(utils.BigToAddress(next.Add(next, big.NewInt(stats.TotalNFT+1))))
 }
 
-func FixHead(parsed *model.Parsed) (types.Uint64, error) {
+func SetHead(parsed *model.Parsed) error {
 	var errBlocks []*model.Block
 	if DB.Find(&errBlocks, "number>?", parsed.Number).Error == nil {
 		data, _ := json.Marshal(errBlocks)
 		log.Printf("err block: %s", string(data))
 	}
-	return parsed.Number + 1, DB.Transaction(func(tx *gorm.DB) (err error) {
+	return DB.Transaction(func(tx *gorm.DB) (err error) {
 		if head := parsed.Number; head != ^types.Uint64(0) {
 			if err = tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
 				tx.Model(&model.Epoch{}).Select("id").Where("number>?", head),
@@ -90,7 +90,7 @@ func FixHead(parsed *model.Parsed) (types.Uint64, error) {
 	})
 }
 
-func BlockInsert(parsed *model.Parsed) (blocks []types.Hash, err error) {
+func Insert(parsed *model.Parsed) (blocks []types.Hash, err error) {
 	if parsed.Number > 0 {
 		err = DB.Take(&model.Block{}, "number=? AND hash=?", parsed.Number-1, parsed.ParentHash).Error
 		if err == gorm.ErrRecordNotFound {

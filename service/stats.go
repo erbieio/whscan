@@ -1,66 +1,20 @@
 package service
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"server/common/model"
 	"server/common/types"
 	"server/common/utils"
 )
 
-// Stats caches some database queries to speed up queries
-type Stats struct {
-	ChainId              int64  `json:"chainId"`              //chain id
-	GenesisBalance       string `json:"genesisBalance"`       //Total amount of coins created
-	AvgBlockTime         int64  `json:"avgBlockTime"`         //average block time, ms
-	TotalBlock           int64  `json:"totalBlock"`           //Total number of blocks
-	TotalBlackHole       int64  `json:"totalBlackHole"`       //Total number of BlackHole blocks
-	TotalTransaction     int64  `json:"totalTransaction"`     //Total number of transactions
-	TotalInternalTx      int64  `json:"totalInternalTx"`      //Total number of internal transactions
-	TotalTransferTx      int64  `json:"totalTransferTx"`      //Total number of  transfer transactions
-	TotalWormholesTx     int64  `json:"totalWormholesTx"`     //Total number of  wormholes transactions
-	TotalUncle           int64  `json:"totalUncle"`           //Number of total uncle blocks
-	TotalAccount         int64  `json:"totalAccount"`         //Total account number
-	TotalBalance         string `json:"totalBalance"`         //The total amount of coins in the chain
-	TotalExchanger       int64  `json:"totalExchanger"`       //Total number of exchanges
-	TotalNFTCollection   int64  `json:"totalNFTCollection"`   //Total number of NFT collections
-	TotalSNFTCollection  int64  `json:"totalSNFTCollection"`  //Total number of SNFT collections
-	TotalNFT             int64  `json:"totalNFT"`             //Total number of NFTs
-	TotalSNFT            int64  `json:"totalSNFT"`            //Total number of SNFTs
-	TotalNFTTx           int64  `json:"totalNFTTx"`           //Total number of  NFT transactions
-	TotalSNFTTx          int64  `json:"totalSNFTTx"`          //Total number of  SNFT transactions
-	TotalAmount          string `json:"totalAmount"`          //total transaction volume
-	TotalNFTAmount       string `json:"totalNFTAmount"`       //Total transaction volume of NFTs
-	TotalSNFTAmount      string `json:"totalSNFTAmount"`      //Total transaction volume of SNFTs
-	TotalValidatorOnline int64  `json:"totalValidatorOnline"` //Total amount of validator online
-	TotalValidator       int64  `json:"totalValidator"`       //Total number of validator
-	TotalNFTCreator      int64  `json:"totalNFTCreator"`      //Total creator of NFTs
-	TotalSNFTCreator     int64  `json:"totalSNFTCreator"`     //Total creator of SNFTs
-	TotalExchangerTx     int64  `json:"totalExchangerTx"`     //Total number of exchanger  transactions
-	RewardCoinCount      int64  `json:"rewardCoinCount"`      //Total number of times to get coin rewards, 0.1ERB once
-	RewardSNFTCount      int64  `json:"rewardSNFTCount"`      //Total number of times to get SNFT rewards
-	TotalRecycle         uint64 `json:"totalRecycle"`         //Total number of recycle SNFT
-	TotalValidatorPledge string `json:"totalValidatorPledge"` //Total amount of validator pledge
-	TotalExchangerPledge string `json:"totalExchangerPledge"` //Total amount of exchanger pledge
-	TotalSNFTPledge      string `json:"totalSNFTPledge"`      //Total amount of snft pledge
-	Total24HExchangerTx  int64  `json:"total24HExchangerTx"`  //Total number of exchanger  transactions within 24 hours
-	Total24HNFT          int64  `json:"total24HNFT"`          //Total number of NFT within 24 hours
-	Total24HTx           int64  `json:"total24HTx"`           //Total number of transactions within 24 hours
-
-	genesis    model.Header
-	firstBlock model.Header
-	balances   map[types.Address]*big.Int
-}
-
-var stats = Stats{
+var stats = &model.Stats{
 	TotalAmount:     "0",
 	TotalNFTAmount:  "0",
 	TotalSNFTAmount: "0",
-	balances:        make(map[types.Address]*big.Int),
+	Balances:        make(map[types.Address]*big.Int),
 }
 
 // initStats initializes the query stats from the database
@@ -70,16 +24,13 @@ func initStats(db *gorm.DB) (err error) {
 		return
 	}
 	for _, account := range accounts {
-		stats.balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
+		stats.Balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
 	}
 	return loadStats(db)
 }
 
 func loadStats(db *gorm.DB) (err error) {
-	if err = db.Model(&model.Cache{}).Where("`key`='ChainId'").Pluck("value", &stats.ChainId).Error; err != nil {
-		return
-	}
-	if err = db.Model(&model.Cache{}).Where("`key`='GenesisBalance'").Pluck("value", &stats.GenesisBalance).Error; err != nil {
+	if err = db.Model(&model.Stats{}).Scan(&stats).Error; err != nil {
 		return
 	}
 	if err = db.Model(&model.Block{}).Count(&stats.TotalBlock).Error; err != nil {
@@ -124,27 +75,15 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x8'").Count(&stats.TotalSNFTTx).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Cache{}).Where("`key`='TotalAmount'").Pluck("value", &stats.TotalAmount).Error; err != nil {
+	if err = db.Model(&model.Block{}).Find(&stats.Genesis, "number=0").Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Cache{}).Where("`key`='TotalNFTAmount'").Pluck("value", &stats.TotalNFTAmount).Error; err != nil {
+	if err = db.Model(&model.Block{}).Find(&stats.FirstBlock, "number=1").Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Cache{}).Where("`key`='TotalSNFTAmount'").Pluck("value", &stats.TotalSNFTAmount).Error; err != nil {
-		return
-	}
-	if err = db.Model(&model.Cache{}).Where("`key`=?", "TotalRecycle").Select("value").Scan(&stats.TotalRecycle).Error; err != nil {
-		return
-	}
-	if err = db.Model(&model.Block{}).Find(&stats.genesis, "number=0").Error; err != nil {
-		return
-	}
-	if err = db.Model(&model.Block{}).Find(&stats.firstBlock, "number=1").Error; err != nil {
-		return
-	}
-	stats.TotalAccount = int64(len(stats.balances))
+	stats.TotalAccount = int64(len(stats.Balances))
 	totalBalance := new(big.Int)
-	for _, balance := range stats.balances {
+	for _, balance := range stats.Balances {
 		totalBalance = totalBalance.Add(totalBalance, balance)
 	}
 	stats.TotalBalance = totalBalance.Text(10)
@@ -181,8 +120,6 @@ func loadStats(db *gorm.DB) (err error) {
 	return
 }
 
-var UpdateComSNFT = false
-
 func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
@@ -196,8 +133,8 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
 		totalBalance = totalBalance.Add(totalBalance, value)
-		if stats.balances[account.Address] != nil {
-			totalBalance = totalBalance.Sub(totalBalance, stats.balances[account.Address])
+		if stats.Balances[account.Address] != nil {
+			totalBalance = totalBalance.Sub(totalBalance, stats.Balances[account.Address])
 		}
 	}
 	for _, tx := range parsed.CacheTxs {
@@ -243,7 +180,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	for _, snft := range parsed.RecycleSNFTs {
 		fnfts[(snft + "00")[:41]] = 0
 	}
-	if UpdateComSNFT {
+	if stats.Ready {
 		for fnft := range fnfts {
 			err = db.Exec("CAll fresh_c_snft(?)", fnft).Error
 			if err != nil {
@@ -252,49 +189,41 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		}
 	}
 	if parsed.Number == 0 {
-		if err = db.Create(&model.Cache{Key: "ChainId", Value: fmt.Sprintf("%v", stats.ChainId)}).Error; err != nil {
-			return
-		}
-		if err = db.Create(&model.Cache{Key: "GenesisBalance", Value: totalBalance.Text(10)}).Error; err != nil {
-			return
-		}
 		stats.GenesisBalance = totalBalance.Text(10)
+		if err = db.Create(&stats).Error; err != nil {
+			return
+		}
 	}
 	if count := len(parsed.RecycleSNFTs); count > 0 {
-		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(model.Cache{
-			Key: "TotalRecycle", Value: fmt.Sprintf("%d", stats.TotalRecycle+uint64(count)),
-		}).Error
+		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_recycle", stats.TotalRecycle+uint64(count)).Error
 		if err != nil {
 			return
 		}
 	}
 	if len(parsed.CacheTxs) > 0 {
-		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
-			Key: "TotalAmount", Value: totalAmount.Text(10)}).Error
+		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_amount", totalAmount.Text(10)).Error
 		if err != nil {
 			return
 		}
 	}
 	if len(parsed.NFTTxs) > 0 {
-		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
-			Key: "TotalNFTAmount", Value: totalNFTAmount.Text(10)}).Error
+		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_nft_amount", totalNFTAmount.Text(10)).Error
 		if err != nil {
 			return
 		}
-		err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"value"})}).Create(&model.Cache{
-			Key: "TotalSNFTAmount", Value: totalSNFTAmount.Text(10)}).Error
+		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_snft_amount", totalSNFTAmount.Text(10)).Error
 		if err != nil {
 			return
 		}
 	}
 	for _, account := range parsed.CacheAccounts {
-		stats.balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
+		stats.Balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
 	}
 	if parsed.Number == 1 {
-		stats.firstBlock = parsed.Block.Header
+		stats.FirstBlock = parsed.Block.Header
 	}
 	if parsed.Number > 1 {
-		stats.AvgBlockTime = int64((parsed.Timestamp-stats.firstBlock.Timestamp)*1000/parsed.Number - 1)
+		stats.AvgBlockTime = int64((parsed.Timestamp-stats.FirstBlock.Timestamp)*1000/parsed.Number - 1)
 	}
 	stats.TotalBlock++
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))
@@ -304,7 +233,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalSNFT += int64(rewardSNFT - len(parsed.RecycleSNFTs))
 	stats.RewardSNFTCount += int64(rewardSNFT)
 	stats.RewardCoinCount += int64(len(parsed.Rewards) - rewardSNFT)
-	stats.TotalAccount = int64(len(stats.balances))
+	stats.TotalAccount = int64(len(stats.Balances))
 	stats.TotalRecycle += uint64(len(parsed.RecycleSNFTs))
 	stats.TotalBalance = totalBalance.Text(10)
 	stats.TotalAmount = totalAmount.Text(10)
@@ -330,17 +259,17 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 }
 
 func fixStats(db *gorm.DB, parsed *model.Parsed) (err error) {
-	for address := range stats.balances {
+	for address := range stats.Balances {
 		if account := parsed.CacheAccounts[address]; account != nil {
 			if err = db.Select("balance", "nonce").Updates(account).Error; err != nil {
 				return
 			}
-			stats.balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
+			stats.Balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
 		} else {
 			if err = db.Delete(&model.Account{}, "address=?", address).Error; err != nil {
 				return
 			}
-			delete(stats.balances, address)
+			delete(stats.Balances, address)
 		}
 	}
 	return loadStats(db)
@@ -385,16 +314,6 @@ func freshStats(db *gorm.DB) {
 	}
 }
 
-func CheckStats(chainId types.Uint64, genesis *model.Header) bool {
-	if stats.TotalBlock == 0 {
-		stats.ChainId = int64(chainId)
-		stats.genesis = *genesis
-	} else if stats.ChainId != int64(chainId) || stats.genesis != *genesis {
-		return false
-	}
-	return true
-}
-
-func TotalBlock() types.Uint64 {
-	return types.Uint64(stats.TotalBlock)
+func GetStats() *model.Stats {
+	return stats
 }

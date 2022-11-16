@@ -13,17 +13,13 @@ type BlocksRes struct {
 func FetchBlocks(page, size int) (res BlocksRes, err error) {
 	err = DB.Order("number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Blocks).Error
 	// use stats to speed up queries
-	res.Total = int64(TotalBlock())
+	res.Total = stats.TotalBlock
 	return
 }
 
 func GetBlock(number string) (b model.Block, err error) {
 	err = DB.Where("number=?", number).First(&b).Error
 	return
-}
-
-func FetchTotals() (Stats, error) {
-	return stats, nil
 }
 
 func FetchValidator(page, size int) (res []*model.Validator, err error) {

@@ -32,7 +32,10 @@ func (b *Uint64) UnmarshalGraphQL(input interface{}) error {
 
 // UnmarshalJSON implements json.Unmarshaler.
 func (b *Uint64) UnmarshalJSON(input []byte) error {
-	return b.UnmarshalText(input[1 : len(input)-1])
+	if len(input) > 2 && input[0] == '"' {
+		input = input[1 : len(input)-1]
+	}
+	return b.UnmarshalText(input)
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler
