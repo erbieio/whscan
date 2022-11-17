@@ -25,7 +25,7 @@ func initValidator(db *gorm.DB) error {
 	go func() {
 		lastLine, lastSize := updateLocation(db, addLogFile, 0, 0)
 		updateOnline(db, onlineFile)
-		updateLastMsg(msgLogFile)
+		updateLastMsg(db, msgLogFile)
 		for {
 			select {
 			case event := <-w.Events:
@@ -34,7 +34,7 @@ func initValidator(db *gorm.DB) error {
 				} else if event.Name == onlineFile {
 					updateOnline(db, onlineFile)
 				} else if event.Name == msgLogFile {
-					updateLastMsg(msgLogFile)
+					updateLastMsg(db, msgLogFile)
 				}
 			case err := <-w.Errors:
 				log.Printf("file watcher error: %v\n", err)
@@ -102,16 +102,24 @@ type Msg struct {
 
 var lastMsg []*Msg
 
-func updateLastMsg(fileName string) {
+func updateLastMsg(db *gorm.DB, fileName string) {
 	if file, err := os.Open(fileName); err == nil {
 		lastMsg = lastMsg[:0]
+		data, proxies := []string(nil), map[string]bool{}
+		db.Model(&model.Validator{}).Select("proxy").Scan(&data)
+		for _, proxy := range data {
+			proxies[proxy] = true
+		}
 		for scanner := bufio.NewScanner(file); scanner.Scan(); {
 			splits := strings.Split(scanner.Text(), " ")
 			if len(splits) == 4 {
-				lastMsg = append(lastMsg, &Msg{
-					From: strings.ToLower(splits[2]),
-					To:   strings.ToLower(splits[3]),
-				})
+				from, to := strings.ToLower(splits[2]), strings.ToLower(splits[3])
+				if proxies[from] && proxies[to] {
+					lastMsg = append(lastMsg, &Msg{
+						From: from,
+						To:   to,
+					})
+				}
 			}
 		}
 	}

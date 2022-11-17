@@ -95,14 +95,6 @@ definitions:
         description: The price of an ERB in USD
         type: number
     type: object
-  api.requestErbTestRes:
-    properties:
-      code:
-        description: 0 success 1 wrong address other failure
-        type: integer
-      msg:
-        type: string
-    type: object
   model.Account:
     properties:
       address:
@@ -481,6 +473,9 @@ definitions:
         type: integer
       chainId:
         description: chain id
+        type: integer
+      firstBlockTime:
+        description: first block unix time
         type: integer
       genesisBalance:
         description: Total amount of coins created
@@ -1461,9 +1456,6 @@ definitions:
       input:
         description: Additional input data, contract call encoded data
         type: string
-      methodId:
-        description: difficulty random number
-        type: string
       nonce:
         description: transaction random number, transaction volume
         type: integer
@@ -1938,29 +1930,6 @@ paths:
       summary: Query system NFT period
       tags:
       - system NFT period
-  /erb_faucet:
-    get:
-      consumes:
-      - application/json
-      description: request ERB test coins
-      parameters:
-      - description: address
-        in: query
-        name: addr
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: request ERB test coins
-      tags:
-      - other interfaces
   /erb_price:
     get:
       consumes:
@@ -2169,31 +2138,6 @@ paths:
           schema:
             $ref: '#/definitions/api.ErrRes'
       summary: query exchange status (new /exchanger_auth)
-      tags:
-      - obsolete interface
-  /extra/requestErbTest:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: request ERB test coins
-      parameters:
-      - description: Address
-        in: query
-        name: address
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.requestErbTestRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.requestErbTestRes'
-      summary: request ERB test coin (new /erb_faucet)
       tags:
       - obsolete interface
   /last_msg:

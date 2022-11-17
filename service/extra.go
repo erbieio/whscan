@@ -1,26 +1,18 @@
 package service
 
 import (
-	"context"
 	"math/big"
 	"strconv"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"gorm.io/gorm/clause"
 	"server/common/model"
-	"server/common/types"
-	"server/common/utils"
 	"server/conf"
 	"server/node"
 )
 
 var (
-	client     *node.Client          //Ethereum RPC client
-	prv        *secp256k1.PrivateKey //Private key object
-	addr       types.Address         //The address corresponding to the private key holds a large number of test ERBs
-	chainId    *big.Int              //Chain ID
-	amount     *big.Int              //The amount of test coins sent
-	erbPayAddr string                //erbPay contract address
+	client     *node.Client //Ethereum RPC client
+	erbPayAddr string       //erbPay contract address
 )
 
 func init() {
@@ -29,34 +21,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	prv = conf.PrivateKey
-	addr = utils.PubkeyToAddress(prv.PubKey())
-	id, err := client.ChainId()
-	chainId = new(big.Int).SetUint64(uint64(id))
-	if err != nil {
-		panic(err)
-	}
-	amount = conf.Amount
 	erbPayAddr = conf.ERBPay
-}
-
-// SendErb sends the test ERB
-func SendErb(to string, ctx context.Context) error {
-	nonce, err := client.PendingNonceAt(ctx, addr)
-	if err != nil {
-		return err
-	}
-	gasPrice, err := client.SuggestGasPrice(ctx)
-	if err != nil {
-		return err
-	}
-	tx := utils.NewTx(nonce, types.Address(to), amount, 21000, gasPrice, nil)
-	rawTx, err := utils.SignTx(tx, chainId, prv)
-	if err != nil {
-		return err
-	}
-
-	return client.CallContext(ctx, nil, "eth_sendRawTransaction", rawTx)
 }
 
 func ExchangerAuth(addr string) (status uint64, flag bool, balance string, err error) {

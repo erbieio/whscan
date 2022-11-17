@@ -118,7 +118,7 @@ type Header struct {
 	GasLimit         types.Uint64  `json:"gasLimit"`                                      //Gas limit
 	GasUsed          types.Uint64  `json:"gasUsed"`                                       //Gas consumption
 	Hash             types.Hash    `json:"hash" gorm:"type:CHAR(66);primaryKey"`          //Hash
-	Miner            types.Address `json:"miner" gorm:"type:CHAR(42)"`                    //miner
+	Miner            types.Address `json:"miner" gorm:"type:CHAR(42);index"`              //miner
 	MixHash          types.Hash    `json:"mixHash" gorm:"type:CHAR(66)"`                  //Mixed hash
 	Nonce            types.Data8   `json:"nonce" gorm:"type:CHAR(18)"`                    //difficulty random number
 	Number           types.Uint64  `json:"number" gorm:"index"`                           //block number
@@ -158,22 +158,16 @@ type Account struct {
 
 // Transaction information
 type Transaction struct {
-	BlockHash   types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
-	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index"`                //block number
-	From        types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
-	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
-	Input       string         `json:"input"`                                   //Additional input data, contract call encoded data
-	MethodId    *types.Data8   `json:"methodId,omitempty" gorm:"type:CHAR(18)"` //Method ID, normal transaction is empty
-	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //Amount, unit wei
-	Nonce       types.Uint64   `json:"nonce"`                                   //Random number, the number of transactions initiated by the account
-	Gas         types.Uint64   `json:"gas"`                                     // fuel
-	GasPrice    types.Uint64   `json:"gasPrice"`                                //Gas price
-	Hash        types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //Hash
-	Receipt
-}
-
-// Receipt transaction receipt
-type Receipt struct {
+	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`       //Block Hash
+	BlockNumber       types.Uint64   `json:"blockNumber" gorm:"index"`             //block number
+	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`      //Send address
+	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`        //Receive address
+	Input             string         `json:"input"`                                //Additional input data, contract call encoded data
+	Value             types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`       //Amount, unit wei
+	Nonce             types.Uint64   `json:"nonce"`                                //Random number, the number of transactions initiated by the account
+	Gas               types.Uint64   `json:"gas"`                                  // fuel
+	GasPrice          types.Uint64   `json:"gasPrice"`                             //Gas price
+	Hash              types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"` //Hash
 	Status            *types.Uint64  `json:"status,omitempty"`                     //Status, 1: success; 0: failure
 	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`                    //Cumulative gas consumption
 	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"` //The created contract address
@@ -288,7 +282,7 @@ type SNFT struct {
 	RewardNumber uint64  `json:"reward_number"`                            //The height of the last rewarded block
 	PledgeNumber *uint64 `json:"pledge_number,omitempty"`                  //The height of the last pledged block, null if not pledge
 	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`         //owner, unallocated and reclaimed are null
-	Remove       bool    `json:"remove"`                                   //SNFTs that are synthesized and then removed
+	Remove       bool    `json:"remove" gorm:"index"`                      //SNFTs that are synthesized and then removed
 }
 
 // NFTTx NFT transaction attribute information

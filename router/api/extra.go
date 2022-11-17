@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +10,6 @@ import (
 
 func Extra(e *gin.Engine) {
 	e.GET("/erb_price", erbPrice)
-	e.GET("/erb_faucet", erbFaucet)
 	e.GET("/exchanger_auth", exchangerAuth)
 	e.POST("/subscription", subscribe)
 	e.GET("/subscription", pageSubscribe)
@@ -31,31 +29,6 @@ type price struct {
 // @Router      /erb_price [get]
 func erbPrice(c *gin.Context) {
 	c.JSON(http.StatusOK, price{CNY: 3.2, USD: 0.5})
-}
-
-// @Tags        other interfaces
-// @Summary     request ERB test coins
-// @Description request ERB test coins
-// @Accept      json
-// @Produce     json
-// @Param       addr query string true "address"
-// @Success     200
-// @Failure     400 {object} service.ErrRes
-// @Router      /erb_faucet [get]
-func erbFaucet(c *gin.Context) {
-	addr, err := utils.ParseAddress([]byte(c.Query("addr")))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	err = service.SendErb(string(addr), context.Background())
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	c.Status(http.StatusOK)
 }
 
 type AuthRes struct {

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +10,6 @@ import (
 
 func Depreciation(e *gin.Engine) {
 	e.GET("/exchanger/get", _getExchanger)
-	e.GET("/extra/requestErbTest", requestErbTest)
 	e.GET("/extra/checkAuth", checkAuth)
 	e.GET("/block/getBlock", _getBlock)
 	e.GET("/block/getTransaction", _getTransaction)
@@ -43,39 +41,6 @@ type requestErbTestReq struct {
 type requestErbTestRes struct {
 	Code int64  `json:"code"` //0 success 1 wrong address other failure
 	Msg  string `json:"msg"`
-}
-
-// @Tags        obsolete interface
-// @Summary     request ERB test coin (new /erb_faucet)
-// @Description request ERB test coins
-// @Deprecated
-// @Accept  json
-// @Produce json
-// @Param   body query    requestErbTestReq true "body"
-// @Success 200  {object} requestErbTestRes
-// @Failure 400  {object} requestErbTestRes
-// @Router  /extra/requestErbTest [get]
-func requestErbTest(c *gin.Context) {
-	var req requestErbTestReq
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, requestErbTestRes{Code: -1, Msg: err.Error()})
-		return
-	}
-
-	addr, err := utils.ParseAddress([]byte(req.Address))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	err = service.SendErb(string(addr), context.Background())
-	if err != nil {
-		c.JSON(http.StatusBadRequest, requestErbTestRes{Code: -1, Msg: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, requestErbTestRes{Code: 0, Msg: "ok"})
 }
 
 // @Tags        obsolete interface

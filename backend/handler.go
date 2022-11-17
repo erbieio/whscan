@@ -41,15 +41,15 @@ func decode(c *node.Client, ctx context.Context, number types.Uint64) (*model.Pa
 			reqs[i] = node.BatchElem{
 				Method: "eth_getTransactionReceipt",
 				Args:   []interface{}{tx.Hash},
-				Result: &parsed.CacheTxs[i].Receipt,
+				Result: &parsed.CacheTxs[i],
 			}
 		}
 		if err := c.BatchCallContext(ctx, reqs); err != nil {
 			return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", err)
 		}
 		for i := range reqs {
-			if reqs[i].Error != nil {
-				return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", reqs[i].Error)
+			if reqs[i].Error != nil || reqs[i].Result == nil {
+				return nil, fmt.Errorf("eth_getTransactionReceipt receipt:%v,err:%v", reqs[i].Result, reqs[i].Error)
 			}
 		}
 		// Get the receipt logs, which can only be checked according to the block hash (there may be multiple blocks with the same block height)

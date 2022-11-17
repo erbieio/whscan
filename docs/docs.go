@@ -666,41 +666,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/erb_faucet": {
-            "get": {
-                "description": "request ERB test coins",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "other interfaces"
-                ],
-                "summary": "request ERB test coins",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "address",
-                        "name": "addr",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
         "/erb_price": {
             "get": {
                 "description": "Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=0.5USD",
@@ -1014,44 +979,6 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/api.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/extra/requestErbTest": {
-            "get": {
-                "description": "request ERB test coins",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "obsolete interface"
-                ],
-                "summary": "request ERB test coin (new /erb_faucet)",
-                "deprecated": true,
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "address",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.requestErbTestRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.requestErbTestRes"
                         }
                     }
                 }
@@ -2448,18 +2375,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.requestErbTestRes": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "0 success 1 wrong address other failure",
-                    "type": "integer"
-                },
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
         "model.Account": {
             "type": "object",
             "properties": {
@@ -2965,6 +2880,10 @@ const docTemplate = `{
                 },
                 "chainId": {
                     "description": "chain id",
+                    "type": "integer"
+                },
+                "firstBlockTime": {
+                    "description": "first block unix time",
                     "type": "integer"
                 },
                 "genesisBalance": {
@@ -4315,10 +4234,6 @@ const docTemplate = `{
                 },
                 "input": {
                     "description": "Additional input data, contract call encoded data",
-                    "type": "string"
-                },
-                "methodId": {
-                    "description": "difficulty random number",
                     "type": "string"
                 },
                 "nonce": {

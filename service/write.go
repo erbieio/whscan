@@ -180,8 +180,9 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 		if err = tx.Find(&validator, "address=?", change.Address).Error; err != nil {
 			return
 		}
-		if change.Address != validator.Address {
+		if validator.Address == "" {
 			validator.Address = change.Address
+			validator.Proxy = change.Address
 			validator.Amount = "0"
 			validator.Reward = "0"
 		}
@@ -283,13 +284,14 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 				exchanger.Timestamp = change.Timestamp
 				exchanger.BlockNumber = change.BlockNumber
 				exchanger.TxHash = change.TxHash
+				exchanger.CloseAt = nil
 			}
 			// exchanger pledge
 			if change.Amount != "0" {
 				exchanger.Amount = BigIntAdd(exchanger.Amount, change.Amount)
 			}
 			err = tx.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "timestamp", "block_number", "tx_hash", "amount"}),
+				DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "timestamp", "block_number", "tx_hash", "amount", "close_at"}),
 			}).Create(&exchanger).Error
 		}
 		if err != nil {
