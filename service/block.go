@@ -28,12 +28,15 @@ func FetchValidator(page, size int) (res []*model.Validator, err error) {
 }
 
 type LocationRes struct {
-	model.Location
-	Online bool `json:"online"`
+	Address   string  `json:"address"`   //account address
+	Proxy     string  `json:"proxy"`     //proxy address
+	Latitude  float64 `json:"latitude"`  //latitude
+	Longitude float64 `json:"longitude"` //longitude
+	Online    bool    `json:"online"`    //online status
 }
 
 func FetchLocations() (res []*LocationRes, err error) {
-	err = DB.Model(&model.Location{}).Joins("LEFT JOIN `validators` ON `locations`.`address`=`validators`.`address`").
-		Where("`validators`.`address` IS NOT NULL").Select("locations.*,online").Scan(&res).Error
+	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`proxy`=`locations`.`address`").
+		Where("`amount`!='0'").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`online`").Scan(&res).Error
 	return
 }

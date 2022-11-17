@@ -48,7 +48,7 @@ func decode(c *node.Client, ctx context.Context, number types.Uint64) (*model.Pa
 			return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", err)
 		}
 		for i := range reqs {
-			if reqs[i].Error != nil || reqs[i].Result == nil {
+			if reqs[i].Error != nil || parsed.CacheTxs[i].GasUsed == 0 {
 				return nil, fmt.Errorf("eth_getTransactionReceipt receipt:%v,err:%v", reqs[i].Result, reqs[i].Error)
 			}
 		}
@@ -539,6 +539,7 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:      6,
 			NFTAddr:     &w.NFTAddress,
+			From:        from,
 			Timestamp:   timestamp,
 			TxHash:      txHash,
 			BlockNumber: blockNumber,

@@ -3449,10 +3449,6 @@ const docTemplate = `{
                     "description": "account address",
                     "type": "string"
                 },
-                "ip": {
-                    "description": "account ip",
-                    "type": "string"
-                },
                 "latitude": {
                     "description": "latitude",
                     "type": "number"
@@ -3462,7 +3458,12 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "online": {
+                    "description": "online status",
                     "type": "boolean"
+                },
+                "proxy": {
+                    "description": "proxy address",
+                    "type": "string"
                 }
             }
         },

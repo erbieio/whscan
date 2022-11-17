@@ -46,6 +46,20 @@ func TxFee(price string, ratio uint32) *string {
 	return &fee
 }
 
+func snftValue(snft string, count int64) string {
+	b := big.NewInt(count)
+	switch 42 - len(snft) {
+	case 0:
+		return b.Mul(b, big.NewInt(95000000000000000)).Text(10)
+	case 1:
+		return b.Mul(b, big.NewInt(143000000000000000)).Text(10)
+	case 2:
+		return b.Mul(b, big.NewInt(271000000000000000)).Text(10)
+	default:
+		return b.Mul(b, big.NewInt(650000000000000000)).Text(10)
+	}
+}
+
 func updateReward(snft *big.Int, user *model.User, exchanger *model.Exchanger) (*model.User, *model.Exchanger) {
 	if user == nil {
 		exchangerReward, _ := new(big.Int).SetString(exchanger.Reward, 0)

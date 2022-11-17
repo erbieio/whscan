@@ -275,14 +275,14 @@ type FNFT struct {
 
 // SNFT of SNFT fragments
 type SNFT struct {
-	Address      string  `json:"address" gorm:"type:CHAR(42);primaryKey"`  //SNFT address
-	LastPrice    *string `json:"last_price"`                               //The last transaction price, the unit is wei, null if the transaction has not been completed
-	TxAmount     string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //the total transaction volume of this SNFT
-	RewardAt     uint64  `json:"reward_at"`                                //The timestamp of the last rewarded, null if not rewarded
-	RewardNumber uint64  `json:"reward_number"`                            //The height of the last rewarded block
-	PledgeNumber *uint64 `json:"pledge_number,omitempty"`                  //The height of the last pledged block, null if not pledge
-	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`         //owner, unallocated and reclaimed are null
-	Remove       bool    `json:"remove" gorm:"index"`                      //SNFTs that are synthesized and then removed
+	Address      string  `json:"address" gorm:"type:VARCHAR(42);primaryKey"` //SNFT address
+	LastPrice    *string `json:"last_price" gorm:"type:VARCHAR(66)"`         //The last transaction price, the unit is wei, null if the transaction has not been completed
+	TxAmount     string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"`   //the total transaction volume of this SNFT
+	RewardAt     uint64  `json:"reward_at"`                                  //The timestamp of the last rewarded, null if not rewarded
+	RewardNumber uint64  `json:"reward_number"`                              //The height of the last rewarded block
+	PledgeNumber *uint64 `json:"pledge_number,omitempty"`                    //The height of the last pledged block, null if not pledge
+	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`           //owner, unallocated and reclaimed are null
+	Remove       bool    `json:"remove" gorm:"index"`                        //SNFTs that are synthesized and then removed
 }
 
 // NFTTx NFT transaction attribute information
@@ -291,7 +291,7 @@ type NFTTx struct {
 	TxType        int32   `json:"tx_type"`
 	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`        //The NFT address of the transaction
 	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42)"` //Exchange address
-	From          string  `json:"from,omitempty" gorm:"type:CHAR(42);index"`     //Seller
+	From          string  `json:"from" gorm:"type:CHAR(42);index"`               //Seller
 	To            string  `json:"to,omitempty" gorm:"type:CHAR(42);index"`       //buyer
 	Price         string  `json:"price"`                                         //price, the unit is wei
 	Timestamp     uint64  `json:"timestamp"`                                     //transaction timestamp

@@ -2,7 +2,6 @@ package service
 
 import (
 	"math/big"
-	"time"
 
 	"gorm.io/gorm"
 	"server/common/model"
@@ -235,6 +234,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			stats.TotalWormholesTx++
 		}
 	}
+	freshStats(db, parsed)
 	return
 }
 
@@ -255,42 +255,20 @@ func fixStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	return loadStats(db)
 }
 
-var lastTime time.Time
-
-func freshStats(db *gorm.DB) {
-	if now := time.Now(); now.Minute() != lastTime.Minute() {
-		var number int64
-		if err := db.Model(&model.Exchanger{}).Count(&number).Error; err == nil {
-			stats.TotalExchanger = number
-		}
-		if err := db.Model(&model.Collection{}).Where("length(id)!=40").Count(&number).Error; err == nil {
-			stats.TotalNFTCollection = number
-		}
-		if err := db.Model(&model.Validator{}).Count(&number).Error; err == nil {
-			stats.TotalValidator = number
-		}
-		if err := db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
-			stats.TotalNFTCreator = number
-		}
-		if err := db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&number).Error; err == nil {
-			stats.TotalSNFTCreator = number
-		}
-		if err := db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Count(&number).Error; err == nil {
-			stats.TotalExchangerTx = number
-		}
-		if now.Hour() != lastTime.Hour() {
+func freshStats(db *gorm.DB, parsed *model.Parsed) {
+	if parsed.Number%12 == 0 {
+		db.Model(&model.Exchanger{}).Count(&stats.TotalExchanger)
+		db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
+		db.Model(&model.Validator{}).Count(&stats.TotalValidator)
+		db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
+		db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
+		db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Count(&stats.TotalExchangerTx)
+		if parsed.Number%720 == 0 {
 			start, stop := utils.LastTimeRange(1)
-			if err := db.Model(&model.Block{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("IFNULL(SUM(total_transaction),0)").Scan(&number).Error; err == nil {
-				stats.Total24HTx = number
-			}
-			if err := db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Select("COUNT(*)").Scan(&number).Error; err == nil {
-				stats.Total24HExchangerTx = number
-			}
-			if err := db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("COUNT(*)").Scan(&number).Error; err == nil {
-				stats.Total24HNFT = number
-			}
+			db.Model(&model.Block{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("IFNULL(SUM(total_transaction),0)").Scan(&stats.Total24HTx)
+			db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HExchangerTx)
+			db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
 		}
-		lastTime = now
 	}
 }
 
