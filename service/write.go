@@ -224,7 +224,6 @@ func WHInsert(tx *gorm.DB, wh *model.Parsed) (err error) {
 			err = tx.Create(&model.SNFT{
 				Address:      *reward.SNFT,
 				TxAmount:     "0",
-				Awardee:      reward.Address,
 				RewardAt:     uint64(wh.Timestamp),
 				RewardNumber: uint64(wh.Number),
 				Owner:        reward.Address,

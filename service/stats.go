@@ -78,7 +78,7 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Block{}).Find(&stats.Genesis, "number=0").Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Block{}).Find(&stats.FirstBlock, "number=1").Error; err != nil {
+	if err = db.Model(&model.Block{}).Where("number=1").Select("timestamp").Scan(&stats.FirstBlockTime).Error; err != nil {
 		return
 	}
 	stats.TotalAccount = int64(len(stats.Balances))
@@ -129,7 +129,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
 	rewardSNFT, value, totalNFTTx, totalSNFTTx := 0, new(big.Int), stats.TotalNFTTx, stats.TotalSNFTTx
-	fnfts := make(map[string]int64)
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
 		totalBalance = totalBalance.Add(totalBalance, value)
@@ -162,30 +161,11 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 				value.SetString(tx.Price, 0)
 				totalSNFTAmount = totalSNFTAmount.Add(totalSNFTAmount, value)
 			}
-			fnfts[(*tx.NFTAddr + "00")[:41]] = 0
 		}
 	}
 	for _, reward := range parsed.Rewards {
 		if reward.SNFT != nil {
-			fnfts[(*reward.SNFT)[:41]] = 0
 			rewardSNFT++
-		}
-	}
-	for _, snft := range parsed.PledgeSNFT {
-		fnfts[(snft + "00")[42:83]] = 0
-	}
-	for _, snft := range parsed.UnPledgeSNFT {
-		fnfts[(snft + "00")[42:83]] = 0
-	}
-	for _, snft := range parsed.RecycleSNFTs {
-		fnfts[(snft + "00")[:41]] = 0
-	}
-	if stats.Ready {
-		for fnft := range fnfts {
-			err = db.Exec("CAll fresh_c_snft(?)", fnft).Error
-			if err != nil {
-				return
-			}
 		}
 	}
 	if parsed.Number == 0 {
@@ -220,10 +200,10 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		stats.Balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
 	}
 	if parsed.Number == 1 {
-		stats.FirstBlock = parsed.Block.Header
+		stats.FirstBlockTime = int64(parsed.Timestamp)
 	}
 	if parsed.Number > 1 {
-		stats.AvgBlockTime = int64((parsed.Timestamp-stats.FirstBlock.Timestamp)*1000/parsed.Number - 1)
+		stats.AvgBlockTime = (int64(parsed.Timestamp) - stats.FirstBlockTime) * 1000 / int64(parsed.Number)
 	}
 	stats.TotalBlock++
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))

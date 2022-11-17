@@ -27,7 +27,13 @@ func FetchValidator(page, size int) (res []*model.Validator, err error) {
 	return
 }
 
-func FetchLocations() (res []*model.Location, err error) {
-	err = DB.Where("`address` IN (?)", DB.Model(&model.Validator{}).Select("proxy")).Find(&res).Error
+type LocationRes struct {
+	model.Location
+	Online bool `json:"online"`
+}
+
+func FetchLocations() (res []*LocationRes, err error) {
+	err = DB.Model(&model.Location{}).Joins("LEFT JOIN `validators` ON `locations`.`address`=`validators`.`address`").
+		Where("`validators`.`address` IS NOT NULL").Select("locations.*,online").Scan(&res).Error
 	return
 }

@@ -57,50 +57,33 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 	return
 }
 
-// ComSNFTsRes SNFT paging return parameters
-type ComSNFTsRes struct {
-	Total int64           `json:"total"` //The total number of SNFTs
-	NFTs  []model.ComSNFT `json:"nfts"`  //SNFT list
-}
-
-func FetchComSNFTs(owner string, status int, page, size int) (res ComSNFTsRes, err error) {
-	db := DB.Model(&model.ComSNFT{}).Where("owner=?", owner)
-	switch status {
-	case 1:
-		db = db.Where("pledge_number IS NOT NULL")
-	case 2:
-		db = db.Where("pledge_number IS NULL")
-	case 3:
-		db = db.Where("pledge_number IS NULL AND LENGTH(address)<42")
-	}
-	err = db.Count(&res.Total).Error
-	if err != nil {
-		return
-	}
-	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
-	return
-}
-
 // SNFTsRes SNFT paging return parameters
 type SNFTsRes struct {
 	Total int64        `json:"total"` //The total number of SNFTs
 	NFTs  []model.SNFT `json:"nfts"`  //SNFT list
 }
 
-func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
-	db := DB
+func FetchSNFTs(owner string, status, page, size int) (res SNFTsRes, err error) {
+	db := DB.Model(&model.SNFT{}).Where("`remove`=false")
 	if owner != "" {
-		db = db.Where("owner=?", owner)
+		db = db.Where("`owner`=?", owner)
 	}
-	if owner == "" {
+	switch status {
+	case 1:
+		db = db.Where("`pledge_number` IS NOT NULL")
+	case 2:
+		db = db.Where("`pledge_number` IS NULL")
+	case 3:
+		db = db.Where("`pledge_number` IS NULL AND LENGTH(`address`)<42")
+	}
+	if owner == "" && status == 0 {
 		res.Total = stats.TotalSNFT
 	} else {
-		err = db.Model(&model.SNFT{}).Count(&res.Total).Error
+		if err = db.Count(&res.Total).Error; err != nil {
+			return
+		}
 	}
-	if err != nil {
-		return
-	}
-	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
+	err = db.Order("`address` DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 
@@ -117,7 +100,7 @@ type SNFTsAndMetaRes struct {
 }
 
 func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
-	db := DB.Table("v_snfts")
+	db := DB.Table("v_snfts").Where("`remove`=false")
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}

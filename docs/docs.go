@@ -1102,7 +1102,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Location"
+                                "$ref": "#/definitions/service.LocationRes"
                             }
                         }
                     },
@@ -1860,7 +1860,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.ComSNFTsRes"
+                            "$ref": "#/definitions/service.SNFTsRes"
                         }
                     },
                     "400": {
@@ -2630,23 +2630,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ComSNFT": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "synthesize SNFT address",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "owner",
-                    "type": "string"
-                },
-                "pledge_number": {
-                    "description": "The height of the last pledged block, null if not pledge",
-                    "type": "integer"
-                }
-            }
-        },
         "model.Epoch": {
             "type": "object",
             "properties": {
@@ -2775,27 +2758,6 @@ const docTemplate = `{
                 "value": {
                     "description": "The total amount of coins in the chain",
                     "type": "string"
-                }
-            }
-        },
-        "model.Location": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "account address",
-                    "type": "string"
-                },
-                "ip": {
-                    "description": "account ip",
-                    "type": "string"
-                },
-                "latitude": {
-                    "description": "latitude",
-                    "type": "number"
-                },
-                "longitude": {
-                    "description": "longitude",
-                    "type": "number"
                 }
             }
         },
@@ -2964,10 +2926,6 @@ const docTemplate = `{
                     "description": "SNFT address",
                     "type": "string"
                 },
-                "awardee": {
-                    "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
-                    "type": "string"
-                },
                 "last_price": {
                     "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
                     "type": "string"
@@ -2980,12 +2938,16 @@ const docTemplate = `{
                     "description": "The height of the last pledged block, null if not pledge",
                     "type": "integer"
                 },
+                "remove": {
+                    "description": "SNFTs that are synthesized and then removed",
+                    "type": "boolean"
+                },
                 "reward_at": {
                     "description": "The timestamp of the last rewarded, null if not rewarded",
                     "type": "integer"
                 },
                 "reward_number": {
-                    "description": "The height of the last rewarded block, null if not rewarded",
+                    "description": "The height of the last rewarded block",
                     "type": "integer"
                 },
                 "tx_amount": {
@@ -3360,22 +3322,6 @@ const docTemplate = `{
                 }
             }
         },
-        "service.ComSNFTsRes": {
-            "type": "object",
-            "properties": {
-                "nfts": {
-                    "description": "SNFT list",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.ComSNFT"
-                    }
-                },
-                "total": {
-                    "description": "The total number of SNFTs",
-                    "type": "integer"
-                }
-            }
-        },
         "service.EpochsRes": {
             "type": "object",
             "properties": {
@@ -3574,6 +3520,30 @@ const docTemplate = `{
                             }
                         }
                     }
+                }
+            }
+        },
+        "service.LocationRes": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "account address",
+                    "type": "string"
+                },
+                "ip": {
+                    "description": "account ip",
+                    "type": "string"
+                },
+                "latitude": {
+                    "description": "latitude",
+                    "type": "number"
+                },
+                "longitude": {
+                    "description": "longitude",
+                    "type": "number"
+                },
+                "online": {
+                    "type": "boolean"
                 }
             }
         },
@@ -3856,10 +3826,6 @@ const docTemplate = `{
                                 "description": "Attributes",
                                 "type": "string"
                             },
-                            "awardee": {
-                                "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
-                                "type": "string"
-                            },
                             "category": {
                                 "description": "category",
                                 "type": "string"
@@ -3892,12 +3858,16 @@ const docTemplate = `{
                                 "description": "The height of the last pledged block, null if not pledge",
                                 "type": "integer"
                             },
+                            "remove": {
+                                "description": "SNFTs that are synthesized and then removed",
+                                "type": "boolean"
+                            },
                             "reward_at": {
                                 "description": "The timestamp of the last rewarded, null if not rewarded",
                                 "type": "integer"
                             },
                             "reward_number": {
-                                "description": "The height of the last rewarded block, null if not rewarded",
+                                "description": "The height of the last rewarded block",
                                 "type": "integer"
                             },
                             "source_url": {
@@ -3976,10 +3946,6 @@ const docTemplate = `{
                     "description": "Attributes",
                     "type": "string"
                 },
-                "awardee": {
-                    "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
-                    "type": "string"
-                },
                 "category": {
                     "description": "category",
                     "type": "string"
@@ -4024,12 +3990,16 @@ const docTemplate = `{
                     "description": "The height of the last pledged block, null if not pledge",
                     "type": "integer"
                 },
+                "remove": {
+                    "description": "SNFTs that are synthesized and then removed",
+                    "type": "boolean"
+                },
                 "reward_at": {
                     "description": "The timestamp of the last rewarded, null if not rewarded",
                     "type": "integer"
                 },
                 "reward_number": {
-                    "description": "The height of the last rewarded block, null if not rewarded",
+                    "description": "The height of the last rewarded block",
                     "type": "integer"
                 },
                 "royaltyRatio": {
@@ -4162,10 +4132,6 @@ const docTemplate = `{
                                 "description": "Attributes",
                                 "type": "string"
                             },
-                            "awardee": {
-                                "description": "The address of the miner that was rewarded last, null if it has not been rewarded",
-                                "type": "string"
-                            },
                             "category": {
                                 "description": "category",
                                 "type": "string"
@@ -4210,12 +4176,16 @@ const docTemplate = `{
                                 "description": "The height of the last pledged block, null if not pledge",
                                 "type": "integer"
                             },
+                            "remove": {
+                                "description": "SNFTs that are synthesized and then removed",
+                                "type": "boolean"
+                            },
                             "reward_at": {
                                 "description": "The timestamp of the last rewarded, null if not rewarded",
                                 "type": "integer"
                             },
                             "reward_number": {
-                                "description": "The height of the last rewarded block, null if not rewarded",
+                                "description": "The height of the last rewarded block",
                                 "type": "integer"
                             },
                             "source_url": {

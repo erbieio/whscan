@@ -123,7 +123,7 @@ func validators(c *gin.Context) {
 // @Description Query validator's locations
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} []model.Location
+// @Success     200 {object} []service.LocationRes
 // @Failure     400 {object} service.ErrRes
 // @Router      /locations [get]
 func locations(c *gin.Context) {

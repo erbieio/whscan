@@ -24,7 +24,6 @@ var Tables = []interface{}{
 	&Epoch{},
 	&FNFT{},
 	&SNFT{},
-	&ComSNFT{},
 	&Collection{},
 	&NFTTx{},
 	&Reward{},
@@ -38,18 +37,11 @@ func Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(Tables...)
 }
 
-func DropTable(db *gorm.DB) error {
-	return db.Migrator().DropTable(Tables...)
-}
-
-func ClearTable(db *gorm.DB) error {
-	return db.Transaction(func(tx *gorm.DB) error {
-		err := tx.AutoMigrate(Tables...)
-		if err == nil {
-			err = tx.Migrator().DropTable(Tables...)
-		}
-		return err
-	})
+func ClearTable(db *gorm.DB) (err error) {
+	if err = db.Migrator().DropTable(Tables...); err == nil {
+		err = db.AutoMigrate(Tables...)
+	}
+	return
 }
 
 var Views = map[string]string{
@@ -74,87 +66,6 @@ func SetView(db *gorm.DB) error {
 	return nil
 }
 
-var Procedures = map[string]string{
-	"fresh_c_snft": `
-CREATE PROCEDURE fresh_c_snft (
-	IN fnft CHAR(41)
-)
-BEGIN
-	DECLARE _level INTEGER DEFAULT 1;
-	DECLARE _pledge_number INTEGER;
-	DECLARE _owner CHAR(42);
-	SELECT owner, pledge_number
-	INTO _owner, _pledge_number
-	FROM snfts
-	WHERE LEFT(address, 41) = fnft
-	LIMIT 1;
-	SELECT IF(COUNT(DISTINCT CONCAT(owner, IFNULL(pledge_number, 0))) = 1, 2, 1)
-	INTO _level
-	FROM snfts
-	WHERE LEFT(address, 41) = LEFT(fnft, 41);
-	IF _level = 2 THEN
-		SELECT IF(COUNT(DISTINCT CONCAT(owner, IFNULL(pledge_number, 0))) = 1, 3, 2)
-		INTO _level
-		FROM snfts
-		WHERE LEFT(address, 40) = LEFT(fnft, 40);
-	END IF;
-	IF _level = 3 THEN
-		SELECT IF(COUNT(DISTINCT CONCAT(owner, IFNULL(pledge_number, 0))) = 1, 4, 3)
-		INTO _level
-		FROM snfts
-		WHERE LEFT(address, 39) = LEFT(fnft, 39);
-	END IF;
-	IF _level = 4 THEN
-		BEGIN
-			DELETE FROM com_snfts
-			WHERE LEFT(address, 39) = LEFT(fnft, 39);
-			INSERT INTO com_snfts
-			VALUES (LEFT(fnft, 39), _pledge_number, _owner);
-		END;
-	END IF;
-	IF _level = 3 THEN
-		BEGIN
-			DELETE FROM com_snfts
-			WHERE LEFT(address, 40) = LEFT(fnft, 40);
-			INSERT INTO com_snfts
-			VALUES (LEFT(fnft, 40), _pledge_number, _owner);
-		END;
-	END IF;
-	IF _level = 2 THEN
-		BEGIN
-			DELETE FROM com_snfts
-			WHERE LEFT(address, 41) = LEFT(fnft, 41);
-			INSERT INTO com_snfts
-			VALUES (LEFT(fnft, 41), _pledge_number, _owner);
-		END;
-	END IF;
-	IF _level = 1 THEN
-		BEGIN
-			DELETE FROM com_snfts
-			WHERE LEFT(address, 41) = LEFT(fnft, 41);
-			INSERT INTO com_snfts
-			SELECT address, pledge_number, owner
-			FROM snfts
-			WHERE LEFT(address, 41) = fnft;
-		END;
-	END IF;
-END;`,
-}
-
-func SetProcedure(db *gorm.DB) error {
-	for name, procedure := range Procedures {
-		err := db.Exec("DROP PROCEDURE IF EXISTS " + name).Error
-		if err != nil {
-			return err
-		}
-		err = db.Exec(procedure).Error
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Stats caches some database queries to speed up queries
 type Stats struct {
 	Ready                bool   `json:"ready" gorm:"-"`                        //ready, sync latest block
@@ -164,6 +75,7 @@ type Stats struct {
 	TotalNFTAmount       string `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
 	TotalSNFTAmount      string `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
 	TotalRecycle         uint64 `json:"totalRecycle"`                          //Total number of recycle SNFT
+	FirstBlockTime       int64  `json:"firstBlockTime" gorm:"-"`               //first block unix time
 	AvgBlockTime         int64  `json:"avgBlockTime" gorm:"-"`                 //average block time, ms
 	TotalBlock           int64  `json:"totalBlock" gorm:"-"`                   //Total number of blocks
 	TotalBlackHole       int64  `json:"totalBlackHole" gorm:"-"`               //Total number of BlackHole blocks
@@ -195,9 +107,8 @@ type Stats struct {
 	Total24HNFT          int64  `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64  `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
 
-	Genesis    Header                     `json:"-" gorm:"-"`
-	FirstBlock Header                     `json:"-" gorm:"-"`
-	Balances   map[types.Address]*big.Int `json:"-" gorm:"-"`
+	Genesis  Header                     `json:"-" gorm:"-"`
+	Balances map[types.Address]*big.Int `json:"-" gorm:"-"`
 }
 
 // Header block header information
@@ -347,25 +258,25 @@ type NFT struct {
 // Epoch SNFT Phase 1
 // One SNFT->16 Collections->16 FNFTs->256 SNFTs
 type Epoch struct {
-	ID           string `json:"id" gorm:"type:VARCHAR(39);primary_key"` //period ID
-	Creator      string `json:"creator" gorm:"type:CHAR(42)"`           //Creator address, also the address of royalty income
-	RoyaltyRatio uint32 `json:"royaltyRatio"`                           //The royalty rate of the same period of SNFT, the unit is one ten thousandth
-	Dir          string `json:"dir"`                                    //meta information directory URL
-	Exchanger    string `json:"exchanger"`                              //Exchange address
-	VoteWeight   string `json:"voteWeight"`                             //Weight
-	Number       uint64 `json:"number"`                                 //Starting block height
-	Timestamp    uint64 `json:"timestamp"`                              //Starting timestamp
+	ID           string `json:"id" gorm:"type:CHAR(39);primary_key"` //period ID
+	Creator      string `json:"creator" gorm:"type:CHAR(42)"`        //Creator address, also the address of royalty income
+	RoyaltyRatio uint32 `json:"royaltyRatio"`                        //The royalty rate of the same period of SNFT, the unit is one ten thousandth
+	Dir          string `json:"dir"`                                 //meta information directory URL
+	Exchanger    string `json:"exchanger" gorm:"type:CHAR(42)"`      //Exchange address
+	VoteWeight   string `json:"voteWeight"`                          //Weight
+	Number       uint64 `json:"number"`                              //Starting block height
+	Timestamp    uint64 `json:"timestamp"`                           //Starting timestamp
 }
 
 // FNFT full SNFT
 type FNFT struct {
-	ID         string `json:"id" gorm:"type:VARCHAR(41);primary_key"` //FNFT ID
-	MetaUrl    string `json:"meta_url"`                               //FNFT meta information URL
-	Name       string `json:"name"`                                   //name
-	Desc       string `json:"desc"`                                   //description
-	Attributes string `json:"attributes"`                             //Attributes
-	Category   string `json:"category"`                               //category
-	SourceUrl  string `json:"source_url"`                             //Resource links, file links such as pictures or videos
+	ID         string `json:"id" gorm:"type:CHAR(41);primary_key"` //FNFT ID
+	MetaUrl    string `json:"meta_url"`                            //FNFT meta information URL
+	Name       string `json:"name"`                                //name
+	Desc       string `json:"desc"`                                //description
+	Attributes string `json:"attributes"`                          //Attributes
+	Category   string `json:"category"`                            //category
+	SourceUrl  string `json:"source_url"`                          //Resource links, file links such as pictures or videos
 }
 
 // SNFT of SNFT fragments
@@ -373,18 +284,11 @@ type SNFT struct {
 	Address      string  `json:"address" gorm:"type:CHAR(42);primaryKey"`  //SNFT address
 	LastPrice    *string `json:"last_price"`                               //The last transaction price, the unit is wei, null if the transaction has not been completed
 	TxAmount     string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //the total transaction volume of this SNFT
-	Awardee      string  `json:"awardee"`                                  //The address of the miner that was rewarded last, null if it has not been rewarded
 	RewardAt     uint64  `json:"reward_at"`                                //The timestamp of the last rewarded, null if not rewarded
-	RewardNumber uint64  `json:"reward_number"`                            //The height of the last rewarded block, null if not rewarded
+	RewardNumber uint64  `json:"reward_number"`                            //The height of the last rewarded block
 	PledgeNumber *uint64 `json:"pledge_number,omitempty"`                  //The height of the last pledged block, null if not pledge
 	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`         //owner, unallocated and reclaimed are null
-}
-
-// ComSNFT Composable SNFTs
-type ComSNFT struct {
-	Address      string  `json:"address" gorm:"type:VARCHAR(42);primary_key"` //synthesize SNFT address
-	PledgeNumber *uint64 `json:"pledge_number"`                               //The height of the last pledged block, null if not pledge
-	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`            //owner
+	Remove       bool    `json:"remove"`                                   //SNFTs that are synthesized and then removed
 }
 
 // NFTTx NFT transaction attribute information

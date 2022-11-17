@@ -149,7 +149,7 @@ func pageSNFT(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchSNFTs(strings.ToLower(req.Owner), page, size)
+	res, err := service.FetchSNFTs(strings.ToLower(req.Owner), 0, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -166,7 +166,7 @@ func pageSNFT(c *gin.Context) {
 // @Param       status    query    number false "1:pledged, 2:free trade, 3:can pledge, other:all"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} service.ComSNFTsRes
+// @Success     200       {object} service.SNFTsRes
 // @Failure     400       {object} service.ErrRes
 // @Router      /snft_com/page [get]
 func pageComSNFT(c *gin.Context) {
@@ -187,7 +187,7 @@ func pageComSNFT(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchComSNFTs(strings.ToLower(req.Owner), req.Status, page, size)
+	res, err := service.FetchSNFTs(strings.ToLower(req.Owner), req.Status, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
