@@ -81,7 +81,7 @@ func getTransaction(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       hash path     string true "Transaction hash"
-// @Success     200  {object} []model.Log
+// @Success     200  {object} []model.EventLog
 // @Failure     400  {object} service.ErrRes
 // @Router      /transaction_logs/{hash} [get]
 func getTransactionLogs(c *gin.Context) {

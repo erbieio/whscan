@@ -119,7 +119,7 @@ func loadStats(db *gorm.DB) (err error) {
 	return
 }
 
-func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
+func updateStats(db *gorm.DB, parsed *model.Parsed, recycleSNFT int) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
 	totalValidatorPledge, _ := new(big.Int).SetString(stats.TotalValidatorPledge, 0)
@@ -173,8 +173,8 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			return
 		}
 	}
-	if count := len(parsed.RecycleSNFTs); count > 0 {
-		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_recycle", stats.TotalRecycle+uint64(count)).Error
+	if recycleSNFT > 0 {
+		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_recycle", stats.TotalRecycle+uint64(recycleSNFT)).Error
 		if err != nil {
 			return
 		}
@@ -209,11 +209,11 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
 	stats.TotalUncle += int64(parsed.UnclesCount)
 	stats.TotalNFT += int64(len(parsed.NFTs))
-	stats.TotalSNFT += int64(rewardSNFT - len(parsed.RecycleSNFTs))
+	stats.TotalSNFT += int64(rewardSNFT - recycleSNFT)
 	stats.RewardSNFTCount += int64(rewardSNFT)
 	stats.RewardCoinCount += int64(len(parsed.Rewards) - rewardSNFT)
 	stats.TotalAccount = int64(len(stats.Balances))
-	stats.TotalRecycle += uint64(len(parsed.RecycleSNFTs))
+	stats.TotalRecycle += uint64(recycleSNFT)
 	stats.TotalBalance = totalBalance.Text(10)
 	stats.TotalAmount = totalAmount.Text(10)
 	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
@@ -234,7 +234,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			stats.TotalWormholesTx++
 		}
 	}
-	freshStats(db, parsed)
 	return
 }
 

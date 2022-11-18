@@ -2169,7 +2169,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Log"
+                                "$ref": "#/definitions/model.EventLog"
                             }
                         }
                     },
@@ -2582,6 +2582,42 @@ const docTemplate = `{
                 }
             }
         },
+        "model.EventLog": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "blockNumber": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "data": {
+                    "description": "data",
+                    "type": "string"
+                },
+                "logIndex": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "removed": {
+                    "description": "whether to remove",
+                    "type": "boolean"
+                },
+                "topics": {
+                    "description": "Uncle block hash",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "transactionHash": {
+                    "description": "create transaction",
+                    "type": "string"
+                }
+            }
+        },
         "model.Exchanger": {
             "type": "object",
             "properties": {
@@ -2672,42 +2708,6 @@ const docTemplate = `{
                 },
                 "value": {
                     "description": "The total amount of coins in the chain",
-                    "type": "string"
-                }
-            }
-        },
-        "model.Log": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "blockNumber": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "data": {
-                    "description": "data",
-                    "type": "string"
-                },
-                "logIndex": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "removed": {
-                    "description": "whether to remove",
-                    "type": "boolean"
-                },
-                "topics": {
-                    "description": "Uncle block hash",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "transactionHash": {
-                    "description": "create transaction",
                     "type": "string"
                 }
             }
@@ -2848,6 +2848,10 @@ const docTemplate = `{
                 "owner": {
                     "description": "owner, unallocated and reclaimed are null",
                     "type": "string"
+                },
+                "pieces": {
+                    "description": "snft pieces number",
+                    "type": "integer"
                 },
                 "pledge_number": {
                     "description": "The height of the last pledged block, null if not pledge",
@@ -3774,6 +3778,10 @@ const docTemplate = `{
                                 "description": "owner, unallocated and reclaimed are null",
                                 "type": "string"
                             },
+                            "pieces": {
+                                "description": "snft pieces number",
+                                "type": "integer"
+                            },
                             "pledge_number": {
                                 "description": "The height of the last pledged block, null if not pledge",
                                 "type": "integer"
@@ -3905,6 +3913,10 @@ const docTemplate = `{
                 "owner": {
                     "description": "owner, unallocated and reclaimed are null",
                     "type": "string"
+                },
+                "pieces": {
+                    "description": "snft pieces number",
+                    "type": "integer"
                 },
                 "pledge_number": {
                     "description": "The height of the last pledged block, null if not pledge",
@@ -4091,6 +4103,10 @@ const docTemplate = `{
                             "owner": {
                                 "description": "owner, unallocated and reclaimed are null",
                                 "type": "string"
+                            },
+                            "pieces": {
+                                "description": "snft pieces number",
+                                "type": "integer"
                             },
                             "pledge_number": {
                                 "description": "The height of the last pledged block, null if not pledge",

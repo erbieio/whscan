@@ -535,21 +535,16 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			BlockNumber: blockNumber,
 		})
 
-	case 6: //Official NFT exchange, recycling shards to shard pool
+	case 6, 7, 8: //recycle snft, pledge snft, cancel pledge snft
+		w.NFTAddress = strings.ToLower(w.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
-			TxType:      6,
+			TxType:      w.Type,
 			NFTAddr:     &w.NFTAddress,
 			From:        from,
 			Timestamp:   timestamp,
 			TxHash:      txHash,
 			BlockNumber: blockNumber,
 		})
-
-	case 7: //pledge snft
-		wh.PledgeSNFT = append(wh.PledgeSNFT, from+w.NFTAddress)
-
-	case 8: //cancel pledge snft
-		wh.UnPledgeSNFT = append(wh.UnPledgeSNFT, from+w.NFTAddress)
 
 	case 9, 10: //validator pledge, can be pledged multiple times, starting at 100000ERB
 		validator := &model.Validator{Address: from, Amount: value}

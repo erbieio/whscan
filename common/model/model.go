@@ -13,7 +13,7 @@ var Tables = []interface{}{
 	&Block{},
 	&Uncle{},
 	&Transaction{},
-	&Log{},
+	&EventLog{},
 	&Account{},
 	&InternalTx{},
 	&ERC20Transfer{},
@@ -175,8 +175,8 @@ type Transaction struct {
 	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index"`        //The serial number in the block
 }
 
-// Log transaction log
-type Log struct {
+// EventLog transaction log
+type EventLog struct {
 	Address     types.Address  `json:"address" gorm:"type:CHAR(42)"`                          //The contract address
 	Topics      types.StrArray `json:"topics" gorm:"type:VARCHAR(277)"`                       //topic
 	Data        string         `json:"data"`                                                  //data
@@ -282,13 +282,14 @@ type SNFT struct {
 	RewardNumber uint64  `json:"reward_number"`                              //The height of the last rewarded block
 	PledgeNumber *uint64 `json:"pledge_number,omitempty"`                    //The height of the last pledged block, null if not pledge
 	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`           //owner, unallocated and reclaimed are null
+	Pieces       int64   `json:"pieces"`                                     //snft pieces number
 	Remove       bool    `json:"remove" gorm:"index"`                        //SNFTs that are synthesized and then removed
 }
 
 // NFTTx NFT transaction attribute information
 type NFTTx struct {
 	//Transaction type, 1: transfer, 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction
-	TxType        int32   `json:"tx_type"`
+	TxType        uint8   `json:"tx_type"`
 	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`        //The NFT address of the transaction
 	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42)"` //Exchange address
 	From          string  `json:"from" gorm:"type:CHAR(42);index"`               //Seller
@@ -377,16 +378,13 @@ type Parsed struct {
 	CacheUncles       []*Uncle
 	CacheTransferLogs []interface{}
 	CacheAccounts     map[types.Address]*Account
-	CacheLogs         []*Log //Insert after CacheAccounts
+	CacheLogs         []*EventLog
 
 	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
-	Epoch            *Epoch       //Official injection of the first phase of SNFT, priority: 1
-	NFTs             []*NFT       //Newly created NFT, priority: 2
-	NFTTxs           []*NFTTx     //NFT transaction record, priority: 4
-	RecycleSNFTs     []string     //Recycle SNFT, priority: 5
-	Rewards          []*Reward    //reward record, priority: none
+	Epoch            *Epoch       //Official injection of the first phase of SNFT
+	NFTs             []*NFT       //Newly created NFT
+	NFTTxs           []*NFTTx     //NFT transaction record, transfer, recycle, pledge
+	Rewards          []*Reward    //reward record
 	ChangeExchangers []*Exchanger //modify the exchanger, including opening, closing, staking and other operations
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
-	PledgeSNFT       []string     //Pledge SNFT
-	UnPledgeSNFT     []string     //UnPledge SNFT
 }

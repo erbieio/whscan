@@ -42,7 +42,7 @@ func FetchTransactions(page, size int, number, addr *string) (res TransactionsRe
 	return
 }
 
-func GetTransactionLogs(hash string) (t []model.Log, err error) {
+func GetTransactionLogs(hash string) (t []model.EventLog, err error) {
 	err = DB.Where("tx_hash=?", hash).Find(&t).Error
 	return
 }

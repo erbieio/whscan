@@ -26,7 +26,7 @@ var (
 	DaySecond                    = 24 * time.Hour.Milliseconds() / 1000
 )
 
-func UnpackTransferLog(log *Log) []interface{} {
+func UnpackTransferLog(log *EventLog) []interface{} {
 	topicsLen := len(log.Topics)
 	if topicsLen == 3 {
 		if log.Topics[0] == erc20TransferEventId && len(log.Data) == 66 {

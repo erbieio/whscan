@@ -248,6 +248,32 @@ definitions:
         description: Weight
         type: string
     type: object
+  model.EventLog:
+    properties:
+      address:
+        description: address
+        type: string
+      blockNumber:
+        description: transaction random number, transaction volume
+        type: integer
+      data:
+        description: data
+        type: string
+      logIndex:
+        description: transaction random number, transaction volume
+        type: integer
+      removed:
+        description: whether to remove
+        type: boolean
+      topics:
+        description: Uncle block hash
+        items:
+          type: string
+        type: array
+      transactionHash:
+        description: create transaction
+        type: string
+    type: object
   model.Exchanger:
     properties:
       address:
@@ -315,32 +341,6 @@ definitions:
         type: string
       value:
         description: The total amount of coins in the chain
-        type: string
-    type: object
-  model.Log:
-    properties:
-      address:
-        description: address
-        type: string
-      blockNumber:
-        description: transaction random number, transaction volume
-        type: integer
-      data:
-        description: data
-        type: string
-      logIndex:
-        description: transaction random number, transaction volume
-        type: integer
-      removed:
-        description: whether to remove
-        type: boolean
-      topics:
-        description: Uncle block hash
-        items:
-          type: string
-        type: array
-      transactionHash:
-        description: create transaction
         type: string
     type: object
   model.NFT:
@@ -450,6 +450,9 @@ definitions:
       owner:
         description: owner, unallocated and reclaimed are null
         type: string
+      pieces:
+        description: snft pieces number
+        type: integer
       pledge_number:
         description: The height of the last pledged block, null if not pledge
         type: integer
@@ -1120,6 +1123,9 @@ definitions:
             owner:
               description: owner, unallocated and reclaimed are null
               type: string
+            pieces:
+              description: snft pieces number
+              type: integer
             pledge_number:
               description: The height of the last pledged block, null if not pledge
               type: integer
@@ -1217,6 +1223,9 @@ definitions:
       owner:
         description: owner, unallocated and reclaimed are null
         type: string
+      pieces:
+        description: snft pieces number
+        type: integer
       pledge_number:
         description: The height of the last pledged block, null if not pledge
         type: integer
@@ -1355,6 +1364,9 @@ definitions:
             owner:
               description: owner, unallocated and reclaimed are null
               type: string
+            pieces:
+              description: snft pieces number
+              type: integer
             pledge_number:
               description: The height of the last pledged block, null if not pledge
               type: integer
@@ -2922,7 +2934,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Log'
+              $ref: '#/definitions/model.EventLog'
             type: array
         "400":
           description: Bad Request
