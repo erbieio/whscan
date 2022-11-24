@@ -158,17 +158,18 @@ func pageSNFT(c *gin.Context) {
 }
 
 // @Tags        NFT
-// @Summary     query Composable SNFT list
+// @Summary     query Composable SNFT list (new /snft/page)
 // @Description Query the Composable SNFT list in reverse order of creation time
-// @Accept      json
-// @Produce     json
-// @Param       owner     query    string true  "Owner, if empty, query all"
-// @Param       status    query    number false "1:pledged, 2:free trade, 3:can pledge, other:all"
-// @Param       page      query    string false "Page, default 1"
-// @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} service.SNFTsRes
-// @Failure     400       {object} service.ErrRes
-// @Router      /snft_com/page [get]
+// @Deprecated
+// @Accept  json
+// @Produce json
+// @Param   owner     query    string true  "Owner, if empty, query all"
+// @Param   status    query    number false "1:pledged, 2:free trade, 3:can pledge, other:all"
+// @Param   page      query    string false "Page, default 1"
+// @Param   page_size query    string false "Page size, default 10"
+// @Success 200       {object} service.SNFTsRes
+// @Failure 400       {object} service.ErrRes
+// @Router  /snft_com/page [get]
 func pageComSNFT(c *gin.Context) {
 	req := struct {
 		Page     *int   `form:"page"`
@@ -355,8 +356,8 @@ func pageSNFTGroup(c *gin.Context) {
 }
 
 // @Tags        NFT
-// @Summary     Query the list of 256 SNFTs of the specified FNFT
-// @Description Query the information of 256 SNFTs under the FNFT of the specified ID
+// @Summary     Query the list of 16 SNFTs of the specified FNFT
+// @Description Query the information of 16 SNFTs under the FNFT of the specified ID
 // @Accept      json
 // @Produce     json
 // @Param       id  path     string true "FNFT ID"

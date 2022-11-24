@@ -127,7 +127,7 @@ type Header struct {
 	Sha3Uncles       types.Hash    `json:"sha3Uncles" gorm:"type:CHAR(66)"`               //Uncle root hash
 	Size             types.Uint64  `json:"size"`                                          //size
 	StateRoot        types.Hash    `json:"stateRoot" gorm:"type:CHAR(66)"`                //World tree root hash
-	Timestamp        types.Uint64  `json:"timestamp"`                                     //timestamp
+	Timestamp        types.Uint64  `json:"timestamp" gorm:"index"`                        //timestamp
 	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:VARCHAR(66);index"` //total difficulty
 	TransactionsRoot types.Hash    `json:"transactionsRoot" gorm:"type:CHAR(66)"`         //transaction root hash
 }
@@ -288,7 +288,7 @@ type SNFT struct {
 
 // NFTTx NFT transaction attribute information
 type NFTTx struct {
-	//Transaction type, 1: transfer, 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction
+	//Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction
 	TxType        uint8   `json:"tx_type"`
 	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`        //The NFT address of the transaction
 	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42)"` //Exchange address

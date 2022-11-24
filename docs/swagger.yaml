@@ -433,9 +433,10 @@ definitions:
         description: transaction hash
         type: string
       tx_type:
-        description: 'Transaction type, 1: transfer, 14: bid transaction, 15: fixed
-          price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid
-          transaction, 19: lazy bid transaction, 20: matching transaction'
+        description: 'Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel
+          pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase,
+          17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction,
+          20: matching transaction'
         type: integer
     type: object
   model.SNFT:
@@ -2570,7 +2571,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Query the information of 256 SNFTs under the FNFT of the specified
+      description: Query the information of 16 SNFTs under the FNFT of the specified
         ID
       parameters:
       - description: FNFT ID
@@ -2591,7 +2592,7 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/service.ErrRes'
-      summary: Query the list of 256 SNFTs of the specified FNFT
+      summary: Query the list of 16 SNFTs of the specified FNFT
       tags:
       - NFT
   /snft/page:
@@ -2658,6 +2659,7 @@ paths:
     get:
       consumes:
       - application/json
+      deprecated: true
       description: Query the Composable SNFT list in reverse order of creation time
       parameters:
       - description: Owner, if empty, query all
@@ -2688,7 +2690,7 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/service.ErrRes'
-      summary: query Composable SNFT list
+      summary: query Composable SNFT list (new /snft/page)
       tags:
       - NFT
   /snft_meta/page:

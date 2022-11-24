@@ -23,7 +23,7 @@ func GetBlock(number string) (b model.Block, err error) {
 }
 
 func FetchValidator(page, size int) (res []*model.Validator, err error) {
-	err = DB.Offset((page - 1) * size).Limit(size).Find(&res).Error
+	err = DB.Where("amount!='0'").Offset((page - 1) * size).Limit(size).Find(&res).Error
 	return
 }
 

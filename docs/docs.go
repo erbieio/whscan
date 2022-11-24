@@ -1574,7 +1574,7 @@ const docTemplate = `{
         },
         "/snft/group/{id}": {
             "get": {
-                "description": "Query the information of 256 SNFTs under the FNFT of the specified ID",
+                "description": "Query the information of 16 SNFTs under the FNFT of the specified ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1584,7 +1584,7 @@ const docTemplate = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "Query the list of 256 SNFTs of the specified FNFT",
+                "summary": "Query the list of 16 SNFTs of the specified FNFT",
                 "parameters": [
                     {
                         "type": "string",
@@ -1755,7 +1755,8 @@ const docTemplate = `{
                 "tags": [
                     "NFT"
                 ],
-                "summary": "query Composable SNFT list",
+                "summary": "query Composable SNFT list (new /snft/page)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -2829,7 +2830,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tx_type": {
-                    "description": "Transaction type, 1: transfer, 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction",
+                    "description": "Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction",
                     "type": "integer"
                 }
             }

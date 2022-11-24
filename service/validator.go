@@ -89,7 +89,7 @@ func updateOnline(db *gorm.DB, fileName string) {
 					addr = strings.ToLower(addr)
 					db.Model(&model.Validator{}).Where("`address`=?", addr).Update("online", true)
 				}
-				db.Model(&model.Validator{}).Where("`online`=true").Count(&stats.TotalValidatorOnline)
+				db.Model(&model.Validator{}).Where("`amount`!='0' AND `online`=true").Count(&stats.TotalValidatorOnline)
 			}
 		}
 	}
@@ -106,7 +106,7 @@ func updateLastMsg(db *gorm.DB, fileName string) {
 	if file, err := os.Open(fileName); err == nil {
 		lastMsg = lastMsg[:0]
 		data, proxies := []string(nil), map[string]bool{}
-		db.Model(&model.Validator{}).Select("proxy").Scan(&data)
+		db.Model(&model.Validator{}).Where("amount!='0'").Select("proxy").Scan(&data)
 		for _, proxy := range data {
 			proxies[proxy] = true
 		}

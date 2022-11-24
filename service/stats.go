@@ -2,6 +2,7 @@ package service
 
 import (
 	"math/big"
+	"strconv"
 
 	"gorm.io/gorm"
 	"server/common/model"
@@ -119,7 +120,7 @@ func loadStats(db *gorm.DB) (err error) {
 	return
 }
 
-func updateStats(db *gorm.DB, parsed *model.Parsed, recycleSNFT int) (err error) {
+func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
 	totalValidatorPledge, _ := new(big.Int).SetString(stats.TotalValidatorPledge, 0)
@@ -127,7 +128,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed, recycleSNFT int) (err error)
 	totalSNFTPledge, _ := new(big.Int).SetString(stats.TotalSNFTPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
-	rewardSNFT, value, totalNFTTx, totalSNFTTx := 0, new(big.Int), stats.TotalNFTTx, stats.TotalSNFTTx
+	rewardSNFT, recycleSNFT, value, totalNFTTx, totalSNFTTx := int64(0), int64(0), new(big.Int), stats.TotalNFTTx, stats.TotalSNFTTx
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
 		totalBalance = totalBalance.Add(totalBalance, value)
@@ -148,6 +149,10 @@ func updateStats(db *gorm.DB, parsed *model.Parsed, recycleSNFT int) (err error)
 		totalExchangerPledge = totalExchangerPledge.Add(totalExchangerPledge, value)
 	}
 	for _, tx := range parsed.NFTTxs {
+		if tx.TxType == 6 {
+			pieces, _ := strconv.ParseInt(*tx.Fee, 10, 32)
+			recycleSNFT += pieces
+		}
 		if (*tx.NFTAddr)[:3] == "0x0" {
 			totalNFTTx++
 			if tx.Price != "0" {
@@ -209,9 +214,9 @@ func updateStats(db *gorm.DB, parsed *model.Parsed, recycleSNFT int) (err error)
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
 	stats.TotalUncle += int64(parsed.UnclesCount)
 	stats.TotalNFT += int64(len(parsed.NFTs))
-	stats.TotalSNFT += int64(rewardSNFT - recycleSNFT)
-	stats.RewardSNFTCount += int64(rewardSNFT)
-	stats.RewardCoinCount += int64(len(parsed.Rewards) - rewardSNFT)
+	stats.TotalSNFT += rewardSNFT - recycleSNFT
+	stats.RewardSNFTCount += rewardSNFT
+	stats.RewardCoinCount += int64(len(parsed.Rewards)) - rewardSNFT
 	stats.TotalAccount = int64(len(stats.Balances))
 	stats.TotalRecycle += uint64(recycleSNFT)
 	stats.TotalBalance = totalBalance.Text(10)
@@ -258,7 +263,7 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 	if parsed.Number%12 == 0 {
 		db.Model(&model.Exchanger{}).Count(&stats.TotalExchanger)
 		db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
-		db.Model(&model.Validator{}).Count(&stats.TotalValidator)
+		db.Model(&model.Validator{}).Where("amount!='0'").Count(&stats.TotalValidator)
 		db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
 		db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
 		db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Count(&stats.TotalExchangerTx)
