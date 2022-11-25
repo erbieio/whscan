@@ -2,9 +2,12 @@ package utils
 
 import (
 	"context"
-	"strings"
+	"encoding/hex"
+	"errors"
+	"math/big"
+	"strconv"
 
-	. "server/common/types"
+	"server/common/types"
 )
 
 var (
@@ -18,269 +21,141 @@ var (
 	transferSelector          = "0xa9059cbb"
 	transferFromSelector      = "0x23b872dd"
 	approveSelector           = "0x095ea7b3"
-
-	notInterfaceId     = "0xffffffff"
-	erc165InterfaceId  = "0x01ffc9a7"
-	erc721InterfaceId  = "0x80ac58cd"
-	erc1155InterfaceId = "0xd9b67a26"
-
-	Addr1 = Address("0x0000000000000000000000000000000000000001")
-	Addr2 = Address("0x0000000000000000000000000000000000000002")
-	Big0  = Uint256("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
 
 type ContractClient interface {
-	CallContract(ctx context.Context, msg map[string]interface{}, number *BigInt) (Data, error)
+	CallContract(ctx context.Context, to, data, number any) (types.Bytes, error)
 }
 
-// SupportsInterface Query whether the given contract supports interfaceId
-func SupportsInterface(client ContractClient, address Address, interfaceId string) (bool, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": supportsInterfaceSelector + interfaceId[2:10] + "000000000000000000000000000000000000000000000000000000",
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+// SupportsInterface query whether a given contract supports interfaceId
+func SupportsInterface(c ContractClient, ctx context.Context, number, address any, interfaceId string) (bool, error) {
+	data := supportsInterfaceSelector + interfaceId[2:10] + "00000000000000000000000000000000000000000000000000000000"
+	out, err := c.CallContract(ctx, address, data, number)
 	if err != nil {
 		return false, err
 	}
-
-	return ABIDecodeBool(string(out))
+	return ABIDecodeBool(out)
 }
 
-// Name Query the token name of the given ERC20 contract (optional interface)
-func Name(client ContractClient, address Address) (string, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": nameSelector,
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+// Name Query the token name of a given ERC20 contract (optional interface)
+func Name(c ContractClient, ctx context.Context, number, address any) (string, error) {
+	out, err := c.CallContract(ctx, address, nameSelector, number)
 	if err != nil {
-		return *new(string), err
+		return "", err
 	}
-
-	return ABIDecodeString(string(out))
+	return ABIDecodeString(out)
 }
 
-// Symbol Query the token symbol of the given ERC20 contract (optional interface)
-func Symbol(client ContractClient, address Address) (string, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": symbolSelector,
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+// Symbol query the token symbol of a given ERC20 contract (optional interface)
+func Symbol(c ContractClient, ctx context.Context, number, address any) (string, error) {
+	out, err := c.CallContract(ctx, address, symbolSelector, number)
 	if err != nil {
-		return *new(string), err
+		return "", err
 	}
-
-	return ABIDecodeString(string(out))
+	return ABIDecodeString(out)
 }
 
 // Decimals query the token symbol of a given ERC20 contract (optional interface)
-func Decimals(client ContractClient, address Address) (uint8, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": decimalsSelector,
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+func Decimals(c ContractClient, ctx context.Context, number, address any) (uint8, error) {
+	out, err := c.CallContract(ctx, address, decimalsSelector, number)
 	if err != nil {
 		return 0, err
 	}
-
-	return ABIDecodeUint8(string(out))
+	return ABIDecodeUint8(out)
 }
 
-// TotalSupply Query the total amount of tokens issued for a given ERC20 contract (required interface)
-func TotalSupply(client ContractClient, address Address) (Uint256, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": totalSupplySelector,
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+// TotalSupply queries the total amount of tokens issued for a given ERC20 contract (required interface)
+func TotalSupply(c ContractClient, ctx context.Context, number, address any) (string, error) {
+	out, err := c.CallContract(ctx, address, totalSupplySelector, number)
 	if err != nil {
 		return "", err
 	}
-
-	return ABIDecodeUint256(string(out))
+	return ABIDecodeBigInt(out)
 }
 
-func Allowance(client ContractClient, address, owner, spender Address) (Uint256, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": allowanceSelector + "000000000000000000000000" + string(owner[2:]) + "000000000000000000000000" + string(spender[2:]),
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+func Allowance(c ContractClient, ctx context.Context, number, address any, owner, spender string) (string, error) {
+	data := allowanceSelector + "000000000000000000000000" + owner[2:] + "000000000000000000000000" + spender[2:]
+	out, err := c.CallContract(ctx, address, data, number)
 	if err != nil {
 		return "", err
 	}
-
-	return ABIDecodeUint256(string(out))
+	return ABIDecodeBigInt(out)
 }
 
-func BalanceOf(client ContractClient, address, account Address) (Uint256, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": balanceOfSelector + "000000000000000000000000" + string(account[2:]),
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+func BalanceOf(c ContractClient, ctx context.Context, number, address any, account string) (string, error) {
+	data := balanceOfSelector + "000000000000000000000000" + account[2:]
+	out, err := c.CallContract(ctx, address, data, number)
 	if err != nil {
 		return "", err
 	}
-
-	return ABIDecodeUint256(string(out))
+	return ABIDecodeBigInt(out)
 }
 
-func Transfer(client ContractClient, address, to Address, amount Uint256, caller *Address) (bool, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": transferSelector + "000000000000000000000000" + string(to[2:]) + string(amount[2:]),
-	}
-	if caller != nil {
-		msg["from"] = *caller
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+func Transfer(c ContractClient, ctx context.Context, number, address any, to, amount string) (bool, error) {
+	data := transferSelector + "000000000000000000000000" + to[2:] + amount[2:]
+	out, err := c.CallContract(ctx, address, data, number)
 	if err != nil {
 		return false, err
 	}
-
-	return ABIDecodeBool(string(out))
+	return ABIDecodeBool(out)
 }
 
-func TransferFrom(client ContractClient, address, from, to Address, amount Uint256, caller *Address) (bool, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": transferFromSelector + "000000000000000000000000" + string(from[2:]) + "000000000000000000000000" + string(to[2:]) + string(amount[2:]),
-	}
-	if caller != nil {
-		msg["from"] = *caller
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+func TransferFrom(c ContractClient, ctx context.Context, number, address any, from, to, amount string) (bool, error) {
+	data := transferFromSelector + "000000000000000000000000" + from[2:] + "000000000000000000000000" + to[2:] + amount[2:]
+	out, err := c.CallContract(ctx, address, data, number)
 	if err != nil {
 		return false, err
 	}
-
-	return ABIDecodeBool(string(out))
+	return ABIDecodeBool(out)
 }
 
-func Approve(client ContractClient, address, spender Address, amount Uint256, caller *Address) (bool, error) {
-	msg := map[string]interface{}{
-		"to":   address,
-		"data": approveSelector + "000000000000000000000000" + string(spender[2:]) + string(amount[2:]),
-	}
-	if caller != nil {
-		msg["from"] = *caller
-	}
-	out, err := client.CallContract(context.Background(), msg, nil)
+func Approve(c ContractClient, ctx context.Context, number, address any, spender, amount string) (bool, error) {
+	data := approveSelector + "000000000000000000000000" + spender[2:] + amount[2:]
+	out, err := c.CallContract(ctx, address, data, number)
 	if err != nil {
 		return false, err
 	}
-
-	return ABIDecodeBool(string(out))
+	return ABIDecodeBool(out)
 }
 
-func Property(c ContractClient, address Address) (n, s *string, t *ContractType, err error) {
-	name, err := Name(c, address)
-	if err == nil {
-		n = &name
+// ABIDecodeString parses the string from the returned data with only one contract return value
+func ABIDecodeString(out types.Bytes) (string, error) {
+	outLen := len(out)
+	if outLen < 130 || (outLen-2)%64 != 0 || out[64:66] != "20" {
+		return "", errors.New("return data format error")
 	}
-	if err = filterContractErr(err); err != nil {
-		return
+	strLen := new(big.Int)
+	strLen.SetString(string(out[66:130]), 16)
+	if (outLen-130)/64 != int(strLen.Int64())/32 {
+		return "", errors.New("return data string length error")
 	}
-	symbol, err := Symbol(c, address)
-	if err == nil {
-		s = &symbol
-	}
-	if err = filterContractErr(err); err != nil {
-		return
-	}
-	ok, err := IsERC165(c, address)
-	if err != nil {
-		return
-	}
-	if !ok {
-		ok, err = IsERC20(c, address)
-		if ok {
-			t = new(ContractType)
-			*t = ERC20
-		}
-		return
-	}
-	t = new(ContractType)
-	ok, err = IsERC721(c, address)
-	if err != nil {
-		return
-	}
-	if ok {
-		*t = ERC721
-		return
-	}
-	ok, err = IsERC1155(c, address)
-	if err != nil {
-		return
-	}
-	if ok {
-		*t = ERC1155
-		return
-	}
-	*t = ERC165
-	return
+	data, err := hex.DecodeString(string(out[130:int(130+strLen.Int64()*2)]))
+	return string(data), err
 }
 
-func IsERC165(client ContractClient, address Address) (bool, error) {
-	support, err := SupportsInterface(client, address, erc165InterfaceId)
-	if !support || err != nil {
-		return false, filterContractErr(err)
+// ABIDecodeUint8 parses uint8 from the return data with only one contract return value
+func ABIDecodeUint8(out types.Bytes) (uint8, error) {
+	outLen := len(out)
+	if outLen != 66 || out[:50] != "0x000000000000000000000000000000000000000000000000" {
+		return 0, errors.New("return data format error")
 	}
-	support, err = SupportsInterface(client, address, notInterfaceId)
-	return !support, filterContractErr(err)
+	data, err := strconv.ParseUint(string(out[50:]), 16, 8)
+	return uint8(data), err
 }
 
-func IsERC721(client ContractClient, address Address) (bool, error) {
-	support, err := SupportsInterface(client, address, erc721InterfaceId)
-	return support, filterContractErr(err)
+// ABIDecodeBigInt parses uint256 from the return data with only one contract return value
+func ABIDecodeBigInt(out types.Bytes) (string, error) {
+	if len(out) != 66 {
+		return "", errors.New("return data format error")
+	}
+	return string(out), nil
 }
 
-func IsERC1155(client ContractClient, address Address) (bool, error) {
-	support, err := SupportsInterface(client, address, erc1155InterfaceId)
-	return support, filterContractErr(err)
-}
-
-func IsERC20(client ContractClient, address Address) (bool, error) {
-	_, err := TotalSupply(client, address)
-	if err != nil {
-		return false, filterContractErr(err)
+// ABIDecodeBool parses bool from the return data with only one contract return value
+func ABIDecodeBool(out types.Bytes) (bool, error) {
+	outLen := len(out)
+	if outLen != 66 || out[:65] != "0x00000000000000000000000000000000000000000000000000000000000000" {
+		return false, errors.New("return data format error")
 	}
-	_, err = BalanceOf(client, address, Addr1)
-	if err != nil {
-		return false, filterContractErr(err)
-	}
-	_, err = Allowance(client, address, Addr1, Addr2)
-	if err != nil {
-		return false, filterContractErr(err)
-	}
-	_, err = Transfer(client, address, Addr2, Big0, &Addr1)
-	if err != nil {
-		return false, filterContractErr(err)
-	}
-	_, err = TransferFrom(client, address, Addr1, Addr2, Big0, &Addr1)
-	if err != nil {
-		return false, filterContractErr(err)
-	}
-	ok, err := Approve(client, address, Addr2, Big0, &Addr1)
-	if !ok || err != nil {
-		return false, filterContractErr(err)
-	}
-	return true, nil
-}
-
-// filterContractErr Filter out errors other than network connections
-func filterContractErr(err error) error {
-	if err != nil {
-		if strings.Index(err.Error(), "connection") > 0 {
-			return err
-		}
-		if strings.Index(err.Error(), "unexpected EOF") > 0 {
-			return err
-		}
-	}
-	return nil
+	return out[65] == '1', nil
 }

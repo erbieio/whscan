@@ -21,7 +21,7 @@ func SetHead(parsed *model.Parsed) error {
 		log.Printf("err block: %s", string(data))
 	}
 	return DB.Transaction(func(tx *gorm.DB) (err error) {
-		if head := parsed.Number; head != ^types.Uint64(0) {
+		if head := parsed.Number; head != ^types.Long(0) {
 			if err = tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
 				tx.Model(&model.Epoch{}).Select("id").Where("number>?", head),
 			).Error; err != nil {
@@ -341,7 +341,7 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 			}
 		case 7, 8:
 			// handle (cancel) pledge snft
-			snft, amount := model.SNFT{}, ""
+			snft, amount := model.SNFT{}, "0"
 			if err = db.Model(&model.SNFT{}).Where("address=?", tx.NFTAddr).Take(&snft).Error; err != nil {
 				return
 			}
@@ -530,7 +530,7 @@ func saveSNFTMeta(id, metaUrl string) {
 }
 
 // saveNFTMeta parses and stores NFT meta information
-func saveNFTMeta(blockNumber types.Uint64, nftAddr, metaUrl string) {
+func saveNFTMeta(blockNumber types.Long, nftAddr, metaUrl string) {
 	var err error
 	defer func() {
 		if err != nil {

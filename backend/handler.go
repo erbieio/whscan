@@ -20,31 +20,27 @@ import (
 var NotFound = fmt.Errorf("not found")
 
 // decode parses the block
-func decode(c *node.Client, ctx context.Context, number types.Uint64) (*model.Parsed, error) {
-	var raw json.RawMessage
+func decode(c *node.Client, ctx context.Context, number types.Long) (parsed *model.Parsed, err error) {
 	// Get the block (including the transaction)
-	err := c.CallContext(ctx, &raw, "eth_getBlockByNumber", number.Hex(), true)
+	err = c.CallContext(ctx, &parsed, "eth_getBlockByNumber", number.Hex(), true)
 	if err != nil {
 		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
-	} else if len(raw) == 0 {
+	} else if parsed == nil {
 		return nil, NotFound
 	}
-	var parsed model.Parsed
-	if err := json.Unmarshal(raw, &parsed); err != nil {
-		return nil, fmt.Errorf("eth_getBlockByNumber err:%v", err)
-	}
 	// Get transaction receipt (including transaction log)
-	if parsed.TotalTransaction = types.Uint64(len(parsed.CacheTxs)); parsed.TotalTransaction > 0 {
+	parsed.TotalTransaction = types.Long(len(parsed.CacheTxs))
+	if parsed.TotalTransaction > 0 {
 		// get transaction receipt
 		reqs := make([]node.BatchElem, parsed.TotalTransaction)
-		for i, tx := range parsed.CacheTxs {
+		for i := range reqs {
 			reqs[i] = node.BatchElem{
 				Method: "eth_getTransactionReceipt",
-				Args:   []interface{}{tx.Hash},
+				Args:   []any{parsed.CacheTxs[i].Hash},
 				Result: &parsed.CacheTxs[i],
 			}
 		}
-		if err := c.BatchCallContext(ctx, reqs); err != nil {
+		if err = c.BatchCallContext(ctx, reqs); err != nil {
 			return nil, fmt.Errorf("eth_getTransactionReceipt err:%v", err)
 		}
 		for i := range reqs {
@@ -53,28 +49,28 @@ func decode(c *node.Client, ctx context.Context, number types.Uint64) (*model.Pa
 			}
 		}
 		// Get the receipt logs, which can only be checked according to the block hash (there may be multiple blocks with the same block height)
-		err := c.CallContext(ctx, &parsed.CacheLogs, "eth_getLogs", map[string]interface{}{"blockHash": parsed.Hash})
+		err = c.CallContext(ctx, &parsed.CacheLogs, "eth_getLogs", map[string]any{"blockHash": parsed.Hash})
 		if err != nil {
 			return nil, fmt.Errorf("eth_getLogs err:%v", err)
 		}
 	}
 	// get uncle block
-	if parsed.UnclesCount = types.Uint64(len(parsed.UncleHashes)); parsed.UnclesCount > 0 {
-		parsed.CacheUncles = make([]*model.Uncle, parsed.UnclesCount)
-		reqs := make([]node.BatchElem, parsed.UnclesCount)
+	if uncleCount := len(parsed.Uncles); uncleCount > 0 {
+		parsed.CacheUncles = make([]*model.Uncle, uncleCount)
+		reqs := make([]node.BatchElem, uncleCount)
 		for i := range reqs {
 			reqs[i] = node.BatchElem{
 				Method: "eth_getUncleByBlockHashAndIndex",
-				Args:   []interface{}{parsed.Hash, types.Uint64(i)},
+				Args:   []any{parsed.Hash, types.Long(i)},
 				Result: &parsed.CacheUncles[i],
 			}
 		}
-		if err := c.BatchCallContext(ctx, reqs); err != nil {
-			return nil, fmt.Errorf("eth_getUncleByBlockHashAndIndex err:%v", err)
+		if err = c.BatchCallContext(ctx, reqs); err != nil {
+			return
 		}
 		for i := range reqs {
 			if reqs[i].Error != nil {
-				return nil, fmt.Errorf("eth_getUncleByBlockHashAndIndex err:%v", reqs[i].Error)
+				return nil, reqs[i].Error
 			}
 		}
 	}
@@ -84,18 +80,16 @@ func decode(c *node.Client, ctx context.Context, number types.Uint64) (*model.Pa
 		}
 	}
 	// Parse changed account properties and internal transactions
-	err = decodeAccounts(c, ctx, &parsed)
-	if err != nil {
-		return nil, fmt.Errorf("decodeAccounts err:%v", err)
-	}
-	err = decodeInternalTxs(c, ctx, &parsed)
-	if err != nil {
+	if err = decodeInternalTxs(c, ctx, parsed); err != nil {
 		return nil, fmt.Errorf("decodeInternalTxs err:%v", err)
 	}
+	if err = decodeAccounts(c, ctx, parsed); err != nil {
+		return nil, fmt.Errorf("decodeAccounts err:%v", err)
+	}
 	// Parse things specific to wormholes
-	err = decodeWH(c, &parsed)
+	err = decodeWH(c, parsed)
 
-	return &parsed, err
+	return
 }
 
 type ExecutionResult struct {
@@ -134,24 +128,24 @@ func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *model.Parsed
 		iTx := &model.InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(types.Address), Value: "0x0"}
 		for _, log := range execRet.StructLogs {
 			if len(*caller) == 0 {
-				*caller = *utils.HexToAddress(log.Stack[len(log.Stack)-1])
+				*caller = *utils.FormatAddress(log.Stack[len(log.Stack)-1])
 			}
 			switch log.Op {
 			case "CALL", "CALLCODE":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-2])
+				iTx.To = utils.FormatAddress(log.Stack[len(log.Stack)-2])
 				iTx.Value = utils.HexToBigInt(log.Stack[len(log.Stack)-3][2:])
 				callers = append(callers, iTx.To)
 			case "DELEGATECALL":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-2])
+				iTx.To = utils.FormatAddress(log.Stack[len(log.Stack)-2])
 				callers = append(callers, callers[log.Depth-1])
 			case "STATICCALL":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-2])
+				iTx.To = utils.FormatAddress(log.Stack[len(log.Stack)-2])
 				callers = append(callers, iTx.To)
 			case "CREATE", "CREATE2":
 				iTx.Value = utils.HexToBigInt(log.Stack[len(log.Stack)-1][2:])
 				callers = append(callers, iTx.To)
 			case "SELFDESTRUCT":
-				iTx.To = utils.HexToAddress(log.Stack[len(log.Stack)-1])
+				iTx.To = utils.FormatAddress(log.Stack[len(log.Stack)-1])
 				caller = callers[len(callers)-1]
 			case "RETURN", "STOP", "REVERT":
 				caller = callers[len(callers)-1]
@@ -160,15 +154,15 @@ func decodeInternalTxs(c *node.Client, ctx context.Context, parsed *model.Parsed
 			default:
 				continue
 			}
-			iTx.Depth = types.Uint64(log.Depth)
+			iTx.Depth = types.Long(log.Depth)
 			iTx.Op = log.Op
 			iTx.From = callers[log.Depth-1]
-			iTx.GasLimit = types.Uint64(log.Gas)
+			iTx.GasLimit = types.Long(log.Gas)
 			parsed.CacheInternalTxs = append(parsed.CacheInternalTxs, iTx)
 			iTx = &model.InternalTx{TxHash: tx.Hash, BlockNumber: parsed.Number, To: new(types.Address), Value: "0x0"}
 		}
 	}
-	return nil
+	return
 }
 
 // decodeAccount to get account related properties
@@ -187,18 +181,18 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			parsed.CacheAccounts[address] = &model.Account{Address: address}
 		}
 	}
-	if len(parsed.CacheAccounts) > 0 {
+	if number := parsed.Number.Hex(); len(parsed.CacheAccounts) > 0 {
 		reqs := make([]node.BatchElem, 0, 2*len(parsed.CacheAccounts))
-		for _, account := range parsed.CacheAccounts {
+		for address := range parsed.CacheAccounts {
 			reqs = append(reqs, node.BatchElem{
 				Method: "eth_getBalance",
-				Args:   []interface{}{account.Address, parsed.Number.Hex()},
-				Result: &account.Balance,
+				Args:   []any{address, number},
+				Result: &parsed.CacheAccounts[address].Balance,
 			})
 			reqs = append(reqs, node.BatchElem{
 				Method: "eth_getTransactionCount",
-				Args:   []interface{}{account.Address, parsed.Number.Hex()},
-				Result: &account.Nonce,
+				Args:   []any{address, number},
+				Result: &parsed.CacheAccounts[address].Nonce,
 			})
 		}
 		if err = c.BatchCallContext(ctx, reqs); err != nil {
@@ -209,29 +203,31 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 				return reqs[i].Error
 			}
 		}
-
-		var contracts []types.Address
+		contracts := make(map[types.Address]*model.Account)
 		for _, tx := range parsed.CacheTxs {
 			if tx.ContractAddress != nil && parsed.CacheAccounts[*tx.ContractAddress] != nil {
-				contracts = append(contracts, *tx.ContractAddress)
-				parsed.CacheAccounts[*tx.ContractAddress].Creator = &tx.From
-				parsed.CacheAccounts[*tx.ContractAddress].CreatedTx = &tx.Hash
+				contracts[*tx.ContractAddress] = parsed.CacheAccounts[*tx.ContractAddress]
+				contracts[*tx.ContractAddress].Creator = &tx.From
+				contracts[*tx.ContractAddress].CreatedTx = &tx.Hash
 			}
 		}
 		for _, tx := range parsed.CacheInternalTxs {
 			if (tx.Op == "CREATE" || tx.Op == "CREATE2") && parsed.CacheAccounts[*tx.To] != nil {
-				contracts = append(contracts, *tx.To)
-				parsed.CacheAccounts[*tx.To].Creator = tx.From
-				parsed.CacheAccounts[*tx.To].CreatedTx = &tx.TxHash
+				contracts[*tx.To] = parsed.CacheAccounts[*tx.To]
+				contracts[*tx.To].Creator = tx.From
+				contracts[*tx.To].CreatedTx = &tx.TxHash
 			}
 		}
 		if len(contracts) > 0 {
 			reqs := make([]node.BatchElem, 0, len(contracts))
 			for _, contract := range contracts {
+				if err = utils.SetProperty(c, ctx, number, contract); err != nil {
+					return
+				}
 				reqs = append(reqs, node.BatchElem{
 					Method: "eth_getCode",
-					Args:   []interface{}{contract, parsed.Number.Hex()},
-					Result: &parsed.CacheAccounts[contract].Code,
+					Args:   []any{contract.Address, number},
+					Result: &contract.Code,
 				})
 			}
 			if err = c.BatchCallContext(ctx, reqs); err != nil {
@@ -240,13 +236,6 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			for i := range reqs {
 				if reqs[i].Error != nil {
 					return reqs[i].Error
-				}
-			}
-			for _, contract := range contracts {
-				account := parsed.CacheAccounts[contract]
-				account.Name, account.Symbol, account.Type, err = utils.Property(c, contract)
-				if err != nil {
-					return
 				}
 			}
 		}
@@ -275,7 +264,7 @@ func decodeState(c *node.Client, ctx context.Context, parsed *model.Parsed) (err
 	return
 }
 
-func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (types.Uint64, error) {
+func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (types.Long, error) {
 	badBlocks, err := service.Insert(parsed)
 	if err != nil || badBlocks == nil {
 		return parsed.Number, err
@@ -302,7 +291,7 @@ func check(c *node.Client, ctx context.Context) (stats *model.Stats, err error) 
 	if err = c.CallContext(ctx, &struct{}{}, "eth_getAccountInfo", "0x0000000000000000000000000000000000000000", "0x0"); err != nil {
 		return
 	}
-	chainId, genesis, stats := types.Uint64(0), model.Header{}, service.GetStats()
+	chainId, genesis, stats := types.Long(0), model.Header{}, service.GetStats()
 	if err = c.CallContext(ctx, &chainId, "eth_chainId"); err != nil {
 		return
 	}

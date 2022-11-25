@@ -24,8 +24,8 @@ func Run(chainUrl string, thread int64, interval time.Duration) (err error) {
 
 func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread int64, interval time.Duration) {
 	parsedCh := make(chan *model.Parsed, thread)
-	cache := make(map[types.Uint64]*model.Parsed)
-	number, taskCount := types.Uint64(stats.TotalBlock), int64(0)
+	cache := make(map[types.Long]*model.Parsed)
+	number, taskCount := types.Long(stats.TotalBlock), int64(0)
 	log.Printf("using %v coroutines, starting data analysis from %v block\n", thread, number)
 	for {
 		max, err := client.BlockNumber(ctx)
@@ -39,7 +39,7 @@ func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread i
 		}
 		for number <= max || taskCount > 0 {
 			for ; number <= max && taskCount < thread; number++ {
-				go func(number types.Uint64) {
+				go func(number types.Long) {
 					for {
 						if parsed, err := decode(client, ctx, number); err != nil {
 							log.Printf("%v block parsing error: %v\n", number, err)
@@ -54,7 +54,7 @@ func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread i
 			}
 			parsed := <-parsedCh
 			taskCount, cache[parsed.Number] = taskCount-1, parsed
-			for newHead := types.Uint64(stats.TotalBlock); cache[newHead] != nil; {
+			for newHead := types.Long(stats.TotalBlock); cache[newHead] != nil; {
 				if head, err := write(client, ctx, cache[newHead]); err != nil {
 					log.Printf("%v block write error: %v\n", newHead, err)
 					time.Sleep(10 * interval)
@@ -65,7 +65,7 @@ func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread i
 					for ; taskCount > 0; taskCount-- {
 						<-parsedCh
 					}
-					number, cache = head+1, make(map[types.Uint64]*model.Parsed)
+					number, cache = head+1, make(map[types.Long]*model.Parsed)
 					log.Printf("the header %v fork falls back to %v\n", newHead-1, head)
 					break
 				}

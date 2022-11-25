@@ -42,31 +42,17 @@ func (c *Client) PendingNonceAt(ctx context.Context, account types.Address) (uin
 	return strconv.ParseUint(result[2:], 16, 64)
 }
 
-func (c *Client) ChainId() (result types.Uint64, err error) {
+func (c *Client) ChainId() (result types.Long, err error) {
 	err = c.Call(&result, "eth_chainId")
 	return
 }
 
-func (c *Client) BlockNumber(ctx context.Context) (result types.Uint64, err error) {
+func (c *Client) BlockNumber(ctx context.Context) (result types.Long, err error) {
 	err = c.CallContext(ctx, &result, "eth_blockNumber")
 	return
 }
 
-func (c *Client) CallContract(ctx context.Context, msg map[string]interface{}, blockNumber *types.BigInt) (types.Data, error) {
-	var hex types.Data
-	err := c.CallContext(ctx, &hex, "eth_call", msg, toBlockNumArg(blockNumber))
-	if err != nil {
-		return "", err
-	}
-	return hex, nil
-}
-
-func toBlockNumArg(number *types.BigInt) string {
-	if number == nil {
-		return "latest"
-	}
-	if *number == "-1" {
-		return "pending"
-	}
-	return number.Hex()
+func (c *Client) CallContract(ctx context.Context, to, data, number any) (result types.Bytes, err error) {
+	err = c.CallContext(ctx, &result, "eth_call", map[string]any{"to": to, "data": data}, number)
+	return
 }

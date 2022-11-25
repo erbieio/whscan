@@ -44,28 +44,6 @@ func ClearTable(db *gorm.DB) (err error) {
 	return
 }
 
-var Views = map[string]string{
-	"v_snfts": `
-CREATE OR REPLACE VIEW v_snfts
-AS
-SELECT snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio
-	, vote_weight, number, collections.id AS collection_id, collections.name AS collection_name
-FROM snfts
-	LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id
-	LEFT JOIN collections ON LEFT(address, 40) = collections.id
-	LEFT JOIN epoches ON LEFT(address, 39) = epoches.id;`,
-}
-
-func SetView(db *gorm.DB) error {
-	for _, view := range Views {
-		err := db.Exec(view).Error
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Stats caches some database queries to speed up queries
 type Stats struct {
 	Ready                bool   `json:"ready" gorm:"-"`                        //ready, sync latest block
@@ -113,21 +91,21 @@ type Stats struct {
 
 // Header block header information
 type Header struct {
-	Difficulty       types.Uint64  `json:"difficulty"`                                    //difficulty
+	Difficulty       types.Long    `json:"difficulty"`                                    //difficulty
 	ExtraData        string        `json:"extraData"`                                     //Extra data
-	GasLimit         types.Uint64  `json:"gasLimit"`                                      //Gas limit
-	GasUsed          types.Uint64  `json:"gasUsed"`                                       //Gas consumption
+	GasLimit         types.Long    `json:"gasLimit"`                                      //Gas limit
+	GasUsed          types.Long    `json:"gasUsed"`                                       //Gas consumption
 	Hash             types.Hash    `json:"hash" gorm:"type:CHAR(66);primaryKey"`          //Hash
 	Miner            types.Address `json:"miner" gorm:"type:CHAR(42);index"`              //miner
 	MixHash          types.Hash    `json:"mixHash" gorm:"type:CHAR(66)"`                  //Mixed hash
-	Nonce            types.Data8   `json:"nonce" gorm:"type:CHAR(18)"`                    //difficulty random number
-	Number           types.Uint64  `json:"number" gorm:"index"`                           //block number
+	Nonce            types.Bytes8  `json:"nonce" gorm:"type:CHAR(18)"`                    //difficulty random number
+	Number           types.Long    `json:"number" gorm:"index"`                           //block number
 	ParentHash       types.Hash    `json:"parentHash" gorm:"type:CHAR(66)"`               //parent block hash
 	ReceiptsRoot     types.Hash    `json:"receiptsRoot" gorm:"type:CHAR(66)"`             //Transaction receipt root hash
 	Sha3Uncles       types.Hash    `json:"sha3Uncles" gorm:"type:CHAR(66)"`               //Uncle root hash
-	Size             types.Uint64  `json:"size"`                                          //size
+	Size             types.Long    `json:"size"`                                          //size
 	StateRoot        types.Hash    `json:"stateRoot" gorm:"type:CHAR(66)"`                //World tree root hash
-	Timestamp        types.Uint64  `json:"timestamp" gorm:"index"`                        //timestamp
+	Timestamp        types.Long    `json:"timestamp" gorm:"index"`                        //timestamp
 	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:VARCHAR(66);index"` //total difficulty
 	TransactionsRoot types.Hash    `json:"transactionsRoot" gorm:"type:CHAR(66)"`         //transaction root hash
 }
@@ -138,16 +116,15 @@ type Uncle Header
 // Block information
 type Block struct {
 	Header
-	UncleHashes      types.StrArray `json:"uncles" gorm:"type:TEXT"` //Uncle block hash
-	UnclesCount      types.Uint64   `json:"unclesCount"`             //Number of uncle blocks
-	TotalTransaction types.Uint64   `json:"totalTransaction"`        //number of transactions
+	Uncles           []types.Hash `json:"uncles" gorm:"type:VARCHAR(139);serializer:json"` //Uncle block hash
+	TotalTransaction types.Long   `json:"totalTransaction"`                                //number of transactions
 }
 
 // Account information
 type Account struct {
 	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
 	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //The total amount of coins in the chain
-	Nonce     types.Uint64        `json:"nonce"`                                   //transaction random number, transaction volume
+	Nonce     types.Long          `json:"nonce"`                                   //transaction random number, transaction volume
 	Code      *string             `json:"code"`                                    //bytecode
 	Name      *string             `json:"name" gorm:"type:VARCHAR(66)"`            //name
 	Symbol    *string             `json:"symbol" gorm:"type:VARCHAR(66)"`          //symbol
@@ -159,43 +136,43 @@ type Account struct {
 // Transaction information
 type Transaction struct {
 	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`       //Block Hash
-	BlockNumber       types.Uint64   `json:"blockNumber" gorm:"index"`             //block number
+	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`             //block number
 	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`      //Send address
 	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`        //Receive address
 	Input             string         `json:"input"`                                //Additional input data, contract call encoded data
 	Value             types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`       //Amount, unit wei
-	Nonce             types.Uint64   `json:"nonce"`                                //Random number, the number of transactions initiated by the account
-	Gas               types.Uint64   `json:"gas"`                                  // fuel
-	GasPrice          types.Uint64   `json:"gasPrice"`                             //Gas price
+	Nonce             types.Long     `json:"nonce"`                                //Random number, the number of transactions initiated by the account
+	Gas               types.Long     `json:"gas"`                                  // fuel
+	GasPrice          types.Long     `json:"gasPrice"`                             //Gas price
 	Hash              types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"` //Hash
-	Status            *types.Uint64  `json:"status,omitempty"`                     //Status, 1: success; 0: failure
-	CumulativeGasUsed types.Uint64   `json:"cumulativeGasUsed"`                    //Cumulative gas consumption
+	Status            *types.Long    `json:"status,omitempty"`                     //Status, 1: success; 0: failure
+	CumulativeGasUsed types.Long     `json:"cumulativeGasUsed"`                    //Cumulative gas consumption
 	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"` //The created contract address
-	GasUsed           types.Uint64   `json:"gasUsed"`                              //Gas consumption
-	TxIndex           types.Uint64   `json:"transactionIndex" gorm:"index"`        //The serial number in the block
+	GasUsed           types.Long     `json:"gasUsed"`                              //Gas consumption
+	TxIndex           types.Long     `json:"transactionIndex" gorm:"index"`        //The serial number in the block
 }
 
 // EventLog transaction log
 type EventLog struct {
-	Address     types.Address  `json:"address" gorm:"type:CHAR(42)"`                          //The contract address
-	Topics      types.StrArray `json:"topics" gorm:"type:VARCHAR(277)"`                       //topic
-	Data        string         `json:"data"`                                                  //data
-	Removed     bool           `json:"removed"`                                               //whether to remove
-	BlockNumber types.Uint64   `json:"blockNumber"`                                           //block number
-	TxHash      types.Hash     `json:"transactionHash" gorm:"type:CHAR(66);primaryKey;index"` //The transaction hash
-	Index       types.Uint64   `json:"logIndex" gorm:"primaryKey"`                            //The serial number in the transaction
+	Address     types.Address `json:"address" gorm:"type:CHAR(42)"`                          //The contract address
+	Topics      []types.Hash  `json:"topics" gorm:"type:VARCHAR(277);serializer:json"`       //topic
+	Data        string        `json:"data"`                                                  //data
+	Removed     bool          `json:"removed"`                                               //whether to remove
+	BlockNumber types.Long    `json:"blockNumber"`                                           //block number
+	TxHash      types.Hash    `json:"transactionHash" gorm:"type:CHAR(66);primaryKey;index"` //The transaction hash
+	Index       types.Long    `json:"logIndex" gorm:"primaryKey"`                            //The serial number in the transaction
 }
 
 // InternalTx internal transaction
 type InternalTx struct {
 	TxHash      types.Hash     `json:"txHash" gorm:"type:CHAR(66);index"` //The transaction
-	BlockNumber types.Uint64   `json:"blockNumber" gorm:"index"`          //block number
-	Depth       types.Uint64   `json:"depth"`                             //call depth
+	BlockNumber types.Long     `json:"blockNumber" gorm:"index"`          //block number
+	Depth       types.Long     `json:"depth"`                             //call depth
 	Op          string         `json:"op" gorm:"type:VARCHAR(16)"`        //Operation
 	From        *types.Address `json:"from" gorm:"type:CHAR(42);index"`   //Originating address
 	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`     //Receive address
 	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`    //Amount, unit wei
-	GasLimit    types.Uint64   `json:"gasLimit"`                          //Gas limit
+	GasLimit    types.Long     `json:"gasLimit"`                          //Gas limit
 }
 
 // ERC20Transfer ERC20 contract transfer event

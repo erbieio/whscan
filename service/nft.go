@@ -87,58 +87,7 @@ func FetchSNFTs(owner string, status, page, size int) (res SNFTsRes, err error) 
 	return
 }
 
-// SNFTsAndMetaRes SNFT and meta information paging return parameters
-type SNFTsAndMetaRes struct {
-	Total int64 `json:"total"` //The total number of SNFTs
-	NFTs  []*struct {
-		model.SNFT
-		model.FNFT
-		Creator        string `json:"creator"`        //creator address, also the address of royalty income
-		Exchanger      string `json:"exchanger"`      //exchanger address
-		CollectionName string `json:"collectionName"` //collection name
-	} `json:"nfts"` //SNFT list
-}
-
-func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
-	db := DB.Table("v_snfts").Where("`remove`=false")
-	if owner != "" {
-		db = db.Where("owner=?", owner)
-	}
-	if collectionId != "" {
-		db = db.Where("collection_id=?", collectionId)
-	}
-	if exchanger != "" {
-		db = db.Where("exchanger=?", exchanger)
-	}
-	if owner == "" && collectionId == "" && exchanger == "" {
-		res.Total = stats.TotalSNFT
-	} else {
-		err = db.Count(&res.Total).Error
-	}
-	if err != nil {
-		return
-	}
-	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
-	return
-}
-
-type NFT struct {
-	model.NFT
-	CollectionName string `json:"collectionName"`
-}
-
-func GetNFT(addr string) (res NFT, err error) {
-	err = DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON collection_id=collections.id").
-		Where("address=?", addr).Select("nfts.*,collections.name AS collection_name").Scan(&res).Error
-	return
-}
-
-func GetRecycleTx(hash, addr string) (res *model.NFTTx, err error) {
-	err = DB.Model(&model.NFTTx{}).Where("tx_type=6 AND (tx_hash=? OR nft_addr=?)", hash, addr).Limit(1).Scan(&res).Error
-	return
-}
-
-type SNFT struct {
+type SNFTRes struct {
 	model.SNFT
 	model.FNFT
 	Creator        string `json:"creator"`        //creator address, also the address of royalty income
@@ -147,8 +96,60 @@ type SNFT struct {
 	CollectionName string `json:"collectionName"` //collection name
 }
 
-func GetSNFT(addr string) (res SNFT, err error) {
-	err = DB.Table("v_snfts").Where("address=?", addr).First(&res).Error
+func GetSNFT(addr string) (res SNFTRes, err error) {
+	db := DB.Model(&model.SNFT{}).
+		Joins("LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id").
+		Joins("LEFT JOIN collections ON LEFT(address, 40) = collections.id").
+		Joins("LEFT JOIN epoches ON LEFT(address, 39) = epoches.id")
+	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio,collections.name AS collection_name").Where("address=?", addr).Scan(&res).Error
+	return
+}
+
+// SNFTsAndMetaRes SNFT and meta information paging return parameters
+type SNFTsAndMetaRes struct {
+	Total int64      `json:"total"` //The total number of SNFTs
+	NFTs  []*SNFTRes `json:"nfts"`  //SNFT list
+}
+
+func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
+	db := DB.Model(&model.SNFT{}).
+		Joins("LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id").
+		Joins("LEFT JOIN collections ON LEFT(address, 40) = collections.id").
+		Joins("LEFT JOIN epoches ON LEFT(address, 39) = epoches.id").
+		Where("`remove`=false")
+	if owner != "" {
+		db = db.Where("owner=?", owner)
+	}
+	if collectionId != "" {
+		db = db.Where("collection.id=?", collectionId)
+	}
+	if exchanger != "" {
+		db = db.Where("exchanger=?", exchanger)
+	}
+	if owner == "" && collectionId == "" && exchanger == "" {
+		res.Total = stats.TotalSNFT
+	} else {
+		if err = db.Count(&res.Total).Error; err != nil {
+			return
+		}
+	}
+	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio,collections.name AS collection_name").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	return
+}
+
+type NFTRes struct {
+	model.NFT
+	CollectionName string `json:"collectionName"`
+}
+
+func GetNFT(addr string) (res NFTRes, err error) {
+	err = DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON collection_id=collections.id").
+		Where("address=?", addr).Select("nfts.*,collections.name AS collection_name").Scan(&res).Error
+	return
+}
+
+func GetRecycleTx(hash, addr string) (res *model.NFTTx, err error) {
+	err = DB.Model(&model.NFTTx{}).Where("tx_type=6 AND (tx_hash=? OR nft_addr=?)", hash, addr).Limit(1).Scan(&res).Error
 	return
 }
 

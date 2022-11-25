@@ -20,10 +20,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = model.SetView(DB)
-	if err != nil {
-		panic(err)
-	}
 	err = initStats(DB)
 	if err != nil {
 		panic(err)

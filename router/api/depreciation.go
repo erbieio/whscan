@@ -32,17 +32,6 @@ func _getExchanger(c *gin.Context) {
 	getExchanger(c)
 }
 
-// requestErbTestReq request
-type requestErbTestReq struct {
-	Address string `form:"address" json:"address"` //Address
-}
-
-// requestErbTestRes returns
-type requestErbTestRes struct {
-	Code int64  `json:"code"` //0 success 1 wrong address other failure
-	Msg  string `json:"msg"`
-}
-
 // @Tags        obsolete interface
 // @Summary     query block list (new /block/page)
 // @Description query block list

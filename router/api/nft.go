@@ -221,7 +221,7 @@ func getRecycleTx(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       addr path     string true "Address"
-// @Success     200  {object} service.NFT
+// @Success     200  {object} service.NFTRes
 // @Failure     400  {object} service.ErrRes
 // @Router      /nft/{addr} [get]
 func getNFT(c *gin.Context) {
@@ -239,7 +239,7 @@ func getNFT(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       addr path     string true "Address"
-// @Success     200  {object} service.SNFT
+// @Success     200  {object} service.SNFTRes
 // @Failure     400  {object} service.ErrRes
 // @Router      /snft/{addr} [get]
 func getSNFT(c *gin.Context) {

@@ -1190,7 +1190,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.NFT"
+                            "$ref": "#/definitions/service.NFTRes"
                         }
                     },
                     "400": {
@@ -1731,7 +1731,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.SNFT"
+                            "$ref": "#/definitions/service.SNFTRes"
                         }
                     },
                     "400": {
@@ -2496,12 +2496,9 @@ const docTemplate = `{
                     "description": "Uncle block hash",
                     "type": "array",
                     "items": {
+                        "description": "create transaction",
                         "type": "string"
                     }
-                },
-                "unclesCount": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
                 }
             }
         },
@@ -2607,9 +2604,10 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "topics": {
-                    "description": "Uncle block hash",
+                    "description": "topic",
                     "type": "array",
                     "items": {
+                        "description": "create transaction",
                         "type": "string"
                     }
                 },
@@ -3500,7 +3498,20 @@ const docTemplate = `{
                 }
             }
         },
-        "service.NFT": {
+        "service.NFTChartRes": {
+            "type": "object",
+            "properties": {
+                "hour": {
+                    "description": "hour",
+                    "type": "integer"
+                },
+                "num": {
+                    "description": "number of nft",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.NFTRes": {
             "type": "object",
             "properties": {
                 "address": {
@@ -3577,19 +3588,6 @@ const docTemplate = `{
                 "tx_hash": {
                     "description": "The transaction hash created",
                     "type": "string"
-                }
-            }
-        },
-        "service.NFTChartRes": {
-            "type": "object",
-            "properties": {
-                "hour": {
-                    "description": "hour",
-                    "type": "integer"
-                },
-                "num": {
-                    "description": "number of nft",
-                    "type": "integer"
                 }
             }
         },
@@ -3864,91 +3862,6 @@ const docTemplate = `{
                 }
             }
         },
-        "service.SNFT": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "SNFT address",
-                    "type": "string"
-                },
-                "attributes": {
-                    "description": "Attributes",
-                    "type": "string"
-                },
-                "category": {
-                    "description": "category",
-                    "type": "string"
-                },
-                "collectionName": {
-                    "description": "collection name",
-                    "type": "string"
-                },
-                "creator": {
-                    "description": "creator address, also the address of royalty income",
-                    "type": "string"
-                },
-                "desc": {
-                    "description": "description",
-                    "type": "string"
-                },
-                "exchanger": {
-                    "description": "exchanger address",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "FNFT ID",
-                    "type": "string"
-                },
-                "last_price": {
-                    "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
-                    "type": "string"
-                },
-                "meta_url": {
-                    "description": "FNFT meta information URL",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "name",
-                    "type": "string"
-                },
-                "owner": {
-                    "description": "owner, unallocated and reclaimed are null",
-                    "type": "string"
-                },
-                "pieces": {
-                    "description": "snft pieces number",
-                    "type": "integer"
-                },
-                "pledge_number": {
-                    "description": "The height of the last pledged block, null if not pledge",
-                    "type": "integer"
-                },
-                "remove": {
-                    "description": "SNFTs that are synthesized and then removed",
-                    "type": "boolean"
-                },
-                "reward_at": {
-                    "description": "The timestamp of the last rewarded, null if not rewarded",
-                    "type": "integer"
-                },
-                "reward_number": {
-                    "description": "The height of the last rewarded block",
-                    "type": "integer"
-                },
-                "royaltyRatio": {
-                    "description": "the royalty rate of the same period of SNFT, the unit is one ten thousandth",
-                    "type": "integer"
-                },
-                "source_url": {
-                    "description": "Resource links, file links such as pictures or videos",
-                    "type": "string"
-                },
-                "tx_amount": {
-                    "description": "the total transaction volume of this SNFT",
-                    "type": "string"
-                }
-            }
-        },
         "service.SNFTGroupsRes": {
             "type": "object",
             "properties": {
@@ -4048,6 +3961,91 @@ const docTemplate = `{
                 }
             }
         },
+        "service.SNFTRes": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "SNFT address",
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "Attributes",
+                    "type": "string"
+                },
+                "category": {
+                    "description": "category",
+                    "type": "string"
+                },
+                "collectionName": {
+                    "description": "collection name",
+                    "type": "string"
+                },
+                "creator": {
+                    "description": "creator address, also the address of royalty income",
+                    "type": "string"
+                },
+                "desc": {
+                    "description": "description",
+                    "type": "string"
+                },
+                "exchanger": {
+                    "description": "exchanger address",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "FNFT ID",
+                    "type": "string"
+                },
+                "last_price": {
+                    "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
+                    "type": "string"
+                },
+                "meta_url": {
+                    "description": "FNFT meta information URL",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "name",
+                    "type": "string"
+                },
+                "owner": {
+                    "description": "owner, unallocated and reclaimed are null",
+                    "type": "string"
+                },
+                "pieces": {
+                    "description": "snft pieces number",
+                    "type": "integer"
+                },
+                "pledge_number": {
+                    "description": "The height of the last pledged block, null if not pledge",
+                    "type": "integer"
+                },
+                "remove": {
+                    "description": "SNFTs that are synthesized and then removed",
+                    "type": "boolean"
+                },
+                "reward_at": {
+                    "description": "The timestamp of the last rewarded, null if not rewarded",
+                    "type": "integer"
+                },
+                "reward_number": {
+                    "description": "The height of the last rewarded block",
+                    "type": "integer"
+                },
+                "royaltyRatio": {
+                    "description": "the royalty rate of the same period of SNFT, the unit is one ten thousandth",
+                    "type": "integer"
+                },
+                "source_url": {
+                    "description": "Resource links, file links such as pictures or videos",
+                    "type": "string"
+                },
+                "tx_amount": {
+                    "description": "the total transaction volume of this SNFT",
+                    "type": "string"
+                }
+            }
+        },
         "service.SNFTsAndMetaRes": {
             "type": "object",
             "properties": {
@@ -4055,85 +4053,7 @@ const docTemplate = `{
                     "description": "SNFT list",
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "address": {
-                                "description": "SNFT address",
-                                "type": "string"
-                            },
-                            "attributes": {
-                                "description": "Attributes",
-                                "type": "string"
-                            },
-                            "category": {
-                                "description": "category",
-                                "type": "string"
-                            },
-                            "collectionName": {
-                                "description": "collection name",
-                                "type": "string"
-                            },
-                            "creator": {
-                                "description": "creator address, also the address of royalty income",
-                                "type": "string"
-                            },
-                            "desc": {
-                                "description": "description",
-                                "type": "string"
-                            },
-                            "exchanger": {
-                                "description": "exchanger address",
-                                "type": "string"
-                            },
-                            "id": {
-                                "description": "FNFT ID",
-                                "type": "string"
-                            },
-                            "last_price": {
-                                "description": "The last transaction price, the unit is wei, null if the transaction has not been completed",
-                                "type": "string"
-                            },
-                            "meta_url": {
-                                "description": "FNFT meta information URL",
-                                "type": "string"
-                            },
-                            "name": {
-                                "description": "name",
-                                "type": "string"
-                            },
-                            "owner": {
-                                "description": "owner, unallocated and reclaimed are null",
-                                "type": "string"
-                            },
-                            "pieces": {
-                                "description": "snft pieces number",
-                                "type": "integer"
-                            },
-                            "pledge_number": {
-                                "description": "The height of the last pledged block, null if not pledge",
-                                "type": "integer"
-                            },
-                            "remove": {
-                                "description": "SNFTs that are synthesized and then removed",
-                                "type": "boolean"
-                            },
-                            "reward_at": {
-                                "description": "The timestamp of the last rewarded, null if not rewarded",
-                                "type": "integer"
-                            },
-                            "reward_number": {
-                                "description": "The height of the last rewarded block",
-                                "type": "integer"
-                            },
-                            "source_url": {
-                                "description": "Resource links, file links such as pictures or videos",
-                                "type": "string"
-                            },
-                            "tx_amount": {
-                                "description": "the total transaction volume of this SNFT",
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/service.SNFTRes"
                     }
                 },
                 "total": {

@@ -212,7 +212,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalBlock++
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
-	stats.TotalUncle += int64(parsed.UnclesCount)
+	stats.TotalUncle += int64(len(parsed.Uncles))
 	stats.TotalNFT += int64(len(parsed.NFTs))
 	stats.TotalSNFT += rewardSNFT - recycleSNFT
 	stats.RewardSNFTCount += rewardSNFT

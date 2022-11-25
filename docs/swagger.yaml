@@ -184,11 +184,9 @@ definitions:
       uncles:
         description: Uncle block hash
         items:
+          description: create transaction
           type: string
         type: array
-      unclesCount:
-        description: transaction random number, transaction volume
-        type: integer
     type: object
   model.Collection:
     properties:
@@ -266,8 +264,9 @@ definitions:
         description: whether to remove
         type: boolean
       topics:
-        description: Uncle block hash
+        description: topic
         items:
+          description: create transaction
           type: string
         type: array
       transactionHash:
@@ -914,7 +913,16 @@ definitions:
       to:
         type: string
     type: object
-  service.NFT:
+  service.NFTChartRes:
+    properties:
+      hour:
+        description: hour
+        type: integer
+      num:
+        description: number of nft
+        type: integer
+    type: object
+  service.NFTRes:
     properties:
       address:
         description: NFT address, grows automatically from 0x1
@@ -975,15 +983,6 @@ definitions:
       tx_hash:
         description: The transaction hash created
         type: string
-    type: object
-  service.NFTChartRes:
-    properties:
-      hour:
-        description: hour
-        type: integer
-      num:
-        description: number of nft
-        type: integer
     type: object
   service.NFTTxsRes:
     properties:
@@ -1185,71 +1184,6 @@ definitions:
         description: The total number of rewards
         type: integer
     type: object
-  service.SNFT:
-    properties:
-      address:
-        description: SNFT address
-        type: string
-      attributes:
-        description: Attributes
-        type: string
-      category:
-        description: category
-        type: string
-      collectionName:
-        description: collection name
-        type: string
-      creator:
-        description: creator address, also the address of royalty income
-        type: string
-      desc:
-        description: description
-        type: string
-      exchanger:
-        description: exchanger address
-        type: string
-      id:
-        description: FNFT ID
-        type: string
-      last_price:
-        description: The last transaction price, the unit is wei, null if the transaction
-          has not been completed
-        type: string
-      meta_url:
-        description: FNFT meta information URL
-        type: string
-      name:
-        description: name
-        type: string
-      owner:
-        description: owner, unallocated and reclaimed are null
-        type: string
-      pieces:
-        description: snft pieces number
-        type: integer
-      pledge_number:
-        description: The height of the last pledged block, null if not pledge
-        type: integer
-      remove:
-        description: SNFTs that are synthesized and then removed
-        type: boolean
-      reward_at:
-        description: The timestamp of the last rewarded, null if not rewarded
-        type: integer
-      reward_number:
-        description: The height of the last rewarded block
-        type: integer
-      royaltyRatio:
-        description: the royalty rate of the same period of SNFT, the unit is one
-          ten thousandth
-        type: integer
-      source_url:
-        description: Resource links, file links such as pictures or videos
-        type: string
-      tx_amount:
-        description: the total transaction volume of this SNFT
-        type: string
-    type: object
   service.SNFTGroupsRes:
     properties:
       collections:
@@ -1322,71 +1256,77 @@ definitions:
         description: The total number of SNFT collections
         type: integer
     type: object
+  service.SNFTRes:
+    properties:
+      address:
+        description: SNFT address
+        type: string
+      attributes:
+        description: Attributes
+        type: string
+      category:
+        description: category
+        type: string
+      collectionName:
+        description: collection name
+        type: string
+      creator:
+        description: creator address, also the address of royalty income
+        type: string
+      desc:
+        description: description
+        type: string
+      exchanger:
+        description: exchanger address
+        type: string
+      id:
+        description: FNFT ID
+        type: string
+      last_price:
+        description: The last transaction price, the unit is wei, null if the transaction
+          has not been completed
+        type: string
+      meta_url:
+        description: FNFT meta information URL
+        type: string
+      name:
+        description: name
+        type: string
+      owner:
+        description: owner, unallocated and reclaimed are null
+        type: string
+      pieces:
+        description: snft pieces number
+        type: integer
+      pledge_number:
+        description: The height of the last pledged block, null if not pledge
+        type: integer
+      remove:
+        description: SNFTs that are synthesized and then removed
+        type: boolean
+      reward_at:
+        description: The timestamp of the last rewarded, null if not rewarded
+        type: integer
+      reward_number:
+        description: The height of the last rewarded block
+        type: integer
+      royaltyRatio:
+        description: the royalty rate of the same period of SNFT, the unit is one
+          ten thousandth
+        type: integer
+      source_url:
+        description: Resource links, file links such as pictures or videos
+        type: string
+      tx_amount:
+        description: the total transaction volume of this SNFT
+        type: string
+    type: object
   service.SNFTsAndMetaRes:
     properties:
       nfts:
         description: SNFT list
         items:
-          properties:
-            address:
-              description: SNFT address
-              type: string
-            attributes:
-              description: Attributes
-              type: string
-            category:
-              description: category
-              type: string
-            collectionName:
-              description: collection name
-              type: string
-            creator:
-              description: creator address, also the address of royalty income
-              type: string
-            desc:
-              description: description
-              type: string
-            exchanger:
-              description: exchanger address
-              type: string
-            id:
-              description: FNFT ID
-              type: string
-            last_price:
-              description: The last transaction price, the unit is wei, null if the
-                transaction has not been completed
-              type: string
-            meta_url:
-              description: FNFT meta information URL
-              type: string
-            name:
-              description: name
-              type: string
-            owner:
-              description: owner, unallocated and reclaimed are null
-              type: string
-            pieces:
-              description: snft pieces number
-              type: integer
-            pledge_number:
-              description: The height of the last pledged block, null if not pledge
-              type: integer
-            remove:
-              description: SNFTs that are synthesized and then removed
-              type: boolean
-            reward_at:
-              description: The timestamp of the last rewarded, null if not rewarded
-              type: integer
-            reward_number:
-              description: The height of the last rewarded block
-              type: integer
-            source_url:
-              description: Resource links, file links such as pictures or videos
-              type: string
-            tx_amount:
-              description: the total transaction volume of this SNFT
-              type: string
-          type: object
+          $ref: '#/definitions/service.SNFTRes'
         type: array
       total:
         description: The total number of SNFTs
@@ -2209,7 +2149,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.NFT'
+            $ref: '#/definitions/service.NFTRes'
         "400":
           description: Bad Request
           schema:
@@ -2495,7 +2435,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.SNFT'
+            $ref: '#/definitions/service.SNFTRes'
         "400":
           description: Bad Request
           schema:
