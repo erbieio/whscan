@@ -19,11 +19,11 @@ type ExchangersRes struct {
 
 func FetchExchangers(name string, page, size int) (res ExchangersRes, err error) {
 	if name != "" {
-		err = DB.Where("name=?", name).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Exchangers).Error
+		err = DB.Where("amount!='0' AND name=?", name).Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Exchangers).Error
 		if err != nil {
 			return
 		}
-		err = DB.Where("name=?", name).Model(&model.Exchanger{}).Count(&res.Total).Error
+		err = DB.Where("amount!='0' AND name=?", name).Model(&model.Exchanger{}).Count(&res.Total).Error
 	} else {
 		err = DB.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Exchangers).Error
 		res.Total = stats.TotalExchanger
@@ -101,7 +101,7 @@ func FindExchanger(addr types.Address) (res ExchangerRes, err error) {
 func Exchangers(page, size int, order string) (res []ExchangerRes, err error) {
 	s := "*, (SELECT COUNT(*) FROM collections WHERE exchanger=exchangers.address) AS collection_count"
 	s += ", (SELECT COUNT(*) FROM nft_txes WHERE exchanger_addr=exchangers.address) AS tx_count"
-	db := DB.Model(model.Exchanger{}).Select(s).Offset((page - 1) * size).Limit(size)
+	db := DB.Model(model.Exchanger{}).Where("amount!='0'").Select(s).Offset((page - 1) * size).Limit(size)
 	if order != "" {
 		db = db.Order(order)
 	}

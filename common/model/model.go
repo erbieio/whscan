@@ -28,7 +28,6 @@ var Tables = []interface{}{
 	&NFTTx{},
 	&Reward{},
 	&Validator{},
-	&User{},
 	&Location{},
 	&Subscription{},
 }
@@ -52,7 +51,7 @@ type Stats struct {
 	TotalAmount          string `json:"totalAmount" gorm:"type:CHAR(128)"`     //total transaction volume
 	TotalNFTAmount       string `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
 	TotalSNFTAmount      string `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
-	TotalRecycle         uint64 `json:"totalRecycle"`                          //Total number of recycle SNFT
+	TotalRecycle         int64  `json:"totalRecycle"`                          //Total number of recycle SNFT
 	FirstBlockTime       int64  `json:"firstBlockTime" gorm:"-"`               //first block unix time
 	AvgBlockTime         int64  `json:"avgBlockTime" gorm:"-"`                 //average block time, ms
 	TotalBlock           int64  `json:"totalBlock" gorm:"-"`                   //Total number of blocks
@@ -62,7 +61,7 @@ type Stats struct {
 	TotalTransferTx      int64  `json:"totalTransferTx" gorm:"-"`              //Total number of  transfer transactions
 	TotalWormholesTx     int64  `json:"totalWormholesTx" gorm:"-"`             //Total number of  wormholes transactions
 	TotalUncle           int64  `json:"totalUncle" gorm:"-"`                   //Number of total uncle blocks
-	TotalAccount         int64  `json:"totalAccount" gorm:"-"`                 //Total account number
+	TotalAccount         int64  `json:"totalAccount" gorm:"-"`                 //Total account number of used
 	TotalBalance         string `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
 	TotalExchanger       int64  `json:"totalExchanger" gorm:"-"`               //Total number of exchanges
 	TotalNFTCollection   int64  `json:"totalNFTCollection" gorm:"-"`           //Total number of NFT collections
@@ -80,7 +79,6 @@ type Stats struct {
 	RewardSNFTCount      int64  `json:"rewardSNFTCount" gorm:"-"`              //Total number of times to get SNFT rewards
 	TotalValidatorPledge string `json:"totalValidatorPledge" gorm:"-"`         //Total amount of validator pledge
 	TotalExchangerPledge string `json:"totalExchangerPledge" gorm:"-"`         //Total amount of exchanger pledge
-	TotalSNFTPledge      string `json:"totalSNFTPledge" gorm:"-"`              //Total amount of snft pledge
 	Total24HExchangerTx  int64  `json:"total24HExchangerTx" gorm:"-"`          //Total number of exchanger  transactions within 24 hours
 	Total24HNFT          int64  `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64  `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
@@ -207,15 +205,15 @@ type ERC1155Transfer struct {
 // NFT User NFT attribute information
 type NFT struct {
 	Address       *string `json:"address" gorm:"type:CHAR(42);primary_key"`  //NFT address, grows automatically from 0x1
-	RoyaltyRatio  uint32  `json:"royalty_ratio"`                             //Royalty rate, in ten thousandths
+	RoyaltyRatio  int64   `json:"royalty_ratio"`                             //Royalty rate, in ten thousandths
 	MetaUrl       string  `json:"meta_url"`                                  //Real meta information URL
 	RawMetaUrl    string  `json:"raw_meta_url"`                              //Original meta information URL on the chain
 	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(42);index"` //The address of the exchange, if there is none, it can be traded on any exchange
 	LastPrice     *string `json:"last_price"`                                //The last transaction price (null if the transaction is not completed), the unit is wei
 	TxAmount      string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"`  //the total transaction volume of this NFT
 	Creator       string  `json:"creator" gorm:"type:CHAR(42)"`              //Creator address
-	Timestamp     uint64  `json:"timestamp"`                                 //Create timestamp
-	BlockNumber   uint64  `json:"block_number"`                              //The height of the created block
+	Timestamp     int64   `json:"timestamp" gorm:"index"`                    //Create timestamp
+	BlockNumber   int64   `json:"block_number"`                              //The height of the created block
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66)"`              //The transaction hash created
 	Owner         string  `json:"owner" gorm:"type:CHAR(42);index"`          //owner
 	Name          string  `json:"name"`                                      //name
@@ -231,12 +229,12 @@ type NFT struct {
 type Epoch struct {
 	ID           string `json:"id" gorm:"type:CHAR(39);primary_key"` //period ID
 	Creator      string `json:"creator" gorm:"type:CHAR(42)"`        //Creator address, also the address of royalty income
-	RoyaltyRatio uint32 `json:"royaltyRatio"`                        //The royalty rate of the same period of SNFT, the unit is one ten thousandth
+	RoyaltyRatio int64  `json:"royaltyRatio"`                        //The royalty rate of the same period of SNFT, the unit is one ten thousandth
 	Dir          string `json:"dir"`                                 //meta information directory URL
 	Exchanger    string `json:"exchanger" gorm:"type:CHAR(42)"`      //Exchange address
 	VoteWeight   string `json:"voteWeight"`                          //Weight
-	Number       uint64 `json:"number"`                              //Starting block height
-	Timestamp    uint64 `json:"timestamp"`                           //Starting timestamp
+	Number       int64  `json:"number"`                              //Starting block height
+	Timestamp    int64  `json:"timestamp"`                           //Starting timestamp
 }
 
 // FNFT full SNFT
@@ -255,9 +253,8 @@ type SNFT struct {
 	Address      string  `json:"address" gorm:"type:VARCHAR(42);primaryKey"` //SNFT address
 	LastPrice    *string `json:"last_price" gorm:"type:VARCHAR(66)"`         //The last transaction price, the unit is wei, null if the transaction has not been completed
 	TxAmount     string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"`   //the total transaction volume of this SNFT
-	RewardAt     uint64  `json:"reward_at"`                                  //The timestamp of the last rewarded, null if not rewarded
-	RewardNumber uint64  `json:"reward_number"`                              //The height of the last rewarded block
-	PledgeNumber *uint64 `json:"pledge_number,omitempty"`                    //The height of the last pledged block, null if not pledge
+	RewardAt     int64   `json:"reward_at"`                                  //The timestamp of the last rewarded, null if not rewarded
+	RewardNumber int64   `json:"reward_number"`                              //The height of the last rewarded block
 	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`           //owner, unallocated and reclaimed are null
 	Pieces       int64   `json:"pieces"`                                     //snft pieces number
 	Remove       bool    `json:"remove" gorm:"index"`                        //SNFTs that are synthesized and then removed
@@ -267,15 +264,15 @@ type SNFT struct {
 type NFTTx struct {
 	//Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction
 	TxType        uint8   `json:"tx_type"`
-	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`        //The NFT address of the transaction
-	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42)"` //Exchange address
-	From          string  `json:"from" gorm:"type:CHAR(42);index"`               //Seller
-	To            string  `json:"to,omitempty" gorm:"type:CHAR(42);index"`       //buyer
-	Price         string  `json:"price"`                                         //price, the unit is wei
-	Timestamp     uint64  `json:"timestamp"`                                     //transaction timestamp
-	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`      //transaction hash
-	BlockNumber   uint64  `json:"block_number"`                                  //block number
-	Fee           *string `json:"fee,omitempty"`                                 //Transaction fee, in wei (only if there is an exchange and price)
+	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`              //The NFT address of the transaction
+	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42);index"` //Exchange address
+	From          string  `json:"from" gorm:"type:CHAR(42);index"`                     //Seller
+	To            string  `json:"to,omitempty" gorm:"type:CHAR(42);index"`             //buyer
+	Price         string  `json:"price"`                                               //price, the unit is wei
+	Timestamp     int64   `json:"timestamp" gorm:"index"`                              //transaction timestamp
+	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`            //transaction hash
+	BlockNumber   int64   `json:"block_number"`                                        //block number
+	Fee           *string `json:"fee,omitempty"`                                       //Transaction fee, in wei (only if there is an exchange and price)
 }
 
 // Collection information, user collection: name + creator + hash of the exchange to which they belong, SNFT collection: SNFT address removes the last 3 digits
@@ -287,41 +284,35 @@ type Collection struct {
 	Category    string  `json:"category"`                             //category
 	Desc        string  `json:"desc"`                                 //description
 	ImgUrl      string  `json:"img_url"`                              //image link
-	BlockNumber uint64  `json:"block_number" gorm:"index"`            //Create block height, equal to the first NFT in the collection
+	BlockNumber int64   `json:"block_number" gorm:"index"`            //Create block height, equal to the first NFT in the collection
 	Exchanger   *string `json:"exchanger" gorm:"type:CHAR(42);index"` //belongs to the exchange
 }
 
 // Exchanger exchange attribute information
 type Exchanger struct {
-	Address     string  `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
-	Name        string  `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
-	URL         string  `json:"url"`                                      //Exchange URL
-	FeeRatio    uint32  `json:"fee_ratio"`                                //fee rate, unit 1/10,000
-	Creator     string  `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
-	Timestamp   uint64  `json:"timestamp" gorm:"index"`                   //Open time
-	BlockNumber uint64  `json:"block_number" gorm:"index"`                //The block number when created
-	TxHash      string  `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
-	Amount      string  `json:"amount" gorm:"type:VARCHAR(66)"`           //Pledge amount
-	Reward      string  `json:"reward" gorm:"type:VARCHAR(66)"`           //amount of total reward
-	TxAmount    string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //Total transaction amount, unit wei
-	NFTCount    uint64  `json:"nft_count"`                                //Total NFT count
-	CloseAt     *uint64 `json:"close_at"`                                 //if not null, the exchange is closed
+	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
+	Name        string `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
+	URL         string `json:"url"`                                      //Exchange URL
+	FeeRatio    int64  `json:"fee_ratio"`                                //fee rate, unit 1/10,000
+	Creator     string `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
+	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //Open time
+	BlockNumber int64  `json:"block_number" gorm:"index"`                //The block number when created
+	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
+	Amount      string `json:"amount" gorm:"type:VARCHAR(66)"`           //Pledge amount
+	Reward      string `json:"reward" gorm:"type:VARCHAR(66)"`           //amount of total reward
+	TxAmount    string `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //Total transaction amount, unit wei
+	NFTCount    int64  `json:"nft_count"`                                //Total NFT count
+	CloseAt     *int64 `json:"close_at"`                                 //if not null, the exchange is closed
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
 type Reward struct {
 	Address     string  `json:"address" gorm:"type:CHAR(42)"`   //reward address
 	Proxy       *string `json:"proxy" gorm:"type:CHAR(42)"`     //proxy address
-	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchange
-	BlockNumber uint64  `json:"block_number"`                   //The block number when rewarding
+	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchanger
+	BlockNumber int64   `json:"block_number"`                   //The block number when rewarding
 	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
 	Amount      *string `json:"amount" gorm:"type:VARCHAR(66)"` //Amount of reward
-}
-
-type User struct {
-	Address string `json:"address" gorm:"type:CHAR(42);primaryKey"` //user account
-	Amount  string `json:"amount" gorm:"type:VARCHAR(66)"`          //snft pledge amount
-	Reward  string `json:"reward" gorm:"type:VARCHAR(66)"`          //amount of total reward
 }
 
 // Validator pledge information
@@ -330,9 +321,9 @@ type Validator struct {
 	Proxy      string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
 	Amount     string `json:"amount" gorm:"type:VARCHAR(66)"`          //pledge amount
 	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
-	Timestamp  uint64 `json:"timestamp"`                               //The time at latest rewarding
-	LastNumber uint64 `json:"last_number"`                             //The block number at latest rewarding
-	Online     bool   `json:"online"`                                  //online
+	Timestamp  int64  `json:"timestamp"`                               //The time at latest rewarding
+	LastNumber int64  `json:"last_number"`                             //The block number at latest rewarding
+	Weight     int64  `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
 }
 
 type Location struct {

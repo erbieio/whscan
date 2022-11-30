@@ -32,11 +32,11 @@ type LocationRes struct {
 	Proxy     string  `json:"proxy"`     //proxy address
 	Latitude  float64 `json:"latitude"`  //latitude
 	Longitude float64 `json:"longitude"` //longitude
-	Online    bool    `json:"online"`    //online status
+	Weight    int64   `json:"weight"`    //online weight,if it is not 70, it means that it is not online
 }
 
 func FetchLocations() (res []*LocationRes, err error) {
 	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`proxy`=`locations`.`address`").
-		Where("`amount`!='0'").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`online`").Scan(&res).Error
+		Where("`amount`!='0'").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`weight`").Scan(&res).Error
 	return
 }

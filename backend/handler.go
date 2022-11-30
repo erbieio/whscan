@@ -335,7 +335,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			wh.Rewards = append(wh.Rewards, &model.Reward{
 				Address:     rewards[i].Address,
 				Identity:    identity,
-				BlockNumber: uint64(wh.Number),
+				BlockNumber: int64(wh.Number),
 			})
 			if rewards[i].RewardAmount == nil {
 				// Note that when NFTAddress is zero address error
@@ -349,7 +349,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 					if len(epochId) > 0 {
 						epoch := struct {
 							Dir        string   `json:"dir"`
-							Royalty    uint32   `json:"royalty"`
+							Royalty    int64    `json:"royalty"`
 							Creator    string   `json:"creator"`
 							Address    string   `json:"address"` //Exchange address
 							VoteWeight *big.Int `json:"vote_weight"`
@@ -367,8 +367,8 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 							Dir:          epoch.Dir,
 							Exchanger:    epoch.Address,
 							VoteWeight:   epoch.VoteWeight.Text(10),
-							Number:       uint64(wh.Number),
-							Timestamp:    uint64(wh.Timestamp),
+							Number:       int64(wh.Number),
+							Timestamp:    int64(wh.Timestamp),
 						}
 					}
 				}
@@ -376,6 +376,17 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 				wh.Rewards[i].Amount = new(string)
 				*wh.Rewards[i].Amount = rewards[i].RewardAmount.Text(10)
 			}
+		}
+
+		var onlineWeight []*struct {
+			Address string `json:"address"`
+			Value   int64  `json:"value"`
+		}
+		if err := c.Call(&onlineWeight, "eth_getValidators", wh.Number.Hex()); err != nil {
+			return fmt.Errorf("getWeights() err:%v", err)
+		}
+		for _, weight := range onlineWeight {
+			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: weight.Address, Amount: "0", Weight: weight.Value})
 		}
 
 		// wormholes transaction processing
@@ -388,7 +399,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 	} else {
 		info := struct {
 			ExchangerBalance *big.Int `json:"ExchangerBalance"`
-			FeeRate          uint32   `json:"FeeRate"`
+			FeeRate          int64    `json:"FeeRate"`
 			ExchangerName    string   `json:"ExchangerName"`
 			ExchangerURL     string   `json:"ExchangerURL"`
 		}{}
@@ -403,7 +414,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 					URL:       info.ExchangerURL,
 					FeeRatio:  info.FeeRate,
 					Creator:   string(address),
-					Timestamp: uint64(wh.Timestamp),
+					Timestamp: int64(wh.Timestamp),
 					TxHash:    "0x0",
 					Amount:    balance,
 				})
@@ -442,9 +453,9 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 		NFTAddress   string `json:"nft_address"`
 		ProxyAddress string `json:"proxy_address"`
 		Exchanger    string `json:"exchanger"`
-		Royalty      uint32 `json:"royalty"`
+		Royalty      int64  `json:"royalty"`
 		MetaURL      string `json:"meta_url"`
-		FeeRate      uint32 `json:"fee_rate"`
+		FeeRate      int64  `json:"fee_rate"`
 		Name         string `json:"name"`
 		Url          string `json:"url"`
 		Dir          string `json:"dir"`
@@ -490,8 +501,8 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 		return
 	}
 
-	blockNumber := uint64(wh.Number)
-	timestamp := uint64(wh.Timestamp)
+	blockNumber := int64(wh.Number)
+	timestamp := int64(wh.Timestamp)
 	txHash := string(tx.Hash)
 	from := string(tx.From)
 	value := string(tx.Value)
@@ -524,10 +535,10 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			BlockNumber: blockNumber,
 		})
 
-	case 6, 7, 8: //recycle snft, pledge snft, cancel pledge snft
+	case 6: //recycle snft
 		w.NFTAddress = strings.ToLower(w.NFTAddress)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
-			TxType:      w.Type,
+			TxType:      6,
 			NFTAddr:     &w.NFTAddress,
 			From:        from,
 			Timestamp:   timestamp,
@@ -597,7 +608,7 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			return err
 		}
 		// royalty rate string to number
-		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
+		royaltyRatio, err := strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
 		if err != nil {
 			return err
 		}
@@ -605,7 +616,7 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 		nftAddr := "" //Calculate fill when inserting into database
 		wh.NFTs = append(wh.NFTs, &model.NFT{
 			Address:       &nftAddr,
-			RoyaltyRatio:  uint32(royaltyRatio),
+			RoyaltyRatio:  royaltyRatio,
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: w.Seller2.Exchanger,
@@ -636,14 +647,14 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			return err
 		}
 		// royalty rate string to number
-		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
+		royaltyRatio, err := strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
 		if err != nil {
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
 		wh.NFTs = append(wh.NFTs, &model.NFT{
 			Address:       &nftAddr,
-			RoyaltyRatio:  uint32(royaltyRatio),
+			RoyaltyRatio:  royaltyRatio,
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: from, //The transaction initiator is the exchange address
@@ -699,14 +710,14 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			return err
 		}
 		// royalty rate string to number
-		royaltyRatio, err := strconv.ParseUint(w.Seller2.Royalty[2:], 16, 32)
+		royaltyRatio, err := strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
 		if err != nil {
 			return err
 		}
 		nftAddr := "" //Calculate fill when inserting into database
 		wh.NFTs = append(wh.NFTs, &model.NFT{
 			Address:       &nftAddr,
-			RoyaltyRatio:  uint32(royaltyRatio),
+			RoyaltyRatio:  royaltyRatio,
 			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
 			RawMetaUrl:    w.Seller2.MetaURL,
 			ExchangerAddr: string(exchangerAddr), //The transaction initiator is the exchange address

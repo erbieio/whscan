@@ -2852,10 +2852,6 @@ const docTemplate = `{
                     "description": "snft pieces number",
                     "type": "integer"
                 },
-                "pledge_number": {
-                    "description": "The height of the last pledged block, null if not pledge",
-                    "type": "integer"
-                },
                 "remove": {
                     "description": "SNFTs that are synthesized and then removed",
                     "type": "boolean"
@@ -2918,7 +2914,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "totalAccount": {
-                    "description": "Total account number",
+                    "description": "Total account number of used",
                     "type": "integer"
                 },
                 "totalAmount": {
@@ -2993,10 +2989,6 @@ const docTemplate = `{
                     "description": "Total creator of SNFTs",
                     "type": "integer"
                 },
-                "totalSNFTPledge": {
-                    "description": "Total amount of snft pledge",
-                    "type": "string"
-                },
                 "totalSNFTTx": {
                     "description": "Total number of  SNFT transactions",
                     "type": "integer"
@@ -3055,10 +3047,6 @@ const docTemplate = `{
                     "description": "The block number at latest rewarding",
                     "type": "integer"
                 },
-                "online": {
-                    "description": "online",
-                    "type": "boolean"
-                },
                 "proxy": {
                     "description": "proxy address",
                     "type": "string"
@@ -3069,6 +3057,10 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "description": "The time at latest rewarding",
+                    "type": "integer"
+                },
+                "weight": {
+                    "description": "online weight,if it is not 70, it means that it is not online",
                     "type": "integer"
                 }
             }
@@ -3460,13 +3452,13 @@ const docTemplate = `{
                     "description": "longitude",
                     "type": "number"
                 },
-                "online": {
-                    "description": "online status",
-                    "type": "boolean"
-                },
                 "proxy": {
                     "description": "proxy address",
                     "type": "string"
+                },
+                "weight": {
+                    "description": "online weight,if it is not 70, it means that it is not online",
+                    "type": "integer"
                 }
             }
         },
@@ -3781,10 +3773,6 @@ const docTemplate = `{
                                 "description": "snft pieces number",
                                 "type": "integer"
                             },
-                            "pledge_number": {
-                                "description": "The height of the last pledged block, null if not pledge",
-                                "type": "integer"
-                            },
                             "remove": {
                                 "description": "SNFTs that are synthesized and then removed",
                                 "type": "boolean"
@@ -3833,7 +3821,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "identity": {
-                    "description": "Identity, 1: block producer, 2: verifier, 3, exchange",
+                    "description": "Identity, 1: block producer, 2: verifier, 3, exchanger",
                     "type": "integer"
                 },
                 "proxy": {
@@ -4014,10 +4002,6 @@ const docTemplate = `{
                 },
                 "pieces": {
                     "description": "snft pieces number",
-                    "type": "integer"
-                },
-                "pledge_number": {
-                    "description": "The height of the last pledged block, null if not pledge",
                     "type": "integer"
                 },
                 "remove": {

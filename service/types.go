@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 
-	"server/common/model"
 	"server/conf"
 )
 
@@ -33,12 +32,12 @@ func BigIntAdd(a, b string) string {
 	return cc.Text(10)
 }
 
-func TxFee(price string, ratio uint32) *string {
+func TxFee(price string, ratio int64) *string {
 	value, ok := new(big.Int).SetString(price, 0)
 	if !ok {
 		return nil
 	}
-	value = value.Mul(value, big.NewInt(int64(ratio)))
+	value = value.Mul(value, big.NewInt(ratio))
 	if value.Sign() == -1 {
 		return nil
 	}
@@ -58,27 +57,6 @@ func snftValue(snft string, count int64) string {
 	default:
 		return b.Mul(b, big.NewInt(650000000000000000)).Text(10)
 	}
-}
-
-func updateReward(snft *big.Int, user *model.User, exchanger *model.Exchanger) (*model.User, *model.Exchanger) {
-	if user == nil {
-		exchangerReward, _ := new(big.Int).SetString(exchanger.Reward, 0)
-		exchanger.Reward = exchangerReward.Add(exchangerReward, snft).Text(10)
-	} else if exchanger == nil {
-		userReward, _ := new(big.Int).SetString(user.Reward, 0)
-		user.Reward = userReward.Add(userReward, snft).Text(10)
-	} else {
-		userAmount, _ := new(big.Int).SetString(user.Amount, 0)
-		userReward, _ := new(big.Int).SetString(user.Reward, 0)
-		exchangerAmount, _ := new(big.Int).SetString(exchanger.Amount, 0)
-		exchangerReward, _ := new(big.Int).SetString(exchanger.Reward, 0)
-		totalAmount := new(big.Int).Add(userAmount, exchangerAmount)
-		reward1 := userAmount.Mul(userAmount, snft).Div(userAmount, totalAmount)
-		reward2 := exchangerAmount.Sub(snft, reward1)
-		user.Reward = userReward.Add(userReward, reward1).Text(10)
-		exchanger.Reward = exchangerReward.Add(exchangerReward, reward2).Text(10)
-	}
-	return user, exchanger
 }
 
 // NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored

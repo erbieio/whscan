@@ -453,9 +453,6 @@ definitions:
       pieces:
         description: snft pieces number
         type: integer
-      pledge_number:
-        description: The height of the last pledged block, null if not pledge
-        type: integer
       remove:
         description: SNFTs that are synthesized and then removed
         type: boolean
@@ -502,7 +499,7 @@ definitions:
         description: Total number of transactions within 24 hours
         type: integer
       totalAccount:
-        description: Total account number
+        description: Total account number of used
         type: integer
       totalAmount:
         description: total transaction volume
@@ -558,9 +555,6 @@ definitions:
       totalSNFTCreator:
         description: Total creator of SNFTs
         type: integer
-      totalSNFTPledge:
-        description: Total amount of snft pledge
-        type: string
       totalSNFTTx:
         description: Total number of  SNFT transactions
         type: integer
@@ -603,9 +597,6 @@ definitions:
       last_number:
         description: The block number at latest rewarding
         type: integer
-      online:
-        description: online
-        type: boolean
       proxy:
         description: proxy address
         type: string
@@ -614,6 +605,9 @@ definitions:
         type: string
       timestamp:
         description: The time at latest rewarding
+        type: integer
+      weight:
+        description: online weight,if it is not 70, it means that it is not online
         type: integer
     type: object
   service.AccountRes:
@@ -888,12 +882,12 @@ definitions:
       longitude:
         description: longitude
         type: number
-      online:
-        description: online status
-        type: boolean
       proxy:
         description: proxy address
         type: string
+      weight:
+        description: online weight,if it is not 70, it means that it is not online
+        type: integer
     type: object
   service.Log:
     properties:
@@ -1126,9 +1120,6 @@ definitions:
             pieces:
               description: snft pieces number
               type: integer
-            pledge_number:
-              description: The height of the last pledged block, null if not pledge
-              type: integer
             remove:
               description: SNFTs that are synthesized and then removed
               type: boolean
@@ -1164,7 +1155,7 @@ definitions:
       collectionName:
         type: string
       identity:
-        description: 'Identity, 1: block producer, 2: verifier, 3, exchange'
+        description: 'Identity, 1: block producer, 2: verifier, 3, exchanger'
         type: integer
       proxy:
         description: proxy address
@@ -1297,9 +1288,6 @@ definitions:
         type: string
       pieces:
         description: snft pieces number
-        type: integer
-      pledge_number:
-        description: The height of the last pledged block, null if not pledge
         type: integer
       remove:
         description: SNFTs that are synthesized and then removed

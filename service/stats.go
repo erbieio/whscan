@@ -75,6 +75,9 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x8'").Count(&stats.TotalSNFTTx).Error; err != nil {
 		return
 	}
+	if err = db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Count(&stats.TotalExchangerTx).Error; err != nil {
+		return
+	}
 	if err = db.Model(&model.Block{}).Find(&stats.Genesis, "number=0").Error; err != nil {
 		return
 	}
@@ -88,17 +91,7 @@ func loadStats(db *gorm.DB) (err error) {
 	}
 	stats.TotalBalance = totalBalance.Text(10)
 
-	value, totalSNFTPledge, snftAmounts := new(big.Int), new(big.Int), make([]string, 0)
-	if err = db.Model(&model.User{}).Pluck("amount", &snftAmounts).Error; err != nil {
-		return
-	}
-	for _, snftAmount := range snftAmounts {
-		value.SetString(snftAmount, 0)
-		totalSNFTPledge = totalSNFTPledge.Add(totalSNFTPledge, value)
-	}
-	stats.TotalSNFTPledge = totalSNFTPledge.Text(10)
-
-	totalExchangerPledge, exchangerAmounts := new(big.Int), make([]string, 0)
+	value, totalExchangerPledge, exchangerAmounts := new(big.Int), new(big.Int), make([]string, 0)
 	if err = db.Model(&model.Exchanger{}).Where("`amount`!='0'").Pluck("amount", &exchangerAmounts).Error; err != nil {
 		return
 	}
@@ -125,10 +118,10 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
 	totalValidatorPledge, _ := new(big.Int).SetString(stats.TotalValidatorPledge, 0)
 	totalExchangerPledge, _ := new(big.Int).SetString(stats.TotalExchangerPledge, 0)
-	totalSNFTPledge, _ := new(big.Int).SetString(stats.TotalSNFTPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
-	rewardSNFT, recycleSNFT, value, totalNFTTx, totalSNFTTx := int64(0), int64(0), new(big.Int), stats.TotalNFTTx, stats.TotalSNFTTx
+	rewardSNFT, recycleSNFT, value := int64(0), int64(0), new(big.Int)
+	totalNFTTx, totalSNFTTx, totalExchangerTx := stats.TotalNFTTx, stats.TotalSNFTTx, stats.TotalExchangerTx
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
 		totalBalance = totalBalance.Add(totalBalance, value)
@@ -149,9 +142,8 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		totalExchangerPledge = totalExchangerPledge.Add(totalExchangerPledge, value)
 	}
 	for _, tx := range parsed.NFTTxs {
-		if tx.TxType == 6 {
-			pieces, _ := strconv.ParseInt(*tx.Fee, 10, 32)
-			recycleSNFT += pieces
+		if tx.ExchangerAddr != nil {
+			totalExchangerTx++
 		}
 		if (*tx.NFTAddr)[:3] == "0x0" {
 			totalNFTTx++
@@ -164,6 +156,10 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			if tx.Price != "0" {
 				value.SetString(tx.Price, 0)
 				totalSNFTAmount = totalSNFTAmount.Add(totalSNFTAmount, value)
+			}
+			if tx.TxType == 6 {
+				pieces, _ := strconv.ParseInt(*tx.Fee, 10, 32)
+				recycleSNFT += pieces
 			}
 		}
 	}
@@ -179,7 +175,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		}
 	}
 	if recycleSNFT > 0 {
-		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_recycle", stats.TotalRecycle+uint64(recycleSNFT)).Error
+		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_recycle", stats.TotalRecycle+recycleSNFT).Error
 		if err != nil {
 			return
 		}
@@ -218,14 +214,14 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.RewardSNFTCount += rewardSNFT
 	stats.RewardCoinCount += int64(len(parsed.Rewards)) - rewardSNFT
 	stats.TotalAccount = int64(len(stats.Balances))
-	stats.TotalRecycle += uint64(recycleSNFT)
+	stats.TotalRecycle += int64(recycleSNFT)
 	stats.TotalBalance = totalBalance.Text(10)
 	stats.TotalAmount = totalAmount.Text(10)
 	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
 	stats.TotalExchangerPledge = totalExchangerPledge.Text(10)
-	stats.TotalSNFTPledge = totalSNFTPledge.Text(10)
 	stats.TotalNFTTx = totalNFTTx
 	stats.TotalSNFTTx = totalSNFTTx
+	stats.TotalExchangerTx = totalExchangerTx
 	stats.TotalNFTAmount = totalNFTAmount.Text(10)
 	stats.TotalSNFTAmount = totalSNFTAmount.Text(10)
 	stats.TotalSNFTCollection = (stats.RewardSNFTCount/4096 + 1) * 16
@@ -260,18 +256,20 @@ func fixStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 }
 
 func freshStats(db *gorm.DB, parsed *model.Parsed) {
-	if parsed.Number%12 == 0 {
-		db.Model(&model.Exchanger{}).Count(&stats.TotalExchanger)
-		db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
-		db.Model(&model.Validator{}).Where("amount!='0'").Count(&stats.TotalValidator)
-		db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
-		db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
-		db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Count(&stats.TotalExchangerTx)
-		if parsed.Number%720 == 0 {
-			start, stop := utils.LastTimeRange(1)
-			db.Model(&model.Block{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("IFNULL(SUM(total_transaction),0)").Scan(&stats.Total24HTx)
-			db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HExchangerTx)
-			db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
+	if stats.Ready {
+		if parsed.Number%12 == 0 {
+			db.Model(&model.Exchanger{}).Where("amount!='0'").Count(&stats.TotalExchanger)
+			db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
+			db.Model(&model.Validator{}).Where("amount!='0'").Count(&stats.TotalValidator)
+			db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
+			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
+			db.Model(&model.Validator{}).Where("amount!='0' AND weight=70").Count(&stats.TotalValidatorOnline)
+			if parsed.Number%720 == 0 {
+				start, stop := utils.LastTimeRange(1)
+				db.Model(&model.Block{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("IFNULL(SUM(total_transaction),0)").Scan(&stats.Total24HTx)
+				db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HExchangerTx)
+				db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
+			}
 		}
 	}
 }
