@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-type Long uint64
+type Long int64
 
 // ImplementsGraphQLType returns true if Long implements the provided GraphQL type.
 func (b *Long) ImplementsGraphQLType(name string) bool { return name == "Long" }
@@ -38,7 +38,7 @@ func (b *Long) UnmarshalJSON(input []byte) error {
 
 // UnmarshalText implements encoding.TextUnmarshaler
 func (b *Long) UnmarshalText(input []byte) error {
-	value, err := strconv.ParseUint(string(input), 0, 64)
+	value, err := strconv.ParseInt(string(input), 0, 64)
 	*b = Long(value)
 	return err
 }

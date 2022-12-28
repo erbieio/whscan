@@ -95,36 +95,6 @@ definitions:
         description: The price of an ERB in USD
         type: number
     type: object
-  model.Account:
-    properties:
-      address:
-        description: address
-        type: string
-      balance:
-        description: The total amount of coins in the chain
-        type: string
-      code:
-        description: bytecode
-        type: string
-      createdTx:
-        description: create transaction
-        type: string
-      creator:
-        description: address
-        type: string
-      name:
-        description: name
-        type: string
-      nonce:
-        description: transaction random number, transaction volume
-        type: integer
-      symbol:
-        description: symbol
-        type: string
-      type:
-        description: contract types, ERC20, ERC721, ERC1155
-        type: integer
-    type: object
   model.Block:
     properties:
       difficulty:
@@ -468,6 +438,9 @@ definitions:
     type: object
   model.Stats:
     properties:
+      activeAccount:
+        description: The number of active account
+        type: integer
       avgBlockTime:
         description: average block time, ms
         type: integer
@@ -633,6 +606,9 @@ definitions:
       name:
         description: name
         type: string
+      nftCount:
+        description: hold NFT number
+        type: integer
       nonce:
         description: transaction random number, transaction volume
         type: integer
@@ -642,18 +618,15 @@ definitions:
       rewardSNFTCount:
         description: Number of times to get SNFT rewards
         type: integer
-      snftAmount:
-        description: account snft pledge amount
+      snftCount:
+        description: hold SNFT number
+        type: integer
+      snftValue:
+        description: hold SNFT value
         type: string
       symbol:
         description: symbol
         type: string
-      totalNFT:
-        description: Number of NFTs held
-        type: integer
-      totalSNFT:
-        description: Number of SNFTs held
-        type: integer
       type:
         description: contract types, ERC20, ERC721, ERC1155
         type: integer
@@ -666,7 +639,47 @@ definitions:
       accounts:
         description: Account list
         items:
-          $ref: '#/definitions/model.Account'
+          properties:
+            address:
+              description: address
+              type: string
+            balance:
+              description: The total amount of coins in the chain
+              type: string
+            code:
+              description: bytecode
+              type: string
+            createdTx:
+              description: create transaction
+              type: string
+            creator:
+              description: address
+              type: string
+            exchangerAmount:
+              description: exchanger pledge amount
+              type: string
+            name:
+              description: name
+              type: string
+            nonce:
+              description: transaction random number, transaction volume
+              type: integer
+            snftCount:
+              description: hold SNFT number
+              type: integer
+            snftValue:
+              description: hold SNFT value
+              type: string
+            symbol:
+              description: symbol
+              type: string
+            type:
+              description: contract types, ERC20, ERC721, ERC1155
+              type: integer
+            validatorAmount:
+              description: validator pledge amount
+              type: string
+          type: object
         type: array
       balance:
         description: The total amount of coins in the chain
@@ -2465,10 +2478,6 @@ paths:
       description: Query the collection list (including 16 FNFT information) held
         by the specified account (with one SNFT in the collection)
       parameters:
-      - description: 1:pledged, 2:unPledged, other:all
-        in: query
-        name: status
-        type: number
       - description: owner
         in: query
         name: owner
@@ -2595,10 +2604,6 @@ paths:
         name: owner
         required: true
         type: string
-      - description: 1:pledged, 2:free trade, 3:can pledge, other:all
-        in: query
-        name: status
-        type: number
       - description: Page, default 1
         in: query
         name: page

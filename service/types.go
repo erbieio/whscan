@@ -59,6 +59,18 @@ func snftValue(snft string, count int64) string {
 	}
 }
 
+func snftMergeValue(snft string, count int64) string {
+	b := big.NewInt(count)
+	switch 42 - len(snft) {
+	case 1:
+		return b.Mul(b, big.NewInt(48000000000000000)).Text(10)
+	case 2:
+		return b.Mul(b, big.NewInt(128000000000000000)).Text(10)
+	default:
+		return b.Mul(b, big.NewInt(379000000000000000)).Text(10)
+	}
+}
+
 // NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored
 type NFTMeta struct {
 	Name                 string `json:"name"`                  //name

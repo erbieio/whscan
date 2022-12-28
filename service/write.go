@@ -21,7 +21,7 @@ func SetHead(parsed *model.Parsed) error {
 		log.Printf("err block: %s", string(data))
 	}
 	return DB.Transaction(func(tx *gorm.DB) (err error) {
-		if head := parsed.Number; head != ^types.Long(0) {
+		if head := parsed.Number; head >= 0 {
 			if err = tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
 				tx.Model(&model.Epoch{}).Select("id").Where("number>?", head),
 			).Error; err != nil {
@@ -94,40 +94,40 @@ func Insert(parsed *model.Parsed) (blocks []types.Hash, err error) {
 		}
 	}
 	err = DB.Transaction(func(db *gorm.DB) (err error) {
-		for _, tx := range parsed.CacheTxs {
-			// write block transaction
-			if err = db.Create(tx).Error; err != nil {
-				return
-			}
-		}
-		for _, internalTx := range parsed.CacheInternalTxs {
-			// write internal transaction
-			if err = db.Create(internalTx).Error; err != nil {
-				return
-			}
-		}
-		for _, uncle := range parsed.CacheUncles {
-			// write uncle block
-			if err = db.Create(uncle).Error; err != nil {
-				return
-			}
-		}
-		for _, account := range parsed.CacheAccounts {
-			// write account information
-			if err = db.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce"}),
-			}).Create(account).Error; err != nil {
+		// write block transaction
+		if len(parsed.CacheTxs) > 0 {
+			if err = db.Create(parsed.CacheTxs).Error; err != nil {
 				return
 			}
 		}
 		// write transaction cacheLog
-		for _, cacheLog := range parsed.CacheLogs {
-			if err = db.Create(cacheLog).Error; err != nil {
+		if len(parsed.CacheLogs) > 0 {
+			if err = db.Create(parsed.CacheLogs).Error; err != nil {
 				return
 			}
 		}
+		// write uncle block
+		if len(parsed.CacheUncles) > 0 {
+			if err = db.Create(parsed.CacheUncles).Error; err != nil {
+				return
+			}
+		}
+		// write internal transaction
+		if len(parsed.CacheInternalTxs) > 0 {
+			if err = db.Create(parsed.CacheInternalTxs).Error; err != nil {
+				return
+			}
+		}
+		// write transaction transferLog
 		for _, cacheTransferLog := range parsed.CacheTransferLogs {
 			if err = db.Create(cacheTransferLog).Error; err != nil {
+				return
+			}
+		}
+		// write account information
+		for _, account := range parsed.CacheAccounts {
+			err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce"})}).Create(account).Error
+			if err != nil {
 				return
 			}
 		}
@@ -211,6 +211,19 @@ func injectSNFT(tx *gorm.DB, wh *model.Parsed) (err error) {
 	return
 }
 
+func updateUserSNFT(db *gorm.DB, user, value string, count int64) (err error) {
+	var account model.Account
+	if err = db.Find(&account, "`address`=?", user).Error; err != nil {
+		return
+	}
+	if account.Address != "" {
+		account.SNFTValue = BigIntAdd(account.SNFTValue, value)
+		account.SNFTCount += count
+		err = db.Select("snft_count", "snft_value").Updates(&account).Error
+	}
+	return
+}
+
 func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 	for _, reward := range wh.Rewards {
 		err = db.Exec("INSERT INTO rewards (`address`, `proxy`, `identity`, `block_number`, `snft`, `amount`) VALUES "+
@@ -230,15 +243,19 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 			if err != nil {
 				return
 			}
-			var exchanger *model.Exchanger
+			var exchanger model.Exchanger
 			if err = db.Find(&exchanger, "`amount`!='0' AND `address`=?", reward.Address).Error; err != nil {
 				return
 			}
+			value := snftValue(*reward.SNFT, 1)
 			if exchanger.Address != "" {
-				exchanger.Reward = BigIntAdd(exchanger.Reward, snftValue(*reward.SNFT, 1))
-				if err = db.Select("reward").Updates(exchanger).Error; err != nil {
+				exchanger.Reward = BigIntAdd(exchanger.Reward, value)
+				if err = db.Select("reward").Updates(&exchanger).Error; err != nil {
 					return
 				}
+			}
+			if err = updateUserSNFT(db, reward.Address, value, 1); err != nil {
+				return
 			}
 		} else {
 			var validator model.Validator
@@ -249,7 +266,7 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 				validator.Reward = BigIntAdd(validator.Reward, *reward.Amount)
 				validator.Timestamp = int64(wh.Timestamp)
 				validator.LastNumber = int64(wh.Number)
-				if err = db.Updates(&validator).Error; err != nil {
+				if err = db.Select("reward", "timestamp", "last_number").Updates(&validator).Error; err != nil {
 					return
 				}
 			}
@@ -310,6 +327,17 @@ func autoMerge(db *gorm.DB, wh *model.Parsed, addr string) (err error) {
 		if err = db.Create(snft).Error; err != nil {
 			return
 		}
+		var account model.Account
+		if err = db.Find(&account, "`address`=?", snft.Owner).Error; err != nil {
+			return
+		}
+		if account.Address != "" {
+			account.SNFTCount -= snft.Pieces - 1
+			account.SNFTValue = BigIntAdd(account.SNFTValue, snftMergeValue(snft.Address, snft.Pieces))
+			if err = db.Select("snft_count", "snft_value").Updates(&account).Error; err != nil {
+				return
+			}
+		}
 	}
 	return
 }
@@ -327,6 +355,9 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 			tx.Fee = &fee
 			tx.Price = snftValue(snft.Address, snft.Pieces)
 			if err = db.Model(&model.SNFT{}).Where("address=?", snft.Address).Update("remove", true).Error; err != nil {
+				return
+			}
+			if err = updateUserSNFT(db, snft.Owner, "-"+tx.Price, -1); err != nil {
 				return
 			}
 		} else {
@@ -364,6 +395,15 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				snft.Owner = tx.To
 				if err = db.Select("last_price", "tx_amount", "owner").Updates(&snft).Error; err != nil {
 					return
+				}
+				if tx.From != tx.To {
+					value := snftValue(snft.Address, snft.Pieces)
+					if err = updateUserSNFT(db, tx.From, "-"+value, -1); err != nil {
+						return
+					}
+					if err = updateUserSNFT(db, tx.To, value, 1); err != nil {
+						return
+					}
 				}
 			}
 			// Calculate the total number of transactions and the total transaction amount to fill the NFT transaction fee and save the exchange

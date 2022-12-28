@@ -63,6 +63,7 @@ type Stats struct {
 	TotalUncle           int64  `json:"totalUncle" gorm:"-"`                   //Number of total uncle blocks
 	TotalAccount         int64  `json:"totalAccount" gorm:"-"`                 //Total account number of used
 	TotalBalance         string `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
+	ActiveAccount        int64  `json:"activeAccount" gorm:"-"`                //The number of active account
 	TotalExchanger       int64  `json:"totalExchanger" gorm:"-"`               //Total number of exchanges
 	TotalNFTCollection   int64  `json:"totalNFTCollection" gorm:"-"`           //Total number of NFT collections
 	TotalSNFTCollection  int64  `json:"totalSNFTCollection" gorm:"-"`          //Total number of SNFT collections
@@ -120,15 +121,17 @@ type Block struct {
 
 // Account information
 type Account struct {
-	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"` //address
-	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`  //The total amount of coins in the chain
-	Nonce     types.Long          `json:"nonce"`                                   //transaction random number, transaction volume
-	Code      *string             `json:"code"`                                    //bytecode
-	Name      *string             `json:"name" gorm:"type:VARCHAR(66)"`            //name
-	Symbol    *string             `json:"symbol" gorm:"type:VARCHAR(66)"`          //symbol
-	Type      *types.ContractType `json:"type"`                                    //contract types, ERC20, ERC721, ERC1155
-	Creator   *types.Address      `json:"creator" gorm:"type:CHAR(42)"`            //the creator, the contract account has value
-	CreatedTx *types.Hash         `json:"createdTx" gorm:"type:CHAR(66)"`          //create transaction
+	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"`  //address
+	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`   //The total amount of coins in the chain
+	Nonce     types.Long          `json:"nonce"`                                    //transaction random number, transaction volume
+	Code      *string             `json:"code"`                                     //bytecode
+	Name      *string             `json:"name,omitempty" gorm:"type:VARCHAR(66)"`   //name
+	Symbol    *string             `json:"symbol,omitempty" gorm:"type:VARCHAR(66)"` //symbol
+	Type      *types.ContractType `json:"type,omitempty"`                           //contract types, ERC20, ERC721, ERC1155
+	Creator   *types.Address      `json:"creator,omitempty" gorm:"type:CHAR(42)"`   //the creator, the contract account has value
+	CreatedTx *types.Hash         `json:"createdTx,omitempty" gorm:"type:CHAR(66)"` //create transaction
+	SNFTCount int64               `json:"snftCount"`                                //hold SNFT number
+	SNFTValue string              `json:"snftValue"`                                //hold SNFT value
 }
 
 // Transaction information
@@ -310,7 +313,7 @@ type Reward struct {
 	Address     string  `json:"address" gorm:"type:CHAR(42)"`   //reward address
 	Proxy       *string `json:"proxy" gorm:"type:CHAR(42)"`     //proxy address
 	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchanger
-	BlockNumber int64   `json:"block_number"`                   //The block number when rewarding
+	BlockNumber int64   `json:"block_number" gorm:"index"`      //The block number when rewarding
 	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
 	Amount      *string `json:"amount" gorm:"type:VARCHAR(66)"` //Amount of reward
 }

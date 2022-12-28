@@ -15,7 +15,7 @@ var (
 	ChainUrl   = "http://localhost:8545"
 	ServerAddr = ":3000"
 	Interval   = time.Second
-	Thread     = int64(16 * runtime.NumCPU())
+	Thread     = int64(8 * runtime.NumCPU())
 	MysqlDsn   = "root:123456@tcp(127.0.0.1:3306)/scan"
 	IpfsServer = "http://localhost:8080"
 	ERBPay     = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay contract address

@@ -46,7 +46,7 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 		db = db.Where("`from`=? OR `to`=?", account, account)
 	}
 	if address != "" {
-		db = db.Where("locate(nft_addr,?)", address)
+		db = db.Where("nft_addr=?", address)
 	}
 
 	err = db.Model(&model.NFTTx{}).Count(&res.Total).Error
@@ -63,20 +63,12 @@ type SNFTsRes struct {
 	NFTs  []model.SNFT `json:"nfts"`  //SNFT list
 }
 
-func FetchSNFTs(owner string, status, page, size int) (res SNFTsRes, err error) {
+func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
 	db := DB.Model(&model.SNFT{}).Where("`remove`=false")
 	if owner != "" {
 		db = db.Where("`owner`=?", owner)
 	}
-	switch status {
-	case 1:
-		db = db.Where("`pledge_number` IS NOT NULL")
-	case 2:
-		db = db.Where("`pledge_number` IS NULL")
-	case 3:
-		db = db.Where("`pledge_number` IS NULL AND LENGTH(`address`)<42")
-	}
-	if owner == "" && status == 0 {
+	if owner == "" {
 		res.Total = stats.TotalSNFT
 	} else {
 		if err = db.Count(&res.Total).Error; err != nil {
@@ -171,14 +163,8 @@ type SNFTGroupsRes struct {
 	} `json:"collections"` //collection information
 }
 
-func FindSNFTGroups(owner string, status, page, size int) (res SNFTGroupsRes, err error) {
+func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error) {
 	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN collections on LEFT(address,40) = id AND owner=?", owner)
-	if status == 1 {
-		db = db.Where("pledge_number IS NOT NULL AND `id` IS NOT NULL")
-	}
-	if status == 2 {
-		db = db.Where("pledge_number IS NULL")
-	}
 	err = db.Select("`collections`.*,COUNT(address) AS total_hold").Group("id").
 		Order("id DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Collections).Error
 	if err != nil {
@@ -189,12 +175,6 @@ func FindSNFTGroups(owner string, status, page, size int) (res SNFTGroupsRes, er
 	}
 	for i := range res.Collections {
 		db = DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts on LEFT(address,41) = fnfts.id").Select("fnfts.*,COUNT(*) AS total_hold")
-		if status == 1 {
-			db = db.Where("pledge_number IS NOT NULL")
-		}
-		if status == 2 {
-			db = db.Where("pledge_number IS NULL")
-		}
 		err = db.Where("LEFT(address, 40)=? AND owner=?", res.Collections[i].Id, owner).Group("id").
 			Scan(&res.Collections[i].FullNFTs).Error
 		if err != nil {

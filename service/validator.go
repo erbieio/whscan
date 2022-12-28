@@ -82,7 +82,7 @@ var lastMsg []*Msg
 func updateLastMsg(db *gorm.DB, fileName string) {
 	if file, err := os.Open(fileName); err == nil {
 		lastMsg = lastMsg[:0]
-		data, proxies := []string(nil), map[string]bool{}
+		data, proxies, exist := []string(nil), map[string]bool{}, map[string]bool{}
 		db.Model(&model.Validator{}).Where("amount!='0'").Select("proxy").Scan(&data)
 		for _, proxy := range data {
 			proxies[proxy] = true
@@ -92,10 +92,13 @@ func updateLastMsg(db *gorm.DB, fileName string) {
 			if len(splits) == 4 {
 				from, to := strings.ToLower(splits[2]), strings.ToLower(splits[3])
 				if proxies[from] && proxies[to] {
-					lastMsg = append(lastMsg, &Msg{
-						From: from,
-						To:   to,
-					})
+					if !exist[from+to] {
+						lastMsg = append(lastMsg, &Msg{
+							From: from,
+							To:   to,
+						})
+						exist[from+to] = true
+					}
 				}
 			}
 		}

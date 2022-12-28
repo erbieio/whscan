@@ -60,9 +60,6 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.NFT{}).Count(&stats.TotalNFT).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.SNFT{}).Count(&stats.TotalSNFT).Error; err != nil {
-		return
-	}
 	if err = db.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&stats.RewardSNFTCount).Error; err != nil {
 		return
 	}
@@ -210,11 +207,10 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
 	stats.TotalUncle += int64(len(parsed.Uncles))
 	stats.TotalNFT += int64(len(parsed.NFTs))
-	stats.TotalSNFT += rewardSNFT - recycleSNFT
 	stats.RewardSNFTCount += rewardSNFT
 	stats.RewardCoinCount += int64(len(parsed.Rewards)) - rewardSNFT
 	stats.TotalAccount = int64(len(stats.Balances))
-	stats.TotalRecycle += int64(recycleSNFT)
+	stats.TotalRecycle += recycleSNFT
 	stats.TotalBalance = totalBalance.Text(10)
 	stats.TotalAmount = totalAmount.Text(10)
 	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
@@ -257,16 +253,18 @@ func fixStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 
 func freshStats(db *gorm.DB, parsed *model.Parsed) {
 	if stats.Ready {
-		if parsed.Number%12 == 0 {
+		if stats.TotalValidator == 0 || parsed.Number%24 == 0 {
+			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Exchanger{}).Where("amount!='0'").Count(&stats.TotalExchanger)
 			db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
 			db.Model(&model.Validator{}).Where("amount!='0'").Count(&stats.TotalValidator)
 			db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
-			db.Model(&model.Validator{}).Where("amount!='0' AND weight=70").Count(&stats.TotalValidatorOnline)
-			if parsed.Number%720 == 0 {
+			db.Model(&model.Validator{}).Where("amount!='0' AND weight>=10").Count(&stats.TotalValidatorOnline)
+			db.Model(&model.Transaction{}).Where("block_number>?", parsed.Number-10000).Select("COUNT(DISTINCT `from`)").Scan(&stats.ActiveAccount)
+			if stats.Total24HTx == 0 || parsed.Number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)
-				db.Model(&model.Block{}).Where("timestamp>=? AND timestamp<?", start, stop).Select("IFNULL(SUM(total_transaction),0)").Scan(&stats.Total24HTx)
+				db.Model(&model.Transaction{}).Joins("LEFT JOIN blocks on block_hash = blocks.hash").Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
 				db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HExchangerTx)
 				db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
 			}

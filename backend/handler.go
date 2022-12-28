@@ -178,7 +178,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 	parsed.CacheAccounts = make(map[types.Address]*model.Account)
 	for _, address := range modifiedAccounts {
 		if address[:12] != "0x0000000000" && address[:12] != "0x8000000000" {
-			parsed.CacheAccounts[address] = &model.Account{Address: address}
+			parsed.CacheAccounts[address] = &model.Account{Address: address, SNFTValue: "0"}
 		}
 	}
 	if number := parsed.Number.Hex(); len(parsed.CacheAccounts) > 0 {
@@ -256,6 +256,7 @@ func decodeState(c *node.Client, ctx context.Context, parsed *model.Parsed) (err
 	for address, account := range status.Accounts {
 		if address[:12] != "0x0000000000" && address[:12] != "0x8000000000" {
 			account.Address = address
+			account.SNFTValue = "0"
 		} else {
 			delete(status.Accounts, address)
 		}

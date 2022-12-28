@@ -1532,12 +1532,6 @@ const docTemplate = `{
                 "summary": "paging query account holding collection list",
                 "parameters": [
                     {
-                        "type": "number",
-                        "description": "1:pledged, 2:unPledged, other:all",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
                         "description": "owner",
                         "name": "owner",
@@ -1764,12 +1758,6 @@ const docTemplate = `{
                         "name": "owner",
                         "in": "query",
                         "required": true
-                    },
-                    {
-                        "type": "number",
-                        "description": "1:pledged, 2:free trade, 3:can pledge, other:all",
-                        "name": "status",
-                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -2376,47 +2364,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Account": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "balance": {
-                    "description": "The total amount of coins in the chain",
-                    "type": "string"
-                },
-                "code": {
-                    "description": "bytecode",
-                    "type": "string"
-                },
-                "createdTx": {
-                    "description": "create transaction",
-                    "type": "string"
-                },
-                "creator": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "name",
-                    "type": "string"
-                },
-                "nonce": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "symbol": {
-                    "description": "symbol",
-                    "type": "string"
-                },
-                "type": {
-                    "description": "contract types, ERC20, ERC721, ERC1155",
-                    "type": "integer"
-                }
-            }
-        },
         "model.Block": {
             "type": "object",
             "properties": {
@@ -2873,6 +2820,10 @@ const docTemplate = `{
         "model.Stats": {
             "type": "object",
             "properties": {
+                "activeAccount": {
+                    "description": "The number of active account",
+                    "type": "integer"
+                },
                 "avgBlockTime": {
                     "description": "average block time, ms",
                     "type": "integer"
@@ -3096,6 +3047,10 @@ const docTemplate = `{
                     "description": "name",
                     "type": "string"
                 },
+                "nftCount": {
+                    "description": "hold NFT number",
+                    "type": "integer"
+                },
                 "nonce": {
                     "description": "transaction random number, transaction volume",
                     "type": "integer"
@@ -3108,21 +3063,17 @@ const docTemplate = `{
                     "description": "Number of times to get SNFT rewards",
                     "type": "integer"
                 },
-                "snftAmount": {
-                    "description": "account snft pledge amount",
+                "snftCount": {
+                    "description": "hold SNFT number",
+                    "type": "integer"
+                },
+                "snftValue": {
+                    "description": "hold SNFT value",
                     "type": "string"
                 },
                 "symbol": {
                     "description": "symbol",
                     "type": "string"
-                },
-                "totalNFT": {
-                    "description": "Number of NFTs held",
-                    "type": "integer"
-                },
-                "totalSNFT": {
-                    "description": "Number of SNFTs held",
-                    "type": "integer"
                 },
                 "type": {
                     "description": "contract types, ERC20, ERC721, ERC1155",
@@ -3141,7 +3092,61 @@ const docTemplate = `{
                     "description": "Account list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.Account"
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "description": "address",
+                                "type": "string"
+                            },
+                            "balance": {
+                                "description": "The total amount of coins in the chain",
+                                "type": "string"
+                            },
+                            "code": {
+                                "description": "bytecode",
+                                "type": "string"
+                            },
+                            "createdTx": {
+                                "description": "create transaction",
+                                "type": "string"
+                            },
+                            "creator": {
+                                "description": "address",
+                                "type": "string"
+                            },
+                            "exchangerAmount": {
+                                "description": "exchanger pledge amount",
+                                "type": "string"
+                            },
+                            "name": {
+                                "description": "name",
+                                "type": "string"
+                            },
+                            "nonce": {
+                                "description": "transaction random number, transaction volume",
+                                "type": "integer"
+                            },
+                            "snftCount": {
+                                "description": "hold SNFT number",
+                                "type": "integer"
+                            },
+                            "snftValue": {
+                                "description": "hold SNFT value",
+                                "type": "string"
+                            },
+                            "symbol": {
+                                "description": "symbol",
+                                "type": "string"
+                            },
+                            "type": {
+                                "description": "contract types, ERC20, ERC721, ERC1155",
+                                "type": "integer"
+                            },
+                            "validatorAmount": {
+                                "description": "validator pledge amount",
+                                "type": "string"
+                            }
+                        }
                     }
                 },
                 "balance": {
