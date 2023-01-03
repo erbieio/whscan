@@ -26,6 +26,7 @@ func Run(addr string) error {
 	api.Epoch(r)
 	api.Ranking(r)
 	api.Chart(r)
+	api.Validator(r)
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	return r.Run(addr)
 }

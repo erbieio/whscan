@@ -447,9 +447,6 @@ definitions:
       chainId:
         description: chain id
         type: integer
-      firstBlockTime:
-        description: first block unix time
-        type: integer
       genesisBalance:
         description: Total amount of coins created
         type: string
@@ -898,9 +895,6 @@ definitions:
       proxy:
         description: proxy address
         type: string
-      weight:
-        description: online weight,if it is not 70, it means that it is not online
-        type: integer
     type: object
   service.Log:
     properties:
@@ -1489,6 +1483,10 @@ paths:
       - application/json
       description: set the account ranking according to the amount of coins held
       parameters:
+      - description: sort by conditions, Support database order statement
+        in: query
+        name: order
+        type: string
       - description: Page, default 1
         in: query
         name: page
@@ -2095,44 +2093,6 @@ paths:
       summary: query exchange status (new /exchanger_auth)
       tags:
       - obsolete interface
-  /last_msg:
-    get:
-      consumes:
-      - application/json
-      description: Query validator's last msg list
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/service.Msg'
-            type: array
-      summary: query validator msg list
-      tags:
-      - block
-  /locations:
-    get:
-      consumes:
-      - application/json
-      description: Query validator's locations
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/service.LocationRes'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query validator locations
-      tags:
-      - block
   /nft/{addr}:
     get:
       consumes:
@@ -2878,12 +2838,54 @@ paths:
       summary: query transaction receipt
       tags:
       - transaction
-  /validators:
+  /validator/last_msg:
+    get:
+      consumes:
+      - application/json
+      description: Query validator's last msg list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.Msg'
+            type: array
+      summary: query validator msg list
+      tags:
+      - validator
+  /validator/locations:
+    get:
+      consumes:
+      - application/json
+      description: Query validator's locations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.LocationRes'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query validator locations
+      tags:
+      - validator
+  /validator/page:
     get:
       consumes:
       - application/json
       description: Query validator's information
       parameters:
+      - description: sort by conditions, Support database order statement
+        in: query
+        name: order
+        type: string
       - description: Page, default 1
         in: query
         name: page
@@ -2907,5 +2909,5 @@ paths:
             $ref: '#/definitions/service.ErrRes'
       summary: query validator list
       tags:
-      - block
+      - validator
 swagger: "2.0"

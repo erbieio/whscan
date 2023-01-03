@@ -52,7 +52,6 @@ type Stats struct {
 	TotalNFTAmount       string `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
 	TotalSNFTAmount      string `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
 	TotalRecycle         int64  `json:"totalRecycle"`                          //Total number of recycle SNFT
-	FirstBlockTime       int64  `json:"firstBlockTime" gorm:"-"`               //first block unix time
 	AvgBlockTime         int64  `json:"avgBlockTime" gorm:"-"`                 //average block time, ms
 	TotalBlock           int64  `json:"totalBlock" gorm:"-"`                   //Total number of blocks
 	TotalBlackHole       int64  `json:"totalBlackHole" gorm:"-"`               //Total number of BlackHole blocks

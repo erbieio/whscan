@@ -32,6 +32,12 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "sort by conditions, Support database order statement",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
@@ -979,64 +985,6 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/api.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/last_msg": {
-            "get": {
-                "description": "Query validator's last msg list",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "block"
-                ],
-                "summary": "query validator msg list",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/service.Msg"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/locations": {
-            "get": {
-                "description": "Query validator's locations",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "block"
-                ],
-                "summary": "query validator locations",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/service.LocationRes"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
                         }
                     }
                 }
@@ -2171,7 +2119,65 @@ const docTemplate = `{
                 }
             }
         },
-        "/validators": {
+        "/validator/last_msg": {
+            "get": {
+                "description": "Query validator's last msg list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "validator"
+                ],
+                "summary": "query validator msg list",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.Msg"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/validator/locations": {
+            "get": {
+                "description": "Query validator's locations",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "validator"
+                ],
+                "summary": "query validator locations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.LocationRes"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/validator/page": {
             "get": {
                 "description": "Query validator's information",
                 "consumes": [
@@ -2181,10 +2187,16 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "block"
+                    "validator"
                 ],
                 "summary": "query validator list",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "sort by conditions, Support database order statement",
+                        "name": "order",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "Page, default 1",
@@ -2832,10 +2844,6 @@ const docTemplate = `{
                     "description": "chain id",
                     "type": "integer"
                 },
-                "firstBlockTime": {
-                    "description": "first block unix time",
-                    "type": "integer"
-                },
                 "genesisBalance": {
                     "description": "Total amount of coins created",
                     "type": "string"
@@ -3460,10 +3468,6 @@ const docTemplate = `{
                 "proxy": {
                     "description": "proxy address",
                     "type": "string"
-                },
-                "weight": {
-                    "description": "online weight,if it is not 70, it means that it is not online",
-                    "type": "integer"
                 }
             }
         },

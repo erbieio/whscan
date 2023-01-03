@@ -15,10 +15,13 @@ type AccountsRes struct {
 	} `json:"accounts"` //Account list
 }
 
-func FetchAccounts(page, size int) (res AccountsRes, err error) {
-	err = DB.Model(&model.Account{}).Joins("LEFT JOIN validators ON validators.address=accounts.address").
-		Joins("LEFT JOIN exchangers ON exchangers.address=accounts.address").
-		Order("length(balance) DESC,balance DESC").Offset((page - 1) * size).Limit(size).
+func FetchAccounts(page, size int, order string) (res AccountsRes, err error) {
+	db := DB.Model(&model.Account{}).Joins("LEFT JOIN validators ON validators.address=accounts.address").
+		Joins("LEFT JOIN exchangers ON exchangers.address=accounts.address")
+	if order != "" {
+		db = db.Order(order)
+	}
+	err = db.Offset((page - 1) * size).Limit(size).
 		Select("accounts.*,validators.amount AS validator_amount,exchangers.amount AS exchanger_amount").Scan(&res.Accounts).Error
 	// use stats to speed up queries
 	res.Balance = stats.TotalBalance

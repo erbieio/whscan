@@ -13,9 +13,6 @@ func Block(e *gin.Engine) {
 	e.GET("/block/page", pageBlock)
 	e.GET("/block/:number", getBlock)
 	e.GET("/totals", totals)
-	e.GET("/validators", validators)
-	e.GET("/locations", locations)
-	e.GET("/last_msg", lastMsg)
 }
 
 // @Tags        block
@@ -82,67 +79,4 @@ func getBlock(c *gin.Context) {
 // @Router      /totals [get]
 func totals(c *gin.Context) {
 	c.JSON(http.StatusOK, service.GetStats())
-}
-
-// @Tags        block
-// @Summary     query validator list
-// @Description Query validator's information
-// @Accept      json
-// @Produce     json
-// @Param       page      query    string false "Page, default 1"
-// @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} []model.Validator
-// @Failure     400       {object} service.ErrRes
-// @Router      /validators [get]
-func validators(c *gin.Context) {
-	req := struct {
-		Page     *int `form:"page"`
-		PageSize *int `form:"page_size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	res, err := service.FetchValidator(page, size)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, res)
-}
-
-// @Tags        block
-// @Summary     query validator locations
-// @Description Query validator's locations
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} []service.LocationRes
-// @Failure     400 {object} service.ErrRes
-// @Router      /locations [get]
-func locations(c *gin.Context) {
-	res, err := service.FetchLocations()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, res)
-}
-
-// @Tags        block
-// @Summary     query validator msg list
-// @Description Query validator's last msg list
-// @Accept      json
-// @Produce     json
-// @Success     200 {object} []service.Msg
-// @Router      /last_msg [get]
-func lastMsg(c *gin.Context) {
-	c.JSON(http.StatusOK, service.GetLastMsg())
 }

@@ -78,9 +78,6 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Block{}).Find(&stats.Genesis, "number=0").Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Block{}).Where("number=1").Select("timestamp").Scan(&stats.FirstBlockTime).Error; err != nil {
-		return
-	}
 	stats.TotalAccount = int64(len(stats.Balances))
 	totalBalance := new(big.Int)
 	for _, balance := range stats.Balances {
@@ -196,12 +193,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	for _, account := range parsed.CacheAccounts {
 		stats.Balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
 	}
-	if parsed.Number == 1 {
-		stats.FirstBlockTime = int64(parsed.Timestamp)
-	}
-	if parsed.Number > 1 {
-		stats.AvgBlockTime = (int64(parsed.Timestamp) - stats.FirstBlockTime) * 1000 / int64(parsed.Number)
-	}
 	stats.TotalBlock++
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
@@ -253,7 +244,10 @@ func fixStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 
 func freshStats(db *gorm.DB, parsed *model.Parsed) {
 	if stats.Ready {
-		if stats.TotalValidator == 0 || parsed.Number%24 == 0 {
+		if number := parsed.Number; stats.TotalValidator == 0 || number%24 == 0 {
+			if number > 1000 {
+				db.Raw("SELECT (SELECT timestamp FROM blocks WHERE number=?)-(SELECT timestamp FROM blocks WHERE number=?)", number, number-1000).Scan(&stats.AvgBlockTime)
+			}
 			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Exchanger{}).Where("amount!='0'").Count(&stats.TotalExchanger)
 			db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
@@ -262,7 +256,7 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
 			db.Model(&model.Validator{}).Where("amount!='0' AND weight>=10").Count(&stats.TotalValidatorOnline)
 			db.Model(&model.Transaction{}).Where("block_number>?", parsed.Number-10000).Select("COUNT(DISTINCT `from`)").Scan(&stats.ActiveAccount)
-			if stats.Total24HTx == 0 || parsed.Number%720 == 0 {
+			if stats.Total24HTx == 0 || number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)
 				db.Model(&model.Transaction{}).Joins("LEFT JOIN blocks on block_hash = blocks.hash").Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
 				db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HExchangerTx)

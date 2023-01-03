@@ -105,6 +105,35 @@ func updateLastMsg(db *gorm.DB, fileName string) {
 	}
 }
 
+// ValidatorsRes validator paging return parameters
+type ValidatorsRes struct {
+	Total int64             `json:"total"` //The total number of validators
+	Data  []model.Validator `json:"data"`  //validator list
+}
+
+func FetchValidator(page, size int, order string) (res ValidatorsRes, err error) {
+	db := DB.Where("amount!='0'")
+	if order != "" {
+		db = db.Order(order)
+	}
+	err = db.Offset((page - 1) * size).Limit(size).Find(&res.Data).Error
+	res.Total = stats.TotalValidator
+	return
+}
+
+type LocationRes struct {
+	Address   string  `json:"address"`   //account address
+	Proxy     string  `json:"proxy"`     //proxy address
+	Latitude  float64 `json:"latitude"`  //latitude
+	Longitude float64 `json:"longitude"` //longitude
+}
+
+func FetchLocations() (res []*LocationRes, err error) {
+	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`proxy`=`locations`.`address`").
+		Where("`amount`!='0'").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`").Scan(&res).Error
+	return
+}
+
 func GetLastMsg() []*Msg {
 	return lastMsg
 }

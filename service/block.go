@@ -21,22 +21,3 @@ func GetBlock(number string) (b model.Block, err error) {
 	err = DB.Where("number=?", number).First(&b).Error
 	return
 }
-
-func FetchValidator(page, size int) (res []*model.Validator, err error) {
-	err = DB.Where("amount!='0'").Offset((page - 1) * size).Limit(size).Find(&res).Error
-	return
-}
-
-type LocationRes struct {
-	Address   string  `json:"address"`   //account address
-	Proxy     string  `json:"proxy"`     //proxy address
-	Latitude  float64 `json:"latitude"`  //latitude
-	Longitude float64 `json:"longitude"` //longitude
-	Weight    int64   `json:"weight"`    //online weight,if it is not 70, it means that it is not online
-}
-
-func FetchLocations() (res []*LocationRes, err error) {
-	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`proxy`=`locations`.`address`").
-		Where("`amount`!='0'").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`weight`").Scan(&res).Error
-	return
-}
