@@ -2419,6 +2419,14 @@ const docTemplate = `{
                     "description": "create transaction",
                     "type": "string"
                 },
+                "proposers": {
+                    "description": "black hole block proposers address",
+                    "type": "array",
+                    "items": {
+                        "description": "address",
+                        "type": "string"
+                    }
+                },
                 "receiptsRoot": {
                     "description": "create transaction",
                     "type": "string"
@@ -2457,6 +2465,13 @@ const docTemplate = `{
                     "items": {
                         "description": "create transaction",
                         "type": "string"
+                    }
+                },
+                "validators": {
+                    "description": "black hole block validators address",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Penalty"
                     }
                 }
             }
@@ -2788,6 +2803,19 @@ const docTemplate = `{
                 },
                 "tx_type": {
                     "description": "Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction",
+                    "type": "integer"
+                }
+            }
+        },
+        "model.Penalty": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "weight": {
+                    "description": "transaction random number, transaction volume",
                     "type": "integer"
                 }
             }

@@ -127,6 +127,12 @@ definitions:
       parentHash:
         description: create transaction
         type: string
+      proposers:
+        description: black hole block proposers address
+        items:
+          description: address
+          type: string
+        type: array
       receiptsRoot:
         description: create transaction
         type: string
@@ -156,6 +162,11 @@ definitions:
         items:
           description: create transaction
           type: string
+        type: array
+      validators:
+        description: black hole block validators address
+        items:
+          $ref: '#/definitions/model.Penalty'
         type: array
     type: object
   model.Collection:
@@ -406,6 +417,15 @@ definitions:
           pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase,
           17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction,
           20: matching transaction'
+        type: integer
+    type: object
+  model.Penalty:
+    properties:
+      address:
+        description: address
+        type: string
+      weight:
+        description: transaction random number, transaction volume
         type: integer
     type: object
   model.SNFT:

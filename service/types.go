@@ -49,7 +49,7 @@ func snftValue(snft string, count int64) string {
 	b := big.NewInt(count)
 	switch 42 - len(snft) {
 	case 0:
-		return b.Mul(b, big.NewInt(95000000000000000)).Text(10)
+		return b.Mul(b, big.NewInt(30000000000000000)).Text(10)
 	case 1:
 		return b.Mul(b, big.NewInt(143000000000000000)).Text(10)
 	case 2:
@@ -63,7 +63,7 @@ func snftMergeValue(snft string, count int64) string {
 	b := big.NewInt(count)
 	switch 42 - len(snft) {
 	case 1:
-		return b.Mul(b, big.NewInt(48000000000000000)).Text(10)
+		return b.Mul(b, big.NewInt(113000000000000000)).Text(10)
 	case 2:
 		return b.Mul(b, big.NewInt(128000000000000000)).Text(10)
 	default:

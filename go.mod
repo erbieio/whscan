@@ -13,8 +13,8 @@ require (
 	github.com/swaggo/gin-swagger v1.5.3
 	github.com/swaggo/swag v1.8.9
 	golang.org/x/crypto v0.4.0
-	gorm.io/driver/mysql v1.4.4
-	gorm.io/gorm v1.24.2
+	gorm.io/driver/mysql v1.4.5
+	gorm.io/gorm v1.24.3
 )
 
 require (
@@ -30,7 +30,7 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
-	github.com/go-sql-driver/mysql v1.6.0 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect

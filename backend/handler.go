@@ -177,7 +177,9 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 	}
 	parsed.CacheAccounts = make(map[types.Address]*model.Account)
 	for _, address := range modifiedAccounts {
-		if address[:12] != "0x0000000000" && address[:12] != "0x8000000000" {
+		if address == "0x0000000000000000000000000000000000000000" {
+			parsed.CacheAccounts[address] = &model.Account{Address: address, SNFTValue: "0"}
+		} else if address[:12] != "0x0000000000" && address[:12] != "0x8000000000" {
 			parsed.CacheAccounts[address] = &model.Account{Address: address, SNFTValue: "0"}
 		}
 	}
@@ -386,8 +388,25 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 		if err := c.Call(&onlineWeight, "eth_getValidators", wh.Number.Hex()); err != nil {
 			return fmt.Errorf("getWeights() err:%v", err)
 		}
+		wh.ChangeValidators = make([]*model.Validator, 0, len(onlineWeight))
 		for _, weight := range onlineWeight {
 			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: weight.Address, Amount: "0", Weight: weight.Value})
+		}
+
+		if wh.Miner == "0x0000000000000000000000000000000000000000" {
+			wh.Validators = make([]*model.Penalty, 0, len(onlineWeight))
+			for _, weight := range onlineWeight {
+				wh.Validators = append(wh.Validators, &model.Penalty{Address: types.Address(weight.Address), Weight: types.Long(weight.Value)})
+			}
+			var proposers []*struct {
+				Address string
+			}
+			if err := c.Call(&proposers, "eth_getRealParticipantsByNumber", wh.Number.Hex()); err != nil {
+				return fmt.Errorf("getProposers() err:%v", err)
+			}
+			for _, proposer := range proposers {
+				wh.Proposers = append(wh.Proposers, types.Address(proposer.Address))
+			}
 		}
 
 		// wormholes transaction processing

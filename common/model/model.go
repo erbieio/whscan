@@ -114,8 +114,16 @@ type Uncle Header
 // Block information
 type Block struct {
 	Header
-	Uncles           []types.Hash `json:"uncles" gorm:"type:VARCHAR(139);serializer:json"` //Uncle block hash
-	TotalTransaction types.Long   `json:"totalTransaction"`                                //number of transactions
+	Uncles           []types.Hash    `json:"uncles" gorm:"type:VARCHAR(139);serializer:json"` //Uncle block hash
+	TotalTransaction types.Long      `json:"totalTransaction"`                                //number of transactions
+	Validators       []*Penalty      `json:"validators" gorm:"serializer:json"`               //black hole block validators address
+	Proposers        []types.Address `json:"proposers" gorm:"serializer:json"`                //black hole block proposers address
+}
+
+// Penalty black hole block penalty
+type Penalty struct {
+	Address types.Address `json:"address"` //validator address
+	Weight  types.Long    `json:"weight"`  //validator weight
 }
 
 // Account information
