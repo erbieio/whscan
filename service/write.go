@@ -216,7 +216,13 @@ func updateUserSNFT(db *gorm.DB, user, value string, count int64) (err error) {
 	if err = db.Find(&account, "`address`=?", user).Error; err != nil {
 		return
 	}
-	if account.Address != "" {
+	if account.Address == "" {
+		account.Address = types.Address(user)
+		account.Balance = "0"
+		account.SNFTValue = value
+		account.SNFTCount = count
+		err = db.Create(&account).Error
+	} else {
 		account.SNFTValue = BigIntAdd(account.SNFTValue, value)
 		account.SNFTCount += count
 		err = db.Select("snft_count", "snft_value").Updates(&account).Error
