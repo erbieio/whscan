@@ -15,85 +15,78 @@ import (
 )
 
 func SetHead(parsed *model.Parsed) error {
-	var errBlocks []*model.Block
-	if DB.Find(&errBlocks, "number>?", parsed.Number).Error == nil {
-		data, _ := json.Marshal(errBlocks)
-		log.Printf("err block: %s", string(data))
-	}
-	return DB.Transaction(func(tx *gorm.DB) (err error) {
+	return DB.Transaction(func(db *gorm.DB) (err error) {
 		if head := parsed.Number; head >= 0 {
-			if err = tx.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
-				tx.Model(&model.Epoch{}).Select("id").Where("number>?", head),
+			if err = db.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
+				db.Model(&model.Epoch{}).Select("id").Where("number>?", head),
 			).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.Epoch{}, "number>?", head).Error; err != nil {
+			if err = db.Delete(&model.Epoch{}, "number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.Collection{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.Collection{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.Exchanger{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.Exchanger{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Model(&model.Exchanger{}).Where("close_at>?", head).Update("close_at", nil).Error; err != nil {
+			if err = db.Model(&model.Exchanger{}).Where("close_at>?", head).Update("close_at", nil).Error; err != nil {
 				return
 			}
-			hashes := tx.Model(&model.Transaction{}).Select("hash").Where("block_number>?", head)
-			if err = tx.Delete(&model.Account{}, "created_tx IN (?)", hashes).Error; err != nil {
+			hashes := db.Model(&model.Transaction{}).Select("hash").Where("block_number>?", head)
+			if err = db.Delete(&model.Account{}, "created_tx IN (?)", hashes).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.ERC20Transfer{}, "tx_hash IN (?)", hashes).Error; err != nil {
+			if err = db.Delete(&model.ERC20Transfer{}, "tx_hash IN (?)", hashes).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.ERC721Transfer{}, "tx_hash IN (?)", hashes).Error; err != nil {
+			if err = db.Delete(&model.ERC721Transfer{}, "tx_hash IN (?)", hashes).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.ERC1155Transfer{}, "tx_hash IN (?)", hashes).Error; err != nil {
+			if err = db.Delete(&model.ERC1155Transfer{}, "tx_hash IN (?)", hashes).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.InternalTx{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.InternalTx{}, "`tx_hash` IN (?)", hashes).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.EventLog{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.EventLog{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.NFTTx{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.NFTTx{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.NFT{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.NFT{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.SNFT{}, "reward_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.SNFT{}, "reward_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.Reward{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.Reward{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.Transaction{}, "block_number>?", head).Error; err != nil {
+			if err = db.Delete(&model.Transaction{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = tx.Delete(&model.Block{}, "number>?", head).Error; err != nil {
+			if err = db.Delete(&model.Block{}, "number>?", head).Error; err != nil {
 				return
 			}
+			return fixStats(db, parsed)
 		} else {
-			if err = model.ClearTable(tx); err != nil {
+			if err = model.ClearTable(db); err != nil {
 				return
 			}
+			return initStats(db)
 		}
-		return fixStats(tx, parsed)
 	})
 }
 
-func Insert(parsed *model.Parsed) (blocks []types.Hash, err error) {
-	if parsed.Number > 0 {
-		err = DB.Take(&model.Block{}, "number=? AND hash=?", parsed.Number-1, parsed.ParentHash).Error
-		if err == gorm.ErrRecordNotFound {
-			err = DB.Model(&model.Block{}).Order("number DESC").Limit(1000).Pluck("hash", &blocks).Error
+func Insert(parsed *model.Parsed) (head types.Long, err error) {
+	err = DB.Transaction(func(db *gorm.DB) (err error) {
+		err = db.Model(&model.Block{}).Where("`hash`=?", parsed.ParentHash).Select("`number`+1").Scan(&head).Error
+		if err != nil || parsed.Number != head {
 			return
 		}
-	}
-	err = DB.Transaction(func(db *gorm.DB) (err error) {
 		// write block transaction
 		if len(parsed.CacheTxs) > 0 {
 			if err = db.Create(parsed.CacheTxs).Error; err != nil {
@@ -169,6 +162,20 @@ func Insert(parsed *model.Parsed) (blocks []types.Hash, err error) {
 	return
 }
 
+func VerifyHead(parsed *model.Parsed) (pass bool, err error) {
+	err = DB.Model(&model.Block{}).Where("`hash`=? AND `number`=?", parsed.Hash, parsed.Number).Select("COUNT(*)=1").Scan(&pass).Error
+	if pass {
+		err = DB.Select("address").Find(&parsed.CacheAccounts, "`number`>?", parsed.Number).Error
+	}
+	var errBlock model.Block
+	if DB.Find(&errBlock, "`number`=?", parsed.Number).Error == nil {
+		errB, _ := json.Marshal(errBlock.Header)
+		okB, _ := json.Marshal(parsed.Header)
+		log.Printf("err block: %+v expect: %+v", string(errB), string(okB))
+	}
+	return
+}
+
 // injectSNFT official batch injection of SNFT
 func injectSNFT(tx *gorm.DB, wh *model.Parsed) (err error) {
 	if epoch := wh.Epoch; epoch != nil {
@@ -211,7 +218,7 @@ func injectSNFT(tx *gorm.DB, wh *model.Parsed) (err error) {
 	return
 }
 
-func updateUserSNFT(db *gorm.DB, user, value string, count int64) (err error) {
+func updateUserSNFT(db *gorm.DB, number types.Long, user, value string, count int64) (err error) {
 	var account model.Account
 	if err = db.Find(&account, "`address`=?", user).Error; err != nil {
 		return
@@ -219,13 +226,15 @@ func updateUserSNFT(db *gorm.DB, user, value string, count int64) (err error) {
 	if account.Address == "" {
 		account.Address = types.Address(user)
 		account.Balance = "0"
+		account.Number = number
 		account.SNFTValue = value
 		account.SNFTCount = count
 		err = db.Create(&account).Error
 	} else {
+		account.Number = number
 		account.SNFTValue = BigIntAdd(account.SNFTValue, value)
 		account.SNFTCount += count
-		err = db.Select("snft_count", "snft_value").Updates(&account).Error
+		err = db.Select("snft_count", "snft_value", "number").Updates(&account).Error
 	}
 	return
 }
@@ -260,7 +269,7 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 					return
 				}
 			}
-			if err = updateUserSNFT(db, reward.Address, value, 1); err != nil {
+			if err = updateUserSNFT(db, wh.Number, reward.Address, value, 1); err != nil {
 				return
 			}
 		} else {
@@ -326,23 +335,21 @@ func autoMerge(db *gorm.DB, wh *model.Parsed, addr string) (err error) {
 		if err != nil {
 			return
 		}
-		err = db.Model(&model.SNFT{}).Where("LEFT(`address`,?)=?", len(addr), addr).Update("remove", true).Error
-		if err != nil {
+		result := db.Model(&model.SNFT{}).Where("LEFT(`address`,?)=? AND remove=false", len(addr), addr).Update("remove", true)
+		if err = result.Error; err != nil {
 			return
 		}
 		if err = db.Create(snft).Error; err != nil {
 			return
 		}
 		var account model.Account
-		if err = db.Find(&account, "`address`=?", snft.Owner).Error; err != nil {
+		if err = db.Take(&account, "`address`=?", snft.Owner).Error; err != nil {
 			return
 		}
-		if account.Address != "" {
-			account.SNFTCount -= snft.Pieces - 1
-			account.SNFTValue = BigIntAdd(account.SNFTValue, snftMergeValue(snft.Address, snft.Pieces))
-			if err = db.Select("snft_count", "snft_value").Updates(&account).Error; err != nil {
-				return
-			}
+		account.SNFTCount -= result.RowsAffected - 1
+		account.SNFTValue = BigIntAdd(account.SNFTValue, snftMergeValue(snft.Address, snft.Pieces))
+		if err = db.Select("snft_count", "snft_value").Updates(&account).Error; err != nil {
+			return
 		}
 	}
 	return
@@ -363,7 +370,7 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 			if err = db.Model(&model.SNFT{}).Where("address=?", snft.Address).Update("remove", true).Error; err != nil {
 				return
 			}
-			if err = updateUserSNFT(db, snft.Owner, "-"+tx.Price, -1); err != nil {
+			if err = updateUserSNFT(db, wh.Number, snft.Owner, "-"+tx.Price, -1); err != nil {
 				return
 			}
 		} else {
@@ -404,10 +411,10 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				}
 				if tx.From != tx.To {
 					value := snftValue(snft.Address, snft.Pieces)
-					if err = updateUserSNFT(db, tx.From, "-"+value, -1); err != nil {
+					if err = updateUserSNFT(db, wh.Number, tx.From, "-"+value, -1); err != nil {
 						return
 					}
-					if err = updateUserSNFT(db, tx.To, value, 1); err != nil {
+					if err = updateUserSNFT(db, wh.Number, tx.To, value, 1); err != nil {
 						return
 					}
 				}

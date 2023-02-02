@@ -31,6 +31,7 @@ func FetchAccounts(page, size int, order string) (res AccountsRes, err error) {
 
 type AccountRes struct {
 	model.Account
+	Weight          int64  `json:"weight"`          //online weight,if it is not 70, it means that it is not online
 	NFTCount        int64  `json:"nftCount"`        // hold NFT number
 	ValidatorAmount string `json:"validatorAmount"` // validator pledge amount
 	ExchangerAmount string `json:"exchangerAmount"` // exchanger pledge amount
@@ -39,7 +40,8 @@ type AccountRes struct {
 }
 
 func GetAccount(addr string) (res AccountRes, err error) {
-	s := "*, (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
+	s := "*, (SELECT weight FROM validators WHERE address=accounts.address)"
+	s += ", (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
 	s += ", IFNULL((SELECT amount FROM validators WHERE address=accounts.address),'0') AS validator_amount"
 	s += ", IFNULL((SELECT amount FROM exchangers WHERE address=accounts.address),'0') AS exchanger_amount"
 	s += ", (SELECT COUNT(amount) FROM rewards WHERE address=accounts.address) AS reward_coin_count"

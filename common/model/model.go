@@ -132,6 +132,7 @@ type Account struct {
 	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`   //The total amount of coins in the chain
 	Nonce     types.Long          `json:"nonce"`                                    //transaction random number, transaction volume
 	Code      *string             `json:"code"`                                     //bytecode
+	Number    types.Long          `json:"number" gorm:"index"`                      //last update block number
 	Name      *string             `json:"name,omitempty" gorm:"type:VARCHAR(66)"`   //name
 	Symbol    *string             `json:"symbol,omitempty" gorm:"type:VARCHAR(66)"` //symbol
 	Type      *types.ContractType `json:"type,omitempty"`                           //contract types, ERC20, ERC721, ERC1155
@@ -143,21 +144,22 @@ type Account struct {
 
 // Transaction information
 type Transaction struct {
-	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`       //Block Hash
-	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`             //block number
-	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`      //Send address
-	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`        //Receive address
-	Input             string         `json:"input"`                                //Additional input data, contract call encoded data
-	Value             types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`       //Amount, unit wei
-	Nonce             types.Long     `json:"nonce"`                                //Random number, the number of transactions initiated by the account
-	Gas               types.Long     `json:"gas"`                                  // fuel
-	GasPrice          types.Long     `json:"gasPrice"`                             //Gas price
-	Hash              types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"` //Hash
-	Status            *types.Long    `json:"status,omitempty"`                     //Status, 1: success; 0: failure
-	CumulativeGasUsed types.Long     `json:"cumulativeGasUsed"`                    //Cumulative gas consumption
-	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"` //The created contract address
-	GasUsed           types.Long     `json:"gasUsed"`                              //Gas consumption
-	TxIndex           types.Long     `json:"transactionIndex" gorm:"index"`        //The serial number in the block
+	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
+	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`                //block number
+	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
+	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
+	Input             string         `json:"input"`                                   //Additional input data, contract call encoded data
+	Value             types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //Amount, unit wei
+	Nonce             types.Long     `json:"nonce"`                                   //Random number, the number of transactions initiated by the account
+	Gas               types.Long     `json:"gas"`                                     //fuel
+	GasPrice          types.Long     `json:"gasPrice"`                                //Gas price
+	Hash              types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //Hash
+	Status            *types.Long    `json:"status,omitempty"`                        //Status, 1: success; 0: failure
+	CumulativeGasUsed types.Long     `json:"cumulativeGasUsed"`                       //Cumulative gas consumption
+	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"`    //The created contract address
+	GasUsed           types.Long     `json:"gasUsed"`                                 //Gas consumption
+	TxIndex           types.Long     `json:"transactionIndex" gorm:"index"`           //The serial number in the block
+	Error             *string        `json:"error,omitempty" gorm:"type:VARCHAR(66)"` //exec error
 }
 
 // EventLog transaction log
@@ -173,14 +175,13 @@ type EventLog struct {
 
 // InternalTx internal transaction
 type InternalTx struct {
-	TxHash      types.Hash     `json:"txHash" gorm:"type:CHAR(66);index"` //The transaction
-	BlockNumber types.Long     `json:"blockNumber" gorm:"index"`          //block number
-	Depth       types.Long     `json:"depth"`                             //call depth
-	Op          string         `json:"op" gorm:"type:VARCHAR(16)"`        //Operation
-	From        *types.Address `json:"from" gorm:"type:CHAR(42);index"`   //Originating address
-	To          *types.Address `json:"to" gorm:"type:CHAR(42);index"`     //Receive address
-	Value       types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`    //Amount, unit wei
-	GasLimit    types.Long     `json:"gasLimit"`                          //Gas limit
+	TxHash types.Hash    `json:"txHash" gorm:"type:CHAR(66);index"` //The transaction
+	Index  types.Long    `json:"index" gorm:"not null"`             //call index
+	Op     string        `json:"op" gorm:"type:VARCHAR(16)"`        //Operation
+	From   types.Address `json:"from" gorm:"type:CHAR(42);index"`   //Originating address
+	To     types.Address `json:"to" gorm:"type:CHAR(42);index"`     //Receive address
+	Value  types.BigInt  `json:"value" gorm:"type:VARCHAR(128)"`    //Amount, unit wei
+	Gas    types.Long    `json:"gas"`                               //Gas
 }
 
 // ERC20Transfer ERC20 contract transfer event
@@ -355,7 +356,7 @@ type Parsed struct {
 	CacheInternalTxs  []*InternalTx
 	CacheUncles       []*Uncle
 	CacheTransferLogs []interface{}
-	CacheAccounts     map[types.Address]*Account
+	CacheAccounts     []*Account
 	CacheLogs         []*EventLog
 
 	// wormholes, which need to be inserted into the database by priority (later data may query previous data)

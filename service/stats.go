@@ -226,17 +226,23 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 }
 
 func fixStats(db *gorm.DB, parsed *model.Parsed) (err error) {
-	for address := range stats.Balances {
-		if account := parsed.CacheAccounts[address]; account != nil {
-			if err = db.Select("balance", "nonce").Updates(account).Error; err != nil {
+	for _, account := range parsed.CacheAccounts {
+		if account.Balance == "0x0" && account.Nonce == 0 && account.SNFTValue == "0" {
+			if err = db.Delete(&model.Account{}, "`address`=?", account.Address).Error; err != nil {
+				return
+			}
+			delete(stats.Balances, account.Address)
+		} else {
+			if err = db.Select("balance", "nonce", "number", "snft_value").Updates(account).Error; err != nil {
+				return
+			}
+			if err = db.Model(&model.Account{}).Where("address=?", account.Address).Update(
+				"snft_count",
+				db.Model(&model.SNFT{}).Where("owner=? AND remove=false", account.Address).Select("COUNT(*)"),
+			).Error; err != nil {
 				return
 			}
 			stats.Balances[account.Address], _ = new(big.Int).SetString(string(account.Balance), 0)
-		} else {
-			if err = db.Delete(&model.Account{}, "address=?", address).Error; err != nil {
-				return
-			}
-			delete(stats.Balances, address)
 		}
 	}
 	return loadStats(db)

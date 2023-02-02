@@ -2651,19 +2651,15 @@ const docTemplate = `{
         "model.InternalTx": {
             "type": "object",
             "properties": {
-                "blockNumber": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "depth": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
                 "from": {
                     "description": "address",
                     "type": "string"
                 },
-                "gasLimit": {
+                "gas": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "index": {
                     "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
@@ -3091,6 +3087,10 @@ const docTemplate = `{
                     "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
+                "number": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
                 "rewardCoinCount": {
                     "description": "Number of times to get coin rewards, 0.1ERB once",
                     "type": "integer"
@@ -3118,6 +3118,10 @@ const docTemplate = `{
                 "validatorAmount": {
                     "description": "validator pledge amount",
                     "type": "string"
+                },
+                "weight": {
+                    "description": "online weight,if it is not 70, it means that it is not online",
+                    "type": "integer"
                 }
             }
         },
@@ -3159,6 +3163,10 @@ const docTemplate = `{
                                 "type": "string"
                             },
                             "nonce": {
+                                "description": "transaction random number, transaction volume",
+                                "type": "integer"
+                            },
+                            "number": {
                                 "description": "transaction random number, transaction volume",
                                 "type": "integer"
                             },
@@ -4170,6 +4178,10 @@ const docTemplate = `{
                 "cumulativeGasUsed": {
                     "description": "transaction random number, transaction volume",
                     "type": "integer"
+                },
+                "error": {
+                    "description": "exec error",
+                    "type": "string"
                 },
                 "from": {
                     "description": "address",
