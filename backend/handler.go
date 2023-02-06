@@ -225,21 +225,19 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 		if pass, err = service.VerifyHead(parsed); err != nil {
 			return
 		} else if pass {
-			if len(parsed.CacheAccounts) > 0 {
-				for _, account := range parsed.CacheAccounts {
-					info := struct {
-						Nonce      types.Long `json:"Nonce"`
-						Balance    *big.Int   `json:"Balance"`
-						VoteWeight *big.Int   `json:"VoteWeight"`
-					}{}
-					if err = c.Call(&info, "eth_getAccountInfo", account.Address, number); err != nil {
-						return
-					}
-					account.Number = parsed.Number
-					account.Nonce = info.Nonce
-					account.Balance = types.BigInt(info.Balance.String())
-					account.SNFTValue = info.VoteWeight.String()
+			for _, account := range parsed.CacheAccounts {
+				info := struct {
+					Nonce      types.Long `json:"Nonce"`
+					Balance    *big.Int   `json:"Balance"`
+					VoteWeight *big.Int   `json:"VoteWeight"`
+				}{}
+				if err = c.Call(&info, "eth_getAccountInfo", account.Address, number); err != nil {
+					return
 				}
+				account.Number = parsed.Number
+				account.Nonce = info.Nonce
+				account.Balance = types.BigInt(info.Balance.String())
+				account.SNFTValue = info.VoteWeight.String()
 			}
 			break
 		}
@@ -271,15 +269,15 @@ func check(c *node.Client, ctx context.Context) (stats *model.Stats, err error) 
 }
 
 // decodeWH Imports the underlying NFT transaction of the SNFT meta information distributed by the block
-func decodeWH(c *node.Client, wh *model.Parsed) error {
-	if wh.Number > 0 {
+func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
+	if number := wh.Number.Hex(); wh.Number > 0 {
 		// Miner reward SNFT processing
 		var rewards []*struct {
 			Address      string   `json:"Address"`
 			NFTAddress   *string  `json:"NftAddress"`
 			RewardAmount *big.Int `json:"RewardAmount"`
 		}
-		err := c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", wh.Number.Hex(), true)
+		err = c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", number, true)
 		if err != nil {
 			return fmt.Errorf("GetReward() err:%v", err)
 		}
@@ -303,36 +301,31 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			if rewards[i].RewardAmount == nil {
 				// Note that when NFTAddress is zero address error
 				wh.Rewards[i].SNFT = rewards[i].NFTAddress
-				nftAddr := *rewards[i].NFTAddress
 				// Parse the new phase ID
-				addr, _ := new(big.Int).SetString(nftAddr[3:], 16)
-				if addr.Mod(addr, big.NewInt(4096)).Uint64() == 0 {
-					epochId := nftAddr[:39]
+				if addr := *rewards[i].NFTAddress; addr[39:] == "000" {
 					// Write the current information, once every 4096 SNFT rewards
-					if len(epochId) > 0 {
-						epoch := struct {
-							Dir        string   `json:"dir"`
-							Royalty    int64    `json:"royalty"`
-							Creator    string   `json:"creator"`
-							Address    string   `json:"address"` //Exchange address
-							VoteWeight *big.Int `json:"vote_weight"`
-						}{}
-						if err = c.Call(&epoch, "eth_getCurrentNFTInfo", wh.Number.Hex()); err != nil {
-							return fmt.Errorf("GetEpoch() err:%v", err)
-						}
-						if len(epoch.Dir) == 52 {
-							epoch.Dir = epoch.Dir + "/"
-						}
-						wh.Epoch = &model.Epoch{
-							ID:           epochId,
-							Creator:      strings.ToLower(epoch.Creator),
-							RoyaltyRatio: epoch.Royalty,
-							Dir:          epoch.Dir,
-							Exchanger:    epoch.Address,
-							VoteWeight:   epoch.VoteWeight.Text(10),
-							Number:       int64(wh.Number),
-							Timestamp:    int64(wh.Timestamp),
-						}
+					epoch := struct {
+						Dir        string   `json:"dir"`
+						Royalty    int64    `json:"royalty"`
+						Creator    string   `json:"creator"`
+						Address    string   `json:"address"` //Exchange address
+						VoteWeight *big.Int `json:"vote_weight"`
+					}{}
+					if err = c.Call(&epoch, "eth_getCurrentNFTInfo", number); err != nil {
+						return fmt.Errorf("GetEpoch() err:%v", err)
+					}
+					if len(epoch.Dir) == 52 {
+						epoch.Dir = epoch.Dir + "/"
+					}
+					wh.Epoch = &model.Epoch{
+						ID:           addr[:39],
+						Creator:      strings.ToLower(epoch.Creator),
+						RoyaltyRatio: epoch.Royalty,
+						Dir:          epoch.Dir,
+						Exchanger:    epoch.Address,
+						VoteWeight:   epoch.VoteWeight.Text(10),
+						Number:       int64(wh.Number),
+						Timestamp:    int64(wh.Timestamp),
 					}
 				}
 			} else {
@@ -345,7 +338,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			Address string `json:"address"`
 			Value   int64  `json:"value"`
 		}
-		if err := c.Call(&onlineWeight, "eth_getValidators", wh.Number.Hex()); err != nil {
+		if err = c.Call(&onlineWeight, "eth_getValidators", number); err != nil {
 			return fmt.Errorf("getWeights() err:%v", err)
 		}
 		wh.ChangeValidators = make([]*model.Validator, 0, len(onlineWeight))
@@ -361,7 +354,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			var proposers []*struct {
 				Address string
 			}
-			if err := c.Call(&proposers, "eth_getRealParticipantsByNumber", wh.Number.Hex()); err != nil {
+			if err = c.Call(&proposers, "eth_getRealParticipantsByNumber", number); err != nil {
 				return fmt.Errorf("getProposers() err:%v", err)
 			}
 			for _, proposer := range proposers {
@@ -376,6 +369,58 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 				return err
 			}
 		}
+
+		// wormholes auto merge snft
+		for _, eventLog := range wh.CacheLogs {
+			if len(eventLog.Topics) == 3 && len(eventLog.Data) == 66 {
+				if eventLog.Topics[0] == "0x2b2711f6ad8adbb2fc8751c8400b9c6ebdaf9ea371995641808a7c692d89d46a" {
+					pieces, _ := strconv.ParseInt(eventLog.Data[62:], 16, 32)
+					if pieces > 0 {
+						addr := string(eventLog.Topics[1][27:])
+						for i := 0; i < 3; i++ {
+							if addr[i] == '8' {
+								wh.Mergers = append(wh.Mergers, &model.SNFT{
+									Address:      "0x" + addr[i:],
+									TxAmount:     "0",
+									RewardAt:     int64(wh.Timestamp),
+									RewardNumber: int64(wh.Number),
+									Owner:        "0x" + string(eventLog.Topics[2][26:]),
+									Pieces:       pieces,
+								})
+							}
+						}
+					}
+				}
+			}
+		}
+		for _, reward := range wh.Rewards {
+			if reward.SNFT != nil && (*reward.SNFT)[41] == 'f' {
+				addr := (*reward.SNFT)[:41] + "0"
+				for i := 0; i < 3; i++ {
+					info := struct {
+						MergeLevel  int    `json:"MergeLevel"`
+						MergeNumber int64  `json:"MergeNumber"`
+						Owner       string `json:"Owner"`
+					}{}
+					if err = c.Call(&info, "eth_getAccountInfo", addr, number); err != nil {
+						return
+					}
+					if info.MergeLevel > i {
+						wh.Mergers = append(wh.Mergers, &model.SNFT{
+							Address:      addr[:41-i],
+							TxAmount:     "0",
+							RewardAt:     int64(wh.Timestamp),
+							RewardNumber: int64(wh.Number),
+							Owner:        info.Owner,
+							Pieces:       info.MergeNumber,
+						})
+						addr = addr[:40-i] + "0" + addr[41+i:]
+					} else {
+						break
+					}
+				}
+			}
+		}
 	} else {
 		info := struct {
 			ExchangerBalance *big.Int `json:"ExchangerBalance"`
@@ -384,8 +429,8 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			ExchangerURL     string   `json:"ExchangerURL"`
 		}{}
 		for _, account := range wh.CacheAccounts {
-			if err := c.Call(&info, "eth_getAccountInfo", account.Address, "0x0"); err != nil {
-				return err
+			if err = c.Call(&info, "eth_getAccountInfo", account.Address, "0x0"); err != nil {
+				return
 			}
 			if balance := info.ExchangerBalance.Text(10); balance != "0" {
 				wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
@@ -407,8 +452,8 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 				Proxy   string   `json:"Proxy"`
 			} `json:"Validators"`
 		}{}
-		if err := c.Call(&result, "eth_getValidator", "0x0"); err != nil {
-			return err
+		if err = c.Call(&result, "eth_getValidator", "0x0"); err != nil {
+			return
 		}
 		for _, validator := range result.Validators {
 			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{
@@ -418,7 +463,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) error {
 			})
 		}
 	}
-	return nil
+	return
 }
 
 // decodeWHTx parses the special transaction of the wormholes blockchain

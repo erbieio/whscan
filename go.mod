@@ -1,6 +1,6 @@
 module server
 
-go 1.19
+go 1.20
 
 require (
 	github.com/INFURA/go-ethlibs v0.0.0-20220727233241-fb9d65fce000
@@ -14,7 +14,7 @@ require (
 	github.com/swaggo/swag v1.8.10
 	golang.org/x/crypto v0.5.0
 	gorm.io/driver/mysql v1.4.5
-	gorm.io/gorm v1.24.3
+	gorm.io/gorm v1.24.5
 )
 
 require (

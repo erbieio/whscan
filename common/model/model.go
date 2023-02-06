@@ -364,6 +364,7 @@ type Parsed struct {
 	NFTs             []*NFT       //Newly created NFT
 	NFTTxs           []*NFTTx     //NFT transaction record, transfer, recycle, pledge
 	Rewards          []*Reward    //reward record
+	Mergers          []*SNFT      //merge snft
 	ChangeExchangers []*Exchanger //modify the exchanger, including opening, closing, staking and other operations
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
 }
