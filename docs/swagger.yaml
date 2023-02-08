@@ -2097,6 +2097,36 @@ paths:
       summary: Query the list of exchanges
       tags:
       - Exchange
+  /exec_sql:
+    get:
+      consumes:
+      - application/json
+      description: execute sql statement and return the result, only read
+      parameters:
+      - description: admin key
+        in: query
+        name: key
+        type: string
+      - description: sql statement
+        in: query
+        name: sql
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: exec sql statement
+      tags:
+      - other interfaces
   /extra/checkAuth:
     get:
       consumes:

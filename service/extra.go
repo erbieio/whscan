@@ -1,9 +1,11 @@
 package service
 
 import (
+	"database/sql"
 	"math/big"
 	"strconv"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"server/common/model"
 	"server/conf"
@@ -56,5 +58,12 @@ func SaveSubscription(email string) error {
 
 func FetchSubscriptions(page, size int) (res []model.Subscription, err error) {
 	err = DB.Offset((page - 1) * size).Limit(size).Find(&res).Error
+	return
+}
+
+func ExecSql(sqlStr string) (result []map[string]any, err error) {
+	err = DB.Transaction(func(db *gorm.DB) error {
+		return db.Raw(sqlStr).Scan(&result).Error
+	}, &sql.TxOptions{ReadOnly: true})
 	return
 }

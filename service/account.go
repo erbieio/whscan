@@ -40,7 +40,7 @@ type AccountRes struct {
 }
 
 func GetAccount(addr string) (res AccountRes, err error) {
-	s := "*, (SELECT weight FROM validators WHERE address=accounts.address)"
+	s := "*, (SELECT weight FROM validators WHERE address=accounts.address) AS weight"
 	s += ", (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
 	s += ", IFNULL((SELECT amount FROM validators WHERE address=accounts.address),'0') AS validator_amount"
 	s += ", IFNULL((SELECT amount FROM exchangers WHERE address=accounts.address),'0') AS exchanger_amount"

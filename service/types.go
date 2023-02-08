@@ -3,8 +3,10 @@ package service
 import (
 	"encoding/json"
 	"io"
+	"math"
 	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"server/conf"
@@ -45,30 +47,34 @@ func TxFee(price string, ratio int64) *string {
 	return &fee
 }
 
-func snftValue(snft string, count int64) string {
-	b := big.NewInt(count)
-	switch 42 - len(snft) {
-	case 0:
-		return b.Mul(b, big.NewInt(30000000000000000)).Text(10)
-	case 1:
-		return b.Mul(b, big.NewInt(143000000000000000)).Text(10)
-	case 2:
-		return b.Mul(b, big.NewInt(271000000000000000)).Text(10)
-	default:
-		return b.Mul(b, big.NewInt(650000000000000000)).Text(10)
-	}
+var LevelValues = []*big.Float{
+	big.NewFloat(30000000000000000),
+	big.NewFloat(143000000000000000),
+	big.NewFloat(271000000000000000),
+	big.NewFloat(650000000000000000),
 }
 
-func snftMergeValue(snft string, count int64) string {
-	b := big.NewInt(count)
-	switch 42 - len(snft) {
-	case 1:
-		return b.Mul(b, big.NewInt(113000000000000000)).Text(10)
-	case 2:
-		return b.Mul(b, big.NewInt(128000000000000000)).Text(10)
-	default:
-		return b.Mul(b, big.NewInt(379000000000000000)).Text(10)
+func _value(hexEpoch string, level int, pieces int64) *big.Int {
+	epoch, err := strconv.ParseInt(hexEpoch, 16, 64)
+	if err != nil {
+		panic(err)
 	}
+	value := new(big.Float).Mul(LevelValues[level], big.NewFloat(float64(pieces)))
+	if year := epoch / 6160; year > 0 {
+		value.Mul(value, big.NewFloat(math.Pow(0.88, float64(year))))
+	}
+	result, _ := value.Int(nil)
+	return result
+}
+
+func snftValue(snft string, pieces int64) string {
+	return _value(snft[3:39], 42-len(snft), pieces).Text(10)
+}
+
+func snftMergeValue(snft string, pieces int64) string {
+	value := _value(snft[3:39], 42-len(snft), pieces)
+	_value := _value(snft[3:39], 41-len(snft), pieces)
+	return value.Sub(value, _value).Text(10)
 }
 
 // NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored

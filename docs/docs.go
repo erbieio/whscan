@@ -952,6 +952,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/exec_sql": {
+            "get": {
+                "description": "execute sql statement and return the result, only read",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "other interfaces"
+                ],
+                "summary": "exec sql statement",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "admin key",
+                        "name": "key",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sql statement",
+                        "name": "sql",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/extra/checkAuth": {
             "get": {
                 "description": "query exchange status",
