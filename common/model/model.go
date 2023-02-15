@@ -29,7 +29,6 @@ var Tables = []interface{}{
 	&Reward{},
 	&Validator{},
 	&Location{},
-	&Subscription{},
 }
 
 func Migrate(db *gorm.DB) error {
@@ -342,11 +341,6 @@ type Location struct {
 	IP        string  `json:"ip" gorm:"type:VARCHAR(15)"`              //account ip
 	Latitude  float64 `json:"latitude"`                                //latitude
 	Longitude float64 `json:"longitude"`                               //longitude
-}
-
-// Subscription information
-type Subscription struct {
-	Email string `json:"email" gorm:"type:VARCHAR(66);primaryKey"` //Email
 }
 
 // Parsed block parsing result

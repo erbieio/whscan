@@ -3,7 +3,7 @@ module server
 go 1.20
 
 require (
-	github.com/INFURA/go-ethlibs v0.0.0-20220727233241-fb9d65fce000
+	github.com/INFURA/go-ethlibs v0.0.0-20230210163729-fc6ca4235802
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-gonic/gin v1.8.2
@@ -12,8 +12,8 @@ require (
 	github.com/swaggo/files v1.0.0
 	github.com/swaggo/gin-swagger v1.5.3
 	github.com/swaggo/swag v1.8.10
-	golang.org/x/crypto v0.5.0
-	gorm.io/driver/mysql v1.4.5
+	golang.org/x/crypto v0.6.0
+	gorm.io/driver/mysql v1.4.6
 	gorm.io/gorm v1.24.5
 )
 
@@ -46,10 +46,10 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/net v0.6.0 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

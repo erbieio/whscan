@@ -1843,87 +1843,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/subscription": {
-            "get": {
-                "description": "Query the list of subscription mailboxes",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "other interfaces"
-                ],
-                "summary": "Query the list of subscription mailboxes",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Page, default 1",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page size, default 10",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Subscription"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Enter the email address to receive the latest event notifications",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "other interfaces"
-                ],
-                "summary": "subscribe email",
-                "parameters": [
-                    {
-                        "description": "Mailbox",
-                        "name": "_",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.Subscribe"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
         "/totals": {
             "get": {
                 "description": "Query the total number of blocks, transactions, accounts, etc.",
@@ -2357,14 +2276,6 @@ const docTemplate = `{
                     "$ref": "#/definitions/service.Transaction"
                 },
                 "msg": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.Subscribe": {
-            "type": "object",
-            "properties": {
-                "email": {
                     "type": "string"
                 }
             }
@@ -3049,15 +2960,6 @@ const docTemplate = `{
                 "totalWormholesTx": {
                     "description": "Total number of  wormholes transactions",
                     "type": "integer"
-                }
-            }
-        },
-        "model.Subscription": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "description": "Email",
-                    "type": "string"
                 }
             }
         },
