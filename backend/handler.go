@@ -461,6 +461,11 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				Amount:  validator.Balance.Text(10),
 				Proxy:   validator.Proxy,
 			})
+			wh.Pledges = append(wh.Pledges, &model.Pledge{
+				Address: validator.Addr,
+				Type:    9,
+				Amount:  validator.Balance.Text(10),
+			})
 		}
 	}
 	return
@@ -580,6 +585,13 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			validator.Proxy = w.ProxyAddress
 		}
 		wh.ChangeValidators = append(wh.ChangeValidators, validator)
+		wh.Pledges = append(wh.Pledges, &model.Pledge{
+			Address:   from,
+			Type:      int64(w.Type),
+			Amount:    value,
+			Number:    blockNumber,
+			Timestamp: 0,
+		})
 
 	case 11: //Open the exchange
 		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{

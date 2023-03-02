@@ -450,6 +450,9 @@ definitions:
     type: object
   model.Stats:
     properties:
+      APR:
+        description: Expect annual interest rates
+        type: number
       activeAccount:
         description: The number of active account
         type: integer
@@ -588,6 +591,9 @@ definitions:
     type: object
   service.AccountRes:
     properties:
+      APR:
+        description: historical annualized interest rate
+        type: number
       address:
         description: address
         type: string

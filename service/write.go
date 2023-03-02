@@ -90,6 +90,9 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		if err = saveMerge(db, parsed); err != nil {
 			return
 		}
+		if err = savePledge(db, parsed); err != nil {
+			return
+		}
 
 		// update the query stats
 		return updateStats(db, parsed)
@@ -254,6 +257,19 @@ func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 		if err = updateUserSNFT(db, wh.Number, snft.Owner, snftMergeValue(snft.Address, snft.Pieces), 1-result.RowsAffected); err != nil {
 			return
 		}
+	}
+	return
+}
+
+func savePledge(db *gorm.DB, wh *model.Parsed) (err error) {
+	if wh.Number == 1 {
+		err = db.Model(&model.Pledge{}).Where("timestamp=0").Update("timestamp", wh.Timestamp).Error
+		if err != nil {
+			return
+		}
+	}
+	if len(wh.Pledges) > 0 {
+		err = db.Create(wh.Pledges).Error
 	}
 	return
 }

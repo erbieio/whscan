@@ -77,6 +77,16 @@ func snftMergeValue(snft string, pieces int64) string {
 	return value.Sub(value, _value).Text(10)
 }
 
+func apr(rewardSNFT int64, totalPledge string) float64 {
+	reward := big.NewFloat(12 * 60 * 24 * 365 * 0.77)
+	pledge, _ := new(big.Float).SetString(totalPledge[:len(totalPledge)-18])
+	if year := rewardSNFT / 4096 / 6160; year > 0 {
+		reward.Mul(reward, big.NewFloat(math.Pow(0.88, float64(year))))
+	}
+	result, _ := reward.Quo(reward, pledge).Float64()
+	return result
+}
+
 // NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored
 type NFTMeta struct {
 	Name                 string `json:"name"`                  //name

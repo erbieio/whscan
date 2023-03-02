@@ -2813,6 +2813,10 @@ const docTemplate = `{
         "model.Stats": {
             "type": "object",
             "properties": {
+                "APR": {
+                    "description": "Expect annual interest rates",
+                    "type": "number"
+                },
                 "activeAccount": {
                     "description": "The number of active account",
                     "type": "integer"
@@ -2999,6 +3003,10 @@ const docTemplate = `{
         "service.AccountRes": {
             "type": "object",
             "properties": {
+                "APR": {
+                    "description": "historical annualized interest rate",
+                    "type": "number"
+                },
                 "address": {
                     "description": "address",
                     "type": "string"
