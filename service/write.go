@@ -183,9 +183,61 @@ func SetHead(parsed *model.Parsed) error {
 }
 
 // injectSNFT official batch injection of SNFT
-func injectSNFT(tx *gorm.DB, wh *model.Parsed) (err error) {
+func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 	if epoch := wh.Epoch; epoch != nil {
-		if err = tx.Create(epoch).Error; err != nil {
+		// full txHash, txType and timestamp
+		var tx *struct {
+			Input string     `json:"input"`
+			Hash  types.Hash `json:"hash" gorm:"type:CHAR(66);primaryKey"`
+		}
+		err = db.Model(&Transaction{}).Where("block_number>? AND block_number<=? AND status=1", epoch.Number-1024, epoch.Number).
+			Where("LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3233'").
+			Or("LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3234'").
+			Order("block_number DESC").Limit(1).Scan(&tx).Error
+		if err != nil {
+			return
+		}
+		if tx != nil {
+			epoch.TxHash = (*string)(&tx.Hash)
+			epoch.TxType = new(int64)
+			*epoch.TxType = -28 + int64(tx.Input[75])
+		}
+		err = db.Model(&Block{}).Where("number=?", epoch.Number).Select("timestamp").Scan(&epoch.Timestamp).Error
+		if err != nil {
+			return
+		}
+
+		// full weightAmount and update creator
+		creator := model.Creator{}
+		err = db.Find(&creator, "address=?", epoch.Creator).Error
+		if err != nil {
+			return
+		}
+		if creator.Address != "" {
+			epoch.WeightAmount = epoch.Number - creator.LastNumber
+			creator.LastNumber = epoch.Number
+			creator.LastTime = epoch.Timestamp
+			creator.LastEpoch = epoch.ID
+			creator.Count++
+		} else {
+			creator.Address = epoch.Creator
+			creator.Number = epoch.Number
+			creator.Timestamp = epoch.Timestamp
+			creator.LastEpoch = epoch.ID
+			creator.LastNumber = epoch.Number
+			creator.LastTime = epoch.Timestamp
+			creator.Count = 1
+			creator.Reward = "0"
+			creator.Profit = "0"
+		}
+		if epoch.Creator == epoch.Voter {
+			creator.Reward = BigIntAdd(creator.Reward, epoch.Reward)
+		}
+		if err = db.Save(&creator).Error; err != nil {
+			return
+		}
+
+		if err = db.Create(epoch).Error; err != nil {
 			return
 		}
 		for i := 0; i < 16; i++ {
@@ -196,7 +248,7 @@ func injectSNFT(tx *gorm.DB, wh *model.Parsed) (err error) {
 				metaUrl = epoch.Dir + hexI + "0"
 			}
 			// write collection information
-			err = tx.
+			err = db.
 				Create(&model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}).Error
 			if err != nil {
 				return
@@ -211,7 +263,7 @@ func injectSNFT(tx *gorm.DB, wh *model.Parsed) (err error) {
 					metaUrl = epoch.Dir + hexI + hexJ
 				}
 				// write complete SNFT information
-				err = tx.Create(&model.FNFT{ID: FNFTId, MetaUrl: metaUrl}).Error
+				err = db.Create(&model.FNFT{ID: FNFTId, MetaUrl: metaUrl}).Error
 				if err != nil {
 					return
 				}
@@ -300,7 +352,8 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 			value := snftValue(*reward.SNFT, 1)
 			if exchanger.Address != "" {
 				exchanger.Reward = BigIntAdd(exchanger.Reward, value)
-				if err = db.Select("reward").Updates(&exchanger).Error; err != nil {
+				exchanger.RewardCount++
+				if err = db.Select("reward", "reward_count").Updates(&exchanger).Error; err != nil {
 					return
 				}
 			}
@@ -314,9 +367,10 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 			}
 			if validator.Address != "" {
 				validator.Reward = BigIntAdd(validator.Reward, *reward.Amount)
+				validator.RewardCount++
 				validator.Timestamp = int64(wh.Timestamp)
 				validator.LastNumber = int64(wh.Number)
-				if err = db.Select("reward", "timestamp", "last_number").Updates(&validator).Error; err != nil {
+				if err = db.Select("reward", "reward_count", "timestamp", "last_number").Updates(&validator).Error; err != nil {
 					return
 				}
 			}
@@ -399,6 +453,15 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				if tx.Price != "0" {
 					snft.LastPrice = &tx.Price
 					snft.TxAmount = BigIntAdd(snft.TxAmount, tx.Price)
+					creator := model.Creator{}
+					err = db.Find(&creator, "address=(?)", db.Model(&model.Epoch{}).Where("`id`=?", snft.Address[:39]).Select("creator")).Error
+					if err != nil {
+						return
+					}
+					creator.Profit = BigIntAdd(creator.Profit, *TxFee(tx.Price, 100))
+					if err = db.Select("profit").Updates(creator).Error; err != nil {
+						return
+					}
 				}
 				snft.Owner = tx.To
 				if err = db.Select("last_price", "tx_amount", "owner").Updates(&snft).Error; err != nil {
@@ -413,6 +476,7 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 						return
 					}
 				}
+
 			}
 			// Calculate the total number of transactions and the total transaction amount to fill the NFT transaction fee and save the exchange
 			if tx.ExchangerAddr != nil && tx.Price != "0" {

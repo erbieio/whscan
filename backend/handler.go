@@ -305,10 +305,11 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				if addr := *rewards[i].NFTAddress; addr[39:] == "000" {
 					// Write the current information, once every 4096 SNFT rewards
 					epoch := struct {
+						StartIndex int64    `json:"start_Index"`
 						Dir        string   `json:"dir"`
 						Royalty    int64    `json:"royalty"`
+						Address    string   `json:"Address"`
 						Creator    string   `json:"creator"`
-						Address    string   `json:"address"` //Exchange address
 						VoteWeight *big.Int `json:"vote_weight"`
 					}{}
 					if err = c.Call(&epoch, "eth_getCurrentNFTInfo", number); err != nil {
@@ -322,11 +323,29 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 						Creator:      strings.ToLower(epoch.Creator),
 						RoyaltyRatio: epoch.Royalty,
 						Dir:          epoch.Dir,
-						Exchanger:    epoch.Address,
-						VoteWeight:   epoch.VoteWeight.Text(10),
-						Number:       int64(wh.Number),
-						Timestamp:    int64(wh.Timestamp),
+						WeightValue:  epoch.VoteWeight.Text(10),
+						Voter:        strings.ToLower(epoch.Address),
+						StartNumber:  int64(wh.Number),
+						StartTime:    int64(wh.Timestamp),
 					}
+
+					selected := wh.Number - 1
+					for startIndex := epoch.StartIndex; selected > wh.Number-64 && selected > 0; selected-- {
+						if err = c.Call(&epoch, "eth_getCurrentNFTInfo", selected.Hex()); err != nil {
+							return fmt.Errorf("GetEpoch() err:%v", err)
+						}
+						if startIndex != epoch.StartIndex {
+							break
+						}
+					}
+					info := struct {
+						Balance *big.Int `json:"Balance"`
+					}{}
+					if err = c.Call(&info, "eth_getAccountInfo", "0xffffffffffffffffffffffffffffffffffffffff", selected.Hex()); err != nil {
+						return
+					}
+					wh.Epoch.Number = int64(selected + 1)
+					wh.Epoch.Reward = info.Balance.Text(10)
 				}
 			} else {
 				wh.Rewards[i].Amount = new(string)

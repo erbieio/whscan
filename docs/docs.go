@@ -592,6 +592,92 @@ const docTemplate = `{
                 }
             }
         },
+        "/creator": {
+            "get": {
+                "description": "Query the creator list, page",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "creator"
+                ],
+                "summary": "Query the creator list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort by conditions, Support database order statement",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.CreatorsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/creator/{addr}": {
+            "get": {
+                "description": "specifies the address to query the creator",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "creator"
+                ],
+                "summary": "Query a creator",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "creator address",
+                        "name": "addr",
+                        "in": "path"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Creator"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/epoch": {
             "get": {
                 "description": "Query the system NFT period list in reverse order of creation time",
@@ -2474,19 +2560,56 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Creator": {
+            "type": "object",
+            "properties": {
+                "LastEpoch": {
+                    "description": "last selected for the epoch",
+                    "type": "string"
+                },
+                "address": {
+                    "description": "account address",
+                    "type": "string"
+                },
+                "count": {
+                    "description": "selected count",
+                    "type": "integer"
+                },
+                "lastNumber": {
+                    "description": "last selected for the block number",
+                    "type": "integer"
+                },
+                "lastTime": {
+                    "description": "last selected for the timestamp",
+                    "type": "integer"
+                },
+                "number": {
+                    "description": "be a Creator block number",
+                    "type": "integer"
+                },
+                "profit": {
+                    "description": "royalty profit",
+                    "type": "string"
+                },
+                "reward": {
+                    "description": "vote profit",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "be a Creator Time",
+                    "type": "integer"
+                }
+            }
+        },
         "model.Epoch": {
             "type": "object",
             "properties": {
                 "creator": {
-                    "description": "Creator address, also the address of royalty income",
+                    "description": "creator address, also the address of royalty income",
                     "type": "string"
                 },
                 "dir": {
                     "description": "meta information directory URL",
-                    "type": "string"
-                },
-                "exchanger": {
-                    "description": "Exchange address",
                     "type": "string"
                 },
                 "id": {
@@ -2494,19 +2617,47 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "number": {
-                    "description": "Starting block height",
+                    "description": "is selected block height",
                     "type": "integer"
                 },
+                "reward": {
+                    "description": "vote reward amount",
+                    "type": "string"
+                },
                 "royaltyRatio": {
-                    "description": "The royalty rate of the same period of SNFT, the unit is one ten thousandth",
+                    "description": "the royalty rate of the same period of SNFT, the unit is one ten thousandth",
+                    "type": "integer"
+                },
+                "startNumber": {
+                    "description": "starting the period block height",
+                    "type": "integer"
+                },
+                "startTime": {
+                    "description": "starting the period timestamp",
                     "type": "integer"
                 },
                 "timestamp": {
-                    "description": "Starting timestamp",
+                    "description": "is selected timestamp",
                     "type": "integer"
                 },
-                "voteWeight": {
-                    "description": "Weight",
+                "txType": {
+                    "description": "transaction type",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "the transaction hash voter",
+                    "type": "string"
+                },
+                "voter": {
+                    "description": "voter",
+                    "type": "string"
+                },
+                "weightAmount": {
+                    "description": "hold block number amount",
+                    "type": "integer"
+                },
+                "weightValue": {
+                    "description": "snft value",
                     "type": "string"
                 }
             }
@@ -2586,6 +2737,10 @@ const docTemplate = `{
                 "reward": {
                     "description": "amount of total reward",
                     "type": "string"
+                },
+                "reward_count": {
+                    "description": "reward snft count",
+                    "type": "integer"
                 },
                 "timestamp": {
                     "description": "Open time",
@@ -2813,13 +2968,13 @@ const docTemplate = `{
         "model.Stats": {
             "type": "object",
             "properties": {
-                "APR": {
-                    "description": "Expect annual interest rates",
-                    "type": "number"
-                },
                 "activeAccount": {
                     "description": "The number of active account",
                     "type": "integer"
+                },
+                "apr": {
+                    "description": "Expect annual interest rates",
+                    "type": "number"
                 },
                 "avgBlockTime": {
                     "description": "average block time, ms",
@@ -2978,6 +3133,10 @@ const docTemplate = `{
                     "description": "pledge amount",
                     "type": "string"
                 },
+                "apr": {
+                    "description": "historical annualized interest rate, updated every 720 blocks",
+                    "type": "number"
+                },
                 "last_number": {
                     "description": "The block number at latest rewarding",
                     "type": "integer"
@@ -2989,6 +3148,10 @@ const docTemplate = `{
                 "reward": {
                     "description": "amount of total reward",
                     "type": "string"
+                },
+                "reward_count": {
+                    "description": "reward coin count",
+                    "type": "integer"
                 },
                 "timestamp": {
                     "description": "The time at latest rewarding",
@@ -3003,13 +3166,13 @@ const docTemplate = `{
         "service.AccountRes": {
             "type": "object",
             "properties": {
-                "APR": {
-                    "description": "historical annualized interest rate",
-                    "type": "number"
-                },
                 "address": {
                     "description": "address",
                     "type": "string"
+                },
+                "apr": {
+                    "description": "historical annualized interest rate",
+                    "type": "number"
                 },
                 "balance": {
                     "description": "The total amount of coins in the chain",
@@ -3031,6 +3194,9 @@ const docTemplate = `{
                     "description": "exchanger pledge amount",
                     "type": "string"
                 },
+                "lastNumber": {
+                    "type": "integer"
+                },
                 "name": {
                     "description": "name",
                     "type": "string"
@@ -3046,6 +3212,14 @@ const docTemplate = `{
                 "number": {
                     "description": "transaction random number, transaction volume",
                     "type": "integer"
+                },
+                "profit": {
+                    "description": "royalty profit",
+                    "type": "string"
+                },
+                "reward": {
+                    "description": "vote profit",
+                    "type": "string"
                 },
                 "rewardCoinCount": {
                     "description": "Number of times to get coin rewards, 0.1ERB once",
@@ -3241,6 +3415,22 @@ const docTemplate = `{
                 }
             }
         },
+        "service.CreatorsRes": {
+            "type": "object",
+            "properties": {
+                "creators": {
+                    "description": "List of creator",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Creator"
+                    }
+                },
+                "total": {
+                    "description": "The total number of creator",
+                    "type": "integer"
+                }
+            }
+        },
         "service.EpochsRes": {
             "type": "object",
             "properties": {
@@ -3308,6 +3498,10 @@ const docTemplate = `{
                 "reward": {
                     "description": "amount of total reward",
                     "type": "string"
+                },
+                "reward_count": {
+                    "description": "reward snft count",
+                    "type": "integer"
                 },
                 "timestamp": {
                     "description": "Open time",

@@ -22,6 +22,7 @@ var Tables = []interface{}{
 	&Exchanger{},
 	&NFT{},
 	&Epoch{},
+	&Creator{},
 	&FNFT{},
 	&SNFT{},
 	&Collection{},
@@ -82,11 +83,10 @@ type Stats struct {
 	Total24HExchangerTx  int64   `json:"total24HExchangerTx" gorm:"-"`          //Total number of exchanger  transactions within 24 hours
 	Total24HNFT          int64   `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64   `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
-	APR                  float64 `json:"APR" gorm:"-"`                          //Expect annual interest rates
+	APR                  float64 `json:"apr" gorm:"-"`                          //Expect annual interest rates
 
-	Genesis    Header                     `json:"-" gorm:"-"`
-	Balances   map[types.Address]*big.Int `json:"-" gorm:"-"`
-	AccountAPR map[types.Address]float64  `json:"-" gorm:"-"`
+	Genesis  Header                     `json:"-" gorm:"-"`
+	Balances map[types.Address]*big.Int `json:"-" gorm:"-"`
 }
 
 // Header block header information
@@ -240,14 +240,33 @@ type NFT struct {
 // Epoch SNFT Phase 1
 // One SNFT->16 Collections->16 FNFTs->256 SNFTs
 type Epoch struct {
-	ID           string `json:"id" gorm:"type:CHAR(39);primary_key"` //period ID
-	Creator      string `json:"creator" gorm:"type:CHAR(42)"`        //Creator address, also the address of royalty income
-	RoyaltyRatio int64  `json:"royaltyRatio"`                        //The royalty rate of the same period of SNFT, the unit is one ten thousandth
-	Dir          string `json:"dir"`                                 //meta information directory URL
-	Exchanger    string `json:"exchanger" gorm:"type:CHAR(42)"`      //Exchange address
-	VoteWeight   string `json:"voteWeight"`                          //Weight
-	Number       int64  `json:"number"`                              //Starting block height
-	Timestamp    int64  `json:"timestamp"`                           //Starting timestamp
+	ID           string  `json:"id" gorm:"type:CHAR(39);primary_key"` //period ID
+	Creator      string  `json:"creator" gorm:"type:CHAR(42);index"`  //creator address, also the address of royalty income
+	RoyaltyRatio int64   `json:"royaltyRatio"`                        //the royalty rate of the same period of SNFT, the unit is one ten thousandth
+	Dir          string  `json:"dir"`                                 //meta information directory URL
+	WeightValue  string  `json:"weightValue"`                         //snft value
+	WeightAmount int64   `json:"weightAmount"`                        //hold block number amount
+	TxHash       *string `json:"tx_hash" gorm:"type:CHAR(66)"`        //the transaction hash voter
+	TxType       *int64  `json:"txType"`                              //transaction type
+	Voter        string  `json:"voter" gorm:"type:CHAR(42);index"`    //voter
+	Reward       string  `json:"reward" gorm:"type:VARCHAR(128)"`     //vote reward amount
+	Number       int64   `json:"number"`                              //is selected block height
+	Timestamp    int64   `json:"timestamp"`                           //is selected timestamp
+	StartNumber  int64   `json:"startNumber"`                         //starting the period block height
+	StartTime    int64   `json:"startTime"`                           //starting the period timestamp
+}
+
+// Creator SNFT creator information
+type Creator struct {
+	Address    string `json:"address" gorm:"type:CHAR(42);primaryKey"` //account address
+	Number     int64  `json:"number"`                                  //be a Creator block number
+	Timestamp  int64  `json:"timestamp"`                               //be a Creator Time
+	LastEpoch  string `json:"LastEpoch" gorm:"type:CHAR(39)"`          //last selected for the epoch
+	LastNumber int64  `json:"lastNumber"`                              //last selected for the block number
+	LastTime   int64  `json:"lastTime"`                                //last selected for the timestamp
+	Count      int64  `json:"count"`                                   //selected count
+	Reward     string `json:"reward" gorm:"type:VARCHAR(128);index"`   //vote profit
+	Profit     string `json:"profit" gorm:"type:VARCHAR(128);index"`   //royalty profit
 }
 
 // FNFT full SNFT
@@ -313,6 +332,7 @@ type Exchanger struct {
 	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
 	Amount      string `json:"amount" gorm:"type:VARCHAR(66)"`           //Pledge amount
 	Reward      string `json:"reward" gorm:"type:VARCHAR(66)"`           //amount of total reward
+	RewardCount int64  `json:"reward_count"`                             //reward snft count
 	TxAmount    string `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //Total transaction amount, unit wei
 	NFTCount    int64  `json:"nft_count"`                                //Total NFT count
 	CloseAt     *int64 `json:"close_at"`                                 //if not null, the exchange is closed
@@ -330,13 +350,15 @@ type Reward struct {
 
 // Validator pledge information
 type Validator struct {
-	Address    string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
-	Proxy      string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
-	Amount     string `json:"amount" gorm:"type:VARCHAR(66)"`          //pledge amount
-	Reward     string `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
-	Timestamp  int64  `json:"timestamp"`                               //The time at latest rewarding
-	LastNumber int64  `json:"last_number"`                             //The block number at latest rewarding
-	Weight     int64  `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
+	Address     string  `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
+	Proxy       string  `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
+	Amount      string  `json:"amount" gorm:"type:VARCHAR(66)"`          //pledge amount
+	Reward      string  `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
+	RewardCount int64   `json:"reward_count"`                            //reward coin count
+	APR         float64 `json:"apr"`                                     //historical annualized interest rate, updated every 720 blocks
+	Timestamp   int64   `json:"timestamp"`                               //The time at latest rewarding
+	LastNumber  int64   `json:"last_number"`                             //The block number at latest rewarding
+	Weight      int64   `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
 }
 
 // Pledge  record

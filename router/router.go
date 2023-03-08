@@ -24,6 +24,7 @@ func Run(addr string) error {
 	api.NFT(r)
 	api.Reward(r)
 	api.Epoch(r)
+	api.Creator(r)
 	api.Ranking(r)
 	api.Chart(r)
 	api.Validator(r)

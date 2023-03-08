@@ -15,7 +15,6 @@ var stats = &model.Stats{
 	TotalNFTAmount:  "0",
 	TotalSNFTAmount: "0",
 	Balances:        make(map[types.Address]*big.Int),
-	AccountAPR:      make(map[types.Address]float64),
 }
 
 // initStats initializes the query stats from the database
@@ -272,28 +271,26 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 				stats.APR = apr(stats.RewardSNFTCount, stats.TotalValidatorPledge)
 				var pledges []*model.Pledge
 				db.Find(&pledges)
+				sumPledges := map[string]*big.Float{}
+				for _, pledge := range pledges {
+					if sumPledges[pledge.Address] == nil {
+						sumPledges[pledge.Address] = new(big.Float)
+					}
+					amount, _ := new(big.Float).SetString(pledge.Amount)
+					if pledge.Type == 9 {
+						amount.Mul(amount, big.NewFloat(float64(int64(parsed.Timestamp)-pledge.Timestamp)))
+					} else {
+						amount.Mul(amount, big.NewFloat(float64(pledge.Timestamp-int64(parsed.Timestamp))))
+					}
+					amount.Quo(amount, big.NewFloat(365*24*3600))
+					sumPledges[pledge.Address].Add(sumPledges[pledge.Address], amount)
+				}
 				var validators []*model.Validator
 				db.Select("address", "reward").Find(&validators)
-				rewards := map[string]*big.Float{}
-				sumPledges := map[string]*big.Float{}
 				for _, validator := range validators {
-					rewards[validator.Address], _ = new(big.Float).SetString(validator.Reward)
-					sumPledges[validator.Address] = big.NewFloat(0)
-				}
-				for _, pledge := range pledges {
-					if sumPledges[pledge.Address] != nil {
-						amount, _ := new(big.Float).SetString(pledge.Amount)
-						if pledge.Type == 9 {
-							amount.Mul(amount, big.NewFloat(float64(int64(parsed.Timestamp)-pledge.Timestamp)))
-						} else {
-							amount.Mul(amount, big.NewFloat(float64(pledge.Timestamp-int64(parsed.Timestamp))))
-						}
-						amount.Quo(amount, big.NewFloat(365*24*3600))
-						sumPledges[pledge.Address].Add(sumPledges[pledge.Address], amount)
-					}
-				}
-				for addr, reward := range rewards {
-					stats.AccountAPR[types.Address(addr)], _ = reward.Quo(reward, sumPledges[addr]).Float64()
+					reward, _ := new(big.Float).SetString(validator.Reward)
+					validator.APR, _ = reward.Quo(reward, sumPledges[validator.Address]).Float64()
+					db.Select("apr").Updates(validator)
 				}
 			}
 		}

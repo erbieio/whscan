@@ -2,7 +2,6 @@ package service
 
 import (
 	"server/common/model"
-	"server/common/types"
 )
 
 // AccountsRes account paging return parameters
@@ -38,17 +37,19 @@ type AccountRes struct {
 	ExchangerAmount string  `json:"exchangerAmount"` // exchanger pledge amount
 	RewardCoinCount int64   `json:"rewardCoinCount"` // Number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount int64   `json:"rewardSNFTCount"` // Number of times to get SNFT rewards
-	APR             float64 `json:"APR"`             // historical annualized interest rate
+	APR             float64 `json:"apr"`             // historical annualized interest rate
+	LastNumber      int64   `json:"lastNumber"`
+	Reward          string  `json:"reward"` //vote profit
+	Profit          string  `json:"profit"` //royalty profit
 }
 
 func GetAccount(addr string) (res AccountRes, err error) {
-	s := "*, (SELECT weight FROM validators WHERE address=accounts.address) AS weight"
-	s += ", (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
-	s += ", IFNULL((SELECT amount FROM validators WHERE address=accounts.address),'0') AS validator_amount"
-	s += ", IFNULL((SELECT amount FROM exchangers WHERE address=accounts.address),'0') AS exchanger_amount"
-	s += ", (SELECT COUNT(amount) FROM rewards WHERE address=accounts.address) AS reward_coin_count"
-	s += ", (SELECT COUNT(snft) FROM rewards WHERE address=accounts.address) AS reward_snft_count"
-	err = DB.Model(model.Account{}).Where("address=?", addr).Select(s).Scan(&res).Error
-	res.APR = stats.AccountAPR[types.Address(addr)]
+	db := DB.Model(model.Account{}).Joins("LEFT JOIN validators ON validators.address=accounts.address")
+	db = db.Joins("LEFT JOIN exchangers ON exchangers.address=accounts.address")
+	db = db.Joins("LEFT JOIN creators ON creators.address=creators.address")
+	s := "accounts.*, creators.last_number, creators.reward, profit, (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
+	s += ", validators.weight AS weight, IFNULL(validators.amount,'0') AS validator_amount, validators.reward_count AS reward_coin_count"
+	s += ", validators.apr AS apr, IFNULL(exchangers.amount, '0') AS exchanger_amount, exchangers.reward_count AS reward_snft_count"
+	err = db.Select(s).Where("accounts.address=?", addr).Scan(&res).Error
 	return
 }
