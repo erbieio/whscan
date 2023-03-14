@@ -46,10 +46,10 @@ type AccountRes struct {
 func GetAccount(addr string) (res AccountRes, err error) {
 	db := DB.Model(model.Account{}).Joins("LEFT JOIN validators ON validators.address=accounts.address")
 	db = db.Joins("LEFT JOIN exchangers ON exchangers.address=accounts.address")
-	db = db.Joins("LEFT JOIN creators ON creators.address=creators.address")
-	s := "accounts.*, creators.last_number, creators.reward, profit, (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
+	db = db.Joins("LEFT JOIN creators ON creators.address=accounts.address")
+	s := "accounts.*, creators.last_number, IFNULL(creators.reward,'0') AS reward, (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
 	s += ", validators.weight AS weight, IFNULL(validators.amount,'0') AS validator_amount, validators.reward_count AS reward_coin_count"
-	s += ", validators.apr AS apr, IFNULL(exchangers.amount, '0') AS exchanger_amount, exchangers.reward_count AS reward_snft_count"
+	s += ", validators.apr AS apr, IFNULL(exchangers.amount, '0') AS exchanger_amount, IFNULL(profit,'0') AS profit, exchangers.reward_count AS reward_snft_count"
 	err = db.Select(s).Where("accounts.address=?", addr).Scan(&res).Error
 	return
 }

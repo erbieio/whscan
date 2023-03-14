@@ -25,3 +25,11 @@ func GetCreator(addr string) (res model.Creator, err error) {
 	err = DB.Where("address=?", addr).First(&res).Error
 	return
 }
+
+func TopCreators(size int) (res []model.Creator, err error) {
+	if size <= 0 {
+		size = 10
+	}
+	err = DB.Order("profit+reward DESC").Limit(size).Find(&res).Error
+	return
+}

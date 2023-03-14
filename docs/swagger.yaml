@@ -196,15 +196,15 @@ definitions:
     type: object
   model.Creator:
     properties:
-      LastEpoch:
-        description: last selected for the epoch
-        type: string
       address:
         description: account address
         type: string
       count:
         description: selected count
         type: integer
+      lastEpoch:
+        description: last selected for the epoch
+        type: string
       lastNumber:
         description: last selected for the block number
         type: integer
@@ -549,6 +549,12 @@ definitions:
       totalBlock:
         description: Total number of blocks
         type: integer
+      totalCreator:
+        description: Total number of creator
+        type: integer
+      totalEpoch:
+        description: Total number of epoch
+        type: integer
       totalExchanger:
         description: Total number of exchanges
         type: integer
@@ -576,6 +582,9 @@ definitions:
       totalNFTTx:
         description: Total number of  NFT transactions
         type: integer
+      totalProfit:
+        description: Total number of creator profit
+        type: string
       totalRecycle:
         description: Total number of recycle SNFT
         type: integer
@@ -1933,7 +1942,31 @@ paths:
       summary: Query the list of NFT collections
       tags:
       - NFT Collection
-  /creator:
+  /creator/{addr}:
+    get:
+      consumes:
+      - application/json
+      description: specifies the address to query the creator
+      parameters:
+      - description: creator address
+        in: path
+        name: addr
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Creator'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: Query a creator
+      tags:
+      - creator
+  /creator/page:
     get:
       consumes:
       - application/json
@@ -1965,28 +1998,30 @@ paths:
       summary: Query the creator list
       tags:
       - creator
-  /creator/{addr}:
+  /creator/top:
     get:
       consumes:
       - application/json
-      description: specifies the address to query the creator
+      description: Query the top creators
       parameters:
-      - description: creator address
-        in: path
-        name: addr
-        type: string
+      - description: request number, default 10
+        in: query
+        name: size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Creator'
+            items:
+              $ref: '#/definitions/model.Creator'
+            type: array
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/service.ErrRes'
-      summary: Query a creator
+      summary: Query the top creators
       tags:
       - creator
   /epoch:

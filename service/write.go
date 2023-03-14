@@ -458,7 +458,7 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 					if err != nil {
 						return
 					}
-					creator.Profit = BigIntAdd(creator.Profit, *TxFee(tx.Price, 100))
+					creator.Profit = BigIntAdd(creator.Profit, *TxFee(tx.Price, 1000))
 					if err = db.Select("profit").Updates(creator).Error; err != nil {
 						return
 					}

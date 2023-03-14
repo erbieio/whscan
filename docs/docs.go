@@ -592,7 +592,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/creator": {
+        "/creator/page": {
             "get": {
                 "description": "Query the creator list, page",
                 "consumes": [
@@ -630,6 +630,46 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/service.CreatorsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/creator/top": {
+            "get": {
+                "description": "Query the top creators",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "creator"
+                ],
+                "summary": "Query the top creators",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "request number, default 10",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Creator"
+                            }
                         }
                     },
                     "400": {
@@ -2563,10 +2603,6 @@ const docTemplate = `{
         "model.Creator": {
             "type": "object",
             "properties": {
-                "LastEpoch": {
-                    "description": "last selected for the epoch",
-                    "type": "string"
-                },
                 "address": {
                     "description": "account address",
                     "type": "string"
@@ -2574,6 +2610,10 @@ const docTemplate = `{
                 "count": {
                     "description": "selected count",
                     "type": "integer"
+                },
+                "lastEpoch": {
+                    "description": "last selected for the epoch",
+                    "type": "string"
                 },
                 "lastNumber": {
                     "description": "last selected for the block number",
@@ -3032,6 +3072,14 @@ const docTemplate = `{
                     "description": "Total number of blocks",
                     "type": "integer"
                 },
+                "totalCreator": {
+                    "description": "Total number of creator",
+                    "type": "integer"
+                },
+                "totalEpoch": {
+                    "description": "Total number of epoch",
+                    "type": "integer"
+                },
                 "totalExchanger": {
                     "description": "Total number of exchanges",
                     "type": "integer"
@@ -3067,6 +3115,10 @@ const docTemplate = `{
                 "totalNFTTx": {
                     "description": "Total number of  NFT transactions",
                     "type": "integer"
+                },
+                "totalProfit": {
+                    "description": "Total number of creator profit",
+                    "type": "string"
                 },
                 "totalRecycle": {
                     "description": "Total number of recycle SNFT",

@@ -10,8 +10,9 @@ import (
 
 // Creator creatorAPI
 func Creator(e *gin.Engine) {
-	e.GET("/creator", pageCreator)
+	e.GET("/creator/page", pageCreator)
 	e.GET("/creator/:addr", getCreator)
+	e.GET("/creator/top", topCreator)
 }
 
 // @Tags        creator
@@ -24,7 +25,7 @@ func Creator(e *gin.Engine) {
 // @Param       order     query    string false "sort by conditions, Support database order statement"
 // @Success     200       {object} service.CreatorsRes
 // @Failure     400       {object} service.ErrRes
-// @Router      /creator [get]
+// @Router      /creator/page [get]
 func pageCreator(c *gin.Context) {
 	req := struct {
 		Page     *int   `form:"page"`
@@ -61,6 +62,31 @@ func pageCreator(c *gin.Context) {
 // @Router      /creator/{addr} [get]
 func getCreator(c *gin.Context) {
 	data, err := service.GetCreator(c.Param("addr"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+// @Tags        creator
+// @Summary     Query the top creators
+// @Description Query the top creators
+// @Accept      json
+// @Produce     json
+// @Param       size query    integer false "request number, default 10"
+// @Success     200  {array}  model.Creator
+// @Failure     400  {object} service.ErrRes
+// @Router      /creator/top [get]
+func topCreator(c *gin.Context) {
+	req := struct {
+		Page int `form:"size"`
+	}{}
+	if err := c.BindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	data, err := service.TopCreators(req.Page)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

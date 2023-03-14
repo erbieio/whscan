@@ -254,6 +254,8 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			if number > 1000 {
 				db.Raw("SELECT (SELECT timestamp FROM blocks WHERE number=?)-(SELECT timestamp FROM blocks WHERE number=?)", number, number-1000).Scan(&stats.AvgBlockTime)
 			}
+			db.Model(&model.Creator{}).Count(&stats.TotalCreator)
+			db.Model(&model.Epoch{}).Count(&stats.TotalEpoch)
 			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Exchanger{}).Where("amount!='0'").Count(&stats.TotalExchanger)
 			db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
@@ -292,6 +294,20 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 					validator.APR, _ = reward.Quo(reward, sumPledges[validator.Address]).Float64()
 					db.Select("apr").Updates(validator)
 				}
+
+				var creators []*struct {
+					Reward string
+					Profit string
+				}
+				totalProfit, value := new(big.Int), new(big.Int)
+				db.Model(&model.Creator{}).Find(&creators)
+				for _, creator := range creators {
+					value.SetString(creator.Profit, 10)
+					totalProfit = totalProfit.Add(totalProfit, value)
+					value.SetString(creator.Reward, 10)
+					totalProfit = totalProfit.Add(totalProfit, value)
+				}
+				stats.TotalProfit = totalProfit.Text(10)
 			}
 		}
 	}

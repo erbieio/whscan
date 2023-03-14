@@ -83,6 +83,9 @@ type Stats struct {
 	Total24HExchangerTx  int64   `json:"total24HExchangerTx" gorm:"-"`          //Total number of exchanger  transactions within 24 hours
 	Total24HNFT          int64   `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64   `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
+	TotalEpoch           int64   `json:"totalEpoch" gorm:"-"`                   //Total number of epoch
+	TotalCreator         int64   `json:"totalCreator" gorm:"-"`                 //Total number of creator
+	TotalProfit          string  `json:"totalProfit" gorm:"-"`                  //Total number of creator profit
 	APR                  float64 `json:"apr" gorm:"-"`                          //Expect annual interest rates
 
 	Genesis  Header                     `json:"-" gorm:"-"`
@@ -261,7 +264,7 @@ type Creator struct {
 	Address    string `json:"address" gorm:"type:CHAR(42);primaryKey"` //account address
 	Number     int64  `json:"number"`                                  //be a Creator block number
 	Timestamp  int64  `json:"timestamp"`                               //be a Creator Time
-	LastEpoch  string `json:"LastEpoch" gorm:"type:CHAR(39)"`          //last selected for the epoch
+	LastEpoch  string `json:"lastEpoch" gorm:"type:CHAR(39)"`          //last selected for the epoch
 	LastNumber int64  `json:"lastNumber"`                              //last selected for the block number
 	LastTime   int64  `json:"lastTime"`                                //last selected for the timestamp
 	Count      int64  `json:"count"`                                   //selected count
