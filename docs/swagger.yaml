@@ -446,6 +446,9 @@ definitions:
       price:
         description: price, the unit is wei
         type: string
+      royalty:
+        description: for the creator royalty
+        type: string
       timestamp:
         description: transaction timestamp
         type: integer
@@ -1377,6 +1380,9 @@ definitions:
       collectionName:
         description: collection name
         type: string
+      createdAt:
+        description: snft created time
+        type: integer
       creator:
         description: creator address, also the address of royalty income
         type: string
@@ -2030,6 +2036,14 @@ paths:
       - application/json
       description: Query the system NFT period list in reverse order of creation time
       parameters:
+      - description: only return the creator's epoch
+        in: query
+        name: creator
+        type: string
+      - description: sort by conditions, Support database order statement
+        in: query
+        name: order
+        type: string
       - description: Page, default 1
         in: query
         name: page
@@ -2380,6 +2394,31 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: query NFT list
+      tags:
+      - NFT
+  /nft/tx/{hash}:
+    get:
+      consumes:
+      - application/json
+      description: Query the NFT of SNFT transactions by hash
+      parameters:
+      - description: transaction hash
+        in: path
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.NFTTx'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: Query NFT transaction
       tags:
       - NFT
   /nft/tx/page:

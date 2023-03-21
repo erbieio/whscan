@@ -13,6 +13,7 @@ func NFT(e *gin.Engine) {
 	e.GET("/nft/page", pageNFT)
 	e.GET("/nft_meta/page", pageNFTAndMeta)
 	e.GET("/nft/tx/page", pageNFTTx)
+	e.GET("/nft/tx/:hash", getNFTTx)
 	e.GET("/snft/page", pageSNFT)
 	e.GET("/snft_com/page", pageComSNFT)
 	e.GET("/snft/recycle_tx", getRecycleTx)
@@ -114,6 +115,24 @@ func pageNFTTx(c *gin.Context) {
 	}
 
 	res, err := service.FetchNFTTxs(req.Address, req.Exchanger, req.Account, page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        NFT
+// @Summary     Query NFT transaction
+// @Description Query the NFT of SNFT transactions by hash
+// @Accept      json
+// @Produce     json
+// @Param       hash path     string true "transaction hash"
+// @Success     200  {object} model.NFTTx
+// @Failure     400  {object} service.ErrRes
+// @Router      /nft/tx/{hash} [get]
+func getNFTTx(c *gin.Context) {
+	res, err := service.GetNFTTx(c.Param("hash"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -267,7 +286,6 @@ func pageSNFTAndMeta(c *gin.Context) {
 		Page         *int   `form:"page"`
 		PageSize     *int   `form:"page_size"`
 		CollectionId string `form:"collection_id"`
-		Exchanger    string `form:"exchanger"`
 		Owner        string `form:"owner"`
 	}{}
 	err := c.BindQuery(&req)
@@ -281,7 +299,7 @@ func pageSNFTAndMeta(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchSNFTsAndMeta(strings.ToLower(req.Owner), req.Exchanger, req.CollectionId, page, size)
+	res, err := service.FetchSNFTsAndMeta(strings.ToLower(req.Owner), req.CollectionId, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

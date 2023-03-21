@@ -734,6 +734,18 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "only return the creator's epoch",
+                        "name": "creator",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "sort by conditions, Support database order statement",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Page, default 1",
                         "name": "page",
                         "in": "query"
@@ -1273,6 +1285,44 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/service.NFTTxsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/nft/tx/{hash}": {
+            "get": {
+                "description": "Query the NFT of SNFT transactions by hash",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NFT"
+                ],
+                "summary": "Query NFT transaction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "transaction hash",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.NFTTx"
                         }
                     },
                     "400": {
@@ -2937,6 +2987,10 @@ const docTemplate = `{
                     "description": "price, the unit is wei",
                     "type": "string"
                 },
+                "royalty": {
+                    "description": "for the creator royalty",
+                    "type": "string"
+                },
                 "timestamp": {
                     "description": "transaction timestamp",
                     "type": "integer"
@@ -4214,6 +4268,10 @@ const docTemplate = `{
                 "collectionName": {
                     "description": "collection name",
                     "type": "string"
+                },
+                "createdAt": {
+                    "description": "snft created time",
+                    "type": "integer"
                 },
                 "creator": {
                     "description": "creator address, also the address of royalty income",

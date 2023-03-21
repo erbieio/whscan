@@ -8,12 +8,24 @@ type EpochsRes struct {
 	Epochs []model.Epoch `json:"epochs"` //List of system NFT periods
 }
 
-func FetchEpochs(page, size int) (res EpochsRes, err error) {
-	err = DB.Order("id DESC").Offset((page - 1) * size).Limit(size).Find(&res.Epochs).Error
-	if err != nil {
-		return
+func FetchEpochs(creator, order string, page, size int) (res EpochsRes, err error) {
+	db := DB.Model(&Epoch{})
+	if creator != "" {
+		db = db.Where("creator=?", creator)
 	}
-	err = DB.Model(&model.Epoch{}).Count(&res.Total).Error
+	if order != "" {
+		db = db.Order(order)
+	} else {
+		db = db.Order("id DESC")
+	}
+	if creator == "" {
+		res.Total = stats.TotalEpoch
+	} else {
+		if err = db.Count(&res.Total).Error; err != nil {
+			return
+		}
+	}
+	err = db.Offset((page - 1) * size).Limit(size).Scan(&res.Epochs).Error
 	return
 }
 

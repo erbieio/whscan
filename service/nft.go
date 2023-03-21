@@ -57,6 +57,11 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 	return
 }
 
+func GetNFTTx(hash string) (res model.NFTTx, err error) {
+	err = DB.Where("tx_hash=?", hash).Take(&res).Error
+	return
+}
+
 // SNFTsRes SNFT paging return parameters
 type SNFTsRes struct {
 	Total int64        `json:"total"` //The total number of SNFTs
@@ -86,6 +91,7 @@ type SNFTRes struct {
 	RoyaltyRatio   uint32 `json:"royaltyRatio"`   //the royalty rate of the same period of SNFT, the unit is one ten thousandth
 	Exchanger      string `json:"exchanger"`      //exchanger address
 	CollectionName string `json:"collectionName"` //collection name
+	CreatedAt      int64  `json:"createdAt"`      //snft created time
 }
 
 func GetSNFT(addr string) (res SNFTRes, err error) {
@@ -93,7 +99,7 @@ func GetSNFT(addr string) (res SNFTRes, err error) {
 		Joins("LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id").
 		Joins("LEFT JOIN collections ON LEFT(address, 40) = collections.id").
 		Joins("LEFT JOIN epoches ON LEFT(address, 39) = epoches.id")
-	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio,collections.name AS collection_name").Where("address=?", addr).Scan(&res).Error
+	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.timestamp AS created_at, royalty_ratio,collections.name AS collection_name").Where("address=?", addr).Scan(&res).Error
 	return
 }
 
@@ -103,7 +109,7 @@ type SNFTsAndMetaRes struct {
 	NFTs  []*SNFTRes `json:"nfts"`  //SNFT list
 }
 
-func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
+func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
 	db := DB.Model(&model.SNFT{}).
 		Joins("LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id").
 		Joins("LEFT JOIN collections ON LEFT(address, 40) = collections.id").
@@ -115,17 +121,14 @@ func FetchSNFTsAndMeta(owner, exchanger, collectionId string, page, size int) (r
 	if collectionId != "" {
 		db = db.Where("collection.id=?", collectionId)
 	}
-	if exchanger != "" {
-		db = db.Where("exchanger=?", exchanger)
-	}
-	if owner == "" && collectionId == "" && exchanger == "" {
+	if owner == "" && collectionId == "" {
 		res.Total = stats.TotalSNFT
 	} else {
 		if err = db.Count(&res.Total).Error; err != nil {
 			return
 		}
 	}
-	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.exchanger, royalty_ratio,collections.name AS collection_name").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.timestamp AS created_at, royalty_ratio,collections.name AS collection_name").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 

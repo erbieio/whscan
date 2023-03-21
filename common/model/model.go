@@ -307,6 +307,7 @@ type NFTTx struct {
 	Timestamp     int64   `json:"timestamp" gorm:"index"`                              //transaction timestamp
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`            //transaction hash
 	BlockNumber   int64   `json:"block_number"`                                        //block number
+	Royalty       string  `json:"royalty"`                                             //for the creator royalty
 	Fee           *string `json:"fee,omitempty"`                                       //Transaction fee, in wei (only if there is an exchange and price)
 }
 

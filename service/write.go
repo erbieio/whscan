@@ -433,7 +433,9 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				if tx.From == "" {
 					tx.From = nft.Owner
 				}
+				tx.Royalty = "0"
 				if tx.Price != "0" {
+					tx.Royalty = *TxFee(tx.Price, nft.RoyaltyRatio)
 					nft.LastPrice = &tx.Price
 					nft.TxAmount = BigIntAdd(nft.TxAmount, tx.Price)
 				}
@@ -450,7 +452,9 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				if tx.From == "" {
 					tx.From = snft.Owner
 				}
+				tx.Royalty = "0"
 				if tx.Price != "0" {
+					tx.Royalty = *TxFee(tx.Price, 1000)
 					snft.LastPrice = &tx.Price
 					snft.TxAmount = BigIntAdd(snft.TxAmount, tx.Price)
 					creator := model.Creator{}

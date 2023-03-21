@@ -19,6 +19,8 @@ func Epoch(e *gin.Engine) {
 // @Description Query the system NFT period list in reverse order of creation time
 // @Accept      json
 // @Produce     json
+// @Param       creator   query    string false "only return the creator's epoch"
+// @Param       order     query    string false "sort by conditions, Support database order statement"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.EpochsRes
@@ -26,8 +28,10 @@ func Epoch(e *gin.Engine) {
 // @Router      /epoch [get]
 func pageEpoch(c *gin.Context) {
 	req := struct {
-		Page     *int `form:"page"`
-		PageSize *int `form:"page_size"`
+		Creator  string `form:"creator"`
+		Order    string `form:"order"`
+		Page     *int   `form:"page"`
+		PageSize *int   `form:"page_size"`
 	}{}
 	err := c.BindQuery(&req)
 	if err != nil {
@@ -40,7 +44,7 @@ func pageEpoch(c *gin.Context) {
 		return
 	}
 
-	res, err := service.FetchEpochs(page, size)
+	res, err := service.FetchEpochs(req.Creator, req.Order, page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

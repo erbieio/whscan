@@ -75,6 +75,9 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Count(&stats.TotalExchangerTx).Error; err != nil {
 		return
 	}
+	if err = db.Model(&model.Epoch{}).Count(&stats.TotalEpoch).Error; err != nil {
+		return
+	}
 	if err = db.Model(&model.Block{}).Find(&stats.Genesis, "number=0").Error; err != nil {
 		return
 	}
@@ -212,6 +215,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalNFTAmount = totalNFTAmount.Text(10)
 	stats.TotalSNFTAmount = totalSNFTAmount.Text(10)
 	stats.TotalSNFTCollection = (stats.RewardSNFTCount/4096 + 1) * 16
+	stats.TotalEpoch = stats.RewardSNFTCount/4096 + 1
 	if parsed.Number > 0 && parsed.Miner == "0x0000000000000000000000000000000000000000" {
 		stats.TotalBlackHole++
 	}
@@ -255,7 +259,6 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 				db.Raw("SELECT (SELECT timestamp FROM blocks WHERE number=?)-(SELECT timestamp FROM blocks WHERE number=?)", number, number-1000).Scan(&stats.AvgBlockTime)
 			}
 			db.Model(&model.Creator{}).Count(&stats.TotalCreator)
-			db.Model(&model.Epoch{}).Count(&stats.TotalEpoch)
 			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Exchanger{}).Where("amount!='0'").Count(&stats.TotalExchanger)
 			db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
