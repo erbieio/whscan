@@ -68,19 +68,22 @@ type SNFTsRes struct {
 	NFTs  []model.SNFT `json:"nfts"`  //SNFT list
 }
 
-func FetchSNFTs(owner string, page, size int) (res SNFTsRes, err error) {
+func FetchSNFTs(sort int, owner string, page, size int) (res SNFTsRes, err error) {
 	db := DB.Model(&model.SNFT{}).Where("`remove`=false")
-	if owner != "" {
-		db = db.Where("`owner`=?", owner)
-	}
 	if owner == "" {
 		res.Total = stats.TotalSNFT
 	} else {
+		db = db.Where("`owner`=?", owner)
 		if err = db.Count(&res.Total).Error; err != nil {
 			return
 		}
 	}
-	err = db.Order("`address` DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	if sort == 1 {
+		db = db.Order("LENGTH(`address`) ASC,`address` DESC")
+	} else {
+		db = db.Order("`address` DESC")
+	}
+	err = db.Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 

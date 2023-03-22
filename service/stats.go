@@ -216,7 +216,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalSNFTAmount = totalSNFTAmount.Text(10)
 	stats.TotalSNFTCollection = (stats.RewardSNFTCount/4096 + 1) * 16
 	stats.TotalEpoch = stats.RewardSNFTCount/4096 + 1
-	if parsed.Number > 0 && parsed.Miner == "0x0000000000000000000000000000000000000000" {
+	if parsed.Number > 0 && parsed.Miner == types.ZeroAddress {
 		stats.TotalBlackHole++
 	}
 	for _, tx := range parsed.CacheTxs {

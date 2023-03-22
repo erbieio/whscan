@@ -2761,6 +2761,10 @@ paths:
       - application/json
       description: Query the SNFT list in reverse order of creation time
       parameters:
+      - description: sort, 1:level priority,none:default
+        in: query
+        name: sort
+        type: string
       - description: Owner, if empty, query all
         in: query
         name: owner
@@ -2822,10 +2826,13 @@ paths:
       deprecated: true
       description: Query the Composable SNFT list in reverse order of creation time
       parameters:
+      - description: sort, 1:level priority,none:default
+        in: query
+        name: sort
+        type: string
       - description: Owner, if empty, query all
         in: query
         name: owner
-        required: true
         type: string
       - description: Page, default 1
         in: query

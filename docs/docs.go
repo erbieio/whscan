@@ -1793,6 +1793,12 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "sort, 1:level priority,none:default",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Owner, if empty, query all",
                         "name": "owner",
                         "in": "query"
@@ -1924,10 +1930,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "sort, 1:level priority,none:default",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Owner, if empty, query all",
                         "name": "owner",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "string",

@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+const ZeroAddress = "0x0000000000000000000000000000000000000000"
+
 type Long int64
 
 // ImplementsGraphQLType returns true if Long implements the provided GraphQL type.

@@ -173,7 +173,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 		}
 		reqs, number := make([]node.BatchElem, 0, 3*len(modifiedAccounts)), parsed.Number.Hex()
 		for _, address := range modifiedAccounts {
-			if address != "0x0000000000000000000000000000000000000000" && (address[:12] == "0x0000000000" || address[:12] == "0x8000000000") {
+			if address != types.ZeroAddress && (address[:12] == "0x0000000000" || address[:12] == "0x8000000000") {
 				continue
 			}
 			account := &model.Account{Address: address, Number: parsed.Number, SNFTValue: "0"}
@@ -249,7 +249,7 @@ func check(c *node.Client, ctx context.Context) (stats *model.Stats, err error) 
 	if err = c.CallContext(ctx, &struct{}{}, "debug_gcStats"); err != nil {
 		return
 	}
-	if err = c.CallContext(ctx, &struct{}{}, "eth_getAccountInfo", "0x0000000000000000000000000000000000000000", "0x0"); err != nil {
+	if err = c.CallContext(ctx, &struct{}{}, "eth_getAccountInfo", types.ZeroAddress, "0x0"); err != nil {
 		return
 	}
 	chainId, genesis, stats := types.Long(0), model.Header{}, service.GetStats()
@@ -365,7 +365,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: weight.Address, Amount: "0", Weight: weight.Value})
 		}
 
-		if wh.Miner == "0x0000000000000000000000000000000000000000" {
+		if wh.Miner == types.ZeroAddress {
 			wh.Validators = make([]*model.Penalty, 0, len(onlineWeight))
 			for _, weight := range onlineWeight {
 				wh.Validators = append(wh.Validators, &model.Penalty{Address: types.Address(weight.Address), Weight: types.Long(weight.Value)})
@@ -600,7 +600,7 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 		if w.Type == 10 && value != "0" {
 			validator.Amount = "-" + value
 		}
-		if len(w.ProxyAddress) == 42 && w.ProxyAddress != "0x0000000000000000000000000000000000000000" {
+		if len(w.ProxyAddress) == 42 && w.ProxyAddress != types.ZeroAddress {
 			validator.Proxy = w.ProxyAddress
 		}
 		wh.ChangeValidators = append(wh.ChangeValidators, validator)
@@ -809,7 +809,7 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			BlockNumber:   blockNumber,
 		})
 
-	case 21: // Exchange pledge
+	case 21: //Exchange pledge
 		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
 			Address: from,
 			Amount:  value,
@@ -819,6 +819,17 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
 			Address: from,
 			Amount:  "-" + value,
+		})
+	case 28: //forcibly buy snft that does not belong to you(level 1 address)
+		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+			TxType:        28,
+			NFTAddr:       &w.Buyer.NFTAddress,
+			ExchangerAddr: &w.Buyer.Exchanger,
+			From:          types.ZeroAddress,
+			To:            string(*tx.To),
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+			BlockNumber:   blockNumber,
 		})
 	case 31:
 		wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: from, Proxy: w.ProxyAddress, Amount: "0"})

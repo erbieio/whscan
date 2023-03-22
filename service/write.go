@@ -443,6 +443,26 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				if err = db.Select("last_price", "tx_amount", "owner").Updates(&nft).Error; err != nil {
 					return
 				}
+			} else if tx.TxType == 28 {
+				var snfts []*model.SNFT
+				if err = db.Where("LEFT(address,41)=? AND owner!=?", tx.NFTAddr, tx.To).Find(&snfts).Error; err != nil {
+					return
+				}
+				for _, snft := range snfts {
+					value := snftValue(snft.Address, 1)
+					if err = updateUserSNFT(db, wh.Number, snft.Owner, "-"+value, -1); err != nil {
+						return
+					}
+					if err = updateUserSNFT(db, wh.Number, tx.To, value, 1); err != nil {
+						return
+					}
+					snft.Owner = tx.To
+					if err = db.Select("owner").Updates(&snft).Error; err != nil {
+						return
+					}
+				}
+				tx.Price = snftValue(*tx.NFTAddr, int64(len(snfts)))
+				tx.Royalty = *TxFee(tx.Price, 1000)
 			} else {
 				var snft model.SNFT
 				if err = db.Where("address=?", tx.NFTAddr).Take(&snft).Error; err != nil {
@@ -518,7 +538,7 @@ func saveValidator(db *gorm.DB, wh *model.Parsed) (err error) {
 				validator.Proxy = change.Address
 			}
 			if change.Proxy != "" {
-				if change.Proxy == "0x0000000000000000000000000000000000000000" {
+				if change.Proxy == types.ZeroAddress {
 					validator.Proxy = change.Address
 				} else {
 					validator.Proxy = change.Proxy
@@ -579,6 +599,7 @@ func saveExchanger(db *gorm.DB, wh *model.Parsed) (err error) {
 func saveSNFTCollection(id, metaUrl string) {
 	nftMeta, err := GetNFTMeta(metaUrl)
 	if err != nil {
+		log.Println("Failed to parse and store SNFT collection information", id, metaUrl, err)
 		return
 	}
 	err = DB.Model(&model.Collection{}).Where("id=?", id).Updates(map[string]any{
@@ -596,6 +617,7 @@ func saveSNFTCollection(id, metaUrl string) {
 func saveSNFTMeta(id, metaUrl string) {
 	nftMeta, err := GetNFTMeta(metaUrl)
 	if err != nil {
+		log.Println("Failed to parse and store SNFT meta information", id, metaUrl, err)
 		return
 	}
 	err = DB.Model(&model.FNFT{}).Where("id=?", id).Updates(map[string]any{
