@@ -28,25 +28,8 @@ func Collection(e *gin.Engine) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /collection/page [get]
 func pageCollection(c *gin.Context) {
-	req := struct {
-		Page      *int   `form:"page"`
-		PageSize  *int   `form:"page_size"`
-		Exchanger string `form:"exchanger"`
-		Creator   string `form:"creator"`
-		Type      string `form:"type"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchCollections(req.Exchanger, req.Creator, req.Type, page, size)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchCollections(c.Query("exchanger"), c.Query("creator"), c.Query("type"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

@@ -27,23 +27,8 @@ func Exchanger(e *gin.Engine) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /exchanger/page [get]
 func pageExchanger(c *gin.Context) {
-	req := struct {
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-		Name     string `form:"name"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchExchangers(req.Name, page, size)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchExchangers(c.Query("name"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -91,23 +76,8 @@ func getExchanger(c *gin.Context) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /exchangers [get]
 func exchangers(c *gin.Context) {
-	req := struct {
-		Order    string `form:"order"`
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.Exchangers(page, size, req.Order)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.Exchangers(page, size, c.Query("order"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

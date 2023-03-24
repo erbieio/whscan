@@ -367,11 +367,11 @@ type Validator struct {
 
 // Pledge  record
 type Pledge struct {
-	Address   string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
-	Type      int64  `json:"type"`                                    //operation type, 9: validator pledge add, 10: validator pledge sub
-	Amount    string `json:"amount" gorm:"type:VARCHAR(66)"`          //pledge amount
-	Number    int64  `json:"number"`                                  //block number
-	Timestamp int64  `json:"timestamp"`                               //operation time
+	Address   string `json:"address" gorm:"type:CHAR(42)"`   //staking account
+	Type      int64  `json:"type"`                           //operation type, 9: validator pledge add, 10: validator pledge sub
+	Amount    string `json:"amount" gorm:"type:VARCHAR(66)"` //pledge amount
+	Number    int64  `json:"number"`                         //block number
+	Timestamp int64  `json:"timestamp"`                      //operation time
 }
 
 type Location struct {

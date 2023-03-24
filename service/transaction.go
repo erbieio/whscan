@@ -20,15 +20,15 @@ type TransactionsRes struct {
 	Transactions []*TransactionRes `json:"transactions"` //transaction list
 }
 
-func FetchTransactions(page, size int, number, addr *string) (res TransactionsRes, err error) {
+func FetchTransactions(page, size int, number, addr string) (res TransactionsRes, err error) {
 	db := DB.Model(&Transaction{})
-	if number != nil {
-		db = db.Where("block_number=?", *number)
+	if number != "" {
+		db = db.Where("block_number=?", number)
 	}
-	if addr != nil {
-		db = db.Where("`from`=? OR `to`=?", *addr, *addr)
+	if addr != "" {
+		db = db.Where("`from`=? OR `to`=?", addr, addr)
 	}
-	if number != nil || addr != nil {
+	if number != "" || addr != "" {
 		err = db.Count(&res.Total).Error
 	} else {
 		// use stats to speed up queries

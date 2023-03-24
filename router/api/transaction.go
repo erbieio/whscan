@@ -30,24 +30,8 @@ func Transaction(e *gin.Engine) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /transaction/page [get]
 func pageTransaction(c *gin.Context) {
-	req := struct {
-		Page     *int    `form:"page"`
-		PageSize *int    `form:"page_size"`
-		Number   *string `form:"number"`
-		Addr     *string `form:"addr"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	data, err := service.FetchTransactions(page, size, req.Number, req.Addr)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	data, err := service.FetchTransactions(page, size, c.Query("number"), c.Query("addr"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -105,21 +89,7 @@ func getTransactionLogs(c *gin.Context) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /transaction/internal/page [get]
 func pageInternalTransaction(c *gin.Context) {
-	req := struct {
-		Page *int `form:"page"`
-		Size *int `form:"size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.Size)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
 	data, err := service.GetInternalTransactions(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})

@@ -25,21 +25,7 @@ func Ranking(e *gin.Engine) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /ranking/snft [get]
 func rankingSNFT(c *gin.Context) {
-	req := struct {
-		Page     *int `form:"page"`
-		PageSize *int `form:"page_size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
 	res, err := service.RankingSNFT(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
@@ -59,21 +45,7 @@ func rankingSNFT(c *gin.Context) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /ranking/nft [get]
 func rankingNFT(c *gin.Context) {
-	req := struct {
-		Page     *int `form:"page"`
-		PageSize *int `form:"page_size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
 	res, err := service.RankingNFT(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
@@ -93,21 +65,7 @@ func rankingNFT(c *gin.Context) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /ranking/exchanger [get]
 func rankingExchanger(c *gin.Context) {
-	req := struct {
-		Page     *int `form:"page"`
-		PageSize *int `form:"page_size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
 	res, err := service.RankingExchanger(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})

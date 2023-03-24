@@ -191,8 +191,7 @@ func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 			Hash  types.Hash `json:"hash" gorm:"type:CHAR(66);primaryKey"`
 		}
 		err = db.Model(&Transaction{}).Where("block_number>? AND block_number<=? AND status=1", epoch.Number-1024, epoch.Number).
-			Where("LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3233'").
-			Or("LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3234'").
+			Where("LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3233' OR LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3234'").
 			Order("block_number DESC").Limit(1).Scan(&tx).Error
 		if err != nil {
 			return
@@ -477,15 +476,6 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 					tx.Royalty = *TxFee(tx.Price, 1000)
 					snft.LastPrice = &tx.Price
 					snft.TxAmount = BigIntAdd(snft.TxAmount, tx.Price)
-					creator := model.Creator{}
-					err = db.Find(&creator, "address=(?)", db.Model(&model.Epoch{}).Where("`id`=?", snft.Address[:39]).Select("creator")).Error
-					if err != nil {
-						return
-					}
-					creator.Profit = BigIntAdd(creator.Profit, *TxFee(tx.Price, 1000))
-					if err = db.Select("profit").Updates(creator).Error; err != nil {
-						return
-					}
 				}
 				snft.Owner = tx.To
 				if err = db.Select("last_price", "tx_amount", "owner").Updates(&snft).Error; err != nil {
@@ -500,7 +490,17 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 						return
 					}
 				}
-
+			}
+			if (*tx.NFTAddr)[2] == '8' && tx.Royalty != "0" {
+				creator := model.Creator{}
+				err = db.Find(&creator, "address=(?)", db.Model(&model.Epoch{}).Where("`id`=?", (*tx.NFTAddr)[:39]).Select("creator")).Error
+				if err != nil {
+					return
+				}
+				creator.Profit = BigIntAdd(creator.Profit, tx.Royalty)
+				if err = db.Select("profit").Updates(creator).Error; err != nil {
+					return
+				}
 			}
 			// Calculate the total number of transactions and the total transaction amount to fill the NFT transaction fee and save the exchange
 			if tx.ExchangerAddr != nil && tx.Price != "0" {
@@ -664,7 +664,7 @@ func saveNFTMeta(blockNumber types.Long, nftAddr, metaUrl string) {
 		"collection_id": collectionId,
 	}).Error
 	if err == nil && collectionId != nil {
-		result := DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
+		err = DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
 			Id:          *collectionId,
 			Name:        nftMeta.CollectionsName,
 			Creator:     nftMeta.CollectionsCreator,
@@ -673,7 +673,6 @@ func saveNFTMeta(blockNumber types.Long, nftAddr, metaUrl string) {
 			ImgUrl:      nftMeta.CollectionsImgUrl,
 			BlockNumber: int64(blockNumber),
 			Exchanger:   &nftMeta.CollectionsExchanger,
-		})
-		err = result.Error
+		}).Error
 	}
 }

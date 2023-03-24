@@ -57,6 +57,15 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 	return
 }
 
+func EpochNFTTxs(epoch string, page, size int) (res NFTTxsRes, err error) {
+	db := DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,39)=?", epoch)
+	if err = db.Count(&res.Total).Error; err != nil {
+		return
+	}
+	err = db.Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTTxs).Error
+	return
+}
+
 func GetNFTTx(hash string) (res model.NFTTx, err error) {
 	err = DB.Where("tx_hash=?", hash).Take(&res).Error
 	return
@@ -68,7 +77,7 @@ type SNFTsRes struct {
 	NFTs  []model.SNFT `json:"nfts"`  //SNFT list
 }
 
-func FetchSNFTs(sort int, owner string, page, size int) (res SNFTsRes, err error) {
+func FetchSNFTs(sort, owner string, page, size int) (res SNFTsRes, err error) {
 	db := DB.Model(&model.SNFT{}).Where("`remove`=false")
 	if owner == "" {
 		res.Total = stats.TotalSNFT
@@ -78,7 +87,7 @@ func FetchSNFTs(sort int, owner string, page, size int) (res SNFTsRes, err error
 			return
 		}
 	}
-	if sort == 1 {
+	if sort == "1" {
 		db = db.Order("LENGTH(`address`) ASC,`address` DESC")
 	} else {
 		db = db.Order("`address` DESC")

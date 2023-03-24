@@ -820,7 +820,24 @@ func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 			Address: from,
 			Amount:  "-" + value,
 		})
+	case 27: //forcibly buy snft that does not belong to you(level 1 address)
+		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
+		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
+		w.Buyer.Seller = strings.ToLower(w.Buyer.Seller)
+		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
+			TxType:        27,
+			NFTAddr:       &w.Buyer.NFTAddress,
+			ExchangerAddr: &w.Buyer.Exchanger,
+			From:          w.Buyer.Seller,
+			To:            string(*tx.To),
+			Price:         value, //The unit is wei
+			Timestamp:     timestamp,
+			TxHash:        txHash,
+			BlockNumber:   blockNumber,
+		})
 	case 28: //forcibly buy snft that does not belong to you(level 1 address)
+		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
+		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
 		wh.NFTTxs = append(wh.NFTTxs, &model.NFTTx{
 			TxType:        28,
 			NFTAddr:       &w.Buyer.NFTAddress,

@@ -27,22 +27,8 @@ func Validator(e *gin.Engine) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /validator/page [get]
 func validators(c *gin.Context) {
-	req := struct {
-		Order    string `form:"order"`
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	res, err := service.FetchValidator(page, size, req.Order)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchValidator(page, size, c.Query("order"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

@@ -13,6 +13,7 @@ func NFT(e *gin.Engine) {
 	e.GET("/nft/page", pageNFT)
 	e.GET("/nft_meta/page", pageNFTAndMeta)
 	e.GET("/nft/tx/page", pageNFTTx)
+	e.GET("/nft/tx/epoch", epochNFTTx)
 	e.GET("/nft/tx/:hash", getNFTTx)
 	e.GET("/snft/page", pageSNFT)
 	e.GET("/snft_com/page", pageComSNFT)
@@ -39,25 +40,8 @@ func NFT(e *gin.Engine) {
 // @Failure     400           {object} service.ErrRes
 // @Router      /nft/page [get]
 func pageNFT(c *gin.Context) {
-	req := struct {
-		Page         *int   `form:"page"`
-		PageSize     *int   `form:"page_size"`
-		Exchanger    string `form:"exchanger"`
-		CollectionId string `form:"collection_id"`
-		Owner        string `form:"owner"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchNFTs(req.Exchanger, req.CollectionId, strings.ToLower(req.Owner), page, size)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchNFTs(c.Query("exchanger"), c.Query("collection_id"), strings.ToLower(c.Query("owner")), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -96,25 +80,29 @@ func pageNFTAndMeta(c *gin.Context) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /nft/tx/page [get]
 func pageNFTTx(c *gin.Context) {
-	req := struct {
-		Page      *int   `form:"page"`
-		PageSize  *int   `form:"page_size"`
-		Address   string `form:"address"`
-		Exchanger string `form:"exchanger"`
-		Account   string `form:"account"`
-	}{}
-	err := c.BindQuery(&req)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchNFTTxs(c.Query("address"), c.Query("exchanger"), c.Query("account"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
+	c.JSON(http.StatusOK, res)
+}
 
-	res, err := service.FetchNFTTxs(req.Address, req.Exchanger, req.Account, page, size)
+// @Tags        NFT
+// @Summary     Query SNFT transaction list
+// @Description Query the specified period of snft transactions
+// @Accept      json
+// @Produce     json
+// @Param       id        query    string true  "Specify the period id"
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.NFTTxsRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /nft/tx/epoch [get]
+func epochNFTTx(c *gin.Context) {
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.EpochNFTTxs(c.Query("id"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -153,24 +141,8 @@ func getNFTTx(c *gin.Context) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /snft/page [get]
 func pageSNFT(c *gin.Context) {
-	req := struct {
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-		Owner    string `form:"owner"`
-		Sort     int    `form:"sort"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchSNFTs(req.Sort, strings.ToLower(req.Owner), page, size)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchSNFTs(c.Query("sort"), c.Query("owner"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -264,24 +236,8 @@ func getSNFT(c *gin.Context) {
 // @Failure     400           {object} service.ErrRes
 // @Router      /snft_meta/page [get]
 func pageSNFTAndMeta(c *gin.Context) {
-	req := struct {
-		Page         *int   `form:"page"`
-		PageSize     *int   `form:"page_size"`
-		CollectionId string `form:"collection_id"`
-		Owner        string `form:"owner"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchSNFTsAndMeta(strings.ToLower(req.Owner), req.CollectionId, page, size)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchSNFTsAndMeta(strings.ToLower(c.Query("exchanger")), c.Query("collection_id"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -328,22 +284,8 @@ func blockSNFT(c *gin.Context) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /snft/collection/page [get]
 func pageSNFTGroup(c *gin.Context) {
-	req := struct {
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-		Owner    string `form:"owner"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	data, err := service.FindSNFTGroups(strings.ToLower(req.Owner), page, size)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	data, err := service.FindSNFTGroups(strings.ToLower(c.Query("owner")), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

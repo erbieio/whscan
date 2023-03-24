@@ -26,23 +26,8 @@ func Account(e *gin.Engine) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /account/page [get]
 func pageAccount(c *gin.Context) {
-	req := struct {
-		Order    string `form:"order"`
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchAccounts(page, size, req.Order)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchAccounts(page, size, c.Query("order"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

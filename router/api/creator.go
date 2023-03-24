@@ -27,23 +27,8 @@ func Creator(e *gin.Engine) {
 // @Failure     400       {object} service.ErrRes
 // @Router      /creator/page [get]
 func pageCreator(c *gin.Context) {
-	req := struct {
-		Page     *int   `form:"page"`
-		PageSize *int   `form:"page_size"`
-		Order    string `form:"order"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	page, size, err := utils.ParsePage(req.Page, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	res, err := service.FetchCreators(page, size, req.Order)
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	res, err := service.FetchCreators(page, size, c.Query("order"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -171,25 +171,18 @@ func NewWatcher(files []string) (*fsnotify.Watcher, error) {
 	return watcher, nil
 }
 
-// ParsePage parses the paging parameters, the default value is 10 records on the first page
-func ParsePage(pagePtr, sizePtr *int) (int, int, error) {
-	page, size := 1, 10
-	if pagePtr != nil {
-		page = *pagePtr
-		if page <= 0 {
-			return 0, 0, fmt.Errorf("number of paging pages is less than 1")
-		}
+// ParsePagination Parsing pagination parameters, maximum 100 records, default return 10 records on page 1
+func ParsePagination(pageStr, sizeStr string) (int, int) {
+	page, _ := strconv.Atoi(pageStr)
+	if page < 1 {
+		page = 1
 	}
-	if sizePtr != nil {
-		size = *sizePtr
-		if size <= 0 {
-			return 0, 0, fmt.Errorf("the page size is less than 1")
-		}
-		if size > 100 {
-			return 0, 0, fmt.Errorf("page size is greater than 100")
-		}
+	size, _ := strconv.Atoi(sizeStr)
+	if size < 1 || size > 100 {
+		size = 10
 	}
-	return page, size, nil
+
+	return page, size
 }
 
 // LastTimeRange unix time range for the specified number of days based on the current time
@@ -199,11 +192,4 @@ func LastTimeRange(day int64) (start, stop int64) {
 	stop = stopTime.Unix()
 	start = stop - DaySecond*day
 	return
-}
-
-func VerifyEmailFormat(email string) bool {
-	pattern := `^[0-9a-z][_.0-9a-z-]{0,31}@([0-9a-z][0-9a-z-]{0,30}[0-9a-z]\.){1,4}[a-z]{2,4}$`
-
-	reg := regexp.MustCompile(pattern)
-	return reg.MatchString(email)
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"math"
 	"math/big"
 	"net/http"
@@ -29,7 +30,8 @@ func BigIntAdd(a, b string) string {
 	}
 	cc := aa.Add(aa, bb)
 	if cc.Sign() == -1 {
-		panic("big add err:" + cc.String())
+		log.Printf("error: the result is negative number, %s+%s=%s", a, b, cc.String())
+		//panic("big add err:" + cc.String())
 	}
 	return cc.Text(10)
 }
