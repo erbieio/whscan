@@ -1389,9 +1389,6 @@ definitions:
       desc:
         description: description
         type: string
-      exchanger:
-        description: exchanger address
-        type: string
       id:
         description: FNFT ID
         type: string
@@ -2899,10 +2896,6 @@ paths:
       - description: collection id, if empty, query all
         in: query
         name: collection_id
-        type: string
-      - description: exchanger, if empty, query all
-        in: query
-        name: exchanger
         type: string
       - description: Owner, if empty, query all
         in: query

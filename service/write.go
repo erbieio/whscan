@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/big"
 	"strconv"
@@ -60,6 +59,12 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		// write block
 		if err = db.Create(parsed.Block).Error; err != nil {
 			return
+		}
+		// write collection
+		if len(parsed.Collections) > 0 {
+			if err = db.Save(parsed.Collections).Error; err != nil {
+				return
+			}
 		}
 
 		// wormholes unique data write
@@ -239,37 +244,8 @@ func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 		if err = db.Create(epoch).Error; err != nil {
 			return
 		}
-		for i := 0; i < 16; i++ {
-			hexI := fmt.Sprintf("%x", i)
-			collectionId := epoch.ID + hexI
-			metaUrl := ""
-			if epoch.Dir != "" {
-				metaUrl = epoch.Dir + hexI + "0"
-			}
-			// write collection information
-			err = db.
-				Create(&model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}).Error
-			if err != nil {
-				return
-			}
-			if metaUrl != "" {
-				go saveSNFTCollection(collectionId, metaUrl)
-			}
-			for j := 0; j < 16; j++ {
-				hexJ := fmt.Sprintf("%x", j)
-				FNFTId := collectionId + hexJ
-				if epoch.Dir != "" {
-					metaUrl = epoch.Dir + hexI + hexJ
-				}
-				// write complete SNFT information
-				err = db.Create(&model.FNFT{ID: FNFTId, MetaUrl: metaUrl}).Error
-				if err != nil {
-					return
-				}
-				if metaUrl != "" {
-					go saveSNFTMeta(FNFTId, metaUrl)
-				}
-			}
+		if err = db.Create(wh.FNFTs).Error; err != nil {
+			return
 		}
 	}
 	return
@@ -395,9 +371,6 @@ func saveNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 					return
 				}
 			}
-		}
-		if nft.MetaUrl != "" {
-			go saveNFTMeta(wh.Number, *nft.Address, nft.MetaUrl)
 		}
 	}
 	return
@@ -594,85 +567,4 @@ func saveExchanger(db *gorm.DB, wh *model.Parsed) (err error) {
 		}
 	}
 	return
-}
-
-func saveSNFTCollection(id, metaUrl string) {
-	nftMeta, err := GetNFTMeta(metaUrl)
-	if err != nil {
-		log.Println("Failed to parse and store SNFT collection information", id, metaUrl, err)
-		return
-	}
-	err = DB.Model(&model.Collection{}).Where("id=?", id).Updates(map[string]any{
-		"name":     nftMeta.CollectionsName,
-		"desc":     nftMeta.CollectionsDesc,
-		"category": nftMeta.CollectionsCategory,
-		"img_url":  nftMeta.CollectionsImgUrl,
-		"creator":  nftMeta.CollectionsCreator,
-	}).Error
-	if err != nil {
-		log.Println("Failed to parse and store SNFT collection information", id, metaUrl, err)
-	}
-}
-
-func saveSNFTMeta(id, metaUrl string) {
-	nftMeta, err := GetNFTMeta(metaUrl)
-	if err != nil {
-		log.Println("Failed to parse and store SNFT meta information", id, metaUrl, err)
-		return
-	}
-	err = DB.Model(&model.FNFT{}).Where("id=?", id).Updates(map[string]any{
-		"name":       nftMeta.Name,
-		"desc":       nftMeta.Desc,
-		"attributes": nftMeta.Attributes,
-		"category":   nftMeta.Category,
-		"source_url": nftMeta.SourceUrl,
-	}).Error
-	if err != nil {
-		log.Println("Failed to parse and store SNFT meta information", id, metaUrl, err)
-	}
-}
-
-// saveNFTMeta parses and stores NFT meta information
-func saveNFTMeta(blockNumber types.Long, nftAddr, metaUrl string) {
-	var err error
-	defer func() {
-		if err != nil {
-			log.Println("Failed to parse and store NFT meta information", nftAddr, metaUrl, err)
-		}
-	}()
-	nftMeta, err := GetNFTMeta(metaUrl)
-	if err != nil {
-		return
-	}
-
-	//collection name + collection creator + hash of the exchange where the collection is located
-	var collectionId *string
-	if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
-		hash := string(utils.Keccak256Hash(
-			[]byte(nftMeta.CollectionsName),
-			[]byte(nftMeta.CollectionsCreator),
-			[]byte(nftMeta.CollectionsExchanger),
-		))
-		collectionId = &hash
-	}
-	err = DB.Model(&model.NFT{}).Where("address=?", nftAddr).Updates(map[string]any{
-		"name":          nftMeta.Name,
-		"desc":          nftMeta.Desc,
-		"attributes":    nftMeta.Attributes,
-		"category":      nftMeta.Category,
-		"source_url":    nftMeta.SourceUrl,
-		"collection_id": collectionId,
-	}).Error
-	if err == nil && collectionId != nil {
-		err = DB.Clauses(clause.Insert{Modifier: "IGNORE"}).Create(&model.Collection{
-			Id:          *collectionId,
-			Name:        nftMeta.CollectionsName,
-			Creator:     nftMeta.CollectionsCreator,
-			Category:    nftMeta.CollectionsCategory,
-			Desc:        nftMeta.CollectionsDesc,
-			ImgUrl:      nftMeta.CollectionsImgUrl,
-			BlockNumber: int64(blockNumber),
-			Exchanger:   &nftMeta.CollectionsExchanger,
-		}).Error
-	}
 }

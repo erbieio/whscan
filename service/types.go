@@ -1,16 +1,10 @@
 package service
 
 import (
-	"encoding/json"
-	"io"
 	"log"
 	"math"
 	"math/big"
-	"net/http"
 	"strconv"
-	"strings"
-
-	"server/conf"
 )
 
 // ErrRes interface error message returned
@@ -87,37 +81,4 @@ func apr(rewardSNFT int64, totalPledge string) float64 {
 	}
 	result, _ := reward.Quo(reward, pledge).Float64()
 	return result
-}
-
-// NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored
-type NFTMeta struct {
-	Name                 string `json:"name"`                  //name
-	Desc                 string `json:"desc"`                  //description
-	Attributes           string `json:"attributes"`            //Attributes
-	Category             string `json:"category"`              //category
-	SourceUrl            string `json:"source_url"`            //Resource links, file links such as pictures or videos
-	CollectionsCreator   string `json:"collections_creator"`   //The creator of the collection, uniquely identifies the collection
-	CollectionsName      string `json:"collections_name"`      //The name of the collection to which it belongs, uniquely identifying the collection
-	CollectionsCategory  string `json:"collections_category"`  //The category of the collection it belongs to
-	CollectionsDesc      string `json:"collections_desc"`      //Description of the collection it belongs to
-	CollectionsImgUrl    string `json:"collections_img_url"`   //collection image link
-	CollectionsExchanger string `json:"collections_exchanger"` //The collection exchange to which it belongs, uniquely identifies the collection
-}
-
-// GetNFTMeta gets NFT meta information from the link
-func GetNFTMeta(url string) (nft NFTMeta, err error) {
-	// If the ipfs link does not give the server address, use the local ipfs server
-	realUrl := url
-	if strings.Index(url, "/ipfs/Qm") == 0 {
-		realUrl = conf.IpfsServer + url
-	}
-
-	resp, err := http.Get(realUrl)
-	if err != nil {
-		return
-	}
-	data, _ := io.ReadAll(resp.Body)
-	_ = resp.Body.Close()
-	err = json.Unmarshal(data, &nft)
-	return
 }

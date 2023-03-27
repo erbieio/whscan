@@ -17,6 +17,7 @@ func initValidator(db *gorm.DB) error {
 	msgLogFile := utils.ExpandPath("~/ops/log_com.log")
 	w, err := utils.NewWatcher([]string{addLogFile, msgLogFile})
 	if err != nil {
+		log.Printf("validator,file watcher error: %v\n", err)
 		return err
 	}
 	go func() {
@@ -31,7 +32,7 @@ func initValidator(db *gorm.DB) error {
 					updateLastMsg(db, msgLogFile)
 				}
 			case err := <-w.Errors:
-				log.Printf("file watcher error: %v\n", err)
+				log.Printf("validator,file watcher error: %v\n", err)
 			}
 		}
 	}()

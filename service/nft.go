@@ -58,7 +58,7 @@ func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxs
 }
 
 func EpochNFTTxs(epoch string, page, size int) (res NFTTxsRes, err error) {
-	db := DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,39)=?", epoch)
+	db := DB.Model(&model.NFTTx{}).Where("LEFT(nft_addr,39)=? AND tx_type!=6", epoch)
 	if err = db.Count(&res.Total).Error; err != nil {
 		return
 	}
@@ -101,7 +101,6 @@ type SNFTRes struct {
 	model.FNFT
 	Creator        string `json:"creator"`        //creator address, also the address of royalty income
 	RoyaltyRatio   uint32 `json:"royaltyRatio"`   //the royalty rate of the same period of SNFT, the unit is one ten thousandth
-	Exchanger      string `json:"exchanger"`      //exchanger address
 	CollectionName string `json:"collectionName"` //collection name
 	CreatedAt      int64  `json:"createdAt"`      //snft created time
 }

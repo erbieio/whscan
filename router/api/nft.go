@@ -228,7 +228,6 @@ func getSNFT(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       collection_id query    string false "collection id, if empty, query all"
-// @Param       exchanger     query    string false "exchanger, if empty, query all"
 // @Param       owner         query    string false "Owner, if empty, query all"
 // @Param       page          query    string false "Page, default 1"
 // @Param       page_size     query    string false "Page size, default 10"
@@ -237,7 +236,7 @@ func getSNFT(c *gin.Context) {
 // @Router      /snft_meta/page [get]
 func pageSNFTAndMeta(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	res, err := service.FetchSNFTsAndMeta(strings.ToLower(c.Query("exchanger")), c.Query("collection_id"), page, size)
+	res, err := service.FetchSNFTsAndMeta(strings.ToLower(c.Query("owner")), c.Query("collection_id"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

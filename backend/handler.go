@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"strconv"
 	"strings"
@@ -88,7 +89,7 @@ func decode(c *node.Client, ctx context.Context, number types.Long) (parsed *mod
 	}
 	// Parse things specific to wormholes
 	err = decodeWH(c, parsed)
-
+	tryParseMeta(parsed)
 	return
 }
 
@@ -383,7 +384,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 
 		// wormholes transaction processing
 		for _, tx := range wh.CacheTxs {
-			err = decodeWHTx(c, wh, tx)
+			err = decodeWHTx(wh, tx)
 			if err != nil {
 				return err
 			}
@@ -491,7 +492,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 }
 
 // decodeWHTx parses the special transaction of the wormholes blockchain
-func decodeWHTx(_ *node.Client, wh *model.Parsed, tx *model.Transaction) (err error) {
+func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
 	// Non-wormholes and failed transactions are not resolved
 	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
@@ -868,4 +869,88 @@ func realMeatUrl(meta string) string {
 		return ""
 	}
 	return r.Meta
+}
+
+// tryParseMeta parses NFT AND SNFT meta information
+func tryParseMeta(wh *model.Parsed) {
+	for _, nft := range wh.NFTs {
+		nftMeta, err := utils.GetNFTMeta(nft.MetaUrl)
+		if err != nil {
+			log.Println("Failed to parse NFT meta information", nft.Address, nft.MetaUrl, err)
+			continue
+		}
+
+		//collection name + collection creator + hash of the exchange where the collection is located
+		if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
+			hash := string(utils.Keccak256Hash(
+				[]byte(nftMeta.CollectionsName),
+				[]byte(nftMeta.CollectionsCreator),
+				[]byte(nftMeta.CollectionsExchanger),
+			))
+			wh.Collections = append(wh.Collections, &model.Collection{
+				Id:          hash,
+				Name:        nftMeta.CollectionsName,
+				Creator:     nftMeta.CollectionsCreator,
+				Category:    nftMeta.CollectionsCategory,
+				Desc:        nftMeta.CollectionsDesc,
+				ImgUrl:      nftMeta.CollectionsImgUrl,
+				BlockNumber: int64(wh.Number),
+				Exchanger:   &nftMeta.CollectionsExchanger,
+			})
+			nft.CollectionId = &hash
+		}
+		nft.Name = nftMeta.Name
+		nft.Desc = nftMeta.Desc
+		nft.Attributes = nftMeta.Attributes
+		nft.Category = nftMeta.Category
+		nft.SourceUrl = nftMeta.SourceUrl
+	}
+
+	if epoch := wh.Epoch; epoch != nil {
+		for i := 0; i < 16; i++ {
+			hexI := fmt.Sprintf("%x", i)
+			collectionId := epoch.ID + hexI
+			metaUrl := ""
+			if epoch.Dir != "" {
+				metaUrl = epoch.Dir + hexI + "0"
+			}
+			// write collection information
+			collection := &model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}
+			if metaUrl != "" {
+				nftMeta, err := utils.GetNFTMeta(metaUrl)
+				if err != nil {
+					log.Println("Failed to parse SNFT collection information", collectionId, metaUrl, err)
+				} else {
+					collection.Name = nftMeta.CollectionsName
+					collection.Desc = nftMeta.CollectionsDesc
+					collection.Category = nftMeta.CollectionsCategory
+					collection.ImgUrl = nftMeta.CollectionsImgUrl
+					collection.Creator = nftMeta.CollectionsCreator
+				}
+			}
+			wh.Collections = append(wh.Collections, collection)
+			for j := 0; j < 16; j++ {
+				hexJ := fmt.Sprintf("%x", j)
+				FNFTId := collectionId + hexJ
+				if epoch.Dir != "" {
+					metaUrl = epoch.Dir + hexI + hexJ
+				}
+				// write complete SNFT information
+				fnft := &model.FNFT{ID: FNFTId, MetaUrl: metaUrl}
+				if metaUrl != "" {
+					nftMeta, err := utils.GetNFTMeta(metaUrl)
+					if err != nil {
+						log.Println("Failed to parse and store SNFT meta information", FNFTId, metaUrl, err)
+					} else {
+						fnft.Name = nftMeta.Name
+						fnft.Desc = nftMeta.Desc
+						fnft.Attributes = nftMeta.Attributes
+						fnft.Category = nftMeta.Category
+						fnft.SourceUrl = nftMeta.SourceUrl
+					}
+				}
+				wh.FNFTs = append(wh.FNFTs, fnft)
+			}
+		}
+	}
 }

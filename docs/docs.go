@@ -2041,12 +2041,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "exchanger, if empty, query all",
-                        "name": "exchanger",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "Owner, if empty, query all",
                         "name": "owner",
                         "in": "query"
@@ -4340,10 +4334,6 @@ const docTemplate = `{
                 },
                 "desc": {
                     "description": "description",
-                    "type": "string"
-                },
-                "exchanger": {
-                    "description": "exchanger address",
                     "type": "string"
                 },
                 "id": {
