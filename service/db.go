@@ -16,13 +16,13 @@ func init() {
 		panic(err)
 	}
 	// Synchronize the table structure to the database, compare the structure in the database and the code, and perform DDL operations
-	err = model.Migrate(DB)
-	if err != nil {
+	if err = model.Migrate(DB); err != nil {
 		panic(err)
 	}
-	err = initStats(DB)
-	if err != nil {
+	if err = initStats(DB); err != nil {
 		panic(err)
 	}
-	err = initValidator(DB)
+	if err = initValidator(DB); err != nil {
+		panic(err)
+	}
 }

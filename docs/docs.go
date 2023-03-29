@@ -2765,6 +2765,10 @@ const docTemplate = `{
                     "description": "is selected block height",
                     "type": "integer"
                 },
+                "profit": {
+                    "description": "royalty profit amount",
+                    "type": "string"
+                },
                 "reward": {
                     "description": "vote reward amount",
                     "type": "string"

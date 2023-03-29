@@ -347,6 +347,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 					}
 					wh.Epoch.Number = int64(selected + 1)
 					wh.Epoch.Reward = info.Balance.Text(10)
+					wh.Epoch.Profit = "0"
 				}
 			} else {
 				wh.Rewards[i].Amount = new(string)

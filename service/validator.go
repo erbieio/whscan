@@ -15,9 +15,11 @@ import (
 func initValidator(db *gorm.DB) error {
 	addLogFile := utils.ExpandPath("~/ops/log_add_node.log")
 	msgLogFile := utils.ExpandPath("~/ops/log_com.log")
+	os.MkdirAll(utils.ExpandPath("~/ops"), os.ModePerm)
+	os.WriteFile(addLogFile, nil, os.ModePerm)
+	os.WriteFile(msgLogFile, nil, os.ModePerm)
 	w, err := utils.NewWatcher([]string{addLogFile, msgLogFile})
 	if err != nil {
-		log.Printf("validator,file watcher error: %v\n", err)
 		return err
 	}
 	go func() {

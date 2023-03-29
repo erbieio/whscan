@@ -474,6 +474,15 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				if err = db.Select("profit").Updates(creator).Error; err != nil {
 					return
 				}
+				epoch := model.Epoch{}
+				err = db.Find(&epoch, "`id`=(?)", (*tx.NFTAddr)[:39]).Error
+				if err != nil {
+					return
+				}
+				epoch.Profit = BigIntAdd(epoch.Profit, tx.Royalty)
+				if err = db.Select("profit").Updates(epoch).Error; err != nil {
+					return
+				}
 			}
 			// Calculate the total number of transactions and the total transaction amount to fill the NFT transaction fee and save the exchange
 			if tx.ExchangerAddr != nil && tx.Price != "0" {

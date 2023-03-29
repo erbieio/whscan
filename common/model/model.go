@@ -149,7 +149,7 @@ type Account struct {
 
 // Transaction information
 type Transaction struct {
-	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
+	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66);index"`    //Block Hash
 	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`                //block number
 	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
 	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
@@ -253,6 +253,7 @@ type Epoch struct {
 	TxType       *int64  `json:"txType"`                              //transaction type
 	Voter        string  `json:"voter" gorm:"type:CHAR(42);index"`    //voter
 	Reward       string  `json:"reward" gorm:"type:VARCHAR(128)"`     //vote reward amount
+	Profit       string  `json:"profit" gorm:"type:VARCHAR(128)"`     //royalty profit amount
 	Number       int64   `json:"number"`                              //is selected block height
 	Timestamp    int64   `json:"timestamp"`                           //is selected timestamp
 	StartNumber  int64   `json:"startNumber"`                         //starting the period block height
