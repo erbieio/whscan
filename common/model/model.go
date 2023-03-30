@@ -159,7 +159,7 @@ type Transaction struct {
 	Gas               types.Long     `json:"gas"`                                     //fuel
 	GasPrice          types.Long     `json:"gasPrice"`                                //Gas price
 	Hash              types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //Hash
-	Status            *types.Long    `json:"status,omitempty"`                        //Status, 1: success; 0: failure
+	Status            *types.Long    `json:"status,omitempty" gorm:"index"`           //Status, 1: success; 0: failure
 	CumulativeGasUsed types.Long     `json:"cumulativeGasUsed"`                       //Cumulative gas consumption
 	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"`    //The created contract address
 	GasUsed           types.Long     `json:"gasUsed"`                                 //Gas consumption

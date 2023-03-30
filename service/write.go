@@ -195,7 +195,7 @@ func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 			Input string     `json:"input"`
 			Hash  types.Hash `json:"hash" gorm:"type:CHAR(66);primaryKey"`
 		}
-		err = db.Model(&Transaction{}).Where("block_number>? AND block_number<=? AND status=1", epoch.Number-1024, epoch.Number).
+		err = db.Model(&model.Transaction{}).Where("block_number>? AND block_number<=? AND status=1", epoch.Number-1024, epoch.Number).
 			Where("LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3233' OR LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3234'").
 			Order("block_number DESC").Limit(1).Scan(&tx).Error
 		if err != nil {

@@ -611,7 +611,7 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 			Type:      int64(w.Type),
 			Amount:    value,
 			Number:    blockNumber,
-			Timestamp: 0,
+			Timestamp: timestamp,
 		})
 
 	case 11: //Open the exchange
