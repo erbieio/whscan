@@ -290,7 +290,7 @@ type SNFT struct {
 	LastPrice    *string `json:"last_price" gorm:"type:VARCHAR(66)"`         //The last transaction price, the unit is wei, null if the transaction has not been completed
 	TxAmount     string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"`   //the total transaction volume of this SNFT
 	RewardAt     int64   `json:"reward_at"`                                  //The timestamp of the last rewarded, null if not rewarded
-	RewardNumber int64   `json:"reward_number"`                              //The height of the last rewarded block
+	RewardNumber int64   `json:"reward_number" gorm:"index"`                 //The height of the last rewarded block
 	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`           //owner, unallocated and reclaimed are null
 	Pieces       int64   `json:"pieces"`                                     //snft pieces number
 	Remove       bool    `json:"remove" gorm:"index"`                        //SNFTs that are synthesized and then removed
@@ -307,7 +307,7 @@ type NFTTx struct {
 	Price         string  `json:"price"`                                               //price, the unit is wei
 	Timestamp     int64   `json:"timestamp" gorm:"index"`                              //transaction timestamp
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`            //transaction hash
-	BlockNumber   int64   `json:"block_number"`                                        //block number
+	BlockNumber   int64   `json:"block_number" gorm:"index"`                           //block number
 	Royalty       string  `json:"royalty"`                                             //for the creator royalty
 	Fee           *string `json:"fee,omitempty"`                                       //Transaction fee, in wei (only if there is an exchange and price)
 }

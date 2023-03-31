@@ -274,7 +274,11 @@ func updateUserSNFT(db *gorm.DB, number types.Long, user, value string, count in
 
 func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 	for _, snft := range wh.Mergers {
-		result := db.Model(&model.SNFT{}).Where("LEFT(`address`,?)=? AND remove=false", len(snft.Address), snft.Address).Update("remove", true)
+		addr := [16]string{}
+		for i := 0; i < 16; i++ {
+			addr[i] = snft.Address + strconv.Itoa(i)
+		}
+		result := db.Model(&model.SNFT{}).Where("address IN (?) AND remove=false", addr).Update("remove", true)
 		if err = result.Error; err != nil {
 			return
 		}
@@ -417,7 +421,11 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				}
 			} else if tx.TxType == 28 {
 				var snfts []*model.SNFT
-				if err = db.Where("LEFT(address,41)=? AND owner!=?", tx.NFTAddr, tx.To).Find(&snfts).Error; err != nil {
+				addr := [16]string{}
+				for i := 0; i < 16; i++ {
+					addr[i] = *tx.NFTAddr + strconv.Itoa(i)
+				}
+				if err = db.Where("address IN (?) AND owner!=?", addr, tx.To).Find(&snfts).Error; err != nil {
 					return
 				}
 				for _, snft := range snfts {

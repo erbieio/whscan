@@ -269,7 +269,7 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.Transaction{}).Where("block_number>?", parsed.Number-10000).Select("COUNT(DISTINCT `from`)").Scan(&stats.ActiveAccount)
 			if stats.Total24HTx == 0 || number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)
-				db.Model(&model.Transaction{}).Joins("LEFT JOIN blocks on block_hash = blocks.hash").Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
+				db.Model(&model.Transaction{}).Joins("LEFT JOIN blocks ON block_hash = blocks.hash").Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
 				db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HExchangerTx)
 				db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
 
