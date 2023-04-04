@@ -400,7 +400,7 @@ type Parsed struct {
 	Mergers          []*SNFT      //merge snft
 	ChangeExchangers []*Exchanger //modify the exchanger, including opening, closing, staking and other operations
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
-	Pledges          []*Pledge    // pledge record
+	Pledges          []*Pledge    //pledge record
 
 	// metadata，the meta information link is not necessarily parsed, and it is only parsed once
 	Collections []*Collection

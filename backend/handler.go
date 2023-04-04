@@ -172,7 +172,12 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 				contracts[tx.To] = &model.Account{Creator: &tx.From, CreatedTx: &tx.TxHash}
 			}
 		}
-		reqs, number := make([]node.BatchElem, 0, 3*len(modifiedAccounts)), parsed.Number.Hex()
+		number := parsed.Number.Hex()
+		info := struct {
+			Nonce      types.Long `json:"Nonce"`
+			Balance    *big.Int   `json:"Balance"`
+			VoteWeight *big.Int   `json:"VoteWeight"`
+		}{}
 		for _, address := range modifiedAccounts {
 			if address != types.ZeroAddress && (address[:12] == "0x0000000000" || address[:12] == "0x8000000000") {
 				continue
@@ -183,31 +188,19 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 				if err = utils.SetProperty(c, ctx, number, account); err != nil {
 					return
 				}
-				reqs = append(reqs, node.BatchElem{
-					Method: "eth_getCode",
-					Args:   []any{address, number},
-					Result: &account.Code,
-				})
+				if err = c.CallContext(ctx, &account.Code, "eth_getCode", address, number); err != nil {
+					return
+				}
+
 			}
-			reqs = append(reqs, node.BatchElem{
-				Method: "eth_getBalance",
-				Args:   []any{address, number},
-				Result: &account.Balance,
-			})
-			reqs = append(reqs, node.BatchElem{
-				Method: "eth_getTransactionCount",
-				Args:   []any{address, number},
-				Result: &account.Nonce,
-			})
+			if err = c.CallContext(ctx, &info, "eth_getAccountInfo", address, number); err != nil {
+				return
+			}
+			account.Number = parsed.Number
+			account.Nonce = info.Nonce
+			account.Balance = types.BigInt(info.Balance.String())
+			account.SNFTValue = info.VoteWeight.String()
 			parsed.CacheAccounts = append(parsed.CacheAccounts, account)
-		}
-		if err = c.BatchCallContext(ctx, reqs); err != nil {
-			return
-		}
-		for i := range reqs {
-			if reqs[i].Error != nil {
-				return reqs[i].Error
-			}
 		}
 	}
 	return
@@ -481,11 +474,6 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				Address: validator.Addr,
 				Amount:  validator.Balance.Text(10),
 				Proxy:   validator.Proxy,
-			})
-			wh.Pledges = append(wh.Pledges, &model.Pledge{
-				Address: validator.Addr,
-				Type:    9,
-				Amount:  validator.Balance.Text(10),
 			})
 		}
 	}

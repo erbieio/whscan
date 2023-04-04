@@ -50,9 +50,10 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 			}
 		}
 		// write account information
-		for _, account := range parsed.CacheAccounts {
-			err = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce"})}).Create(account).Error
-			if err != nil {
+		if len(parsed.CacheAccounts) > 0 {
+			if err = db.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "number", "snft_value"}),
+			}).Create(parsed.CacheAccounts).Error; err != nil {
 				return
 			}
 		}
@@ -77,6 +78,9 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 			return
 		}
 		// validator change
+		if err = savePledge(db, parsed); err != nil {
+			return
+		}
 		if err = saveValidator(db, parsed); err != nil {
 			return
 		}
@@ -93,9 +97,6 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 			return
 		}
 		if err = saveMerge(db, parsed); err != nil {
-			return
-		}
-		if err = savePledge(db, parsed); err != nil {
 			return
 		}
 
@@ -132,6 +133,9 @@ func SetHead(parsed *model.Parsed) error {
 				return
 			}
 			if err = db.Delete(&model.Collection{}, "block_number>?", head).Error; err != nil {
+				return
+			}
+			if err = db.Delete(&model.Pledge{}, "number>?", head).Error; err != nil {
 				return
 			}
 			if err = db.Delete(&model.Exchanger{}, "block_number>?", head).Error; err != nil {
@@ -240,7 +244,6 @@ func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 		if err = db.Save(&creator).Error; err != nil {
 			return
 		}
-
 		if err = db.Create(epoch).Error; err != nil {
 			return
 		}
@@ -251,41 +254,16 @@ func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 	return
 }
 
-func updateUserSNFT(db *gorm.DB, number types.Long, user, value string, count int64) (err error) {
-	var account model.Account
-	if err = db.Find(&account, "`address`=?", user).Error; err != nil {
-		return
-	}
-	if account.Address == "" {
-		account.Address = types.Address(user)
-		account.Balance = "0"
-		account.Number = number
-		account.SNFTValue = value
-		account.SNFTCount = count
-		err = db.Create(&account).Error
-	} else {
-		account.Number = number
-		account.SNFTValue = BigIntAdd(account.SNFTValue, value)
-		account.SNFTCount += count
-		err = db.Select("snft_count", "snft_value", "number").Updates(&account).Error
-	}
-	return
-}
-
 func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 	for _, snft := range wh.Mergers {
 		addr := [16]string{}
 		for i := 0; i < 16; i++ {
 			addr[i] = snft.Address + strconv.Itoa(i)
 		}
-		result := db.Model(&model.SNFT{}).Where("address IN (?) AND remove=false", addr).Update("remove", true)
-		if err = result.Error; err != nil {
+		if err = db.Model(&model.SNFT{}).Where("address IN (?)", addr).Update("remove", true).Error; err != nil {
 			return
 		}
 		if err = db.Create(snft).Error; err != nil {
-			return
-		}
-		if err = updateUserSNFT(db, wh.Number, snft.Owner, snftMergeValue(snft.Address, snft.Pieces), 1-result.RowsAffected); err != nil {
 			return
 		}
 	}
@@ -294,7 +272,7 @@ func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 
 func savePledge(db *gorm.DB, wh *model.Parsed) (err error) {
 	if wh.Number == 1 {
-		err = db.Model(&model.Pledge{}).Where("timestamp=0").Update("timestamp", wh.Timestamp).Error
+		err = db.Exec("INSERT INTO pledges SELECT address,9 AS `type`,amount,0 AS number,? AS timestamp FROM validators;", wh.Timestamp-5).Error
 		if err != nil {
 			return
 		}
@@ -336,9 +314,6 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 					return
 				}
 			}
-			if err = updateUserSNFT(db, wh.Number, reward.Address, value, 1); err != nil {
-				return
-			}
 		} else {
 			var validator model.Validator
 			if err = db.Find(&validator, "address=?", reward.Address).Error; err != nil {
@@ -367,13 +342,8 @@ func saveNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 		}
 		// Update the total number of NFTs on the specified exchange
 		if len(nft.ExchangerAddr) == 42 {
-			var exchanger model.Exchanger
-			db.Find(&exchanger, "address=?", nft.ExchangerAddr)
-			if exchanger.Address == nft.ExchangerAddr {
-				exchanger.NFTCount++
-				if err = db.Select("nft_count").Updates(&exchanger).Error; err != nil {
-					return
-				}
+			if err = db.Exec("UPDATE `exchangers` SET `nft_count`=`nft_count`+1 WHERE address=?", nft.ExchangerAddr).Error; err != nil {
+				return
 			}
 		}
 	}
@@ -393,9 +363,6 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 			tx.Fee = &fee
 			tx.Price = snftValue(snft.Address, snft.Pieces)
 			if err = db.Model(&model.SNFT{}).Where("address=?", snft.Address).Update("remove", true).Error; err != nil {
-				return
-			}
-			if err = updateUserSNFT(db, wh.Number, snft.Owner, "-"+tx.Price, -1); err != nil {
 				return
 			}
 		} else {
@@ -420,28 +387,15 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 					return
 				}
 			} else if tx.TxType == 28 {
-				var snfts []*model.SNFT
 				addr := [16]string{}
 				for i := 0; i < 16; i++ {
 					addr[i] = *tx.NFTAddr + strconv.Itoa(i)
 				}
-				if err = db.Where("address IN (?) AND owner!=?", addr, tx.To).Find(&snfts).Error; err != nil {
+				result := db.Model(&model.SNFT{}).Where("address IN (?) AND owner!=?", addr, tx.To).Update("owner", tx.To)
+				if err = result.Error; err != nil {
 					return
 				}
-				for _, snft := range snfts {
-					value := snftValue(snft.Address, 1)
-					if err = updateUserSNFT(db, wh.Number, snft.Owner, "-"+value, -1); err != nil {
-						return
-					}
-					if err = updateUserSNFT(db, wh.Number, tx.To, value, 1); err != nil {
-						return
-					}
-					snft.Owner = tx.To
-					if err = db.Select("owner").Updates(&snft).Error; err != nil {
-						return
-					}
-				}
-				tx.Price = snftValue(*tx.NFTAddr, int64(len(snfts)))
+				tx.Price = snftValue(*tx.NFTAddr, result.RowsAffected)
 				tx.Royalty = *TxFee(tx.Price, 1000)
 			} else {
 				var snft model.SNFT
@@ -461,15 +415,6 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				snft.Owner = tx.To
 				if err = db.Select("last_price", "tx_amount", "owner").Updates(&snft).Error; err != nil {
 					return
-				}
-				if tx.From != tx.To {
-					value := snftValue(snft.Address, snft.Pieces)
-					if err = updateUserSNFT(db, wh.Number, tx.From, "-"+value, -1); err != nil {
-						return
-					}
-					if err = updateUserSNFT(db, wh.Number, tx.To, value, 1); err != nil {
-						return
-					}
 				}
 			}
 			if (*tx.NFTAddr)[2] == '8' && tx.Royalty != "0" {

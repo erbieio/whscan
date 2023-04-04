@@ -1,7 +1,7 @@
 package service
 
 import (
-	"log"
+	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -24,8 +24,7 @@ func BigIntAdd(a, b string) string {
 	}
 	cc := aa.Add(aa, bb)
 	if cc.Sign() == -1 {
-		log.Printf("error: the result is negative number, %s+%s=%s", a, b, cc.String())
-		//panic("big add err:" + cc.String())
+		panic(fmt.Sprintf("error: the result is negative number, %s+%s=%s", a, b, cc.String()))
 	}
 	return cc.Text(10)
 }

@@ -254,6 +254,9 @@ func fixStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 
 func freshStats(db *gorm.DB, parsed *model.Parsed) {
 	if stats.Ready {
+		for _, account := range parsed.CacheAccounts {
+			db.Model(&model.Account{}).Where("address=?", account.Address).Update("snft_count", db.Model(&model.SNFT{}).Where("owner=?", account.Address).Select("count(*)"))
+		}
 		if number := parsed.Number; stats.TotalValidator == 0 || number%24 == 0 {
 			if number > 1000 {
 				db.Raw("SELECT (SELECT timestamp FROM blocks WHERE number=?)-(SELECT timestamp FROM blocks WHERE number=?)", number, number-1000).Scan(&stats.AvgBlockTime)
