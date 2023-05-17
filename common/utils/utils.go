@@ -213,15 +213,15 @@ type NFTMeta struct {
 	CollectionsExchanger string `json:"collections_exchanger"` //The collection exchange to which it belongs, uniquely identifies the collection
 }
 
+var client = &http.Client{Timeout: 3 * time.Second}
+
 // GetNFTMeta gets NFT meta information from the link
 func GetNFTMeta(url string) (nft NFTMeta, err error) {
 	// If the ipfs link does not give the server address, use the local ipfs server
-	realUrl := url
 	if strings.Index(url, "/ipfs/Qm") == 0 {
-		realUrl = conf.IpfsServer + url
+		url = conf.IpfsServer + url
 	}
-
-	resp, err := http.Get(realUrl)
+	resp, err := client.Get(url)
 	if err != nil {
 		return
 	}

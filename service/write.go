@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/big"
 	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -104,6 +105,10 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		return updateStats(db, parsed)
 	})
 	freshStats(DB, parsed)
+	if parsed.Number%17280 == 0 {
+		// once a day
+		reTryMeta(DB)
+	}
 	return
 }
 
@@ -257,8 +262,8 @@ func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 	for _, snft := range wh.Mergers {
 		addr := [16]string{}
-		for i := 0; i < 16; i++ {
-			addr[i] = snft.Address + strconv.Itoa(i)
+		for i := int64(0); i < 16; i++ {
+			addr[i] = snft.Address + strconv.FormatInt(i, 16)
 		}
 		if err = db.Model(&model.SNFT{}).Where("address IN (?)", addr).Update("remove", true).Error; err != nil {
 			return
@@ -388,8 +393,8 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				}
 			} else if tx.TxType == 28 {
 				addr := [16]string{}
-				for i := 0; i < 16; i++ {
-					addr[i] = *tx.NFTAddr + strconv.Itoa(i)
+				for i := int64(0); i < 16; i++ {
+					addr[i] = *tx.NFTAddr + strconv.FormatInt(i, 16)
 				}
 				result := db.Model(&model.SNFT{}).Where("address IN (?) AND owner!=?", addr, tx.To).Update("owner", tx.To)
 				if err = result.Error; err != nil {
@@ -529,4 +534,85 @@ func saveExchanger(db *gorm.DB, wh *model.Parsed) (err error) {
 		}
 	}
 	return
+}
+
+func reTryMeta(db *gorm.DB) {
+	var NFTs []*model.NFT
+	db.Find(&NFTs, "status>0")
+	for _, nft := range NFTs {
+		nftMeta, err := utils.GetNFTMeta(nft.MetaUrl)
+		if err != nil {
+			if strings.Index(err.Error(), "context deadline exceeded") > 0 {
+				nft.Status += 1
+			} else {
+				nft.Status = -1
+			}
+			db.Select("status").Updates(nft)
+			log.Println("Failed to retry parse NFT meta information", nft.Address, nft.MetaUrl, err)
+			continue
+		}
+
+		//collection name + collection creator + hash of the exchange where the collection is located
+		if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
+			nft.CollectionId = string(utils.Keccak256Hash(
+				[]byte(nftMeta.CollectionsName),
+				[]byte(nftMeta.CollectionsCreator),
+				[]byte(nftMeta.CollectionsExchanger),
+			))
+			db.Save(&model.Collection{
+				Id:          nft.CollectionId,
+				Name:        nftMeta.CollectionsName,
+				Creator:     nftMeta.CollectionsCreator,
+				Category:    nftMeta.CollectionsCategory,
+				Desc:        nftMeta.CollectionsDesc,
+				ImgUrl:      nftMeta.CollectionsImgUrl,
+				BlockNumber: nft.BlockNumber,
+				Exchanger:   &nftMeta.CollectionsExchanger,
+			})
+		}
+		nft.Status = 0
+		nft.Name = nftMeta.Name
+		nft.Desc = nftMeta.Desc
+		nft.Attributes = nftMeta.Attributes
+		nft.Category = nftMeta.Category
+		nft.SourceUrl = nftMeta.SourceUrl
+		db.Select("status", "name", "desc", "attributes", "category", "source_url", "collection_id").Updates(nft)
+	}
+	log.Printf("retry parse nft meta: %v\n", len(NFTs))
+
+	var FNFTs []*model.FNFT
+	db.Find(&FNFTs, "status>0")
+	for _, fnft := range FNFTs {
+		nftMeta, err := utils.GetNFTMeta(fnft.MetaUrl)
+		if err != nil {
+			if strings.Index(err.Error(), "context deadline exceeded") > 0 {
+				fnft.Status += 1
+			} else {
+				fnft.Status = -1
+			}
+			db.Select("status").Updates(fnft)
+			log.Println("Failed to retry parse SNFT meta information", fnft.ID, fnft.MetaUrl, err)
+			continue
+		}
+		//collection name + collection creator + hash of the exchange where the collection is located
+		if fnft.ID[40] == '0' {
+			db.Select("name", "creator", "category", "desc", "img_url", "exchanger").Updates(&model.Collection{
+				Id:        fnft.ID[:40],
+				Name:      nftMeta.CollectionsName,
+				Creator:   nftMeta.CollectionsCreator,
+				Category:  nftMeta.CollectionsCategory,
+				Desc:      nftMeta.CollectionsDesc,
+				ImgUrl:    nftMeta.CollectionsImgUrl,
+				Exchanger: &nftMeta.CollectionsExchanger,
+			})
+		}
+		fnft.Status = 0
+		fnft.Name = nftMeta.Name
+		fnft.Desc = nftMeta.Desc
+		fnft.Attributes = nftMeta.Attributes
+		fnft.Category = nftMeta.Category
+		fnft.SourceUrl = nftMeta.SourceUrl
+		db.Select("status", "name", "desc", "attributes", "category", "source_url", "collection_id").Updates(fnft)
+	}
+	log.Printf("retry parse snft meta: %v\n", len(FNFTs))
 }

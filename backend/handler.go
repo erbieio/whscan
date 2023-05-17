@@ -865,19 +865,24 @@ func tryParseMeta(wh *model.Parsed) {
 	for _, nft := range wh.NFTs {
 		nftMeta, err := utils.GetNFTMeta(nft.MetaUrl)
 		if err != nil {
+			if strings.Index(err.Error(), "context deadline exceeded") > 0 {
+				nft.Status += 1
+			} else {
+				nft.Status = -1
+			}
 			log.Println("Failed to parse NFT meta information", nft.Address, nft.MetaUrl, err)
 			continue
 		}
 
 		//collection name + collection creator + hash of the exchange where the collection is located
 		if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
-			hash := string(utils.Keccak256Hash(
+			nft.CollectionId = string(utils.Keccak256Hash(
 				[]byte(nftMeta.CollectionsName),
 				[]byte(nftMeta.CollectionsCreator),
 				[]byte(nftMeta.CollectionsExchanger),
 			))
 			wh.Collections = append(wh.Collections, &model.Collection{
-				Id:          hash,
+				Id:          nft.CollectionId,
 				Name:        nftMeta.CollectionsName,
 				Creator:     nftMeta.CollectionsCreator,
 				Category:    nftMeta.CollectionsCategory,
@@ -886,7 +891,6 @@ func tryParseMeta(wh *model.Parsed) {
 				BlockNumber: int64(wh.Number),
 				Exchanger:   &nftMeta.CollectionsExchanger,
 			})
-			nft.CollectionId = &hash
 		}
 		nft.Name = nftMeta.Name
 		nft.Desc = nftMeta.Desc
@@ -929,6 +933,11 @@ func tryParseMeta(wh *model.Parsed) {
 				if metaUrl != "" {
 					nftMeta, err := utils.GetNFTMeta(metaUrl)
 					if err != nil {
+						if strings.Index(err.Error(), "context deadline exceeded") > 0 {
+							fnft.Status += 1
+						} else {
+							fnft.Status = -1
+						}
 						log.Println("Failed to parse and store SNFT meta information", FNFTId, metaUrl, err)
 					} else {
 						fnft.Name = nftMeta.Name

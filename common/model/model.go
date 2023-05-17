@@ -94,23 +94,23 @@ type Stats struct {
 
 // Header block header information
 type Header struct {
-	Difficulty       types.Long    `json:"difficulty"`                                    //difficulty
-	ExtraData        string        `json:"extraData"`                                     //Extra data
-	GasLimit         types.Long    `json:"gasLimit"`                                      //Gas limit
-	GasUsed          types.Long    `json:"gasUsed"`                                       //Gas consumption
-	Hash             types.Hash    `json:"hash" gorm:"type:CHAR(66);primaryKey"`          //Hash
-	Miner            types.Address `json:"miner" gorm:"type:CHAR(42);index"`              //miner
-	MixHash          types.Hash    `json:"mixHash" gorm:"type:CHAR(66)"`                  //Mixed hash
-	Nonce            types.Bytes8  `json:"nonce" gorm:"type:CHAR(18)"`                    //difficulty random number
-	Number           types.Long    `json:"number" gorm:"index"`                           //block number
-	ParentHash       types.Hash    `json:"parentHash" gorm:"type:CHAR(66)"`               //parent block hash
-	ReceiptsRoot     types.Hash    `json:"receiptsRoot" gorm:"type:CHAR(66)"`             //Transaction receipt root hash
-	Sha3Uncles       types.Hash    `json:"sha3Uncles" gorm:"type:CHAR(66)"`               //Uncle root hash
-	Size             types.Long    `json:"size"`                                          //size
-	StateRoot        types.Hash    `json:"stateRoot" gorm:"type:CHAR(66)"`                //World tree root hash
-	Timestamp        types.Long    `json:"timestamp" gorm:"index"`                        //timestamp
-	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:VARCHAR(66);index"` //total difficulty
-	TransactionsRoot types.Hash    `json:"transactionsRoot" gorm:"type:CHAR(66)"`         //transaction root hash
+	Difficulty       types.Long    `json:"difficulty"`                              //difficulty
+	ExtraData        string        `json:"extraData"`                               //Extra data
+	GasLimit         types.Long    `json:"gasLimit"`                                //Gas limit
+	GasUsed          types.Long    `json:"gasUsed"`                                 //Gas consumption
+	Hash             types.Hash    `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //Hash
+	Miner            types.Address `json:"miner" gorm:"type:CHAR(42);index"`        //miner
+	MixHash          types.Hash    `json:"mixHash" gorm:"type:CHAR(66)"`            //Mixed hash
+	Nonce            types.Bytes8  `json:"nonce" gorm:"type:CHAR(18)"`              //difficulty random number
+	Number           types.Long    `json:"number" gorm:"index"`                     //block number
+	ParentHash       types.Hash    `json:"parentHash" gorm:"type:CHAR(66)"`         //parent block hash
+	ReceiptsRoot     types.Hash    `json:"receiptsRoot" gorm:"type:CHAR(66)"`       //Transaction receipt root hash
+	Sha3Uncles       types.Hash    `json:"sha3Uncles" gorm:"type:CHAR(66)"`         //Uncle root hash
+	Size             types.Long    `json:"size"`                                    //size
+	StateRoot        types.Hash    `json:"stateRoot" gorm:"type:CHAR(66)"`          //World tree root hash
+	Timestamp        types.Long    `json:"timestamp" gorm:"index"`                  //timestamp
+	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:DECIMAL(65)"` //total difficulty
+	TransactionsRoot types.Hash    `json:"transactionsRoot" gorm:"type:CHAR(66)"`   //transaction root hash
 }
 
 // Uncle block information
@@ -134,7 +134,7 @@ type Penalty struct {
 // Account information
 type Account struct {
 	Address   types.Address       `json:"address" gorm:"type:CHAR(42);primaryKey"`  //address
-	Balance   types.BigInt        `json:"balance" gorm:"type:VARCHAR(128);index"`   //The total amount of coins in the chain
+	Balance   types.BigInt        `json:"balance" gorm:"type:DECIMAL(65);index"`    //The total amount of coins in the chain
 	Nonce     types.Long          `json:"nonce"`                                    //transaction random number, transaction volume
 	Code      *string             `json:"code"`                                     //bytecode
 	Number    types.Long          `json:"number" gorm:"index"`                      //last update block number
@@ -154,7 +154,7 @@ type Transaction struct {
 	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
 	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
 	Input             string         `json:"input"`                                   //Additional input data, contract call encoded data
-	Value             types.BigInt   `json:"value" gorm:"type:VARCHAR(128)"`          //Amount, unit wei
+	Value             types.BigInt   `json:"value" gorm:"type:DECIMAL(65)"`           //Amount, unit wei
 	Nonce             types.Long     `json:"nonce"`                                   //Random number, the number of transactions initiated by the account
 	Gas               types.Long     `json:"gas"`                                     //fuel
 	GasPrice          types.Long     `json:"gasPrice"`                                //Gas price
@@ -185,7 +185,7 @@ type InternalTx struct {
 	Op     string        `json:"op" gorm:"type:VARCHAR(16)"`        //Operation
 	From   types.Address `json:"from" gorm:"type:CHAR(42);index"`   //Originating address
 	To     types.Address `json:"to" gorm:"type:CHAR(42);index"`     //Receive address
-	Value  types.BigInt  `json:"value" gorm:"type:VARCHAR(128)"`    //Amount, unit wei
+	Value  types.BigInt  `json:"value" gorm:"type:DECIMAL(65)"`     //Amount, unit wei
 	Gas    types.Long    `json:"gas"`                               //Gas
 }
 
@@ -226,18 +226,19 @@ type NFT struct {
 	RawMetaUrl    string  `json:"raw_meta_url"`                              //Original meta information URL on the chain
 	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(42);index"` //The address of the exchange, if there is none, it can be traded on any exchange
 	LastPrice     *string `json:"last_price"`                                //The last transaction price (null if the transaction is not completed), the unit is wei
-	TxAmount      string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"`  //the total transaction volume of this NFT
+	TxAmount      string  `json:"tx_amount" gorm:"type:DECIMAL(65);index"`   //the total transaction volume of this NFT
 	Creator       string  `json:"creator" gorm:"type:CHAR(42)"`              //Creator address
 	Timestamp     int64   `json:"timestamp" gorm:"index"`                    //Create timestamp
 	BlockNumber   int64   `json:"block_number"`                              //The height of the created block
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66)"`              //The transaction hash created
 	Owner         string  `json:"owner" gorm:"type:CHAR(42);index"`          //owner
+	Status        int64   `json:"status"  gorm:"index"`                      //decode meta status, 0:ok, -1:invalid, >1: number of attempts
 	Name          string  `json:"name"`                                      //name
 	Desc          string  `json:"desc"`                                      //description
 	Attributes    string  `json:"attributes"`                                //Attributes
 	Category      string  `json:"category"`                                  //category
 	SourceUrl     string  `json:"source_url"`                                //Resource links, file links such as pictures or videos
-	CollectionId  *string `json:"collection_id" gorm:"index"`                //The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located
+	CollectionId  string  `json:"collection_id" gorm:"index"`                //The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located
 }
 
 // Epoch SNFT Phase 1
@@ -252,8 +253,8 @@ type Epoch struct {
 	TxHash       *string `json:"tx_hash" gorm:"type:CHAR(66)"`        //the transaction hash voter
 	TxType       *int64  `json:"txType"`                              //transaction type
 	Voter        string  `json:"voter" gorm:"type:CHAR(42);index"`    //voter
-	Reward       string  `json:"reward" gorm:"type:VARCHAR(128)"`     //vote reward amount
-	Profit       string  `json:"profit" gorm:"type:VARCHAR(128)"`     //royalty profit amount
+	Reward       string  `json:"reward" gorm:"type:DECIMAL(65)"`      //vote reward amount
+	Profit       string  `json:"profit" gorm:"type:DECIMAL(65)"`      //royalty profit amount
 	Number       int64   `json:"number"`                              //is selected block height
 	Timestamp    int64   `json:"timestamp"`                           //is selected timestamp
 	StartNumber  int64   `json:"startNumber"`                         //starting the period block height
@@ -269,14 +270,15 @@ type Creator struct {
 	LastNumber int64  `json:"lastNumber"`                              //last selected for the block number
 	LastTime   int64  `json:"lastTime"`                                //last selected for the timestamp
 	Count      int64  `json:"count"`                                   //selected count
-	Reward     string `json:"reward" gorm:"type:VARCHAR(128);index"`   //vote profit
-	Profit     string `json:"profit" gorm:"type:VARCHAR(128);index"`   //royalty profit
+	Reward     string `json:"reward" gorm:"type:DECIMAL(65);index"`    //vote profit
+	Profit     string `json:"profit" gorm:"type:DECIMAL(65);index"`    //royalty profit
 }
 
 // FNFT full SNFT
 type FNFT struct {
 	ID         string `json:"id" gorm:"type:CHAR(41);primary_key"` //FNFT ID
 	MetaUrl    string `json:"meta_url"`                            //FNFT meta information URL
+	Status     int64  `json:"status"  gorm:"index"`                //decode meta status, 0:ok, -1:invalid, >1: number of attempts
 	Name       string `json:"name"`                                //name
 	Desc       string `json:"desc"`                                //description
 	Attributes string `json:"attributes"`                          //Attributes
@@ -287,8 +289,8 @@ type FNFT struct {
 // SNFT of SNFT fragments
 type SNFT struct {
 	Address      string  `json:"address" gorm:"type:VARCHAR(42);primaryKey"` //SNFT address
-	LastPrice    *string `json:"last_price" gorm:"type:VARCHAR(66)"`         //The last transaction price, the unit is wei, null if the transaction has not been completed
-	TxAmount     string  `json:"tx_amount" gorm:"type:VARCHAR(128);index"`   //the total transaction volume of this SNFT
+	LastPrice    *string `json:"last_price" gorm:"type:DECIMAL(65)"`         //The last transaction price, the unit is wei, null if the transaction has not been completed
+	TxAmount     string  `json:"tx_amount" gorm:"type:DECIMAL(65);index"`    //the total transaction volume of this SNFT
 	RewardAt     int64   `json:"reward_at"`                                  //The timestamp of the last rewarded, null if not rewarded
 	RewardNumber int64   `json:"reward_number" gorm:"index"`                 //The height of the last rewarded block
 	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`           //owner, unallocated and reclaimed are null
@@ -335,10 +337,10 @@ type Exchanger struct {
 	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //Open time
 	BlockNumber int64  `json:"block_number" gorm:"index"`                //The block number when created
 	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
-	Amount      string `json:"amount" gorm:"type:VARCHAR(66)"`           //Pledge amount
-	Reward      string `json:"reward" gorm:"type:VARCHAR(66)"`           //amount of total reward
+	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`           //Pledge amount
+	Reward      string `json:"reward" gorm:"type:DECIMAL(65)"`           //amount of total reward
 	RewardCount int64  `json:"reward_count"`                             //reward snft count
-	TxAmount    string `json:"tx_amount" gorm:"type:VARCHAR(128);index"` //Total transaction amount, unit wei
+	TxAmount    string `json:"tx_amount" gorm:"type:DECIMAL(65);index"`  //Total transaction amount, unit wei
 	NFTCount    int64  `json:"nft_count"`                                //Total NFT count
 	CloseAt     *int64 `json:"close_at"`                                 //if not null, the exchange is closed
 }
@@ -350,15 +352,15 @@ type Reward struct {
 	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchanger
 	BlockNumber int64   `json:"block_number" gorm:"index"`      //The block number when rewarding
 	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
-	Amount      *string `json:"amount" gorm:"type:VARCHAR(66)"` //Amount of reward
+	Amount      *string `json:"amount" gorm:"type:DECIMAL(65)"` //Amount of reward
 }
 
 // Validator pledge information
 type Validator struct {
 	Address     string  `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
 	Proxy       string  `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
-	Amount      string  `json:"amount" gorm:"type:VARCHAR(66)"`          //pledge amount
-	Reward      string  `json:"reward" gorm:"type:VARCHAR(128)"`         //amount of total reward
+	Amount      string  `json:"amount" gorm:"type:DECIMAL(65)"`          //pledge amount
+	Reward      string  `json:"reward" gorm:"type:DECIMAL(65)"`          //amount of total reward
 	RewardCount int64   `json:"reward_count"`                            //reward coin count
 	APR         float64 `json:"apr"`                                     //historical annualized interest rate, updated every 720 blocks
 	Timestamp   int64   `json:"timestamp"`                               //The time at latest rewarding
@@ -370,7 +372,7 @@ type Validator struct {
 type Pledge struct {
 	Address   string `json:"address" gorm:"type:CHAR(42)"`   //staking account
 	Type      int64  `json:"type"`                           //operation type, 9: validator pledge add, 10: validator pledge sub
-	Amount    string `json:"amount" gorm:"type:VARCHAR(66)"` //pledge amount
+	Amount    string `json:"amount" gorm:"type:DECIMAL(65)"` //pledge amount
 	Number    int64  `json:"number"`                         //block number
 	Timestamp int64  `json:"timestamp"`                      //operation time
 }

@@ -14,7 +14,7 @@ type RankingSNFTRes struct {
 }
 
 func RankingSNFT(page, size int) (res RankingSNFTRes, err error) {
-	db := DB.Model(&model.SNFT{}).Order("LENGTH(tx_amount) DESC, tx_amount DESC").Where("tx_amount!='0'")
+	db := DB.Model(&model.SNFT{}).Order("tx_amount DESC").Where("tx_amount!='0'")
 	if err = db.Count(&res.Total).Error; err != nil {
 		return
 	}
@@ -29,7 +29,7 @@ type RankingNFTRes struct {
 }
 
 func RankingNFT(page, size int) (res RankingNFTRes, err error) {
-	db := DB.Model(&model.NFT{}).Order("LENGTH(tx_amount) DESC, tx_amount DESC").Where("tx_amount!='0'")
+	db := DB.Model(&model.NFT{}).Order("tx_amount DESC").Where("tx_amount!='0'")
 	if err = db.Count(&res.Total).Error; err != nil {
 		return
 	}
@@ -44,7 +44,7 @@ type RankingExchangerRes struct {
 }
 
 func RankingExchanger(page, size int) (res RankingExchangerRes, err error) {
-	db := DB.Model(&model.Exchanger{}).Order("LENGTH(tx_amount) DESC, tx_amount DESC").Where("tx_amount!='0'")
+	db := DB.Model(&model.Exchanger{}).Order("tx_amount DESC").Where("tx_amount!='0'")
 	if err = db.Count(&res.Total).Error; err != nil {
 		return
 	}
