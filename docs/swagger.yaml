@@ -1,25 +1,4 @@
 definitions:
-  api.AuthRes:
-    properties:
-      exchanger_balance:
-        type: string
-      exchanger_flag:
-        type: boolean
-      status:
-        description: 2 The payment status of the exchange is normal, other numbers
-          are arrears or no payment
-        type: integer
-    type: object
-  api.CheckAuthRes:
-    properties:
-      code:
-        description: 0 success 1 wrong address other failure
-        type: integer
-      data:
-        $ref: '#/definitions/api.AuthRes'
-      msg:
-        type: string
-    type: object
   api.ErrRes:
     properties:
       err:
@@ -419,6 +398,9 @@ definitions:
       source_url:
         description: Resource links, file links such as pictures or videos
         type: string
+      status:
+        description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
+        type: integer
       timestamp:
         description: Create timestamp
         type: integer
@@ -1090,6 +1072,9 @@ definitions:
       source_url:
         description: Resource links, file links such as pictures or videos
         type: string
+      status:
+        description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
+        type: integer
       timestamp:
         description: Create timestamp
         type: integer
@@ -1168,6 +1153,9 @@ definitions:
             source_url:
               description: Resource links, file links such as pictures or videos
               type: string
+            status:
+              description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
+              type: integer
             timestamp:
               description: Create timestamp
               type: integer
@@ -1254,6 +1242,9 @@ definitions:
             source_url:
               description: Resource links, file links such as pictures or videos
               type: string
+            status:
+              description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
+              type: integer
             tx_amount:
               description: the total transaction volume of this SNFT
               type: string
@@ -1343,6 +1334,10 @@ definitions:
                   source_url:
                     description: Resource links, file links such as pictures or videos
                     type: string
+                  status:
+                    description: 'decode meta status, 0:ok, -1:invalid, >1: number
+                      of attempts'
+                    type: integer
                   total_hold:
                     description: The number of SNFTs held in a FNFT
                     type: integer
@@ -1427,6 +1422,9 @@ definitions:
       source_url:
         description: Resource links, file links such as pictures or videos
         type: string
+      status:
+        description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
+        type: integer
       tx_amount:
         description: the total transaction volume of this SNFT
         type: string
@@ -2217,31 +2215,6 @@ paths:
       summary: Query the exchanges tx count
       tags:
       - Exchange
-  /exchanger_auth:
-    get:
-      consumes:
-      - application/json
-      description: query exchange status
-      parameters:
-      - description: address
-        in: query
-        name: addr
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.AuthRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query exchange status
-      tags:
-      - other interfaces
   /exchangers:
     get:
       consumes:
@@ -2306,31 +2279,6 @@ paths:
       summary: exec sql statement
       tags:
       - other interfaces
-  /extra/checkAuth:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: query exchange status
-      parameters:
-      - description: Address
-        in: query
-        name: address
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.CheckAuthRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrRes'
-      summary: query exchange status (new /exchanger_auth)
-      tags:
-      - obsolete interface
   /nft/{addr}:
     get:
       consumes:

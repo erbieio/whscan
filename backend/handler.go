@@ -174,9 +174,11 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 		}
 		number := parsed.Number.Hex()
 		info := struct {
-			Nonce      types.Long `json:"Nonce"`
-			Balance    *big.Int   `json:"Balance"`
-			VoteWeight *big.Int   `json:"VoteWeight"`
+			Nonce   types.Long `json:"Nonce"`
+			Balance *big.Int   `json:"Balance"`
+			Worm    *struct {
+				VoteWeight *big.Int `json:"VoteWeight"`
+			} `json:"Worm"`
 		}{}
 		for _, address := range modifiedAccounts {
 			if address != types.ZeroAddress && (address[:12] == "0x0000000000" || address[:12] == "0x8000000000") {
@@ -199,7 +201,11 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			account.Number = parsed.Number
 			account.Nonce = info.Nonce
 			account.Balance = types.BigInt(info.Balance.String())
-			account.SNFTValue = info.VoteWeight.String()
+			if info.Worm != nil {
+				account.SNFTValue = info.Worm.VoteWeight.String()
+			} else {
+				account.SNFTValue = "0"
+			}
 			parsed.CacheAccounts = append(parsed.CacheAccounts, account)
 		}
 	}
@@ -221,9 +227,11 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 		} else if pass {
 			for _, account := range parsed.CacheAccounts {
 				info := struct {
-					Nonce      types.Long `json:"Nonce"`
-					Balance    *big.Int   `json:"Balance"`
-					VoteWeight *big.Int   `json:"VoteWeight"`
+					Nonce   types.Long `json:"Nonce"`
+					Balance *big.Int   `json:"Balance"`
+					Worm    *struct {
+						VoteWeight *big.Int `json:"VoteWeight"`
+					} `json:"Worm"`
 				}{}
 				if err = c.Call(&info, "eth_getAccountInfo", account.Address, number); err != nil {
 					return
@@ -231,7 +239,11 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 				account.Number = parsed.Number
 				account.Nonce = info.Nonce
 				account.Balance = types.BigInt(info.Balance.String())
-				account.SNFTValue = info.VoteWeight.String()
+				if info.Worm != nil {
+					account.SNFTValue = info.Worm.VoteWeight.String()
+				} else {
+					account.SNFTValue = "0"
+				}
 			}
 			break
 		}
@@ -386,9 +398,9 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 
 		// wormholes auto merge snft
 		for _, eventLog := range wh.CacheLogs {
-			if len(eventLog.Topics) == 3 && len(eventLog.Data) == 66 {
-				if eventLog.Topics[0] == "0x2b2711f6ad8adbb2fc8751c8400b9c6ebdaf9ea371995641808a7c692d89d46a" {
-					pieces, _ := strconv.ParseInt(eventLog.Data[62:], 16, 32)
+			if len(eventLog.Topics) == 3 && len(eventLog.Data) >= 66 {
+				if eventLog.Topics[0] == "0x77415a68a0d28daf11e1308e53371f573e0920810c9cd9de7904777d5fb9d625" {
+					pieces, _ := strconv.ParseInt(eventLog.Data[62:66], 16, 32)
 					if pieces > 0 {
 						addr := string(eventLog.Topics[1][27:])
 						for i := 0; i < 3; i++ {
@@ -412,21 +424,23 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				addr := (*reward.SNFT)[:41] + "0"
 				for i := 0; i < 3; i++ {
 					info := struct {
-						MergeLevel  int    `json:"MergeLevel"`
-						MergeNumber int64  `json:"MergeNumber"`
-						Owner       string `json:"Owner"`
+						NFT *struct {
+							MergeLevel  int    `json:"MergeLevel"`
+							MergeNumber int64  `json:"MergeNumber"`
+							Owner       string `json:"Owner"`
+						} `json:"Nft"`
 					}{}
 					if err = c.Call(&info, "eth_getAccountInfo", addr, number); err != nil {
 						return
 					}
-					if info.MergeLevel > i {
+					if info.NFT != nil && info.NFT.MergeLevel > i {
 						wh.Mergers = append(wh.Mergers, &model.SNFT{
 							Address:      addr[:41-i],
 							TxAmount:     "0",
 							RewardAt:     int64(wh.Timestamp),
 							RewardNumber: int64(wh.Number),
-							Owner:        info.Owner,
-							Pieces:       info.MergeNumber,
+							Owner:        info.NFT.Owner,
+							Pieces:       info.NFT.MergeNumber,
 						})
 						addr = addr[:40-i] + "0" + addr[41+i:]
 					} else {
@@ -437,21 +451,24 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		}
 	} else {
 		info := struct {
-			ExchangerBalance *big.Int `json:"ExchangerBalance"`
-			FeeRate          int64    `json:"FeeRate"`
-			ExchangerName    string   `json:"ExchangerName"`
-			ExchangerURL     string   `json:"ExchangerURL"`
+			Worm *struct {
+				ExchangerBalance *big.Int `json:"ExchangerBalance"`
+				FeeRate          int64    `json:"FeeRate"`
+				ExchangerName    string   `json:"ExchangerName"`
+				ExchangerURL     string   `json:"ExchangerURL"`
+			} `json:"Worm"`
 		}{}
 		for _, account := range wh.CacheAccounts {
 			if err = c.Call(&info, "eth_getAccountInfo", account.Address, "0x0"); err != nil {
 				return
 			}
-			if balance := info.ExchangerBalance.Text(10); balance != "0" {
+			if info.Worm != nil && info.Worm.ExchangerBalance.Int64() != 0 {
+				balance := info.Worm.ExchangerBalance.Text(10)
 				wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
 					Address:   string(account.Address),
-					Name:      info.ExchangerName,
-					URL:       info.ExchangerURL,
-					FeeRatio:  info.FeeRate,
+					Name:      info.Worm.ExchangerName,
+					URL:       info.Worm.ExchangerURL,
+					FeeRatio:  info.Worm.FeeRate,
 					Creator:   string(account.Address),
 					Timestamp: int64(wh.Timestamp),
 					TxHash:    "0x0",

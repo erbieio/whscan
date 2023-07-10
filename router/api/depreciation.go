@@ -4,13 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"server/common/utils"
 	"server/service"
 )
 
 func Depreciation(e *gin.Engine) {
 	e.GET("/exchanger/get", _getExchanger)
-	e.GET("/extra/checkAuth", checkAuth)
 	e.GET("/block/getBlock", _getBlock)
 	e.GET("/block/getTransaction", _getTransaction)
 	e.GET("/block/getTransactionLogs", _getTransactionLogs)
@@ -92,42 +90,6 @@ type CheckAuthRes struct {
 	Code int64    `json:"code"` //0 success 1 wrong address other failure
 	Msg  string   `json:"msg"`
 	Data *AuthRes `json:"data" `
-}
-
-// @Tags        obsolete interface
-// @Summary     query exchange status (new /exchanger_auth)
-// @Description query exchange status
-// @Deprecated
-// @Accept  json
-// @Produce json
-// @Param   body query    CheckAuthReq true "body"
-// @Success 200  {object} CheckAuthRes
-// @Failure 400  {object} ErrRes
-// @Router  /extra/checkAuth [get]
-func checkAuth(c *gin.Context) {
-	var req CheckAuthReq
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: -1, Msg: err.Error()})
-		return
-	}
-
-	addr, err := utils.ParseAddress([]byte(req.Address))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	status, flag, balance, err := service.ExchangerAuth(string(addr))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, CheckAuthRes{Code: -1, Msg: err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, CheckAuthRes{Code: 0, Msg: "ok", Data: &AuthRes{
-		Status:           status,
-		ExchangerFlag:    flag,
-		ExchangerBalance: balance,
-	}})
 }
 
 // @Tags        obsolete interface

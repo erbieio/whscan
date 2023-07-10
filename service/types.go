@@ -44,9 +44,9 @@ func TxFee(price string, ratio int64) *string {
 
 var LevelValues = []*big.Float{
 	big.NewFloat(30000000000000000),
-	big.NewFloat(143000000000000000),
-	big.NewFloat(271000000000000000),
-	big.NewFloat(650000000000000000),
+	big.NewFloat(60000000000000000),
+	big.NewFloat(180000000000000000),
+	big.NewFloat(1000000000000000000),
 }
 
 func _value(hexEpoch string, level int, pieces int64) *big.Int {

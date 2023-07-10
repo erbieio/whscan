@@ -18,7 +18,6 @@ var (
 	Thread     = int64(8 * runtime.NumCPU())
 	MysqlDsn   = "root:123456@tcp(127.0.0.1:3306)/scan"
 	IpfsServer = "http://localhost:8080"
-	ERBPay     = "0xa03196bF28ffABcab352fe6d58F4AA83998bebA1" //ERBPay contract address
 )
 
 func init() {
@@ -55,8 +54,5 @@ func init() {
 	}
 	if ipfsServer := os.Getenv("IPFS_SERVER"); ipfsServer != "" {
 		IpfsServer = ipfsServer
-	}
-	if erbPay := os.Getenv("ERB_PAY"); erbPay != "" {
-		ERBPay = erbPay
 	}
 }

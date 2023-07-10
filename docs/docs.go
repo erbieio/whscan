@@ -1000,44 +1000,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/exchanger_auth": {
-            "get": {
-                "description": "query exchange status",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "other interfaces"
-                ],
-                "summary": "query exchange status",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "address",
-                        "name": "addr",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.AuthRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
         "/exchangers": {
             "get": {
                 "description": "Query the list of exchanges in reverse order of creation time",
@@ -1131,44 +1093,6 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/extra/checkAuth": {
-            "get": {
-                "description": "query exchange status",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "obsolete interface"
-                ],
-                "summary": "query exchange status (new /exchanger_auth)",
-                "deprecated": true,
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Address",
-                        "name": "address",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.CheckAuthRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrRes"
                         }
                     }
                 }
@@ -2427,36 +2351,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "api.AuthRes": {
-            "type": "object",
-            "properties": {
-                "exchanger_balance": {
-                    "type": "string"
-                },
-                "exchanger_flag": {
-                    "type": "boolean"
-                },
-                "status": {
-                    "description": "2 The payment status of the exchange is normal, other numbers are arrears or no payment",
-                    "type": "integer"
-                }
-            }
-        },
-        "api.CheckAuthRes": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "description": "0 success 1 wrong address other failure",
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/api.AuthRes"
-                },
-                "msg": {
-                    "type": "string"
-                }
-            }
-        },
         "api.ErrRes": {
             "type": "object",
             "properties": {
@@ -3004,6 +2898,10 @@ const docTemplate = `{
                 "source_url": {
                     "description": "Resource links, file links such as pictures or videos",
                     "type": "string"
+                },
+                "status": {
+                    "description": "decode meta status, 0:ok, -1:invalid, \u003e1: number of attempts",
+                    "type": "integer"
                 },
                 "timestamp": {
                     "description": "Create timestamp",
@@ -3929,6 +3827,10 @@ const docTemplate = `{
                     "description": "Resource links, file links such as pictures or videos",
                     "type": "string"
                 },
+                "status": {
+                    "description": "decode meta status, 0:ok, -1:invalid, \u003e1: number of attempts",
+                    "type": "integer"
+                },
                 "timestamp": {
                     "description": "Create timestamp",
                     "type": "integer"
@@ -4030,6 +3932,10 @@ const docTemplate = `{
                             "source_url": {
                                 "description": "Resource links, file links such as pictures or videos",
                                 "type": "string"
+                            },
+                            "status": {
+                                "description": "decode meta status, 0:ok, -1:invalid, \u003e1: number of attempts",
+                                "type": "integer"
                             },
                             "timestamp": {
                                 "description": "Create timestamp",
@@ -4148,6 +4054,10 @@ const docTemplate = `{
                             "source_url": {
                                 "description": "Resource links, file links such as pictures or videos",
                                 "type": "string"
+                            },
+                            "status": {
+                                "description": "decode meta status, 0:ok, -1:invalid, \u003e1: number of attempts",
+                                "type": "integer"
                             },
                             "tx_amount": {
                                 "description": "the total transaction volume of this SNFT",
@@ -4273,6 +4183,10 @@ const docTemplate = `{
                                             "description": "Resource links, file links such as pictures or videos",
                                             "type": "string"
                                         },
+                                        "status": {
+                                            "description": "decode meta status, 0:ok, -1:invalid, \u003e1: number of attempts",
+                                            "type": "integer"
+                                        },
                                         "total_hold": {
                                             "description": "The number of SNFTs held in a FNFT",
                                             "type": "integer"
@@ -4383,6 +4297,10 @@ const docTemplate = `{
                 "source_url": {
                     "description": "Resource links, file links such as pictures or videos",
                     "type": "string"
+                },
+                "status": {
+                    "description": "decode meta status, 0:ok, -1:invalid, \u003e1: number of attempts",
+                    "type": "integer"
                 },
                 "tx_amount": {
                     "description": "the total transaction volume of this SNFT",
