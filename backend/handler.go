@@ -611,13 +611,6 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 			validator.Proxy = w.ProxyAddress
 		}
 		wh.ChangeValidators = append(wh.ChangeValidators, validator)
-		wh.Pledges = append(wh.Pledges, &model.Pledge{
-			Address:   from,
-			Type:      int64(w.Type),
-			Amount:    value,
-			Number:    blockNumber,
-			Timestamp: timestamp,
-		})
 
 	case 11: //Open the exchange
 		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{

@@ -65,19 +65,3 @@ func _value(hexEpoch string, level int, pieces int64) *big.Int {
 func snftValue(snft string, pieces int64) string {
 	return _value(snft[3:39], 42-len(snft), pieces).Text(10)
 }
-
-func snftMergeValue(snft string, pieces int64) string {
-	value := _value(snft[3:39], 42-len(snft), pieces)
-	_value := _value(snft[3:39], 41-len(snft), pieces)
-	return value.Sub(value, _value).Text(10)
-}
-
-func apr(rewardSNFT int64, totalPledge string) float64 {
-	reward := big.NewFloat(12 * 60 * 24 * 365 * 0.77)
-	pledge, _ := new(big.Float).SetString(totalPledge[:len(totalPledge)-18])
-	if year := rewardSNFT / 4096 / 6160; year > 0 {
-		reward.Mul(reward, big.NewFloat(math.Pow(0.88, float64(year))))
-	}
-	result, _ := reward.Quo(reward, pledge).Float64()
-	return result
-}

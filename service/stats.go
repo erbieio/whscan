@@ -276,31 +276,6 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 				db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HExchangerTx)
 				db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
 
-				stats.APR = apr(stats.RewardSNFTCount, stats.TotalValidatorPledge)
-				var pledges []*model.Pledge
-				db.Find(&pledges)
-				sumPledges := map[string]*big.Float{}
-				for _, pledge := range pledges {
-					if sumPledges[pledge.Address] == nil {
-						sumPledges[pledge.Address] = new(big.Float)
-					}
-					amount, _ := new(big.Float).SetString(pledge.Amount)
-					if pledge.Type == 9 {
-						amount.Mul(amount, big.NewFloat(float64(int64(parsed.Timestamp)-pledge.Timestamp)))
-					} else {
-						amount.Mul(amount, big.NewFloat(float64(pledge.Timestamp-int64(parsed.Timestamp))))
-					}
-					amount.Quo(amount, big.NewFloat(365*24*3600))
-					sumPledges[pledge.Address].Add(sumPledges[pledge.Address], amount)
-				}
-				var validators []*model.Validator
-				db.Select("address", "reward").Find(&validators)
-				for _, validator := range validators {
-					reward, _ := new(big.Float).SetString(validator.Reward)
-					validator.APR, _ = reward.Quo(reward, sumPledges[validator.Address]).Float64()
-					db.Select("apr").Updates(validator)
-				}
-
 				var creators []*struct {
 					Reward string
 					Profit string

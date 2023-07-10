@@ -3023,10 +3023,6 @@ const docTemplate = `{
                     "description": "The number of active account",
                     "type": "integer"
                 },
-                "apr": {
-                    "description": "Expect annual interest rates",
-                    "type": "number"
-                },
                 "avgBlockTime": {
                     "description": "average block time, ms",
                     "type": "integer"
@@ -3195,10 +3191,6 @@ const docTemplate = `{
                 "amount": {
                     "description": "pledge amount",
                     "type": "string"
-                },
-                "apr": {
-                    "description": "historical annualized interest rate, updated every 720 blocks",
-                    "type": "number"
                 },
                 "last_number": {
                     "description": "The block number at latest rewarding",

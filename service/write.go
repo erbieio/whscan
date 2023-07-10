@@ -79,9 +79,6 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 			return
 		}
 		// validator change
-		if err = savePledge(db, parsed); err != nil {
-			return
-		}
 		if err = saveValidator(db, parsed); err != nil {
 			return
 		}
@@ -138,9 +135,6 @@ func SetHead(parsed *model.Parsed) error {
 				return
 			}
 			if err = db.Delete(&model.Collection{}, "block_number>?", head).Error; err != nil {
-				return
-			}
-			if err = db.Delete(&model.Pledge{}, "number>?", head).Error; err != nil {
 				return
 			}
 			if err = db.Delete(&model.Exchanger{}, "block_number>?", head).Error; err != nil {
@@ -271,19 +265,6 @@ func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 		if err = db.Create(snft).Error; err != nil {
 			return
 		}
-	}
-	return
-}
-
-func savePledge(db *gorm.DB, wh *model.Parsed) (err error) {
-	if wh.Number == 1 {
-		err = db.Exec("INSERT INTO pledges SELECT address,9 AS `type`,amount,0 AS number,? AS timestamp FROM validators;", wh.Timestamp-5).Error
-		if err != nil {
-			return
-		}
-	}
-	if len(wh.Pledges) > 0 {
-		err = db.Create(wh.Pledges).Error
 	}
 	return
 }

@@ -29,7 +29,6 @@ var Tables = []interface{}{
 	&NFTTx{},
 	&Reward{},
 	&Validator{},
-	&Pledge{},
 	&Location{},
 }
 
@@ -46,47 +45,46 @@ func ClearTable(db *gorm.DB) (err error) {
 
 // Stats caches some database queries to speed up queries
 type Stats struct {
-	Ready                bool    `json:"ready" gorm:"-"`                        //ready, sync latest block
-	ChainId              int64   `json:"chainId" gorm:"primaryKey"`             //chain id
-	GenesisBalance       string  `json:"genesisBalance" gorm:"type:CHAR(128)"`  //Total amount of coins created
-	TotalAmount          string  `json:"totalAmount" gorm:"type:CHAR(128)"`     //total transaction volume
-	TotalNFTAmount       string  `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
-	TotalSNFTAmount      string  `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
-	TotalRecycle         int64   `json:"totalRecycle"`                          //Total number of recycle SNFT
-	AvgBlockTime         int64   `json:"avgBlockTime" gorm:"-"`                 //average block time, ms
-	TotalBlock           int64   `json:"totalBlock" gorm:"-"`                   //Total number of blocks
-	TotalBlackHole       int64   `json:"totalBlackHole" gorm:"-"`               //Total number of BlackHole blocks
-	TotalTransaction     int64   `json:"totalTransaction" gorm:"-"`             //Total number of transactions
-	TotalInternalTx      int64   `json:"totalInternalTx" gorm:"-"`              //Total number of internal transactions
-	TotalTransferTx      int64   `json:"totalTransferTx" gorm:"-"`              //Total number of  transfer transactions
-	TotalWormholesTx     int64   `json:"totalWormholesTx" gorm:"-"`             //Total number of  wormholes transactions
-	TotalUncle           int64   `json:"totalUncle" gorm:"-"`                   //Number of total uncle blocks
-	TotalAccount         int64   `json:"totalAccount" gorm:"-"`                 //Total account number of used
-	TotalBalance         string  `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
-	ActiveAccount        int64   `json:"activeAccount" gorm:"-"`                //The number of active account
-	TotalExchanger       int64   `json:"totalExchanger" gorm:"-"`               //Total number of exchanges
-	TotalNFTCollection   int64   `json:"totalNFTCollection" gorm:"-"`           //Total number of NFT collections
-	TotalSNFTCollection  int64   `json:"totalSNFTCollection" gorm:"-"`          //Total number of SNFT collections
-	TotalNFT             int64   `json:"totalNFT" gorm:"-"`                     //Total number of NFTs
-	TotalSNFT            int64   `json:"totalSNFT" gorm:"-"`                    //Total number of SNFTs
-	TotalNFTTx           int64   `json:"totalNFTTx" gorm:"-"`                   //Total number of  NFT transactions
-	TotalSNFTTx          int64   `json:"totalSNFTTx" gorm:"-"`                  //Total number of  SNFT transactions
-	TotalValidatorOnline int64   `json:"totalValidatorOnline" gorm:"-"`         //Total amount of validator online
-	TotalValidator       int64   `json:"totalValidator" gorm:"-"`               //Total number of validator
-	TotalNFTCreator      int64   `json:"totalNFTCreator" gorm:"-"`              //Total creator of NFTs
-	TotalSNFTCreator     int64   `json:"totalSNFTCreator" gorm:"-"`             //Total creator of SNFTs
-	TotalExchangerTx     int64   `json:"totalExchangerTx" gorm:"-"`             //Total number of exchanger  transactions
-	RewardCoinCount      int64   `json:"rewardCoinCount" gorm:"-"`              //Total number of times to get coin rewards, 0.1ERB once
-	RewardSNFTCount      int64   `json:"rewardSNFTCount" gorm:"-"`              //Total number of times to get SNFT rewards
-	TotalValidatorPledge string  `json:"totalValidatorPledge" gorm:"-"`         //Total amount of validator pledge
-	TotalExchangerPledge string  `json:"totalExchangerPledge" gorm:"-"`         //Total amount of exchanger pledge
-	Total24HExchangerTx  int64   `json:"total24HExchangerTx" gorm:"-"`          //Total number of exchanger  transactions within 24 hours
-	Total24HNFT          int64   `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
-	Total24HTx           int64   `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
-	TotalEpoch           int64   `json:"totalEpoch" gorm:"-"`                   //Total number of epoch
-	TotalCreator         int64   `json:"totalCreator" gorm:"-"`                 //Total number of creator
-	TotalProfit          string  `json:"totalProfit" gorm:"-"`                  //Total number of creator profit
-	APR                  float64 `json:"apr" gorm:"-"`                          //Expect annual interest rates
+	Ready                bool   `json:"ready" gorm:"-"`                        //ready, sync latest block
+	ChainId              int64  `json:"chainId" gorm:"primaryKey"`             //chain id
+	GenesisBalance       string `json:"genesisBalance" gorm:"type:CHAR(128)"`  //Total amount of coins created
+	TotalAmount          string `json:"totalAmount" gorm:"type:CHAR(128)"`     //total transaction volume
+	TotalNFTAmount       string `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
+	TotalSNFTAmount      string `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
+	TotalRecycle         int64  `json:"totalRecycle"`                          //Total number of recycle SNFT
+	AvgBlockTime         int64  `json:"avgBlockTime" gorm:"-"`                 //average block time, ms
+	TotalBlock           int64  `json:"totalBlock" gorm:"-"`                   //Total number of blocks
+	TotalBlackHole       int64  `json:"totalBlackHole" gorm:"-"`               //Total number of BlackHole blocks
+	TotalTransaction     int64  `json:"totalTransaction" gorm:"-"`             //Total number of transactions
+	TotalInternalTx      int64  `json:"totalInternalTx" gorm:"-"`              //Total number of internal transactions
+	TotalTransferTx      int64  `json:"totalTransferTx" gorm:"-"`              //Total number of  transfer transactions
+	TotalWormholesTx     int64  `json:"totalWormholesTx" gorm:"-"`             //Total number of  wormholes transactions
+	TotalUncle           int64  `json:"totalUncle" gorm:"-"`                   //Number of total uncle blocks
+	TotalAccount         int64  `json:"totalAccount" gorm:"-"`                 //Total account number of used
+	TotalBalance         string `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
+	ActiveAccount        int64  `json:"activeAccount" gorm:"-"`                //The number of active account
+	TotalExchanger       int64  `json:"totalExchanger" gorm:"-"`               //Total number of exchanges
+	TotalNFTCollection   int64  `json:"totalNFTCollection" gorm:"-"`           //Total number of NFT collections
+	TotalSNFTCollection  int64  `json:"totalSNFTCollection" gorm:"-"`          //Total number of SNFT collections
+	TotalNFT             int64  `json:"totalNFT" gorm:"-"`                     //Total number of NFTs
+	TotalSNFT            int64  `json:"totalSNFT" gorm:"-"`                    //Total number of SNFTs
+	TotalNFTTx           int64  `json:"totalNFTTx" gorm:"-"`                   //Total number of  NFT transactions
+	TotalSNFTTx          int64  `json:"totalSNFTTx" gorm:"-"`                  //Total number of  SNFT transactions
+	TotalValidatorOnline int64  `json:"totalValidatorOnline" gorm:"-"`         //Total amount of validator online
+	TotalValidator       int64  `json:"totalValidator" gorm:"-"`               //Total number of validator
+	TotalNFTCreator      int64  `json:"totalNFTCreator" gorm:"-"`              //Total creator of NFTs
+	TotalSNFTCreator     int64  `json:"totalSNFTCreator" gorm:"-"`             //Total creator of SNFTs
+	TotalExchangerTx     int64  `json:"totalExchangerTx" gorm:"-"`             //Total number of exchanger  transactions
+	RewardCoinCount      int64  `json:"rewardCoinCount" gorm:"-"`              //Total number of times to get coin rewards, 0.1ERB once
+	RewardSNFTCount      int64  `json:"rewardSNFTCount" gorm:"-"`              //Total number of times to get SNFT rewards
+	TotalValidatorPledge string `json:"totalValidatorPledge" gorm:"-"`         //Total amount of validator pledge
+	TotalExchangerPledge string `json:"totalExchangerPledge" gorm:"-"`         //Total amount of exchanger pledge
+	Total24HExchangerTx  int64  `json:"total24HExchangerTx" gorm:"-"`          //Total number of exchanger  transactions within 24 hours
+	Total24HNFT          int64  `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
+	Total24HTx           int64  `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
+	TotalEpoch           int64  `json:"totalEpoch" gorm:"-"`                   //Total number of epoch
+	TotalCreator         int64  `json:"totalCreator" gorm:"-"`                 //Total number of creator
+	TotalProfit          string `json:"totalProfit" gorm:"-"`                  //Total number of creator profit
 
 	Genesis  Header                     `json:"-" gorm:"-"`
 	Balances map[types.Address]*big.Int `json:"-" gorm:"-"`
@@ -357,24 +355,14 @@ type Reward struct {
 
 // Validator pledge information
 type Validator struct {
-	Address     string  `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
-	Proxy       string  `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
-	Amount      string  `json:"amount" gorm:"type:DECIMAL(65)"`          //pledge amount
-	Reward      string  `json:"reward" gorm:"type:DECIMAL(65)"`          //amount of total reward
-	RewardCount int64   `json:"reward_count"`                            //reward coin count
-	APR         float64 `json:"apr"`                                     //historical annualized interest rate, updated every 720 blocks
-	Timestamp   int64   `json:"timestamp"`                               //The time at latest rewarding
-	LastNumber  int64   `json:"last_number"`                             //The block number at latest rewarding
-	Weight      int64   `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
-}
-
-// Pledge  record
-type Pledge struct {
-	Address   string `json:"address" gorm:"type:CHAR(42)"`   //staking account
-	Type      int64  `json:"type"`                           //operation type, 9: validator pledge add, 10: validator pledge sub
-	Amount    string `json:"amount" gorm:"type:DECIMAL(65)"` //pledge amount
-	Number    int64  `json:"number"`                         //block number
-	Timestamp int64  `json:"timestamp"`                      //operation time
+	Address     string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
+	Proxy       string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
+	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`          //pledge amount
+	Reward      string `json:"reward" gorm:"type:DECIMAL(65)"`          //amount of total reward
+	RewardCount int64  `json:"reward_count"`                            //reward coin count
+	Timestamp   int64  `json:"timestamp"`                               //The time at latest rewarding
+	LastNumber  int64  `json:"last_number"`                             //The block number at latest rewarding
+	Weight      int64  `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
 }
 
 type Location struct {
@@ -402,7 +390,6 @@ type Parsed struct {
 	Mergers          []*SNFT      //merge snft
 	ChangeExchangers []*Exchanger //modify the exchanger, including opening, closing, staking and other operations
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
-	Pledges          []*Pledge    //pledge record
 
 	// metadata，the meta information link is not necessarily parsed, and it is only parsed once
 	Collections []*Collection
