@@ -19,7 +19,7 @@ var Tables = []interface{}{
 	&ERC20Transfer{},
 	&ERC721Transfer{},
 	&ERC1155Transfer{},
-	&Exchanger{},
+	&Staker{},
 	&NFT{},
 	&Epoch{},
 	&Creator{},
@@ -63,7 +63,7 @@ type Stats struct {
 	TotalAccount         int64  `json:"totalAccount" gorm:"-"`                 //Total account number of used
 	TotalBalance         string `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
 	ActiveAccount        int64  `json:"activeAccount" gorm:"-"`                //The number of active account
-	TotalExchanger       int64  `json:"totalExchanger" gorm:"-"`               //Total number of exchanges
+	TotalStaker          int64  `json:"totalStaker" gorm:"-"`                  //Total number of stakers
 	TotalNFTCollection   int64  `json:"totalNFTCollection" gorm:"-"`           //Total number of NFT collections
 	TotalSNFTCollection  int64  `json:"totalSNFTCollection" gorm:"-"`          //Total number of SNFT collections
 	TotalNFT             int64  `json:"totalNFT" gorm:"-"`                     //Total number of NFTs
@@ -74,12 +74,12 @@ type Stats struct {
 	TotalValidator       int64  `json:"totalValidator" gorm:"-"`               //Total number of validator
 	TotalNFTCreator      int64  `json:"totalNFTCreator" gorm:"-"`              //Total creator of NFTs
 	TotalSNFTCreator     int64  `json:"totalSNFTCreator" gorm:"-"`             //Total creator of SNFTs
-	TotalExchangerTx     int64  `json:"totalExchangerTx" gorm:"-"`             //Total number of exchanger  transactions
+	TotalStakerTx        int64  `json:"totalStakerTx" gorm:"-"`                //Total number of staker  transactions
 	RewardCoinCount      int64  `json:"rewardCoinCount" gorm:"-"`              //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount      int64  `json:"rewardSNFTCount" gorm:"-"`              //Total number of times to get SNFT rewards
 	TotalValidatorPledge string `json:"totalValidatorPledge" gorm:"-"`         //Total amount of validator pledge
-	TotalExchangerPledge string `json:"totalExchangerPledge" gorm:"-"`         //Total amount of exchanger pledge
-	Total24HExchangerTx  int64  `json:"total24HExchangerTx" gorm:"-"`          //Total number of exchanger  transactions within 24 hours
+	TotalStakerPledge    string `json:"totalStakerPledge" gorm:"-"`            //Total amount of staker pledge
+	Total24HStakerTx     int64  `json:"total24HStakerTx" gorm:"-"`             //Total number of staker transactions within 24 hours
 	Total24HNFT          int64  `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64  `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
 	TotalEpoch           int64  `json:"totalEpoch" gorm:"-"`                   //Total number of epoch
@@ -325,22 +325,19 @@ type Collection struct {
 	Exchanger   *string `json:"exchanger" gorm:"type:CHAR(42);index"` //belongs to the exchange
 }
 
-// Exchanger exchange attribute information
-type Exchanger struct {
-	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //Exchange address
-	Name        string `json:"name" gorm:"type:VARCHAR(256)"`            //Exchange name
-	URL         string `json:"url"`                                      //Exchange URL
+// Staker staker attribute information
+type Staker struct {
+	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //staker address
+	Name        string `json:"name" gorm:"type:VARCHAR(256)"`            //staker name
+	URL         string `json:"url"`                                      //staker URL
 	FeeRatio    int64  `json:"fee_ratio"`                                //fee rate, unit 1/10,000
-	Creator     string `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
-	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //Open time
-	BlockNumber int64  `json:"block_number" gorm:"index"`                //The block number when created
-	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction created
-	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`           //Pledge amount
-	Reward      string `json:"reward" gorm:"type:DECIMAL(65)"`           //amount of total reward
+	Receiver    string `json:"receiver" gorm:"type:CHAR(42)"`            //reward snft receive address
+	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //create time
+	BlockNumber int64  `json:"block_number" gorm:"index"`                //the block number when created
+	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //the transaction created
+	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`           //pledge amount
+	Reward      string `json:"reward" gorm:"type:DECIMAL(65);index"`     //amount of total reward
 	RewardCount int64  `json:"reward_count"`                             //reward snft count
-	TxAmount    string `json:"tx_amount" gorm:"type:DECIMAL(65);index"`  //Total transaction amount, unit wei
-	NFTCount    int64  `json:"nft_count"`                                //Total NFT count
-	CloseAt     *int64 `json:"close_at"`                                 //if not null, the exchange is closed
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
@@ -388,7 +385,7 @@ type Parsed struct {
 	NFTTxs           []*NFTTx     //NFT transaction record, transfer, recycle, pledge
 	Rewards          []*Reward    //reward record
 	Mergers          []*SNFT      //merge snft
-	ChangeExchangers []*Exchanger //modify the exchanger, including opening, closing, staking and other operations
+	ChangeStakers    []*Staker    //modify the staker, including opening, closing, staking and other operations
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
 
 	// metadata，the meta information link is not necessarily parsed, and it is only parsed once

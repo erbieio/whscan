@@ -82,8 +82,8 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		if err = saveValidator(db, parsed); err != nil {
 			return
 		}
-		// exchanger change
-		if err = saveExchanger(db, parsed); err != nil {
+		// staker change
+		if err = saveStaker(db, parsed); err != nil {
 			return
 		}
 		// Officially inject SNFT meta information
@@ -137,10 +137,7 @@ func SetHead(parsed *model.Parsed) error {
 			if err = db.Delete(&model.Collection{}, "block_number>?", head).Error; err != nil {
 				return
 			}
-			if err = db.Delete(&model.Exchanger{}, "block_number>?", head).Error; err != nil {
-				return
-			}
-			if err = db.Model(&model.Exchanger{}).Where("close_at>?", head).Update("close_at", nil).Error; err != nil {
+			if err = db.Delete(&model.Staker{}, "block_number>?", head).Error; err != nil {
 				return
 			}
 			hashes := db.Model(&model.Transaction{}).Select("hash").Where("block_number>?", head)
@@ -288,15 +285,14 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 			if err != nil {
 				return
 			}
-			var exchanger model.Exchanger
-			if err = db.Find(&exchanger, "`amount`!='0' AND `address`=?", reward.Address).Error; err != nil {
+			var staker model.Staker
+			if err = db.Find(&staker, "`address`=?", reward.Address).Error; err != nil {
 				return
 			}
-			value := snftValue(*reward.SNFT, 1)
-			if exchanger.Address != "" {
-				exchanger.Reward = BigIntAdd(exchanger.Reward, value)
-				exchanger.RewardCount++
-				if err = db.Select("reward", "reward_count").Updates(&exchanger).Error; err != nil {
+			if staker.Address != "" {
+				staker.Reward = BigIntAdd(staker.Reward, snftValue(*reward.SNFT, 1))
+				staker.RewardCount++
+				if err = db.Select("reward", "reward_count").Updates(&staker).Error; err != nil {
 					return
 				}
 			}
@@ -325,12 +321,6 @@ func saveNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 		*nft.Address = string(utils.BigToAddress(big.NewInt(int64(i) + stats.TotalNFT + 1)))
 		if err = db.Create(nft).Error; err != nil {
 			return
-		}
-		// Update the total number of NFTs on the specified exchange
-		if len(nft.ExchangerAddr) == 42 {
-			if err = db.Exec("UPDATE `exchangers` SET `nft_count`=`nft_count`+1 WHERE address=?", nft.ExchangerAddr).Error; err != nil {
-				return
-			}
 		}
 	}
 	return
@@ -423,18 +413,6 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 					return
 				}
 			}
-			// Calculate the total number of transactions and the total transaction amount to fill the NFT transaction fee and save the exchange
-			if tx.ExchangerAddr != nil && tx.Price != "0" {
-				var exchanger model.Exchanger
-				db.Find(&exchanger, "address=?", tx.ExchangerAddr)
-				if exchanger.Address != "" {
-					tx.Fee = TxFee(tx.Price, exchanger.FeeRatio)
-					exchanger.TxAmount = BigIntAdd(exchanger.TxAmount, tx.Price)
-					if err = db.Select("tx_amount").Updates(&exchanger).Error; err != nil {
-						return
-					}
-				}
-			}
 		}
 		if err = db.Create(&tx).Error; err != nil {
 			return
@@ -481,35 +459,29 @@ func saveValidator(db *gorm.DB, wh *model.Parsed) (err error) {
 	return
 }
 
-func saveExchanger(db *gorm.DB, wh *model.Parsed) (err error) {
-	for _, change := range wh.ChangeExchangers {
-		exchanger := model.Exchanger{Address: change.Address, Creator: change.Address, Amount: "0", Reward: "0", TxAmount: "0"}
-		if err = db.Where("address=?", change.Address).Find(&exchanger).Error; err != nil {
+func saveStaker(db *gorm.DB, wh *model.Parsed) (err error) {
+	for _, change := range wh.ChangeStakers {
+		staker := model.Staker{Address: change.Address, Amount: "0", Reward: "0"}
+		if err = db.Where("address=?", change.Address).Find(&staker).Error; err != nil {
 			return
 		}
-		if change.CloseAt != nil && exchanger.Amount != "0" {
-			// close exchanger
-			err = db.Select("amount", "close_at").Updates(change).Error
-			change.Amount = "-" + exchanger.Amount
+		staker.Amount = BigIntAdd(staker.Amount, change.Amount)
+		if staker.Amount == "0" {
+			// remove staker
+			err = db.Delete(staker).Error
 		} else {
-			// open exchanger
-			if change.Creator != "" {
-				exchanger.Name = change.Name
-				exchanger.URL = change.URL
-				exchanger.FeeRatio = change.FeeRatio
-				exchanger.Timestamp = change.Timestamp
-				exchanger.BlockNumber = change.BlockNumber
-				exchanger.TxHash = change.TxHash
-				exchanger.CloseAt = nil
-			}
-			// exchanger pledge
-			if change.Amount != "0" {
-				exchanger.Amount = BigIntAdd(exchanger.Amount, change.Amount)
-			}
+			staker.Name = change.Name
+			staker.URL = change.URL
+			staker.FeeRatio = change.FeeRatio
+			staker.Receiver = change.Receiver
+			staker.Timestamp = change.Timestamp
+			staker.BlockNumber = change.BlockNumber
+			staker.TxHash = change.TxHash
 			err = db.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "timestamp", "block_number", "tx_hash", "amount", "close_at"}),
-			}).Create(&exchanger).Error
+				DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "receiver", "amount"}),
+			}).Create(&staker).Error
 		}
+
 		if err != nil {
 			return
 		}

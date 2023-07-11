@@ -279,51 +279,6 @@ definitions:
         description: create transaction
         type: string
     type: object
-  model.Exchanger:
-    properties:
-      address:
-        description: Exchange address
-        type: string
-      amount:
-        description: Pledge amount
-        type: string
-      block_number:
-        description: The block number when created
-        type: integer
-      close_at:
-        description: if not null, the exchange is closed
-        type: integer
-      creator:
-        description: Creator address
-        type: string
-      fee_ratio:
-        description: fee rate, unit 1/10,000
-        type: integer
-      name:
-        description: Exchange name
-        type: string
-      nft_count:
-        description: Total NFT count
-        type: integer
-      reward:
-        description: amount of total reward
-        type: string
-      reward_count:
-        description: reward snft count
-        type: integer
-      timestamp:
-        description: Open time
-        type: integer
-      tx_amount:
-        description: Total transaction amount, unit wei
-        type: string
-      tx_hash:
-        description: The transaction created
-        type: string
-      url:
-        description: Exchange URL
-        type: string
-    type: object
   model.InternalTx:
     properties:
       from:
@@ -487,6 +442,42 @@ definitions:
         description: the total transaction volume of this SNFT
         type: string
     type: object
+  model.Staker:
+    properties:
+      address:
+        description: staker address
+        type: string
+      amount:
+        description: pledge amount
+        type: string
+      block_number:
+        description: the block number when created
+        type: integer
+      fee_ratio:
+        description: fee rate, unit 1/10,000
+        type: integer
+      name:
+        description: staker name
+        type: string
+      receiver:
+        description: reward snft receive address
+        type: string
+      reward:
+        description: amount of total reward
+        type: string
+      reward_count:
+        description: reward snft count
+        type: integer
+      timestamp:
+        description: create time
+        type: integer
+      tx_hash:
+        description: the transaction created
+        type: string
+      url:
+        description: staker URL
+        type: string
+    type: object
   model.Stats:
     properties:
       activeAccount:
@@ -510,11 +501,11 @@ definitions:
       rewardSNFTCount:
         description: Total number of times to get SNFT rewards
         type: integer
-      total24HExchangerTx:
-        description: Total number of exchanger  transactions within 24 hours
-        type: integer
       total24HNFT:
         description: Total number of NFT within 24 hours
+        type: integer
+      total24HStakerTx:
+        description: Total number of staker transactions within 24 hours
         type: integer
       total24HTx:
         description: Total number of transactions within 24 hours
@@ -539,15 +530,6 @@ definitions:
         type: integer
       totalEpoch:
         description: Total number of epoch
-        type: integer
-      totalExchanger:
-        description: Total number of exchanges
-        type: integer
-      totalExchangerPledge:
-        description: Total amount of exchanger pledge
-        type: string
-      totalExchangerTx:
-        description: Total number of exchanger  transactions
         type: integer
       totalInternalTx:
         description: Total number of internal transactions
@@ -587,6 +569,15 @@ definitions:
         type: integer
       totalSNFTTx:
         description: Total number of  SNFT transactions
+        type: integer
+      totalStaker:
+        description: Total number of stakers
+        type: integer
+      totalStakerPledge:
+        description: Total amount of staker pledge
+        type: string
+      totalStakerTx:
+        description: Total number of staker  transactions
         type: integer
       totalTransaction:
         description: Total number of transactions
@@ -642,9 +633,6 @@ definitions:
       address:
         description: address
         type: string
-      apr:
-        description: historical annualized interest rate
-        type: number
       balance:
         description: The total amount of coins in the chain
         type: string
@@ -656,9 +644,6 @@ definitions:
         type: string
       creator:
         description: address
-        type: string
-      exchangerAmount:
-        description: exchanger pledge amount
         type: string
       lastNumber:
         type: integer
@@ -692,6 +677,9 @@ definitions:
       snftValue:
         description: hold SNFT value
         type: string
+      stakerAmount:
+        description: staker pledge amount
+        type: string
       symbol:
         description: symbol
         type: string
@@ -700,6 +688,9 @@ definitions:
         type: integer
       validatorAmount:
         description: validator pledge amount
+        type: string
+      validatorReward:
+        description: validator reward
         type: string
       weight:
         description: online weight,if it is not 70, it means that it is not online
@@ -726,9 +717,6 @@ definitions:
             creator:
               description: address
               type: string
-            exchangerAmount:
-              description: exchanger pledge amount
-              type: string
             name:
               description: name
               type: string
@@ -743,6 +731,9 @@ definitions:
               type: integer
             snftValue:
               description: hold SNFT value
+              type: string
+            stakerAmount:
+              description: staker pledge amount
               type: string
             symbol:
               description: symbol
@@ -845,90 +836,6 @@ definitions:
         description: Error message
         type: string
     type: object
-  service.ExchangerRes:
-    properties:
-      address:
-        description: Exchange address
-        type: string
-      amount:
-        description: Pledge amount
-        type: string
-      block_number:
-        description: The block number when created
-        type: integer
-      close_at:
-        description: if not null, the exchange is closed
-        type: integer
-      collectionCount:
-        description: collection count
-        type: integer
-      creator:
-        description: Creator address
-        type: string
-      fee_ratio:
-        description: fee rate, unit 1/10,000
-        type: integer
-      name:
-        description: Exchange name
-        type: string
-      nft_count:
-        description: Total NFT count
-        type: integer
-      reward:
-        description: amount of total reward
-        type: string
-      reward_count:
-        description: reward snft count
-        type: integer
-      timestamp:
-        description: Open time
-        type: integer
-      tx_amount:
-        description: Total transaction amount, unit wei
-        type: string
-      tx_hash:
-        description: The transaction created
-        type: string
-      txCount:
-        description: transaction count
-        type: integer
-      url:
-        description: Exchange URL
-        type: string
-    type: object
-  service.ExchangerTxCountRes:
-    properties:
-      day_1:
-        type: integer
-      day_7:
-        type: integer
-      day30:
-        type: integer
-      total:
-        type: integer
-    type: object
-  service.ExchangersRes:
-    properties:
-      exchangers:
-        description: List of exchanges
-        items:
-          $ref: '#/definitions/model.Exchanger'
-        type: array
-      last_0_total:
-        description: The number of newly opened exchanges in the latest 0 days (today),
-          calculated in real time
-        type: integer
-      last_1_total:
-        description: Number of newly opened exchanges in the latest 1 day (yesterday),
-          cached
-        type: integer
-      last_7_total:
-        description: Number of newly opened exchanges in the last 7 days, cached
-        type: integer
-      total:
-        description: Total number of exchanges
-        type: integer
-    type: object
   service.InternalTxsRes:
     properties:
       internal_txs:
@@ -951,7 +858,7 @@ definitions:
               type: integer
           type: object
         type: array
-      exchangers:
+      stakers:
         items:
           properties:
             day:
@@ -1165,20 +1072,9 @@ definitions:
         description: The total number of NFTs
         type: integer
     type: object
-  service.RankingExchangerRes:
-    properties:
-      exchangers:
-        description: Exchanger list
-        items:
-          $ref: '#/definitions/model.Exchanger'
-        type: array
-      total:
-        description: The total number of Exchanger
-        type: integer
-    type: object
   service.RankingNFTRes:
     properties:
-      nfts:
+      data:
         description: NFT list
         items:
           $ref: '#/definitions/model.NFT'
@@ -1189,7 +1085,7 @@ definitions:
     type: object
   service.RankingSNFTRes:
     properties:
-      nfts:
+      data:
         description: SNFT list
         items:
           properties:
@@ -1246,6 +1142,17 @@ definitions:
         type: array
       total:
         description: The total number of SNFTs
+        type: integer
+    type: object
+  service.RankingStakerRes:
+    properties:
+      data:
+        description: Staker list
+        items:
+          $ref: '#/definitions/model.Staker'
+        type: array
+      total:
+        description: The total number of Staker
         type: integer
     type: object
   service.Reward:
@@ -1443,6 +1350,38 @@ definitions:
         type: array
       total:
         description: The total number of SNFTs
+        type: integer
+    type: object
+  service.StakerTxCountRes:
+    properties:
+      day_1:
+        type: integer
+      day_7:
+        type: integer
+      day30:
+        type: integer
+      total:
+        type: integer
+    type: object
+  service.StakersRes:
+    properties:
+      last_0_total:
+        description: The number of newly stakers in the latest 0 days (today), calculated
+          in real time
+        type: integer
+      last_1_total:
+        description: Number of newly stakers in the latest 1 day (yesterday), cached
+        type: integer
+      last_7_total:
+        description: Number of newly stakers in the last 7 days, cached
+        type: integer
+      stakers:
+        description: List of stakers
+        items:
+          $ref: '#/definitions/model.Staker'
+        type: array
+      total:
+        description: Total number of stakers
         type: integer
     type: object
   service.Transaction:
@@ -2099,150 +2038,6 @@ paths:
       summary: query ERB price
       tags:
       - other interfaces
-  /exchanger/{addr}:
-    get:
-      consumes:
-      - application/json
-      description: Query exchanges by address
-      parameters:
-      - description: Exchange address
-        in: path
-        name: addr
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.ExchangerRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query exchange
-      tags:
-      - Exchange
-  /exchanger/get:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: Query exchanges by address
-      parameters:
-      - description: Exchange address
-        in: query
-        name: addr
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Exchanger'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query exchange (new /exchanger/{addr})
-      tags:
-      - obsolete interface
-  /exchanger/page:
-    get:
-      consumes:
-      - application/json
-      description: Query the list of exchanges in reverse order of creation time
-      parameters:
-      - description: Exchange name, if empty, query all exchanges
-        in: query
-        name: name
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.ExchangersRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query the list of exchanges
-      tags:
-      - Exchange
-  /exchanger/tx_count/{addr}:
-    get:
-      consumes:
-      - application/json
-      description: Query the exchanges tx count chart
-      parameters:
-      - description: Exchanger address
-        in: path
-        name: addr
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/service.ExchangerTxCountRes'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query the exchanges tx count
-      tags:
-      - Exchange
-  /exchangers:
-    get:
-      consumes:
-      - application/json
-      description: Query the list of exchanges in reverse order of creation time
-      parameters:
-      - description: sort by conditions, Support database order statement
-        in: query
-        name: order
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/service.ExchangerRes'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query the list of exchanges
-      tags:
-      - Exchange
   /exec_sql:
     get:
       consumes:
@@ -2478,34 +2273,6 @@ paths:
       summary: query contains meta information NFT list
       tags:
       - NFT
-  /ranking/exchanger:
-    get:
-      consumes:
-      - application/json
-      description: Exchanger ranking for a specified time range
-      parameters:
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.RankingExchangerRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query exchanger ranking
-      tags:
-      - Ranking
   /ranking/nft:
     get:
       consumes:
@@ -2560,6 +2327,34 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: query SNFT ranking
+      tags:
+      - Ranking
+  /ranking/staker:
+    get:
+      consumes:
+      - application/json
+      description: Staker ranking for a specified time range
+      parameters:
+      - description: Page, default 1
+        in: query
+        name: page
+        type: string
+      - description: Page size, default 10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.RankingStakerRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query staker ranking
       tags:
       - Ranking
   /reward:
@@ -2868,6 +2663,124 @@ paths:
       summary: Query a list of SNFTs with meta information
       tags:
       - NFT
+  /staker/{addr}:
+    get:
+      consumes:
+      - application/json
+      description: Query staker by address
+      parameters:
+      - description: staker address
+        in: path
+        name: addr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Staker'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query staker
+      tags:
+      - Staker
+  /staker/page:
+    get:
+      consumes:
+      - application/json
+      description: Query the list of stakers in reverse order of creation time
+      parameters:
+      - description: staker name, if empty, query all stakers
+        in: query
+        name: name
+        type: string
+      - description: Page, default 1
+        in: query
+        name: page
+        type: string
+      - description: Page size, default 10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.StakersRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: Query the list of stakers
+      tags:
+      - Staker
+  /staker/tx_count/{addr}:
+    get:
+      consumes:
+      - application/json
+      description: Query the staker tx count chart
+      parameters:
+      - description: staker address
+        in: path
+        name: addr
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.StakerTxCountRes'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: Query the staker tx count
+      tags:
+      - Staker
+  /stakers:
+    get:
+      consumes:
+      - application/json
+      description: Query the list of stakers in reverse order of creation time
+      parameters:
+      - description: sort by conditions, Support database order statement
+        in: query
+        name: order
+        type: string
+      - description: Page, default 1
+        in: query
+        name: page
+        type: string
+      - description: Page size, default 10
+        in: query
+        name: page_size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Staker'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: Query the list of stakers
+      tags:
+      - Staker
   /totals:
     get:
       consumes:

@@ -833,225 +833,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/exchanger/get": {
-            "get": {
-                "description": "Query exchanges by address",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "obsolete interface"
-                ],
-                "summary": "query exchange (new /exchanger/{addr})",
-                "deprecated": true,
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Exchange address",
-                        "name": "addr",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Exchanger"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/exchanger/page": {
-            "get": {
-                "description": "Query the list of exchanges in reverse order of creation time",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Exchange"
-                ],
-                "summary": "Query the list of exchanges",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Exchange name, if empty, query all exchanges",
-                        "name": "name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page, default 1",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page size, default 10",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/service.ExchangersRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/exchanger/tx_count/{addr}": {
-            "get": {
-                "description": "Query the exchanges tx count chart",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Exchange"
-                ],
-                "summary": "Query the exchanges tx count",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Exchanger address",
-                        "name": "addr",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/service.ExchangerTxCountRes"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/exchanger/{addr}": {
-            "get": {
-                "description": "Query exchanges by address",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Exchange"
-                ],
-                "summary": "query exchange",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Exchange address",
-                        "name": "addr",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/service.ExchangerRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/exchangers": {
-            "get": {
-                "description": "Query the list of exchanges in reverse order of creation time",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Exchange"
-                ],
-                "summary": "Query the list of exchanges",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "sort by conditions, Support database order statement",
-                        "name": "order",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page, default 1",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page size, default 10",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/service.ExchangerRes"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
         "/exec_sql": {
             "get": {
                 "description": "execute sql statement and return the result, only read",
@@ -1407,49 +1188,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/ranking/exchanger": {
-            "get": {
-                "description": "Exchanger ranking for a specified time range",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Ranking"
-                ],
-                "summary": "query exchanger ranking",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Page, default 1",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page size, default 10",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/service.RankingExchangerRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
         "/ranking/nft": {
             "get": {
                 "description": "NFT ranking for a specified time range",
@@ -1525,6 +1263,49 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/service.RankingSNFTRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/ranking/staker": {
+            "get": {
+                "description": "Staker ranking for a specified time range",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Ranking"
+                ],
+                "summary": "query staker ranking",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.RankingStakerRes"
                         }
                     },
                     "400": {
@@ -1987,6 +1768,186 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/service.SNFTsAndMetaRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/staker/page": {
+            "get": {
+                "description": "Query the list of stakers in reverse order of creation time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Staker"
+                ],
+                "summary": "Query the list of stakers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "staker name, if empty, query all stakers",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.StakersRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/staker/tx_count/{addr}": {
+            "get": {
+                "description": "Query the staker tx count chart",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Staker"
+                ],
+                "summary": "Query the staker tx count",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "staker address",
+                        "name": "addr",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/service.StakerTxCountRes"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/staker/{addr}": {
+            "get": {
+                "description": "Query staker by address",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Staker"
+                ],
+                "summary": "query staker",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "staker address",
+                        "name": "addr",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Staker"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/stakers": {
+            "get": {
+                "description": "Query the list of stakers in reverse order of creation time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Staker"
+                ],
+                "summary": "Query the list of stakers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "sort by conditions, Support database order statement",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Staker"
+                            }
                         }
                     },
                     "400": {
@@ -2742,67 +2703,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Exchanger": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "Exchange address",
-                    "type": "string"
-                },
-                "amount": {
-                    "description": "Pledge amount",
-                    "type": "string"
-                },
-                "block_number": {
-                    "description": "The block number when created",
-                    "type": "integer"
-                },
-                "close_at": {
-                    "description": "if not null, the exchange is closed",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "Creator address",
-                    "type": "string"
-                },
-                "fee_ratio": {
-                    "description": "fee rate, unit 1/10,000",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "Exchange name",
-                    "type": "string"
-                },
-                "nft_count": {
-                    "description": "Total NFT count",
-                    "type": "integer"
-                },
-                "reward": {
-                    "description": "amount of total reward",
-                    "type": "string"
-                },
-                "reward_count": {
-                    "description": "reward snft count",
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "description": "Open time",
-                    "type": "integer"
-                },
-                "tx_amount": {
-                    "description": "Total transaction amount, unit wei",
-                    "type": "string"
-                },
-                "tx_hash": {
-                    "description": "The transaction created",
-                    "type": "string"
-                },
-                "url": {
-                    "description": "Exchange URL",
-                    "type": "string"
-                }
-            }
-        },
         "model.InternalTx": {
             "type": "object",
             "properties": {
@@ -3016,6 +2916,55 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Staker": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "staker address",
+                    "type": "string"
+                },
+                "amount": {
+                    "description": "pledge amount",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "the block number when created",
+                    "type": "integer"
+                },
+                "fee_ratio": {
+                    "description": "fee rate, unit 1/10,000",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "staker name",
+                    "type": "string"
+                },
+                "receiver": {
+                    "description": "reward snft receive address",
+                    "type": "string"
+                },
+                "reward": {
+                    "description": "amount of total reward",
+                    "type": "string"
+                },
+                "reward_count": {
+                    "description": "reward snft count",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "description": "create time",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "the transaction created",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "staker URL",
+                    "type": "string"
+                }
+            }
+        },
         "model.Stats": {
             "type": "object",
             "properties": {
@@ -3047,12 +2996,12 @@ const docTemplate = `{
                     "description": "Total number of times to get SNFT rewards",
                     "type": "integer"
                 },
-                "total24HExchangerTx": {
-                    "description": "Total number of exchanger  transactions within 24 hours",
-                    "type": "integer"
-                },
                 "total24HNFT": {
                     "description": "Total number of NFT within 24 hours",
+                    "type": "integer"
+                },
+                "total24HStakerTx": {
+                    "description": "Total number of staker transactions within 24 hours",
                     "type": "integer"
                 },
                 "total24HTx": {
@@ -3085,18 +3034,6 @@ const docTemplate = `{
                 },
                 "totalEpoch": {
                     "description": "Total number of epoch",
-                    "type": "integer"
-                },
-                "totalExchanger": {
-                    "description": "Total number of exchanges",
-                    "type": "integer"
-                },
-                "totalExchangerPledge": {
-                    "description": "Total amount of exchanger pledge",
-                    "type": "string"
-                },
-                "totalExchangerTx": {
-                    "description": "Total number of exchanger  transactions",
                     "type": "integer"
                 },
                 "totalInternalTx": {
@@ -3149,6 +3086,18 @@ const docTemplate = `{
                 },
                 "totalSNFTTx": {
                     "description": "Total number of  SNFT transactions",
+                    "type": "integer"
+                },
+                "totalStaker": {
+                    "description": "Total number of stakers",
+                    "type": "integer"
+                },
+                "totalStakerPledge": {
+                    "description": "Total amount of staker pledge",
+                    "type": "string"
+                },
+                "totalStakerTx": {
+                    "description": "Total number of staker  transactions",
                     "type": "integer"
                 },
                 "totalTransaction": {
@@ -3225,10 +3174,6 @@ const docTemplate = `{
                     "description": "address",
                     "type": "string"
                 },
-                "apr": {
-                    "description": "historical annualized interest rate",
-                    "type": "number"
-                },
                 "balance": {
                     "description": "The total amount of coins in the chain",
                     "type": "string"
@@ -3243,10 +3188,6 @@ const docTemplate = `{
                 },
                 "creator": {
                     "description": "address",
-                    "type": "string"
-                },
-                "exchangerAmount": {
-                    "description": "exchanger pledge amount",
                     "type": "string"
                 },
                 "lastNumber": {
@@ -3292,6 +3233,10 @@ const docTemplate = `{
                     "description": "hold SNFT value",
                     "type": "string"
                 },
+                "stakerAmount": {
+                    "description": "staker pledge amount",
+                    "type": "string"
+                },
                 "symbol": {
                     "description": "symbol",
                     "type": "string"
@@ -3302,6 +3247,10 @@ const docTemplate = `{
                 },
                 "validatorAmount": {
                     "description": "validator pledge amount",
+                    "type": "string"
+                },
+                "validatorReward": {
+                    "description": "validator reward",
                     "type": "string"
                 },
                 "weight": {
@@ -3339,10 +3288,6 @@ const docTemplate = `{
                                 "description": "address",
                                 "type": "string"
                             },
-                            "exchangerAmount": {
-                                "description": "exchanger pledge amount",
-                                "type": "string"
-                            },
                             "name": {
                                 "description": "name",
                                 "type": "string"
@@ -3361,6 +3306,10 @@ const docTemplate = `{
                             },
                             "snftValue": {
                                 "description": "hold SNFT value",
+                                "type": "string"
+                            },
+                            "stakerAmount": {
+                                "description": "staker pledge amount",
                                 "type": "string"
                             },
                             "symbol": {
@@ -3511,120 +3460,6 @@ const docTemplate = `{
                 }
             }
         },
-        "service.ExchangerRes": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "description": "Exchange address",
-                    "type": "string"
-                },
-                "amount": {
-                    "description": "Pledge amount",
-                    "type": "string"
-                },
-                "block_number": {
-                    "description": "The block number when created",
-                    "type": "integer"
-                },
-                "close_at": {
-                    "description": "if not null, the exchange is closed",
-                    "type": "integer"
-                },
-                "collectionCount": {
-                    "description": "collection count",
-                    "type": "integer"
-                },
-                "creator": {
-                    "description": "Creator address",
-                    "type": "string"
-                },
-                "fee_ratio": {
-                    "description": "fee rate, unit 1/10,000",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "Exchange name",
-                    "type": "string"
-                },
-                "nft_count": {
-                    "description": "Total NFT count",
-                    "type": "integer"
-                },
-                "reward": {
-                    "description": "amount of total reward",
-                    "type": "string"
-                },
-                "reward_count": {
-                    "description": "reward snft count",
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "description": "Open time",
-                    "type": "integer"
-                },
-                "txCount": {
-                    "description": "transaction count",
-                    "type": "integer"
-                },
-                "tx_amount": {
-                    "description": "Total transaction amount, unit wei",
-                    "type": "string"
-                },
-                "tx_hash": {
-                    "description": "The transaction created",
-                    "type": "string"
-                },
-                "url": {
-                    "description": "Exchange URL",
-                    "type": "string"
-                }
-            }
-        },
-        "service.ExchangerTxCountRes": {
-            "type": "object",
-            "properties": {
-                "day30": {
-                    "type": "integer"
-                },
-                "day_1": {
-                    "type": "integer"
-                },
-                "day_7": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "service.ExchangersRes": {
-            "type": "object",
-            "properties": {
-                "exchangers": {
-                    "description": "List of exchanges",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Exchanger"
-                    }
-                },
-                "last_0_total": {
-                    "description": "The number of newly opened exchanges in the latest 0 days (today), calculated in real time",
-                    "type": "integer"
-                },
-                "last_1_total": {
-                    "description": "Number of newly opened exchanges in the latest 1 day (yesterday), cached",
-                    "type": "integer"
-                },
-                "last_7_total": {
-                    "description": "Number of newly opened exchanges in the last 7 days, cached",
-                    "type": "integer"
-                },
-                "total": {
-                    "description": "Total number of exchanges",
-                    "type": "integer"
-                }
-            }
-        },
         "service.InternalTxsRes": {
             "type": "object",
             "properties": {
@@ -3658,7 +3493,7 @@ const docTemplate = `{
                         }
                     }
                 },
-                "exchangers": {
+                "stakers": {
                     "type": "array",
                     "items": {
                         "type": "object",
@@ -3950,26 +3785,10 @@ const docTemplate = `{
                 }
             }
         },
-        "service.RankingExchangerRes": {
-            "type": "object",
-            "properties": {
-                "exchangers": {
-                    "description": "Exchanger list",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Exchanger"
-                    }
-                },
-                "total": {
-                    "description": "The total number of Exchanger",
-                    "type": "integer"
-                }
-            }
-        },
         "service.RankingNFTRes": {
             "type": "object",
             "properties": {
-                "nfts": {
+                "data": {
                     "description": "NFT list",
                     "type": "array",
                     "items": {
@@ -3985,7 +3804,7 @@ const docTemplate = `{
         "service.RankingSNFTRes": {
             "type": "object",
             "properties": {
-                "nfts": {
+                "data": {
                     "description": "SNFT list",
                     "type": "array",
                     "items": {
@@ -4060,6 +3879,22 @@ const docTemplate = `{
                 },
                 "total": {
                     "description": "The total number of SNFTs",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.RankingStakerRes": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Staker list",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Staker"
+                    }
+                },
+                "total": {
+                    "description": "The total number of Staker",
                     "type": "integer"
                 }
             }
@@ -4328,6 +4163,51 @@ const docTemplate = `{
                 },
                 "total": {
                     "description": "The total number of SNFTs",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.StakerTxCountRes": {
+            "type": "object",
+            "properties": {
+                "day30": {
+                    "type": "integer"
+                },
+                "day_1": {
+                    "type": "integer"
+                },
+                "day_7": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "service.StakersRes": {
+            "type": "object",
+            "properties": {
+                "last_0_total": {
+                    "description": "The number of newly stakers in the latest 0 days (today), calculated in real time",
+                    "type": "integer"
+                },
+                "last_1_total": {
+                    "description": "Number of newly stakers in the latest 1 day (yesterday), cached",
+                    "type": "integer"
+                },
+                "last_7_total": {
+                    "description": "Number of newly stakers in the last 7 days, cached",
+                    "type": "integer"
+                },
+                "stakers": {
+                    "description": "List of stakers",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Staker"
+                    }
+                },
+                "total": {
+                    "description": "Total number of stakers",
                     "type": "integer"
                 }
             }

@@ -8,27 +8,27 @@ import (
 	"server/service"
 )
 
-func Exchanger(e *gin.Engine) {
-	e.GET("/exchanger/page", pageExchanger)
-	e.GET("/exchanger/:addr", getExchanger)
-	e.GET("/exchangers", exchangers)
-	e.GET("/exchanger/tx_count/:addr", getExchangerTxCount)
+func Staker(e *gin.Engine) {
+	e.GET("/staker/page", pageStaker)
+	e.GET("/staker/:addr", getStaker)
+	e.GET("/stakers", stakers)
+	e.GET("/staker/tx_count/:addr", getStakerTxCount)
 }
 
-// @Tags        Exchange
-// @Summary     Query the list of exchanges
-// @Description Query the list of exchanges in reverse order of creation time
+// @Tags        Staker
+// @Summary     Query the list of stakers
+// @Description Query the list of stakers in reverse order of creation time
 // @Accept      json
 // @Produce     json
-// @Param       name      query    string false "Exchange name, if empty, query all exchanges"
+// @Param       name      query    string false "staker name, if empty, query all stakers"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} service.ExchangersRes
+// @Success     200       {object} service.StakersRes
 // @Failure     400       {object} service.ErrRes
-// @Router      /exchanger/page [get]
-func pageExchanger(c *gin.Context) {
+// @Router      /staker/page [get]
+func pageStaker(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	res, err := service.FetchExchangers(c.Query("name"), page, size)
+	res, err := service.FetchStakers(c.Query("name"), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -37,16 +37,16 @@ func pageExchanger(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags        Exchange
-// @Summary     query exchange
-// @Description Query exchanges by address
+// @Tags        Staker
+// @Summary     query staker
+// @Description Query staker by address
 // @Accept      json
 // @Produce     json
-// @Param       addr path     string true "Exchange address"
-// @Success     200  {object} service.ExchangerRes
+// @Param       addr path     string true "staker address"
+// @Success     200  {object} model.Staker
 // @Failure     400  {object} service.ErrRes
-// @Router      /exchanger/{addr} [get]
-func getExchanger(c *gin.Context) {
+// @Router      /staker/{addr} [get]
+func getStaker(c *gin.Context) {
 	address := c.Param("addr")
 	if address == "" {
 		address = c.Query("addr")
@@ -56,7 +56,7 @@ func getExchanger(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
-	data, err := service.FindExchanger(addr)
+	data, err := service.FindStaker(addr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -64,20 +64,20 @@ func getExchanger(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
-// @Tags        Exchange
-// @Summary     Query the list of exchanges
-// @Description Query the list of exchanges in reverse order of creation time
+// @Tags        Staker
+// @Summary     Query the list of stakers
+// @Description Query the list of stakers in reverse order of creation time
 // @Accept      json
 // @Produce     json
 // @Param       order     query    string false "sort by conditions, Support database order statement"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} []service.ExchangerRes
+// @Success     200       {object} []model.Staker
 // @Failure     400       {object} service.ErrRes
-// @Router      /exchangers [get]
-func exchangers(c *gin.Context) {
+// @Router      /stakers [get]
+func stakers(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	res, err := service.Exchangers(page, size, c.Query("order"))
+	res, err := service.Stakers(page, size, c.Query("order"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -86,23 +86,23 @@ func exchangers(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-// @Tags        Exchange
-// @Summary     Query the exchanges tx count
-// @Description Query the exchanges tx count chart
+// @Tags        Staker
+// @Summary     Query the staker tx count
+// @Description Query the staker tx count chart
 // @Accept      json
 // @Produce     json
-// @Param       addr path     string true "Exchanger address"
-// @Success     200  {object} []service.ExchangerTxCountRes
+// @Param       addr path     string true "staker address"
+// @Success     200  {object} []service.StakerTxCountRes
 // @Failure     400  {object} service.ErrRes
-// @Router      /exchanger/tx_count/{addr} [get]
-func getExchangerTxCount(c *gin.Context) {
+// @Router      /staker/tx_count/{addr} [get]
+func getStakerTxCount(c *gin.Context) {
 	address := c.Param("addr")
 	addr, err := utils.ParseAddress([]byte(address))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
-	data, err := service.ExchangerTxCount(addr)
+	data, err := service.StakerTxCount(addr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

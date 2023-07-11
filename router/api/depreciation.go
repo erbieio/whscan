@@ -8,26 +8,11 @@ import (
 )
 
 func Depreciation(e *gin.Engine) {
-	e.GET("/exchanger/get", _getExchanger)
 	e.GET("/block/getBlock", _getBlock)
 	e.GET("/block/getTransaction", _getTransaction)
 	e.GET("/block/getTransactionLogs", _getTransactionLogs)
 	e.GET("/block/viewBlocks", viewBlocks)
 	e.GET("/block/viewTransactions", viewTransactions)
-}
-
-// @Tags        obsolete interface
-// @Summary     query exchange (new /exchanger/{addr})
-// @Description Query exchanges by address
-// @Deprecated
-// @Accept  json
-// @Produce json
-// @Param   addr query    string true "Exchange address"
-// @Success 200  {object} model.Exchanger
-// @Failure 400  {object} service.ErrRes
-// @Router  /exchanger/get [get]
-func _getExchanger(c *gin.Context) {
-	getExchanger(c)
 }
 
 // @Tags        obsolete interface
@@ -78,18 +63,6 @@ func viewTransactions(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, GetBlockRes{Code: -1, Msg: err.Error()})
 	}
 	c.JSON(http.StatusOK, ViewTxsRes{Code: 0, Msg: "ok", Data: txs, Total: count})
-}
-
-// CheckAuthReq request
-type CheckAuthReq struct {
-	Address string `form:"address" json:"address"` //Address
-}
-
-// CheckAuthRes returns
-type CheckAuthRes struct {
-	Code int64    `json:"code"` //0 success 1 wrong address other failure
-	Msg  string   `json:"msg"`
-	Data *AuthRes `json:"data" `
 }
 
 // @Tags        obsolete interface

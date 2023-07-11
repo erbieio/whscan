@@ -11,7 +11,7 @@ import (
 func Ranking(e *gin.Engine) {
 	e.GET("/ranking/nft", rankingNFT)
 	e.GET("/ranking/snft", rankingSNFT)
-	e.GET("/ranking/exchanger", rankingExchanger)
+	e.GET("/ranking/staker", rankingStaker)
 }
 
 // @Tags        Ranking
@@ -55,18 +55,18 @@ func rankingNFT(c *gin.Context) {
 }
 
 // @Tags        Ranking
-// @Summary     query exchanger ranking
-// @Description Exchanger ranking for a specified time range
+// @Summary     query staker ranking
+// @Description Staker ranking for a specified time range
 // @Accept      json
 // @Produce     json
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} service.RankingExchangerRes
+// @Success     200       {object} service.RankingStakerRes
 // @Failure     400       {object} service.ErrRes
-// @Router      /ranking/exchanger [get]
-func rankingExchanger(c *gin.Context) {
+// @Router      /ranking/staker [get]
+func rankingStaker(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	res, err := service.RankingExchanger(page, size)
+	res, err := service.RankingStaker(page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

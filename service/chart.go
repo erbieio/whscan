@@ -14,11 +14,11 @@ type LineChartRes struct {
 		Hash     string `json:"hash"`
 		GasPrice uint64 `json:"gasPrice"`
 	} `json:"txs"`
-	Exchangers []*struct {
+	Stakers []*struct {
 		Index uint64 `json:"index"`
 		Day   string `json:"day"`
 		Num   uint64 `json:"num"`
-	} `json:"exchangers"`
+	} `json:"stakers"`
 }
 
 func LineChart(limit int) (res LineChartRes, err error) {
@@ -31,8 +31,8 @@ func LineChart(limit int) (res LineChartRes, err error) {
 		return
 	}
 	start, stop := utils.LastTimeRange(int64(limit))
-	err = DB.Table("(?) A", DB.Model(&model.Exchanger{}).Select("(timestamp-?) DIV 86400 AS `index`, FROM_UNIXTIME(timestamp,'%Y-%m-%d') AS `day`", start).
-		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`, `day`").Select("*, COUNT(*) AS num").Scan(&res.Exchangers).Error
+	err = DB.Table("(?) A", DB.Model(&model.Staker{}).Select("(timestamp-?) DIV 86400 AS `index`, FROM_UNIXTIME(timestamp,'%Y-%m-%d') AS `day`", start).
+		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`index`, `day`").Select("*, COUNT(*) AS num").Scan(&res.Stakers).Error
 	return
 }
 

@@ -452,10 +452,11 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 	} else {
 		info := struct {
 			Worm *struct {
-				ExchangerBalance *big.Int `json:"ExchangerBalance"`
-				FeeRate          int64    `json:"FeeRate"`
-				ExchangerName    string   `json:"ExchangerName"`
-				ExchangerURL     string   `json:"ExchangerURL"`
+				ExchangerBalance   *big.Int `json:"ExchangerBalance"`
+				FeeRate            int64    `json:"FeeRate"`
+				ExchangerName      string   `json:"ExchangerName"`
+				ExchangerURL       string   `json:"ExchangerURL"`
+				SNFTAgentRecipient string   `json:"SNFTAgentRecipient"`
 			} `json:"Worm"`
 		}{}
 		for _, account := range wh.CacheAccounts {
@@ -464,12 +465,12 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 			if info.Worm != nil && info.Worm.ExchangerBalance.Int64() != 0 {
 				balance := info.Worm.ExchangerBalance.Text(10)
-				wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
+				wh.ChangeStakers = append(wh.ChangeStakers, &model.Staker{
 					Address:   string(account.Address),
 					Name:      info.Worm.ExchangerName,
 					URL:       info.Worm.ExchangerURL,
 					FeeRatio:  info.Worm.FeeRate,
-					Creator:   string(account.Address),
+					Receiver:  info.Worm.SNFTAgentRecipient,
 					Timestamp: int64(wh.Timestamp),
 					TxHash:    "0x0",
 					Amount:    balance,
@@ -602,31 +603,24 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 			BlockNumber: blockNumber,
 		})
 
-	case 9, 10: //validator pledge, can be pledged multiple times, starting at 100000ERB
-		validator := &model.Validator{Address: from, Amount: value}
-		if w.Type == 10 && value != "0" {
-			validator.Amount = "-" + value
+	case 9: //pledge to be staker
+		if w.ProxyAddress == "" {
+			w.ProxyAddress = from
 		}
-		if len(w.ProxyAddress) == 42 && w.ProxyAddress != types.ZeroAddress {
-			validator.Proxy = w.ProxyAddress
-		}
-		wh.ChangeValidators = append(wh.ChangeValidators, validator)
-
-	case 11: //Open the exchange
-		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
+		wh.ChangeStakers = append(wh.ChangeStakers, &model.Staker{
 			Address:     from,
 			Name:        w.Name,
 			URL:         w.Url,
 			FeeRatio:    w.FeeRate,
-			Creator:     from,
+			Receiver:    w.ProxyAddress,
 			Timestamp:   timestamp,
 			BlockNumber: blockNumber,
 			TxHash:      txHash,
 			Amount:      value,
 		})
 
-	case 12: //Close the exchange
-		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{Address: from, Amount: "0", CloseAt: &timestamp})
+	case 10: //staker revoke pledge
+		wh.ChangeStakers = append(wh.ChangeStakers, &model.Staker{Address: from, Amount: "-" + value})
 
 	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
@@ -809,17 +803,6 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 			BlockNumber:   blockNumber,
 		})
 
-	case 21: //Exchange pledge
-		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
-			Address: from,
-			Amount:  value,
-		})
-
-	case 22: //Revoke the exchange pledge
-		wh.ChangeExchangers = append(wh.ChangeExchangers, &model.Exchanger{
-			Address: from,
-			Amount:  "-" + value,
-		})
 	case 27: //forcibly buy snft that does not belong to you(level 1 address)
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
 		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)

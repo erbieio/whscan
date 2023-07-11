@@ -50,9 +50,3 @@ type price struct {
 func erbPrice(c *gin.Context) {
 	c.JSON(http.StatusOK, price{CNY: 3.2, USD: 0.5})
 }
-
-type AuthRes struct {
-	Status           uint64 `json:"status"` //2 The payment status of the exchange is normal, other numbers are arrears or no payment
-	ExchangerFlag    bool   `json:"exchanger_flag"`
-	ExchangerBalance string `json:"exchanger_balance"`
-}
