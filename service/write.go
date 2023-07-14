@@ -78,12 +78,12 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		if err = saveNFTTx(db, parsed); err != nil {
 			return
 		}
-		// validator change
-		if err = saveValidator(db, parsed); err != nil {
+		// staker change
+		if err = savePledge(db, parsed); err != nil {
 			return
 		}
-		// staker change
-		if err = saveStaker(db, parsed); err != nil {
+		// validator change
+		if err = saveValidator(db, parsed); err != nil {
 			return
 		}
 		// Officially inject SNFT meta information
@@ -305,8 +305,8 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 				validator.Reward = BigIntAdd(validator.Reward, *reward.Amount)
 				validator.RewardCount++
 				validator.Timestamp = int64(wh.Timestamp)
-				validator.LastNumber = int64(wh.Number)
-				if err = db.Select("reward", "reward_count", "timestamp", "last_number").Updates(&validator).Error; err != nil {
+				validator.BlockNumber = int64(wh.Number)
+				if err = db.Select("reward", "reward_count", "timestamp", "block_number").Updates(&validator).Error; err != nil {
 					return
 				}
 			}
@@ -421,6 +421,72 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 	return
 }
 
+func savePledge(db *gorm.DB, wh *model.Parsed) (err error) {
+	for _, change := range wh.ChangePledges {
+		pledge := model.Pledge{Staker: change.Staker, Validator: change.Validator, Amount: "0", TxHash: change.TxHash}
+		if err = db.Find(&pledge).Error; err != nil {
+			return
+		}
+		pledge.Amount = BigIntAdd(pledge.Amount, change.Amount)
+		if pledge.Amount == "0" {
+			// remove pledge
+			err = db.Delete(&pledge).Error
+		} else {
+			pledge.Timestamp = change.Timestamp
+			pledge.BlockNumber = change.BlockNumber
+			err = db.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"amount", "timestamp", "block_number"}),
+			}).Create(&pledge).Error
+		}
+		if err != nil {
+			return
+		}
+
+		staker := model.Staker{Address: change.Staker, Amount: "0", Reward: "0"}
+		if err = db.Find(&staker).Error; err != nil {
+			return
+		}
+		staker.Amount = BigIntAdd(staker.Amount, change.Amount)
+		if staker.Amount == "0" {
+			// remove staker
+			err = db.Delete(&staker).Error
+		} else {
+			staker.Timestamp = change.Timestamp
+			staker.BlockNumber = change.BlockNumber
+			staker.TxHash = change.TxHash
+			err = db.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"amount"}),
+			}).Create(&staker).Error
+		}
+		if err != nil {
+			return
+		}
+
+		validator := model.Validator{Address: change.Validator, Proxy: change.Validator, Amount: "0", Reward: "0"}
+		if err = db.Find(&validator).Error; err != nil {
+			return
+		}
+		validator.Amount = BigIntAdd(validator.Amount, change.Amount)
+		if validator.Amount == "0" {
+			// remove validator
+			err = db.Delete(&validator).Error
+		} else {
+			if validator.Weight > 0 && !CheckValidatorAmount(validator.Amount) {
+				validator.Weight = 0
+			}
+			validator.Timestamp = change.Timestamp
+			validator.BlockNumber = change.BlockNumber
+			err = db.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"amount", "timestamp", "block_number", "weight"}),
+			}).Create(&validator).Error
+		}
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
 func saveValidator(db *gorm.DB, wh *model.Parsed) (err error) {
 	for i, change := range wh.ChangeValidators {
 		if wh.Number > 0 && i < 11 {
@@ -428,13 +494,9 @@ func saveValidator(db *gorm.DB, wh *model.Parsed) (err error) {
 				return
 			}
 		} else {
-			validator := model.Validator{Amount: "0", Reward: "0", Weight: 70}
-			if err = db.Find(&validator, "address=?", change.Address).Error; err != nil {
+			validator := model.Validator{Address: change.Address, Proxy: change.Address, Amount: "0", Reward: "0"}
+			if err = db.Find(&validator).Error; err != nil {
 				return
-			}
-			if validator.Address == "" {
-				validator.Address = change.Address
-				validator.Proxy = change.Address
 			}
 			if change.Proxy != "" {
 				if change.Proxy == types.ZeroAddress {
@@ -443,47 +505,17 @@ func saveValidator(db *gorm.DB, wh *model.Parsed) (err error) {
 					validator.Proxy = change.Proxy
 				}
 			}
-			if change.Amount != "0" {
-				validator.Amount = BigIntAdd(validator.Amount, change.Amount)
+			if change.Weight != 0 {
+				validator.Weight = change.Weight
 			}
 			validator.Timestamp = int64(wh.Timestamp)
-			validator.LastNumber = int64(wh.Number)
+			validator.BlockNumber = int64(wh.Number)
 			err = db.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"proxy", "amount", "timestamp", "last_number"}),
+				DoUpdates: clause.AssignmentColumns([]string{"proxy", "timestamp", "block_number", "weight"}),
 			}).Create(&validator).Error
 			if err != nil {
 				return
 			}
-		}
-	}
-	return
-}
-
-func saveStaker(db *gorm.DB, wh *model.Parsed) (err error) {
-	for _, change := range wh.ChangeStakers {
-		staker := model.Staker{Address: change.Address, Amount: "0", Reward: "0"}
-		if err = db.Where("address=?", change.Address).Find(&staker).Error; err != nil {
-			return
-		}
-		staker.Amount = BigIntAdd(staker.Amount, change.Amount)
-		if staker.Amount == "0" {
-			// remove staker
-			err = db.Delete(staker).Error
-		} else {
-			staker.Name = change.Name
-			staker.URL = change.URL
-			staker.FeeRatio = change.FeeRatio
-			staker.Receiver = change.Receiver
-			staker.Timestamp = change.Timestamp
-			staker.BlockNumber = change.BlockNumber
-			staker.TxHash = change.TxHash
-			err = db.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"name", "url", "fee_ratio", "receiver", "amount"}),
-			}).Create(&staker).Error
-		}
-
-		if err != nil {
-			return
 		}
 	}
 	return

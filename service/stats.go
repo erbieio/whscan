@@ -88,33 +88,22 @@ func loadStats(db *gorm.DB) (err error) {
 	}
 	stats.TotalBalance = totalBalance.Text(10)
 
-	value, totalStakerPledge, stakerAmounts := new(big.Int), new(big.Int), make([]string, 0)
-	if err = db.Model(&model.Staker{}).Where("`amount`!='0'").Pluck("amount", &stakerAmounts).Error; err != nil {
+	value, totalPledge, amounts := new(big.Int), new(big.Int), make([]string, 0)
+	if err = db.Model(&model.Pledge{}).Pluck("amount", &amounts).Error; err != nil {
 		return
 	}
-	for _, stakerAmount := range stakerAmounts {
-		value.SetString(stakerAmount, 0)
-		totalStakerPledge = totalStakerPledge.Add(totalStakerPledge, value)
+	for _, amount := range amounts {
+		value.SetString(amount, 0)
+		totalPledge = totalPledge.Add(totalPledge, value)
 	}
-	stats.TotalStakerPledge = totalStakerPledge.Text(10)
-
-	totalValidatorPledge, validatorAmounts := new(big.Int), make([]string, 0)
-	if err = db.Model(&model.Validator{}).Where("`amount`!='0'").Pluck("amount", &validatorAmounts).Error; err != nil {
-		return
-	}
-	for _, validatorAmount := range validatorAmounts {
-		value.SetString(validatorAmount, 0)
-		totalValidatorPledge = totalValidatorPledge.Add(totalValidatorPledge, value)
-	}
-	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
+	stats.TotalPledge = totalPledge.Text(10)
 	return
 }
 
 func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
-	totalValidatorPledge, _ := new(big.Int).SetString(stats.TotalValidatorPledge, 0)
-	totalStakerPledge, _ := new(big.Int).SetString(stats.TotalStakerPledge, 0)
+	totalPledge, _ := new(big.Int).SetString(stats.TotalPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
 	rewardSNFT, recycleSNFT, value := int64(0), int64(0), new(big.Int)
@@ -130,13 +119,9 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		value.SetString(string(tx.Value), 0)
 		totalAmount = totalAmount.Add(totalAmount, value)
 	}
-	for _, pledge := range parsed.ChangeValidators {
+	for _, pledge := range parsed.ChangePledges {
 		value.SetString(pledge.Amount, 0)
-		totalValidatorPledge = totalValidatorPledge.Add(totalValidatorPledge, value)
-	}
-	for _, pledge := range parsed.ChangeStakers {
-		value.SetString(pledge.Amount, 0)
-		totalStakerPledge = totalStakerPledge.Add(totalStakerPledge, value)
+		totalPledge = totalPledge.Add(totalPledge, value)
 	}
 	for _, tx := range parsed.NFTTxs {
 		if tx.ExchangerAddr != nil {
@@ -207,8 +192,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalRecycle += recycleSNFT
 	stats.TotalBalance = totalBalance.Text(10)
 	stats.TotalAmount = totalAmount.Text(10)
-	stats.TotalValidatorPledge = totalValidatorPledge.Text(10)
-	stats.TotalStakerPledge = totalStakerPledge.Text(10)
+	stats.TotalPledge = totalPledge.Text(10)
 	stats.TotalNFTTx = totalNFTTx
 	stats.TotalSNFTTx = totalSNFTTx
 	stats.TotalStakerTx = totalStakerTx
@@ -265,10 +249,10 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Staker{}).Count(&stats.TotalStaker)
 			db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
-			db.Model(&model.Validator{}).Where("amount!='0'").Count(&stats.TotalValidator)
+			db.Model(&model.Validator{}).Where("weight>0").Count(&stats.TotalValidator)
 			db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
-			db.Model(&model.Validator{}).Where("amount!='0' AND weight>=10").Count(&stats.TotalValidatorOnline)
+			db.Model(&model.Validator{}).Where("weight>=10").Count(&stats.TotalValidatorOnline)
 			db.Model(&model.Transaction{}).Where("block_number>?", parsed.Number-10000).Select("COUNT(DISTINCT `from`)").Scan(&stats.ActiveAccount)
 			if stats.Total24HTx == 0 || number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)

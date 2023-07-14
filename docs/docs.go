@@ -1188,6 +1188,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/pledge/page": {
+            "get": {
+                "description": "Query pledge list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "block"
+                ],
+                "summary": "query pledge list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "staker address",
+                        "name": "staker",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "validator address",
+                        "name": "validator",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.PledgesRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/ranking/nft": {
             "get": {
                 "description": "NFT ranking for a specified time range",
@@ -2879,6 +2934,35 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Pledge": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "pledge amount",
+                    "type": "string"
+                },
+                "block_number": {
+                    "description": "latest block",
+                    "type": "integer"
+                },
+                "staker": {
+                    "description": "staker address",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "latest time",
+                    "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "the transaction created",
+                    "type": "string"
+                },
+                "validator": {
+                    "description": "validator address",
+                    "type": "string"
+                }
+            }
+        },
         "model.SNFT": {
             "type": "object",
             "properties": {
@@ -2931,18 +3015,6 @@ const docTemplate = `{
                     "description": "the block number when created",
                     "type": "integer"
                 },
-                "fee_ratio": {
-                    "description": "fee rate, unit 1/10,000",
-                    "type": "integer"
-                },
-                "name": {
-                    "description": "staker name",
-                    "type": "string"
-                },
-                "receiver": {
-                    "description": "reward snft receive address",
-                    "type": "string"
-                },
                 "reward": {
                     "description": "amount of total reward",
                     "type": "string"
@@ -2957,10 +3029,6 @@ const docTemplate = `{
                 },
                 "tx_hash": {
                     "description": "the transaction created",
-                    "type": "string"
-                },
-                "url": {
-                    "description": "staker URL",
                     "type": "string"
                 }
             }
@@ -3060,6 +3128,10 @@ const docTemplate = `{
                     "description": "Total number of  NFT transactions",
                     "type": "integer"
                 },
+                "totalPledge": {
+                    "description": "Total amount of  pledge",
+                    "type": "string"
+                },
                 "totalProfit": {
                     "description": "Total number of creator profit",
                     "type": "string"
@@ -3092,10 +3164,6 @@ const docTemplate = `{
                     "description": "Total number of stakers",
                     "type": "integer"
                 },
-                "totalStakerPledge": {
-                    "description": "Total amount of staker pledge",
-                    "type": "string"
-                },
                 "totalStakerTx": {
                     "description": "Total number of staker  transactions",
                     "type": "integer"
@@ -3120,10 +3188,6 @@ const docTemplate = `{
                     "description": "Total amount of validator online",
                     "type": "integer"
                 },
-                "totalValidatorPledge": {
-                    "description": "Total amount of validator pledge",
-                    "type": "string"
-                },
                 "totalWormholesTx": {
                     "description": "Total number of  wormholes transactions",
                     "type": "integer"
@@ -3141,7 +3205,7 @@ const docTemplate = `{
                     "description": "pledge amount",
                     "type": "string"
                 },
-                "last_number": {
+                "block_number": {
                     "description": "The block number at latest rewarding",
                     "type": "integer"
                 },
@@ -3781,6 +3845,22 @@ const docTemplate = `{
                 },
                 "total": {
                     "description": "The total number of NFTs",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.PledgesRes": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "pledge list",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Pledge"
+                    }
+                },
+                "total": {
+                    "description": "The total number of pledges",
                     "type": "integer"
                 }
             }

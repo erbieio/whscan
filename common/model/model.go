@@ -19,7 +19,9 @@ var Tables = []interface{}{
 	&ERC20Transfer{},
 	&ERC721Transfer{},
 	&ERC1155Transfer{},
+	&Pledge{},
 	&Staker{},
+	&Validator{},
 	&NFT{},
 	&Epoch{},
 	&Creator{},
@@ -28,7 +30,6 @@ var Tables = []interface{}{
 	&Collection{},
 	&NFTTx{},
 	&Reward{},
-	&Validator{},
 	&Location{},
 }
 
@@ -77,8 +78,7 @@ type Stats struct {
 	TotalStakerTx        int64  `json:"totalStakerTx" gorm:"-"`                //Total number of staker  transactions
 	RewardCoinCount      int64  `json:"rewardCoinCount" gorm:"-"`              //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount      int64  `json:"rewardSNFTCount" gorm:"-"`              //Total number of times to get SNFT rewards
-	TotalValidatorPledge string `json:"totalValidatorPledge" gorm:"-"`         //Total amount of validator pledge
-	TotalStakerPledge    string `json:"totalStakerPledge" gorm:"-"`            //Total amount of staker pledge
+	TotalPledge          string `json:"totalPledge" gorm:"-"`                  //Total amount of  pledge
 	Total24HStakerTx     int64  `json:"total24HStakerTx" gorm:"-"`             //Total number of staker transactions within 24 hours
 	Total24HNFT          int64  `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64  `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
@@ -325,21 +325,6 @@ type Collection struct {
 	Exchanger   *string `json:"exchanger" gorm:"type:CHAR(42);index"` //belongs to the exchange
 }
 
-// Staker staker attribute information
-type Staker struct {
-	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //staker address
-	Name        string `json:"name" gorm:"type:VARCHAR(256)"`            //staker name
-	URL         string `json:"url"`                                      //staker URL
-	FeeRatio    int64  `json:"fee_ratio"`                                //fee rate, unit 1/10,000
-	Receiver    string `json:"receiver" gorm:"type:CHAR(42)"`            //reward snft receive address
-	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //create time
-	BlockNumber int64  `json:"block_number" gorm:"index"`                //the block number when created
-	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //the transaction created
-	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`           //pledge amount
-	Reward      string `json:"reward" gorm:"type:DECIMAL(65);index"`     //amount of total reward
-	RewardCount int64  `json:"reward_count"`                             //reward snft count
-}
-
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
 type Reward struct {
 	Address     string  `json:"address" gorm:"type:CHAR(42)"`   //reward address
@@ -350,6 +335,27 @@ type Reward struct {
 	Amount      *string `json:"amount" gorm:"type:DECIMAL(65)"` //Amount of reward
 }
 
+// Pledge records from stakers to validators
+type Pledge struct {
+	Staker      string `json:"staker" gorm:"type:CHAR(42);primary_key;index"`    //staker address
+	Validator   string `json:"validator" gorm:"type:CHAR(42);primary_key;index"` //validator address
+	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`                   //pledge amount
+	Timestamp   int64  `json:"timestamp" gorm:"index"`                           //latest time
+	BlockNumber int64  `json:"block_number" gorm:"index"`                        //latest block
+	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`                     //the transaction created
+}
+
+// Staker staker attribute information
+type Staker struct {
+	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //staker address
+	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //create time
+	BlockNumber int64  `json:"block_number" gorm:"index"`                //the block number when created
+	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //the transaction created
+	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`           //pledge amount
+	Reward      string `json:"reward" gorm:"type:DECIMAL(65);index"`     //amount of total reward
+	RewardCount int64  `json:"reward_count"`                             //reward snft count
+}
+
 // Validator pledge information
 type Validator struct {
 	Address     string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
@@ -358,7 +364,7 @@ type Validator struct {
 	Reward      string `json:"reward" gorm:"type:DECIMAL(65)"`          //amount of total reward
 	RewardCount int64  `json:"reward_count"`                            //reward coin count
 	Timestamp   int64  `json:"timestamp"`                               //The time at latest rewarding
-	LastNumber  int64  `json:"last_number"`                             //The block number at latest rewarding
+	BlockNumber int64  `json:"block_number"`                            //The block number at latest rewarding
 	Weight      int64  `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
 }
 
@@ -385,7 +391,7 @@ type Parsed struct {
 	NFTTxs           []*NFTTx     //NFT transaction record, transfer, recycle, pledge
 	Rewards          []*Reward    //reward record
 	Mergers          []*SNFT      //merge snft
-	ChangeStakers    []*Staker    //modify the staker, including opening, closing, staking and other operations
+	ChangePledges    []*Pledge    //modify the pledge
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
 
 	// metadata，the meta information link is not necessarily parsed, and it is only parsed once

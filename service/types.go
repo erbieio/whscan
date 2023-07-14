@@ -42,6 +42,16 @@ func TxFee(price string, ratio int64) *string {
 	return &fee
 }
 
+var minValidatorAmount, _ = new(big.Int).SetString("70000000000000000000000", 10)
+
+func CheckValidatorAmount(amount string) bool {
+	value, ok := new(big.Int).SetString(amount, 0)
+	if !ok {
+		return false
+	}
+	return value.Cmp(minValidatorAmount) != -1
+}
+
 var LevelValues = []*big.Float{
 	big.NewFloat(30000000000000000),
 	big.NewFloat(60000000000000000),

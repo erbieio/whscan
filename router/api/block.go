@@ -13,6 +13,7 @@ func Block(e *gin.Engine) {
 	e.GET("/block/page", pageBlock)
 	e.GET("/block/:number", getBlock)
 	e.GET("/totals", totals)
+	e.GET("/pledge/page", pagePledge)
 }
 
 // @Tags        block
@@ -65,4 +66,26 @@ func getBlock(c *gin.Context) {
 // @Router      /totals [get]
 func totals(c *gin.Context) {
 	c.JSON(http.StatusOK, service.GetStats())
+}
+
+// @Tags        block
+// @Summary     query pledge list
+// @Description Query pledge list
+// @Accept      json
+// @Produce     json
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Param       staker    query    string false "staker address"
+// @Param       validator query    string false "validator address"
+// @Success     200       {object} service.PledgesRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /pledge/page [get]
+func pagePledge(c *gin.Context) {
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	data, err := service.FetchPledges(c.Query("staker"), c.Query("validator"), page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
 }

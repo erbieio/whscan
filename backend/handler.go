@@ -369,7 +369,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		}
 		wh.ChangeValidators = make([]*model.Validator, 0, len(onlineWeight))
 		for _, weight := range onlineWeight {
-			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: weight.Address, Amount: "0", Weight: weight.Value})
+			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: weight.Address, Weight: weight.Value})
 		}
 
 		if wh.Miner == types.ZeroAddress {
@@ -452,36 +452,33 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 	} else {
 		info := struct {
 			Worm *struct {
-				ExchangerBalance   *big.Int `json:"ExchangerBalance"`
-				FeeRate            int64    `json:"FeeRate"`
-				ExchangerName      string   `json:"ExchangerName"`
-				ExchangerURL       string   `json:"ExchangerURL"`
-				SNFTAgentRecipient string   `json:"SNFTAgentRecipient"`
+				StakerExtension *struct {
+					StakerExtensions []struct {
+						Addr    string   `json:"Addr"`
+						Balance *big.Int `json:"Balance"`
+					} `json:"StakerExtensions"`
+				}
 			} `json:"Worm"`
 		}{}
 		for _, account := range wh.CacheAccounts {
 			if err = c.Call(&info, "eth_getAccountInfo", account.Address, "0x0"); err != nil {
 				return
 			}
-			if info.Worm != nil && info.Worm.ExchangerBalance.Int64() != 0 {
-				balance := info.Worm.ExchangerBalance.Text(10)
-				wh.ChangeStakers = append(wh.ChangeStakers, &model.Staker{
-					Address:   string(account.Address),
-					Name:      info.Worm.ExchangerName,
-					URL:       info.Worm.ExchangerURL,
-					FeeRatio:  info.Worm.FeeRate,
-					Receiver:  info.Worm.SNFTAgentRecipient,
-					Timestamp: int64(wh.Timestamp),
-					TxHash:    "0x0",
-					Amount:    balance,
-				})
+			if info.Worm != nil && info.Worm.StakerExtension != nil {
+				for _, pledge := range info.Worm.StakerExtension.StakerExtensions {
+					wh.ChangePledges = append(wh.ChangePledges, &model.Pledge{
+						Staker:    string(account.Address),
+						Validator: pledge.Addr,
+						Amount:    pledge.Balance.Text(10),
+						TxHash:    "0x0",
+					})
+				}
 			}
 		}
 		result := struct {
 			Validators []*struct {
-				Addr    string   `json:"Addr"`
-				Balance *big.Int `json:"Balance"`
-				Proxy   string   `json:"Proxy"`
+				Addr  string `json:"Addr"`
+				Proxy string `json:"Proxy"`
 			} `json:"Validators"`
 		}{}
 		if err = c.Call(&result, "eth_getValidator", "0x0"); err != nil {
@@ -490,8 +487,8 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		for _, validator := range result.Validators {
 			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{
 				Address: validator.Addr,
-				Amount:  validator.Balance.Text(10),
 				Proxy:   validator.Proxy,
+				Weight:  70,
 			})
 		}
 	}
@@ -603,24 +600,29 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 			BlockNumber: blockNumber,
 		})
 
-	case 9: //pledge to be staker
-		if w.ProxyAddress == "" {
-			w.ProxyAddress = from
-		}
-		wh.ChangeStakers = append(wh.ChangeStakers, &model.Staker{
-			Address:     from,
-			Name:        w.Name,
-			URL:         w.Url,
-			FeeRatio:    w.FeeRate,
-			Receiver:    w.ProxyAddress,
+	case 9, 10: //staker pledge
+		pledge := &model.Pledge{
+			Staker:      from,
+			Validator:   string(*tx.To),
 			Timestamp:   timestamp,
 			BlockNumber: blockNumber,
 			TxHash:      txHash,
-			Amount:      value,
-		})
+		}
+		if w.Type == 9 {
+			pledge.Amount = value
+		} else {
+			pledge.Amount = "-" + value
+		}
+		wh.ChangePledges = append(wh.ChangePledges, pledge)
 
-	case 10: //staker revoke pledge
-		wh.ChangeStakers = append(wh.ChangeStakers, &model.Staker{Address: from, Amount: "-" + value})
+	case 12: //to be validator
+		wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{
+			Address:     from,
+			Proxy:       w.ProxyAddress,
+			Timestamp:   timestamp,
+			BlockNumber: blockNumber,
+			Weight:      70,
+		})
 
 	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
 		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
@@ -832,7 +834,7 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 			BlockNumber:   blockNumber,
 		})
 	case 31:
-		wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: from, Proxy: w.ProxyAddress, Amount: "0"})
+		wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: from, Proxy: w.ProxyAddress})
 	}
 	return
 }
