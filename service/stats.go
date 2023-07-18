@@ -51,9 +51,6 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Transaction{}).Where("LEFT(input,22)='0x776f726d686f6c65733a'").Count(&stats.TotalWormholesTx).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Uncle{}).Count(&stats.TotalUncle).Error; err != nil {
-		return
-	}
 	if err = db.Model(&model.Collection{}).Where("length(id)=40").Count(&stats.TotalSNFTCollection).Error; err != nil {
 		return
 	}
@@ -184,7 +181,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalBlock++
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
-	stats.TotalUncle += int64(len(parsed.Uncles))
 	stats.TotalNFT += int64(len(parsed.NFTs))
 	stats.RewardSNFTCount += rewardSNFT
 	stats.RewardCoinCount += int64(len(parsed.Rewards)) - rewardSNFT

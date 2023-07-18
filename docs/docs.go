@@ -3176,10 +3176,6 @@ const docTemplate = `{
                     "description": "Total number of  transfer transactions",
                     "type": "integer"
                 },
-                "totalUncle": {
-                    "description": "Number of total uncle blocks",
-                    "type": "integer"
-                },
                 "totalValidator": {
                     "description": "Total number of validator",
                     "type": "integer"

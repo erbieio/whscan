@@ -11,7 +11,6 @@ import (
 var Tables = []interface{}{
 	&Stats{},
 	&Block{},
-	&Uncle{},
 	&Transaction{},
 	&EventLog{},
 	&Account{},
@@ -60,7 +59,6 @@ type Stats struct {
 	TotalInternalTx      int64  `json:"totalInternalTx" gorm:"-"`              //Total number of internal transactions
 	TotalTransferTx      int64  `json:"totalTransferTx" gorm:"-"`              //Total number of  transfer transactions
 	TotalWormholesTx     int64  `json:"totalWormholesTx" gorm:"-"`             //Total number of  wormholes transactions
-	TotalUncle           int64  `json:"totalUncle" gorm:"-"`                   //Number of total uncle blocks
 	TotalAccount         int64  `json:"totalAccount" gorm:"-"`                 //Total account number of used
 	TotalBalance         string `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
 	ActiveAccount        int64  `json:"activeAccount" gorm:"-"`                //The number of active account
@@ -110,9 +108,6 @@ type Header struct {
 	TotalDifficulty  types.BigInt  `json:"totalDifficulty" gorm:"type:DECIMAL(65)"` //total difficulty
 	TransactionsRoot types.Hash    `json:"transactionsRoot" gorm:"type:CHAR(66)"`   //transaction root hash
 }
-
-// Uncle block information
-type Uncle Header
 
 // Block information
 type Block struct {
@@ -380,7 +375,6 @@ type Parsed struct {
 	*Block
 	CacheTxs          []*Transaction `json:"transactions"`
 	CacheInternalTxs  []*InternalTx
-	CacheUncles       []*Uncle
 	CacheTransferLogs []interface{}
 	CacheAccounts     []*Account
 	CacheLogs         []*EventLog

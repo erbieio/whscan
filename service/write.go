@@ -32,12 +32,6 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 				return
 			}
 		}
-		// write uncle block
-		if len(parsed.CacheUncles) > 0 {
-			if err = db.Create(parsed.CacheUncles).Error; err != nil {
-				return
-			}
-		}
 		// write internal transaction
 		if len(parsed.CacheInternalTxs) > 0 {
 			if err = db.Create(parsed.CacheInternalTxs).Error; err != nil {

@@ -55,26 +55,6 @@ func decode(c *node.Client, ctx context.Context, number types.Long) (parsed *mod
 			return nil, fmt.Errorf("eth_getLogs err:%v", err)
 		}
 	}
-	// get uncle block
-	if uncleCount := len(parsed.Uncles); uncleCount > 0 {
-		parsed.CacheUncles = make([]*model.Uncle, uncleCount)
-		reqs := make([]node.BatchElem, uncleCount)
-		for i := range reqs {
-			reqs[i] = node.BatchElem{
-				Method: "eth_getUncleByBlockHashAndIndex",
-				Args:   []any{parsed.Hash, types.Long(i)},
-				Result: &parsed.CacheUncles[i],
-			}
-		}
-		if err = c.BatchCallContext(ctx, reqs); err != nil {
-			return
-		}
-		for i := range reqs {
-			if reqs[i].Error != nil {
-				return nil, reqs[i].Error
-			}
-		}
-	}
 	for _, log := range parsed.CacheLogs {
 		if transferLog := utils.UnpackTransferLog(log); transferLog != nil {
 			parsed.CacheTransferLogs = append(parsed.CacheTransferLogs, transferLog...)
