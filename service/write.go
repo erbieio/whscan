@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/big"
 	"strconv"
-	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -56,12 +55,6 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		if err = db.Create(parsed.Block).Error; err != nil {
 			return
 		}
-		// write collection
-		if len(parsed.Collections) > 0 {
-			if err = db.Save(parsed.Collections).Error; err != nil {
-				return
-			}
-		}
 
 		// wormholes unique data write
 		// NFT creation
@@ -96,10 +89,6 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		return updateStats(db, parsed)
 	})
 	freshStats(DB, parsed)
-	if parsed.Number%17280 == 0 {
-		// once a day
-		reTryMeta(DB)
-	}
 	return
 }
 
@@ -120,15 +109,7 @@ func VerifyHead(parsed *model.Parsed) (pass bool, err error) {
 func SetHead(parsed *model.Parsed) error {
 	return DB.Transaction(func(db *gorm.DB) (err error) {
 		if head := parsed.Number; head >= 0 {
-			if err = db.Delete(&model.FNFT{}, "LEFT(`id`, 39) IN (?)",
-				db.Model(&model.Epoch{}).Select("id").Where("number>?", head),
-			).Error; err != nil {
-				return
-			}
 			if err = db.Delete(&model.Epoch{}, "number>?", head).Error; err != nil {
-				return
-			}
-			if err = db.Delete(&model.Collection{}, "block_number>?", head).Error; err != nil {
 				return
 			}
 			if err = db.Delete(&model.Staker{}, "block_number>?", head).Error; err != nil {
@@ -184,23 +165,7 @@ func SetHead(parsed *model.Parsed) error {
 // injectSNFT official batch injection of SNFT
 func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 	if epoch := wh.Epoch; epoch != nil {
-		// full txHash, txType and timestamp
-		var tx *struct {
-			Input string     `json:"input"`
-			Hash  types.Hash `json:"hash" gorm:"type:CHAR(66);primaryKey"`
-		}
-		err = db.Model(&model.Transaction{}).Where("block_number>? AND block_number<=? AND status=1", epoch.Number-1024, epoch.Number).
-			Where("LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3233' OR LEFT(input,76)='0x776f726d686f6c65733a7b2276657273696f6e223a22302e3031222c2274797065223a3234'").
-			Order("block_number DESC").Limit(1).Scan(&tx).Error
-		if err != nil {
-			return
-		}
-		if tx != nil {
-			epoch.TxHash = (*string)(&tx.Hash)
-			epoch.TxType = new(int64)
-			*epoch.TxType = -28 + int64(tx.Input[75])
-		}
-		err = db.Model(&Block{}).Where("number=?", epoch.Number).Select("timestamp").Scan(&epoch.Timestamp).Error
+		err = db.Model(&model.Block{}).Where("number=?", epoch.Number).Select("timestamp").Scan(&epoch.Timestamp).Error
 		if err != nil {
 			return
 		}
@@ -235,9 +200,6 @@ func injectSNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 			return
 		}
 		if err = db.Create(epoch).Error; err != nil {
-			return
-		}
-		if err = db.Create(wh.FNFTs).Error; err != nil {
 			return
 		}
 	}
@@ -513,85 +475,4 @@ func saveValidator(db *gorm.DB, wh *model.Parsed) (err error) {
 		}
 	}
 	return
-}
-
-func reTryMeta(db *gorm.DB) {
-	var NFTs []*model.NFT
-	db.Find(&NFTs, "status>0")
-	for _, nft := range NFTs {
-		nftMeta, err := utils.GetNFTMeta(nft.MetaUrl)
-		if err != nil {
-			if strings.Index(err.Error(), "context deadline exceeded") > 0 {
-				nft.Status += 1
-			} else {
-				nft.Status = -1
-			}
-			db.Select("status").Updates(nft)
-			log.Println("Failed to retry parse NFT meta information", nft.Address, nft.MetaUrl, err)
-			continue
-		}
-
-		//collection name + collection creator + hash of the exchange where the collection is located
-		if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
-			nft.CollectionId = string(utils.Keccak256Hash(
-				[]byte(nftMeta.CollectionsName),
-				[]byte(nftMeta.CollectionsCreator),
-				[]byte(nftMeta.CollectionsExchanger),
-			))
-			db.Save(&model.Collection{
-				Id:          nft.CollectionId,
-				Name:        nftMeta.CollectionsName,
-				Creator:     nftMeta.CollectionsCreator,
-				Category:    nftMeta.CollectionsCategory,
-				Desc:        nftMeta.CollectionsDesc,
-				ImgUrl:      nftMeta.CollectionsImgUrl,
-				BlockNumber: nft.BlockNumber,
-				Exchanger:   &nftMeta.CollectionsExchanger,
-			})
-		}
-		nft.Status = 0
-		nft.Name = nftMeta.Name
-		nft.Desc = nftMeta.Desc
-		nft.Attributes = nftMeta.Attributes
-		nft.Category = nftMeta.Category
-		nft.SourceUrl = nftMeta.SourceUrl
-		db.Select("status", "name", "desc", "attributes", "category", "source_url", "collection_id").Updates(nft)
-	}
-	log.Printf("retry parse nft meta: %v\n", len(NFTs))
-
-	var FNFTs []*model.FNFT
-	db.Find(&FNFTs, "status>0")
-	for _, fnft := range FNFTs {
-		nftMeta, err := utils.GetNFTMeta(fnft.MetaUrl)
-		if err != nil {
-			if strings.Index(err.Error(), "context deadline exceeded") > 0 {
-				fnft.Status += 1
-			} else {
-				fnft.Status = -1
-			}
-			db.Select("status").Updates(fnft)
-			log.Println("Failed to retry parse SNFT meta information", fnft.ID, fnft.MetaUrl, err)
-			continue
-		}
-		//collection name + collection creator + hash of the exchange where the collection is located
-		if fnft.ID[40] == '0' {
-			db.Select("name", "creator", "category", "desc", "img_url", "exchanger").Updates(&model.Collection{
-				Id:        fnft.ID[:40],
-				Name:      nftMeta.CollectionsName,
-				Creator:   nftMeta.CollectionsCreator,
-				Category:  nftMeta.CollectionsCategory,
-				Desc:      nftMeta.CollectionsDesc,
-				ImgUrl:    nftMeta.CollectionsImgUrl,
-				Exchanger: &nftMeta.CollectionsExchanger,
-			})
-		}
-		fnft.Status = 0
-		fnft.Name = nftMeta.Name
-		fnft.Desc = nftMeta.Desc
-		fnft.Attributes = nftMeta.Attributes
-		fnft.Category = nftMeta.Category
-		fnft.SourceUrl = nftMeta.SourceUrl
-		db.Select("status", "name", "desc", "attributes", "category", "source_url", "collection_id").Updates(fnft)
-	}
-	log.Printf("retry parse snft meta: %v\n", len(FNFTs))
 }

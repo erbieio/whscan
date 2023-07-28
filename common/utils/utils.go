@@ -1,15 +1,11 @@
 package utils
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"math/big"
-	"net/http"
 	"os"
 	"os/user"
 	"path"
-	"server/conf"
 	"strconv"
 	"strings"
 	"time"
@@ -195,38 +191,5 @@ func LastTimeRange(day int64) (start, stop int64) {
 	stopTime, _ := time.ParseInLocation("2006-01-02 15:04:05", now.Format("2006-01-02")+" 00:00:00", loc)
 	stop = stopTime.Unix()
 	start = stop - DaySecond*day
-	return
-}
-
-// NFTMeta NFT core meta information, only these fields are parsed, the extra fields are ignored
-type NFTMeta struct {
-	Name                 string `json:"name"`                  //name
-	Desc                 string `json:"desc"`                  //description
-	Attributes           string `json:"attributes"`            //Attributes
-	Category             string `json:"category"`              //category
-	SourceUrl            string `json:"source_url"`            //Resource links, file links such as pictures or videos
-	CollectionsCreator   string `json:"collections_creator"`   //The creator of the collection, uniquely identifies the collection
-	CollectionsName      string `json:"collections_name"`      //The name of the collection to which it belongs, uniquely identifying the collection
-	CollectionsCategory  string `json:"collections_category"`  //The category of the collection it belongs to
-	CollectionsDesc      string `json:"collections_desc"`      //Description of the collection it belongs to
-	CollectionsImgUrl    string `json:"collections_img_url"`   //collection image link
-	CollectionsExchanger string `json:"collections_exchanger"` //The collection exchange to which it belongs, uniquely identifies the collection
-}
-
-var client = &http.Client{Timeout: 3 * time.Second}
-
-// GetNFTMeta gets NFT meta information from the link
-func GetNFTMeta(url string) (nft NFTMeta, err error) {
-	// If the ipfs link does not give the server address, use the local ipfs server
-	if strings.Index(url, "/ipfs/Qm") == 0 {
-		url = conf.IpfsServer + url
-	}
-	resp, err := client.Get(url)
-	if err != nil {
-		return
-	}
-	data, _ := io.ReadAll(resp.Body)
-	_ = resp.Body.Close()
-	err = json.Unmarshal(data, &nft)
 	return
 }

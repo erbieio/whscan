@@ -24,9 +24,7 @@ var Tables = []interface{}{
 	&NFT{},
 	&Epoch{},
 	&Creator{},
-	&FNFT{},
 	&SNFT{},
-	&Collection{},
 	&NFTTx{},
 	&Reward{},
 	&Location{},
@@ -63,8 +61,6 @@ type Stats struct {
 	TotalBalance         string `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
 	ActiveAccount        int64  `json:"activeAccount" gorm:"-"`                //The number of active account
 	TotalStaker          int64  `json:"totalStaker" gorm:"-"`                  //Total number of stakers
-	TotalNFTCollection   int64  `json:"totalNFTCollection" gorm:"-"`           //Total number of NFT collections
-	TotalSNFTCollection  int64  `json:"totalSNFTCollection" gorm:"-"`          //Total number of SNFT collections
 	TotalNFT             int64  `json:"totalNFT" gorm:"-"`                     //Total number of NFTs
 	TotalSNFT            int64  `json:"totalSNFT" gorm:"-"`                    //Total number of SNFTs
 	TotalNFTTx           int64  `json:"totalNFTTx" gorm:"-"`                   //Total number of  NFT transactions
@@ -216,7 +212,6 @@ type NFT struct {
 	Address       *string `json:"address" gorm:"type:CHAR(42);primary_key"`  //NFT address, grows automatically from 0x1
 	RoyaltyRatio  int64   `json:"royalty_ratio"`                             //Royalty rate, in ten thousandths
 	MetaUrl       string  `json:"meta_url"`                                  //Real meta information URL
-	RawMetaUrl    string  `json:"raw_meta_url"`                              //Original meta information URL on the chain
 	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(42);index"` //The address of the exchange, if there is none, it can be traded on any exchange
 	LastPrice     *string `json:"last_price"`                                //The last transaction price (null if the transaction is not completed), the unit is wei
 	TxAmount      string  `json:"tx_amount" gorm:"type:DECIMAL(65);index"`   //the total transaction volume of this NFT
@@ -225,33 +220,24 @@ type NFT struct {
 	BlockNumber   int64   `json:"block_number"`                              //The height of the created block
 	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66)"`              //The transaction hash created
 	Owner         string  `json:"owner" gorm:"type:CHAR(42);index"`          //owner
-	Status        int64   `json:"status"  gorm:"index"`                      //decode meta status, 0:ok, -1:invalid, >1: number of attempts
-	Name          string  `json:"name"`                                      //name
-	Desc          string  `json:"desc"`                                      //description
-	Attributes    string  `json:"attributes"`                                //Attributes
-	Category      string  `json:"category"`                                  //category
-	SourceUrl     string  `json:"source_url"`                                //Resource links, file links such as pictures or videos
-	CollectionId  string  `json:"collection_id" gorm:"index"`                //The id of the collection, the name of the collection + the creator of the collection + the hash of the exchange where the collection is located
 }
 
 // Epoch SNFT Phase 1
 // One SNFT->16 Collections->16 FNFTs->256 SNFTs
 type Epoch struct {
-	ID           string  `json:"id" gorm:"type:CHAR(39);primary_key"` //period ID
-	Creator      string  `json:"creator" gorm:"type:CHAR(42);index"`  //creator address, also the address of royalty income
-	RoyaltyRatio int64   `json:"royaltyRatio"`                        //the royalty rate of the same period of SNFT, the unit is one ten thousandth
-	Dir          string  `json:"dir"`                                 //meta information directory URL
-	WeightValue  string  `json:"weightValue"`                         //snft value
-	WeightAmount int64   `json:"weightAmount"`                        //hold block number amount
-	TxHash       *string `json:"tx_hash" gorm:"type:CHAR(66)"`        //the transaction hash voter
-	TxType       *int64  `json:"txType"`                              //transaction type
-	Voter        string  `json:"voter" gorm:"type:CHAR(42);index"`    //voter
-	Reward       string  `json:"reward" gorm:"type:DECIMAL(65)"`      //vote reward amount
-	Profit       string  `json:"profit" gorm:"type:DECIMAL(65)"`      //royalty profit amount
-	Number       int64   `json:"number"`                              //is selected block height
-	Timestamp    int64   `json:"timestamp"`                           //is selected timestamp
-	StartNumber  int64   `json:"startNumber"`                         //starting the period block height
-	StartTime    int64   `json:"startTime"`                           //starting the period timestamp
+	ID           string `json:"id" gorm:"type:CHAR(39);primary_key"` //period ID
+	Creator      string `json:"creator" gorm:"type:CHAR(42);index"`  //creator address, also the address of royalty income
+	RoyaltyRatio int64  `json:"royaltyRatio"`                        //the royalty rate of the same period of SNFT, the unit is one ten thousandth
+	MetaUrl      string `json:"meta_url"`                            //Real meta information URL
+	WeightValue  string `json:"weightValue"`                         //snft value
+	WeightAmount int64  `json:"weightAmount"`                        //hold block number amount
+	Voter        string `json:"voter" gorm:"type:CHAR(42);index"`    //voter
+	Reward       string `json:"reward" gorm:"type:DECIMAL(65)"`      //vote reward amount
+	Profit       string `json:"profit" gorm:"type:DECIMAL(65)"`      //royalty profit amount
+	Number       int64  `json:"number"`                              //is selected block height
+	Timestamp    int64  `json:"timestamp"`                           //is selected timestamp
+	StartNumber  int64  `json:"startNumber"`                         //starting the period block height
+	StartTime    int64  `json:"startTime"`                           //starting the period timestamp
 }
 
 // Creator SNFT creator information
@@ -265,18 +251,6 @@ type Creator struct {
 	Count      int64  `json:"count"`                                   //selected count
 	Reward     string `json:"reward" gorm:"type:DECIMAL(65);index"`    //vote profit
 	Profit     string `json:"profit" gorm:"type:DECIMAL(65);index"`    //royalty profit
-}
-
-// FNFT full SNFT
-type FNFT struct {
-	ID         string `json:"id" gorm:"type:CHAR(41);primary_key"` //FNFT ID
-	MetaUrl    string `json:"meta_url"`                            //FNFT meta information URL
-	Status     int64  `json:"status"  gorm:"index"`                //decode meta status, 0:ok, -1:invalid, >1: number of attempts
-	Name       string `json:"name"`                                //name
-	Desc       string `json:"desc"`                                //description
-	Attributes string `json:"attributes"`                          //Attributes
-	Category   string `json:"category"`                            //category
-	SourceUrl  string `json:"source_url"`                          //Resource links, file links such as pictures or videos
 }
 
 // SNFT of SNFT fragments
@@ -307,24 +281,11 @@ type NFTTx struct {
 	Fee           *string `json:"fee,omitempty"`                                       //Transaction fee, in wei (only if there is an exchange and price)
 }
 
-// Collection information, user collection: name + creator + hash of the exchange to which they belong, SNFT collection: SNFT address removes the last 3 digits
-type Collection struct {
-	Id          string  `json:"id" gorm:"type:CHAR(66);primary_key"`  //ID
-	MetaUrl     string  `json:"meta_url"`                             //collection meta information URL
-	Name        string  `json:"name"`                                 //name
-	Creator     string  `json:"creator" gorm:"index"`                 //Creator
-	Category    string  `json:"category"`                             //category
-	Desc        string  `json:"desc"`                                 //description
-	ImgUrl      string  `json:"img_url"`                              //image link
-	BlockNumber int64   `json:"block_number" gorm:"index"`            //Create block height, equal to the first NFT in the collection
-	Exchanger   *string `json:"exchanger" gorm:"type:CHAR(42);index"` //belongs to the exchange
-}
-
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
 type Reward struct {
 	Address     string  `json:"address" gorm:"type:CHAR(42)"`   //reward address
 	Proxy       *string `json:"proxy" gorm:"type:CHAR(42)"`     //proxy address
-	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: verifier, 3, exchanger
+	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: validator, 3, staker
 	BlockNumber int64   `json:"block_number" gorm:"index"`      //The block number when rewarding
 	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
 	Amount      *string `json:"amount" gorm:"type:DECIMAL(65)"` //Amount of reward
@@ -387,8 +348,4 @@ type Parsed struct {
 	Mergers          []*SNFT      //merge snft
 	ChangePledges    []*Pledge    //modify the pledge
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
-
-	// metadata，the meta information link is not necessarily parsed, and it is only parsed once
-	Collections []*Collection
-	FNFTs       []*FNFT
 }

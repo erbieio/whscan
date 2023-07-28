@@ -9,7 +9,7 @@ type TransactionRes struct {
 }
 
 func GetTransaction(hash string) (res TransactionRes, err error) {
-	err = DB.Model(&Transaction{}).Joins("LEFT JOIN blocks ON number=block_number").Where("transactions.hash=?", hash).
+	err = DB.Model(&model.Transaction{}).Joins("LEFT JOIN blocks ON number=block_number").Where("transactions.hash=?", hash).
 		Select("transactions.*,timestamp").First(&res).Error
 	return
 }
@@ -21,7 +21,7 @@ type TransactionsRes struct {
 }
 
 func FetchTransactions(page, size int, number, addr string) (res TransactionsRes, err error) {
-	db := DB.Model(&Transaction{})
+	db := DB.Model(&model.Transaction{})
 	if number != "" {
 		db = db.Where("block_number=?", number)
 	}

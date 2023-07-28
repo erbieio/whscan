@@ -51,9 +51,6 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Transaction{}).Where("LEFT(input,22)='0x776f726d686f6c65733a'").Count(&stats.TotalWormholesTx).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Collection{}).Where("length(id)=40").Count(&stats.TotalSNFTCollection).Error; err != nil {
-		return
-	}
 	if err = db.Model(&model.NFT{}).Count(&stats.TotalNFT).Error; err != nil {
 		return
 	}
@@ -194,7 +191,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalStakerTx = totalStakerTx
 	stats.TotalNFTAmount = totalNFTAmount.Text(10)
 	stats.TotalSNFTAmount = totalSNFTAmount.Text(10)
-	stats.TotalSNFTCollection = (stats.RewardSNFTCount/4096 + 1) * 16
 	stats.TotalEpoch = stats.RewardSNFTCount/4096 + 1
 	if parsed.Number > 0 && parsed.Miner == types.ZeroAddress {
 		stats.TotalBlackHole++
@@ -244,7 +240,6 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.Creator{}).Count(&stats.TotalCreator)
 			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Staker{}).Count(&stats.TotalStaker)
-			db.Model(&model.Collection{}).Where("length(id)!=40").Count(&stats.TotalNFTCollection)
 			db.Model(&model.Validator{}).Where("weight>0").Count(&stats.TotalValidator)
 			db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)

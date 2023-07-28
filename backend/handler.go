@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
 	"strconv"
 	"strings"
@@ -69,7 +68,6 @@ func decode(c *node.Client, ctx context.Context, number types.Long) (parsed *mod
 	}
 	// Parse things specific to wormholes
 	err = decodeWH(c, parsed)
-	tryParseMeta(parsed)
 	return
 }
 
@@ -308,7 +306,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 						ID:           addr[:39],
 						Creator:      strings.ToLower(epoch.Creator),
 						RoyaltyRatio: epoch.Royalty,
-						Dir:          epoch.Dir,
+						MetaUrl:      epoch.Dir,
 						WeightValue:  epoch.VoteWeight.Text(10),
 						Voter:        strings.ToLower(epoch.Address),
 						StartNumber:  int64(wh.Number),
@@ -546,8 +544,7 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		wh.NFTs = append(wh.NFTs, &model.NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  w.Royalty, //The unit is one ten thousandth
-			MetaUrl:       realMeatUrl(w.MetaURL),
-			RawMetaUrl:    w.MetaURL,
+			MetaUrl:       w.MetaURL,
 			ExchangerAddr: strings.ToLower(w.Exchanger),
 			TxAmount:      "0",
 			Creator:       string(*tx.To),
@@ -649,8 +646,7 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		wh.NFTs = append(wh.NFTs, &model.NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  royaltyRatio,
-			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
-			RawMetaUrl:    w.Seller2.MetaURL,
+			MetaUrl:       w.Seller2.MetaURL,
 			ExchangerAddr: w.Seller2.Exchanger,
 			TxAmount:      "0",
 			Creator:       string(creator),
@@ -687,8 +683,7 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		wh.NFTs = append(wh.NFTs, &model.NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  royaltyRatio,
-			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
-			RawMetaUrl:    w.Seller2.MetaURL,
+			MetaUrl:       w.Seller2.MetaURL,
 			ExchangerAddr: from, //The transaction initiator is the exchange address
 			TxAmount:      "0",
 			Creator:       string(creator),
@@ -750,8 +745,7 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		wh.NFTs = append(wh.NFTs, &model.NFT{
 			Address:       &nftAddr,
 			RoyaltyRatio:  royaltyRatio,
-			MetaUrl:       realMeatUrl(w.Seller2.MetaURL),
-			RawMetaUrl:    w.Seller2.MetaURL,
+			MetaUrl:       w.Seller2.MetaURL,
 			ExchangerAddr: string(exchangerAddr), //The transaction initiator is the exchange address
 			TxAmount:      "0",
 			Creator:       string(creator),
@@ -817,113 +811,4 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: from, Proxy: w.ProxyAddress})
 	}
 	return
-}
-
-// realMeatUrl parses the real metaUrl
-func realMeatUrl(meta string) string {
-	data, err := hex.DecodeString(meta)
-	if err != nil {
-		return ""
-	}
-	r := struct {
-		Meta string `json:"meta"`
-	}{}
-	err = json.Unmarshal(data, &r)
-	if err != nil {
-		return ""
-	}
-	return r.Meta
-}
-
-// tryParseMeta parses NFT AND SNFT meta information
-func tryParseMeta(wh *model.Parsed) {
-	for _, nft := range wh.NFTs {
-		nftMeta, err := utils.GetNFTMeta(nft.MetaUrl)
-		if err != nil {
-			if strings.Index(err.Error(), "context deadline exceeded") > 0 {
-				nft.Status += 1
-			} else {
-				nft.Status = -1
-			}
-			log.Println("Failed to parse NFT meta information", nft.Address, nft.MetaUrl, err)
-			continue
-		}
-
-		//collection name + collection creator + hash of the exchange where the collection is located
-		if nftMeta.CollectionsName != "" && nftMeta.CollectionsCreator != "" {
-			nft.CollectionId = string(utils.Keccak256Hash(
-				[]byte(nftMeta.CollectionsName),
-				[]byte(nftMeta.CollectionsCreator),
-				[]byte(nftMeta.CollectionsExchanger),
-			))
-			wh.Collections = append(wh.Collections, &model.Collection{
-				Id:          nft.CollectionId,
-				Name:        nftMeta.CollectionsName,
-				Creator:     nftMeta.CollectionsCreator,
-				Category:    nftMeta.CollectionsCategory,
-				Desc:        nftMeta.CollectionsDesc,
-				ImgUrl:      nftMeta.CollectionsImgUrl,
-				BlockNumber: int64(wh.Number),
-				Exchanger:   &nftMeta.CollectionsExchanger,
-			})
-		}
-		nft.Name = nftMeta.Name
-		nft.Desc = nftMeta.Desc
-		nft.Attributes = nftMeta.Attributes
-		nft.Category = nftMeta.Category
-		nft.SourceUrl = nftMeta.SourceUrl
-	}
-
-	if epoch := wh.Epoch; epoch != nil {
-		for i := 0; i < 16; i++ {
-			hexI := fmt.Sprintf("%x", i)
-			collectionId := epoch.ID + hexI
-			metaUrl := ""
-			if epoch.Dir != "" {
-				metaUrl = epoch.Dir + hexI + "0"
-			}
-			// write collection information
-			collection := &model.Collection{Id: collectionId, MetaUrl: metaUrl, BlockNumber: epoch.Number}
-			if metaUrl != "" {
-				nftMeta, err := utils.GetNFTMeta(metaUrl)
-				if err != nil {
-					log.Println("Failed to parse SNFT collection information", collectionId, metaUrl, err)
-				} else {
-					collection.Name = nftMeta.CollectionsName
-					collection.Desc = nftMeta.CollectionsDesc
-					collection.Category = nftMeta.CollectionsCategory
-					collection.ImgUrl = nftMeta.CollectionsImgUrl
-					collection.Creator = nftMeta.CollectionsCreator
-				}
-			}
-			wh.Collections = append(wh.Collections, collection)
-			for j := 0; j < 16; j++ {
-				hexJ := fmt.Sprintf("%x", j)
-				FNFTId := collectionId + hexJ
-				if epoch.Dir != "" {
-					metaUrl = epoch.Dir + hexI + hexJ
-				}
-				// write complete SNFT information
-				fnft := &model.FNFT{ID: FNFTId, MetaUrl: metaUrl}
-				if metaUrl != "" {
-					nftMeta, err := utils.GetNFTMeta(metaUrl)
-					if err != nil {
-						if strings.Index(err.Error(), "context deadline exceeded") > 0 {
-							fnft.Status += 1
-						} else {
-							fnft.Status = -1
-						}
-						log.Println("Failed to parse and store SNFT meta information", FNFTId, metaUrl, err)
-					} else {
-						fnft.Name = nftMeta.Name
-						fnft.Desc = nftMeta.Desc
-						fnft.Attributes = nftMeta.Attributes
-						fnft.Category = nftMeta.Category
-						fnft.SourceUrl = nftMeta.SourceUrl
-					}
-				}
-				wh.FNFTs = append(wh.FNFTs, fnft)
-			}
-		}
-	}
 }

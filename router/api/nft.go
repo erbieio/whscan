@@ -11,19 +11,15 @@ import (
 
 func NFT(e *gin.Engine) {
 	e.GET("/nft/page", pageNFT)
-	e.GET("/nft_meta/page", pageNFTAndMeta)
 	e.GET("/nft/tx/page", pageNFTTx)
 	e.GET("/nft/tx/epoch", epochNFTTx)
 	e.GET("/nft/tx/:hash", getNFTTx)
 	e.GET("/snft/page", pageSNFT)
-	e.GET("/snft_com/page", pageComSNFT)
 	e.GET("/snft/recycle_tx", getRecycleTx)
 	e.GET("/nft/:addr", getNFT)
 	e.GET("/snft/:addr", getSNFT)
 	e.GET("/snft/block", blockSNFT)
 	e.GET("/snft_meta/page", pageSNFTAndMeta)
-	e.GET("/snft/collection/page", pageSNFTGroup)
-	e.GET("/snft/group/:id", groupSNFTs)
 }
 
 // @Tags        NFT
@@ -31,39 +27,20 @@ func NFT(e *gin.Engine) {
 // @Description Query the NFT list in reverse order of creation time
 // @Accept      json
 // @Produce     json
-// @Param       exchanger     query    string false "Exchange, if empty, query all exchanges"
-// @Param       owner         query    string false "Owner, if empty, query all"
-// @Param       collection_id query    string false "collection id, if empty, query all"
-// @Param       page          query    string false "Page, default 1"
-// @Param       page_size     query    string false "Page size, default 10"
-// @Success     200           {object} service.NFTsRes
-// @Failure     400           {object} service.ErrRes
+// @Param       owner     query    string false "Owner, if empty, query all"
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.NFTsRes
+// @Failure     400       {object} service.ErrRes
 // @Router      /nft/page [get]
 func pageNFT(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	res, err := service.FetchNFTs(c.Query("exchanger"), c.Query("collection_id"), strings.ToLower(c.Query("owner")), page, size)
+	res, err := service.FetchNFTs(strings.ToLower(c.Query("owner")), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, res)
-}
-
-// @Tags        NFT
-// @Summary     query contains meta information NFT list
-// @Description query the NFT list containing meta information in reverse order of creation time
-// @Accept      json
-// @Produce     json
-// @Param       exchanger     query    string false "Exchange, if empty, query all exchanges"
-// @Param       owner         query    string false "Owner, if empty, query all"
-// @Param       collection_id query    string false "collection id, if empty, query all"
-// @Param       page          query    string false "Page, default 1"
-// @Param       page_size     query    string false "Page size, default 10"
-// @Success     200           {object} service.NFTsRes
-// @Failure     400           {object} service.ErrRes
-// @Router      /nft_meta/page [get]
-func pageNFTAndMeta(c *gin.Context) {
-	pageNFT(c)
 }
 
 // @Tags        NFT
@@ -151,23 +128,6 @@ func pageSNFT(c *gin.Context) {
 }
 
 // @Tags        NFT
-// @Summary     query Composable SNFT list (new /snft/page)
-// @Description Query the Composable SNFT list in reverse order of creation time
-// @Deprecated
-// @Accept  json
-// @Produce json
-// @Param   sort      query    string false "sort, 1:level priority,none:default"
-// @Param   owner     query    string false "Owner, if empty, query all"
-// @Param   page      query    string false "Page, default 1"
-// @Param   page_size query    string false "Page size, default 10"
-// @Success 200       {object} service.SNFTsRes
-// @Failure 400       {object} service.ErrRes
-// @Router  /snft_com/page [get]
-func pageComSNFT(c *gin.Context) {
-	pageSNFT(c)
-}
-
-// @Tags        NFT
 // @Summary     query recycle transaction
 // @Description Query one SNFT recycle transaction by address or tx hash
 // @Accept      json
@@ -192,7 +152,7 @@ func getRecycleTx(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       addr path     string true "Address"
-// @Success     200  {object} service.NFTRes
+// @Success     200  {object} model.NFT
 // @Failure     400  {object} service.ErrRes
 // @Router      /nft/{addr} [get]
 func getNFT(c *gin.Context) {
@@ -227,16 +187,15 @@ func getSNFT(c *gin.Context) {
 // @Description Query the list of SNFTs with meta information in reverse order of creation time
 // @Accept      json
 // @Produce     json
-// @Param       collection_id query    string false "collection id, if empty, query all"
-// @Param       owner         query    string false "Owner, if empty, query all"
-// @Param       page          query    string false "Page, default 1"
-// @Param       page_size     query    string false "Page size, default 10"
-// @Success     200           {object} service.SNFTsAndMetaRes
-// @Failure     400           {object} service.ErrRes
+// @Param       owner     query    string false "Owner, if empty, query all"
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Success     200       {object} service.SNFTsAndMetaRes
+// @Failure     400       {object} service.ErrRes
 // @Router      /snft_meta/page [get]
 func pageSNFTAndMeta(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	res, err := service.FetchSNFTsAndMeta(strings.ToLower(c.Query("owner")), c.Query("collection_id"), page, size)
+	res, err := service.FetchSNFTsAndMeta(strings.ToLower(c.Query("owner")), page, size)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
@@ -254,56 +213,7 @@ func pageSNFTAndMeta(c *gin.Context) {
 // @Failure     400    {object} service.ErrRes
 // @Router      /snft/block [get]
 func blockSNFT(c *gin.Context) {
-	req := struct {
-		Number uint64 `form:"number"`
-	}{}
-	err := c.BindQuery(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-
-	data, err := service.BlockSNFTs(req.Number)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, data)
-}
-
-// @Tags        NFT
-// @Summary     paging query account holding collection list
-// @Description Query the collection list (including 16 FNFT information) held by the specified account (with one SNFT in the collection)
-// @Accept      json
-// @Produce     json
-// @Param       owner     query    string false "owner"
-// @Param       page      query    string false "Page, default 1"
-// @Param       page_size query    string false "Page size, default 10"
-// @Success     200       {object} service.SNFTGroupsRes
-// @Failure     400       {object} service.ErrRes
-// @Router      /snft/collection/page [get]
-func pageSNFTGroup(c *gin.Context) {
-	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	data, err := service.FindSNFTGroups(strings.ToLower(c.Query("owner")), page, size)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, data)
-}
-
-// @Tags        NFT
-// @Summary     Query the list of 16 SNFTs of the specified FNFT
-// @Description Query the information of 16 SNFTs under the FNFT of the specified ID
-// @Accept      json
-// @Produce     json
-// @Param       id  path     string true "FNFT ID"
-// @Success     200 {object} []model.SNFT
-// @Failure     400 {object} service.ErrRes
-// @Router      /snft/group/{id} [get]
-func groupSNFTs(c *gin.Context) {
-	id := c.Param("id")
-	data, err := service.FNFTs(id)
+	data, err := service.BlockSNFTs(c.Query("number"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

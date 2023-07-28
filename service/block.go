@@ -34,7 +34,7 @@ func FetchPledges(staker, validator string, page, size int) (res PledgesRes, err
 		db = db.Where("staker=?", staker)
 	}
 	if validator != "" {
-		db = db.Where("staker=?", validator)
+		db = db.Where("validator=?", validator)
 	}
 	err = db.Offset((page - 1) * size).Limit(size).Find(&res.Data).Error
 	if err != nil {

@@ -1,65 +1,4 @@
 definitions:
-  api.ErrRes:
-    properties:
-      err:
-        description: Error message
-        type: string
-    type: object
-  api.GetBlockRes:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/service.Block'
-      msg:
-        type: string
-    type: object
-  api.GetReceiptsRes:
-    properties:
-      code:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/service.Log'
-        type: array
-      msg:
-        type: string
-    type: object
-  api.GetTxRes:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/service.Transaction'
-      msg:
-        type: string
-    type: object
-  api.ViewBlocksRes:
-    properties:
-      code:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/service.Block'
-        type: array
-      msg:
-        type: string
-      total:
-        type: integer
-    type: object
-  api.ViewTxsRes:
-    properties:
-      code:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/service.Transaction'
-        type: array
-      msg:
-        type: string
-      total:
-        type: integer
-    type: object
   api.price:
     properties:
       CNY:
@@ -143,36 +82,6 @@ definitions:
           $ref: '#/definitions/model.Penalty'
         type: array
     type: object
-  model.Collection:
-    properties:
-      block_number:
-        description: Create block height, equal to the first NFT in the collection
-        type: integer
-      category:
-        description: category
-        type: string
-      creator:
-        description: Creator
-        type: string
-      desc:
-        description: description
-        type: string
-      exchanger:
-        description: belongs to the exchange
-        type: string
-      id:
-        description: ID
-        type: string
-      img_url:
-        description: image link
-        type: string
-      meta_url:
-        description: collection meta information URL
-        type: string
-      name:
-        description: name
-        type: string
-    type: object
   model.Creator:
     properties:
       address:
@@ -208,11 +117,11 @@ definitions:
       creator:
         description: creator address, also the address of royalty income
         type: string
-      dir:
-        description: meta information directory URL
-        type: string
       id:
         description: period ID
+        type: string
+      meta_url:
+        description: Real meta information URL
         type: string
       number:
         description: is selected block height
@@ -235,12 +144,6 @@ definitions:
         type: integer
       timestamp:
         description: is selected timestamp
-        type: integer
-      tx_hash:
-        description: the transaction hash voter
-        type: string
-      txType:
-        description: transaction type
         type: integer
       voter:
         description: voter
@@ -308,24 +211,11 @@ definitions:
       address:
         description: NFT address, grows automatically from 0x1
         type: string
-      attributes:
-        description: Attributes
-        type: string
       block_number:
         description: The height of the created block
         type: integer
-      category:
-        description: category
-        type: string
-      collection_id:
-        description: The id of the collection, the name of the collection + the creator
-          of the collection + the hash of the exchange where the collection is located
-        type: string
       creator:
         description: Creator address
-        type: string
-      desc:
-        description: description
         type: string
       exchanger_addr:
         description: The address of the exchange, if there is none, it can be traded
@@ -338,23 +228,11 @@ definitions:
       meta_url:
         description: Real meta information URL
         type: string
-      name:
-        description: name
-        type: string
       owner:
         description: owner
         type: string
-      raw_meta_url:
-        description: Original meta information URL on the chain
-        type: string
       royalty_ratio:
         description: Royalty rate, in ten thousandths
-        type: integer
-      source_url:
-        description: Resource links, file links such as pictures or videos
-        type: string
-      status:
-        description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
         type: integer
       timestamp:
         description: Create timestamp
@@ -433,6 +311,27 @@ definitions:
         type: string
       validator:
         description: validator address
+        type: string
+    type: object
+  model.Reward:
+    properties:
+      address:
+        description: reward address
+        type: string
+      amount:
+        description: Amount of reward
+        type: string
+      block_number:
+        description: The block number when rewarding
+        type: integer
+      identity:
+        description: 'Identity, 1: block producer, 2: validator, 3, staker'
+        type: integer
+      proxy:
+        description: proxy address
+        type: string
+      snft:
+        description: SNFT address
         type: string
     type: object
   model.SNFT:
@@ -549,9 +448,6 @@ definitions:
       totalNFTAmount:
         description: Total transaction volume of NFTs
         type: string
-      totalNFTCollection:
-        description: Total number of NFT collections
-        type: integer
       totalNFTCreator:
         description: Total creator of NFTs
         type: integer
@@ -573,9 +469,6 @@ definitions:
       totalSNFTAmount:
         description: Total transaction volume of SNFTs
         type: string
-      totalSNFTCollection:
-        description: Total number of SNFT collections
-        type: integer
       totalSNFTCreator:
         description: Total creator of SNFTs
         type: integer
@@ -756,39 +649,6 @@ definitions:
         description: Total number of accounts
         type: integer
     type: object
-  service.Block:
-    properties:
-      difficulty:
-        type: string
-      extraData:
-        type: string
-      gasLimit:
-        type: string
-      gasUsed:
-        type: string
-      miner:
-        type: string
-      mixHash:
-        type: string
-      number:
-        type: string
-      parentHash:
-        type: string
-      receiptsRoot:
-        type: string
-      sha3Uncles:
-        type: string
-      size:
-        type: string
-      stateRoot:
-        type: string
-      timestamp:
-        type: string
-      transactionsRoot:
-        type: string
-      tx_count:
-        type: integer
-    type: object
   service.BlocksRes:
     properties:
       blocks:
@@ -798,17 +658,6 @@ definitions:
         type: array
       total:
         description: The total number of blocks
-        type: integer
-    type: object
-  service.CollectionsRes:
-    properties:
-      collections:
-        description: NFT collection list
-        items:
-          $ref: '#/definitions/model.Collection'
-        type: array
-      total:
-        description: The total number of NFT collections
         type: integer
     type: object
   service.CreatorsRes:
@@ -897,17 +746,6 @@ definitions:
         description: proxy address
         type: string
     type: object
-  service.Log:
-    properties:
-      address:
-        type: string
-      data:
-        type: string
-      topics:
-        type: string
-      tx_hash:
-        type: string
-    type: object
   service.Msg:
     properties:
       from:
@@ -923,71 +761,6 @@ definitions:
       num:
         description: number of nft
         type: integer
-    type: object
-  service.NFTRes:
-    properties:
-      address:
-        description: NFT address, grows automatically from 0x1
-        type: string
-      attributes:
-        description: Attributes
-        type: string
-      block_number:
-        description: The height of the created block
-        type: integer
-      category:
-        description: category
-        type: string
-      collection_id:
-        description: The id of the collection, the name of the collection + the creator
-          of the collection + the hash of the exchange where the collection is located
-        type: string
-      collectionName:
-        type: string
-      creator:
-        description: Creator address
-        type: string
-      desc:
-        description: description
-        type: string
-      exchanger_addr:
-        description: The address of the exchange, if there is none, it can be traded
-          on any exchange
-        type: string
-      last_price:
-        description: The last transaction price (null if the transaction is not completed),
-          the unit is wei
-        type: string
-      meta_url:
-        description: Real meta information URL
-        type: string
-      name:
-        description: name
-        type: string
-      owner:
-        description: owner
-        type: string
-      raw_meta_url:
-        description: Original meta information URL on the chain
-        type: string
-      royalty_ratio:
-        description: Royalty rate, in ten thousandths
-        type: integer
-      source_url:
-        description: Resource links, file links such as pictures or videos
-        type: string
-      status:
-        description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
-        type: integer
-      timestamp:
-        description: Create timestamp
-        type: integer
-      tx_amount:
-        description: the total transaction volume of this NFT
-        type: string
-      tx_hash:
-        description: The transaction hash created
-        type: string
     type: object
   service.NFTTxsRes:
     properties:
@@ -1005,71 +778,7 @@ definitions:
       nfts:
         description: NFT list
         items:
-          properties:
-            address:
-              description: NFT address, grows automatically from 0x1
-              type: string
-            attributes:
-              description: Attributes
-              type: string
-            block_number:
-              description: The height of the created block
-              type: integer
-            category:
-              description: category
-              type: string
-            collection_id:
-              description: The id of the collection, the name of the collection +
-                the creator of the collection + the hash of the exchange where the
-                collection is located
-              type: string
-            collectionName:
-              type: string
-            creator:
-              description: Creator address
-              type: string
-            desc:
-              description: description
-              type: string
-            exchanger_addr:
-              description: The address of the exchange, if there is none, it can be
-                traded on any exchange
-              type: string
-            last_price:
-              description: The last transaction price (null if the transaction is
-                not completed), the unit is wei
-              type: string
-            meta_url:
-              description: Real meta information URL
-              type: string
-            name:
-              description: name
-              type: string
-            owner:
-              description: owner
-              type: string
-            raw_meta_url:
-              description: Original meta information URL on the chain
-              type: string
-            royalty_ratio:
-              description: Royalty rate, in ten thousandths
-              type: integer
-            source_url:
-              description: Resource links, file links such as pictures or videos
-              type: string
-            status:
-              description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
-              type: integer
-            timestamp:
-              description: Create timestamp
-              type: integer
-            tx_amount:
-              description: the total transaction volume of this NFT
-              type: string
-            tx_hash:
-              description: The transaction hash created
-              type: string
-          type: object
+          $ref: '#/definitions/model.NFT'
         type: array
       total:
         description: The total number of NFTs
@@ -1102,57 +811,7 @@ definitions:
       data:
         description: SNFT list
         items:
-          properties:
-            address:
-              description: SNFT address
-              type: string
-            attributes:
-              description: Attributes
-              type: string
-            category:
-              description: category
-              type: string
-            desc:
-              description: description
-              type: string
-            id:
-              description: FNFT ID
-              type: string
-            last_price:
-              description: The last transaction price, the unit is wei, null if the
-                transaction has not been completed
-              type: string
-            meta_url:
-              description: FNFT meta information URL
-              type: string
-            name:
-              description: name
-              type: string
-            owner:
-              description: owner, unallocated and reclaimed are null
-              type: string
-            pieces:
-              description: snft pieces number
-              type: integer
-            remove:
-              description: SNFTs that are synthesized and then removed
-              type: boolean
-            reward_at:
-              description: The timestamp of the last rewarded, null if not rewarded
-              type: integer
-            reward_number:
-              description: The height of the last rewarded block
-              type: integer
-            source_url:
-              description: Resource links, file links such as pictures or videos
-              type: string
-            status:
-              description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
-              type: integer
-            tx_amount:
-              description: the total transaction volume of this SNFT
-              type: string
-          type: object
+          $ref: '#/definitions/model.SNFT'
         type: array
       total:
         description: The total number of SNFTs
@@ -1169,114 +828,15 @@ definitions:
         description: The total number of Staker
         type: integer
     type: object
-  service.Reward:
-    properties:
-      address:
-        description: reward address
-        type: string
-      amount:
-        description: Amount of reward
-        type: string
-      block_number:
-        description: The block number when rewarding
-        type: integer
-      collectionName:
-        type: string
-      identity:
-        description: 'Identity, 1: block producer, 2: verifier, 3, exchanger'
-        type: integer
-      proxy:
-        description: proxy address
-        type: string
-      snft:
-        description: SNFT address
-        type: string
-    type: object
   service.RewardsRes:
     properties:
       rewards:
         description: Rewards list
         items:
-          $ref: '#/definitions/service.Reward'
+          $ref: '#/definitions/model.Reward'
         type: array
       total:
         description: The total number of rewards
-        type: integer
-    type: object
-  service.SNFTGroupsRes:
-    properties:
-      collections:
-        description: collection information
-        items:
-          properties:
-            block_number:
-              description: Create block height, equal to the first NFT in the collection
-              type: integer
-            category:
-              description: category
-              type: string
-            creator:
-              description: Creator
-              type: string
-            desc:
-              description: description
-              type: string
-            exchanger:
-              description: belongs to the exchange
-              type: string
-            fullNFTs:
-              description: 16 FNFT messages
-              items:
-                properties:
-                  attributes:
-                    description: Attributes
-                    type: string
-                  category:
-                    description: category
-                    type: string
-                  desc:
-                    description: description
-                    type: string
-                  id:
-                    description: FNFT ID
-                    type: string
-                  meta_url:
-                    description: FNFT meta information URL
-                    type: string
-                  name:
-                    description: name
-                    type: string
-                  source_url:
-                    description: Resource links, file links such as pictures or videos
-                    type: string
-                  status:
-                    description: 'decode meta status, 0:ok, -1:invalid, >1: number
-                      of attempts'
-                    type: integer
-                  total_hold:
-                    description: The number of SNFTs held in a FNFT
-                    type: integer
-                type: object
-              type: array
-            id:
-              description: ID
-              type: string
-            img_url:
-              description: image link
-              type: string
-            meta_url:
-              description: collection meta information URL
-              type: string
-            name:
-              description: name
-              type: string
-            total_hold:
-              description: The number of SNFTs held in a collection
-              type: integer
-          type: object
-        type: array
-      total:
-        description: The total number of SNFT collections
         type: integer
     type: object
   service.SNFTRes:
@@ -1284,36 +844,18 @@ definitions:
       address:
         description: SNFT address
         type: string
-      attributes:
-        description: Attributes
-        type: string
-      category:
-        description: category
-        type: string
-      collectionName:
-        description: collection name
-        type: string
       createdAt:
         description: snft created time
         type: integer
       creator:
         description: creator address, also the address of royalty income
         type: string
-      desc:
-        description: description
-        type: string
-      id:
-        description: FNFT ID
-        type: string
       last_price:
         description: The last transaction price, the unit is wei, null if the transaction
           has not been completed
         type: string
       meta_url:
-        description: FNFT meta information URL
-        type: string
-      name:
-        description: name
+        description: Real meta information URL
         type: string
       owner:
         description: owner, unallocated and reclaimed are null
@@ -1333,12 +875,6 @@ definitions:
       royaltyRatio:
         description: the royalty rate of the same period of SNFT, the unit is one
           ten thousandth
-        type: integer
-      source_url:
-        description: Resource links, file links such as pictures or videos
-        type: string
-      status:
-        description: 'decode meta status, 0:ok, -1:invalid, >1: number of attempts'
         type: integer
       tx_amount:
         description: the total transaction volume of this SNFT
@@ -1366,30 +902,9 @@ definitions:
         description: The total number of SNFTs
         type: integer
     type: object
-  service.StakerTxCountRes:
-    properties:
-      day_1:
-        type: integer
-      day_7:
-        type: integer
-      day30:
-        type: integer
-      total:
-        type: integer
-    type: object
   service.StakersRes:
     properties:
-      last_0_total:
-        description: The number of newly stakers in the latest 0 days (today), calculated
-          in real time
-        type: integer
-      last_1_total:
-        description: Number of newly stakers in the latest 1 day (yesterday), cached
-        type: integer
-      last_7_total:
-        description: Number of newly stakers in the last 7 days, cached
-        type: integer
-      stakers:
+      data:
         description: List of stakers
         items:
           $ref: '#/definitions/model.Staker'
@@ -1397,41 +912,6 @@ definitions:
       total:
         description: Total number of stakers
         type: integer
-    type: object
-  service.Transaction:
-    properties:
-      blockHash:
-        type: string
-      blockNumber:
-        type: string
-      from:
-        type: string
-      gas:
-        type: string
-      gasPrice:
-        type: string
-      hash:
-        type: string
-      input:
-        type: string
-      internal_calls:
-        type: string
-      internal_value_transfer:
-        type: string
-      nonce:
-        type: string
-      status:
-        type: string
-      timestamp:
-        type: string
-      to:
-        type: string
-      token_transfer:
-        type: string
-      transactionIndex:
-        type: string
-      value:
-        type: string
     type: object
   service.TransactionRes:
     properties:
@@ -1597,81 +1077,6 @@ paths:
       summary: query block
       tags:
       - block
-  /block/getBlock:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: query block
-      parameters:
-      - description: block number
-        in: query
-        name: block_number
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GetBlockRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrRes'
-      summary: query block (new /block/{number})
-      tags:
-      - obsolete interface
-  /block/getTransaction:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: query transaction
-      parameters:
-      - description: Transaction hash
-        in: query
-        name: tx_hash
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GetTxRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrRes'
-      summary: query transaction (new /transaction/{hash})
-      tags:
-      - obsolete interface
-  /block/getTransactionLogs:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: query receipt
-      parameters:
-      - description: Transaction hash
-        in: query
-        name: tx_hash
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.GetReceiptsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrRes'
-      summary: query receipt (new /transaction_logs/{hash})
-      tags:
-      - obsolete interface
   /block/page:
     get:
       consumes:
@@ -1700,72 +1105,6 @@ paths:
       summary: query block list
       tags:
       - block
-  /block/viewBlocks:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: query block list
-      parameters:
-      - description: page
-        in: query
-        name: page
-        type: integer
-      - description: page number
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ViewBlocksRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrRes'
-      summary: query block list (new /block/page)
-      tags:
-      - obsolete interface
-  /block/viewTransactions:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: query transaction list
-      parameters:
-      - description: Address does not distinguish transmission
-        in: query
-        name: address
-        type: string
-      - description: Block number is indistinguishable
-        in: query
-        name: block_number
-        type: string
-      - description: page
-        in: query
-        name: page
-        type: integer
-      - description: page number
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.ViewTxsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrRes'
-      summary: query transaction list (new /transaction/page)
-      tags:
-      - obsolete interface
   /chart/line:
     get:
       consumes:
@@ -1828,71 +1167,6 @@ paths:
       summary: query 24h tx growth charts
       tags:
       - chart
-  /collection/{id}:
-    get:
-      consumes:
-      - application/json
-      description: specifies the ID to query the NFT collection information
-      parameters:
-      - description: Collection ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Collection'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query NFT collection
-      tags:
-      - NFT Collection
-  /collection/page:
-    get:
-      consumes:
-      - application/json
-      description: Query NFT collection list in reverse order of created block height
-      parameters:
-      - description: Exchange, if empty, query all exchanges
-        in: query
-        name: exchanger
-        type: string
-      - description: Creator, if empty, query all
-        in: query
-        name: creator
-        type: string
-      - description: 'Type: all, nft, snft, default all'
-        in: query
-        name: type
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.CollectionsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query the list of NFT collections
-      tags:
-      - NFT Collection
   /creator/{addr}:
     get:
       consumes:
@@ -2099,7 +1373,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/service.NFTRes'
+            $ref: '#/definitions/model.NFT'
         "400":
           description: Bad Request
           schema:
@@ -2113,17 +1387,9 @@ paths:
       - application/json
       description: Query the NFT list in reverse order of creation time
       parameters:
-      - description: Exchange, if empty, query all exchanges
-        in: query
-        name: exchanger
-        type: string
       - description: Owner, if empty, query all
         in: query
         name: owner
-        type: string
-      - description: collection id, if empty, query all
-        in: query
-        name: collection_id
         type: string
       - description: Page, default 1
         in: query
@@ -2244,47 +1510,6 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: Query NFT transaction list
-      tags:
-      - NFT
-  /nft_meta/page:
-    get:
-      consumes:
-      - application/json
-      description: query the NFT list containing meta information in reverse order
-        of creation time
-      parameters:
-      - description: Exchange, if empty, query all exchanges
-        in: query
-        name: exchanger
-        type: string
-      - description: Owner, if empty, query all
-        in: query
-        name: owner
-        type: string
-      - description: collection id, if empty, query all
-        in: query
-        name: collection_id
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.NFTsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query contains meta information NFT list
       tags:
       - NFT
   /pledge/page:
@@ -2453,7 +1678,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/service.Reward'
+              $ref: '#/definitions/model.Reward'
             type: array
         "400":
           description: Bad Request
@@ -2512,67 +1737,6 @@ paths:
           schema:
             $ref: '#/definitions/service.ErrRes'
       summary: Query blocks SNFT list
-      tags:
-      - NFT
-  /snft/collection/page:
-    get:
-      consumes:
-      - application/json
-      description: Query the collection list (including 16 FNFT information) held
-        by the specified account (with one SNFT in the collection)
-      parameters:
-      - description: owner
-        in: query
-        name: owner
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.SNFTGroupsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: paging query account holding collection list
-      tags:
-      - NFT
-  /snft/group/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Query the information of 16 SNFTs under the FNFT of the specified
-        ID
-      parameters:
-      - description: FNFT ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.SNFT'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query the list of 16 SNFTs of the specified FNFT
       tags:
       - NFT
   /snft/page:
@@ -2639,43 +1803,6 @@ paths:
       summary: query recycle transaction
       tags:
       - NFT
-  /snft_com/page:
-    get:
-      consumes:
-      - application/json
-      deprecated: true
-      description: Query the Composable SNFT list in reverse order of creation time
-      parameters:
-      - description: sort, 1:level priority,none:default
-        in: query
-        name: sort
-        type: string
-      - description: Owner, if empty, query all
-        in: query
-        name: owner
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.SNFTsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query Composable SNFT list (new /snft/page)
-      tags:
-      - NFT
   /snft_meta/page:
     get:
       consumes:
@@ -2683,10 +1810,6 @@ paths:
       description: Query the list of SNFTs with meta information in reverse order
         of creation time
       parameters:
-      - description: collection id, if empty, query all
-        in: query
-        name: collection_id
-        type: string
       - description: Owner, if empty, query all
         in: query
         name: owner
@@ -2744,65 +1867,6 @@ paths:
       - application/json
       description: Query the list of stakers in reverse order of creation time
       parameters:
-      - description: staker name, if empty, query all stakers
-        in: query
-        name: name
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.StakersRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query the list of stakers
-      tags:
-      - Staker
-  /staker/tx_count/{addr}:
-    get:
-      consumes:
-      - application/json
-      description: Query the staker tx count chart
-      parameters:
-      - description: staker address
-        in: path
-        name: addr
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/service.StakerTxCountRes'
-            type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query the staker tx count
-      tags:
-      - Staker
-  /stakers:
-    get:
-      consumes:
-      - application/json
-      description: Query the list of stakers in reverse order of creation time
-      parameters:
       - description: sort by conditions, Support database order statement
         in: query
         name: order
@@ -2821,9 +1885,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.Staker'
-            type: array
+            $ref: '#/definitions/service.StakersRes'
         "400":
           description: Bad Request
           schema:

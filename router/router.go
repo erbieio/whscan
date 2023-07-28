@@ -15,12 +15,10 @@ func Run(addr string) error {
 	r.Use(middleware.Cors())
 	// Set up accessible routes
 	api.Extra(r)
-	api.Depreciation(r)
 	api.Block(r)
 	api.Transaction(r)
 	api.Account(r)
 	api.Staker(r)
-	api.Collection(r)
 	api.NFT(r)
 	api.Reward(r)
 	api.Epoch(r)

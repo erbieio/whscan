@@ -4,21 +4,12 @@ import "server/common/model"
 
 // NFTsRes NFT paging return parameters
 type NFTsRes struct {
-	Total int64 `json:"total"` //The total number of NFTs
-	NFTs  []*struct {
-		model.NFT
-		CollectionName string `json:"collectionName"`
-	} `json:"nfts"` //NFT list
+	Total int64       `json:"total"` //The total number of NFTs
+	NFTs  []model.NFT `json:"nfts"`  //NFT list
 }
 
-func FetchNFTs(exchanger, collectionId, owner string, page, size int) (res NFTsRes, err error) {
-	db := DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON id=collection_id")
-	if exchanger != "" {
-		db = db.Where("exchanger_addr=?", exchanger)
-	}
-	if collectionId != "" {
-		db = db.Where("collection_id=?", collectionId)
-	}
+func FetchNFTs(owner string, page, size int) (res NFTsRes, err error) {
+	db := DB.Model(&model.NFT{})
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
@@ -27,7 +18,7 @@ func FetchNFTs(exchanger, collectionId, owner string, page, size int) (res NFTsR
 	if err != nil {
 		return
 	}
-	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Select("nfts.*, collections.name AS collection_name").Scan(&res.NFTs).Error
+	err = db.Order("address DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTs).Error
 	return
 }
 
@@ -98,59 +89,43 @@ func FetchSNFTs(sort, owner string, page, size int) (res SNFTsRes, err error) {
 
 type SNFTRes struct {
 	model.SNFT
-	model.FNFT
-	Creator        string `json:"creator"`        //creator address, also the address of royalty income
-	RoyaltyRatio   uint32 `json:"royaltyRatio"`   //the royalty rate of the same period of SNFT, the unit is one ten thousandth
-	CollectionName string `json:"collectionName"` //collection name
-	CreatedAt      int64  `json:"createdAt"`      //snft created time
+	Creator      string `json:"creator"`      //creator address, also the address of royalty income
+	MetaUrl      string `json:"meta_url"`     //Real meta information URL
+	RoyaltyRatio uint32 `json:"royaltyRatio"` //the royalty rate of the same period of SNFT, the unit is one ten thousandth
+	CreatedAt    int64  `json:"createdAt"`    //snft created time
 }
 
 func GetSNFT(addr string) (res SNFTRes, err error) {
-	db := DB.Model(&model.SNFT{}).
-		Joins("LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id").
-		Joins("LEFT JOIN collections ON LEFT(address, 40) = collections.id").
-		Joins("LEFT JOIN epoches ON LEFT(address, 39) = epoches.id")
-	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.timestamp AS created_at, royalty_ratio,collections.name AS collection_name").Where("address=?", addr).Scan(&res).Error
+	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN epoches ON LEFT(address, 39) = epoches.id")
+	err = db.Select("snfts.*, creator, timestamp AS created_at, meta_url, royalty_ratio").Where("address=?", addr).Scan(&res).Error
 	return
 }
 
 // SNFTsAndMetaRes SNFT and meta information paging return parameters
 type SNFTsAndMetaRes struct {
-	Total int64      `json:"total"` //The total number of SNFTs
-	NFTs  []*SNFTRes `json:"nfts"`  //SNFT list
+	Total int64     `json:"total"` //The total number of SNFTs
+	NFTs  []SNFTRes `json:"nfts"`  //SNFT list
 }
 
-func FetchSNFTsAndMeta(owner, collectionId string, page, size int) (res SNFTsAndMetaRes, err error) {
-	db := DB.Model(&model.SNFT{}).
-		Joins("LEFT JOIN fnfts ON LEFT(address, 41) = fnfts.id").
-		Joins("LEFT JOIN collections ON LEFT(address, 40) = collections.id").
-		Joins("LEFT JOIN epoches ON LEFT(address, 39) = epoches.id").
-		Where("`remove`=false")
+func FetchSNFTsAndMeta(owner string, page, size int) (res SNFTsAndMetaRes, err error) {
+	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN epoches ON LEFT(address, 39) = epoches.id").Where("`remove`=false")
 	if owner != "" {
 		db = db.Where("owner=?", owner)
 	}
-	if collectionId != "" {
-		db = db.Where("collection.id=?", collectionId)
-	}
-	if owner == "" && collectionId == "" {
+
+	if owner == "" {
 		res.Total = stats.TotalSNFT
 	} else {
 		if err = db.Count(&res.Total).Error; err != nil {
 			return
 		}
 	}
-	err = db.Select("snfts.*, fnfts.*, epoches.creator, epoches.timestamp AS created_at, royalty_ratio,collections.name AS collection_name").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
+	err = db.Select("snfts.*, creator, timestamp AS created_at, meta_url, royalty_ratio").Order("address DESC").Offset((page - 1) * size).Limit(size).Scan(&res.NFTs).Error
 	return
 }
 
-type NFTRes struct {
-	model.NFT
-	CollectionName string `json:"collectionName"`
-}
-
-func GetNFT(addr string) (res NFTRes, err error) {
-	err = DB.Model(&model.NFT{}).Joins("LEFT JOIN collections ON collection_id=collections.id").
-		Where("address=?", addr).Select("nfts.*,collections.name AS collection_name").Scan(&res).Error
+func GetNFT(addr string) (res model.NFT, err error) {
+	err = DB.Find(&res, "address=?", addr).Error
 	return
 }
 
@@ -159,46 +134,7 @@ func GetRecycleTx(hash, addr string) (res *model.NFTTx, err error) {
 	return
 }
 
-func BlockSNFTs(number uint64) (res []model.SNFT, err error) {
-	err = DB.Where("reward_number=?", number).Find(&res).Error
-	return
-}
-
-// SNFTGroupsRes SNFT collection information return
-type SNFTGroupsRes struct {
-	Total       int64 `json:"total"` //The total number of SNFT collections
-	Collections []struct {
-		model.Collection
-		TotalHold int64 `json:"total_hold"` //The number of SNFTs held in a collection
-		FullNFTs  []struct {
-			model.FNFT
-			TotalHold int64 `json:"total_hold"` //The number of SNFTs held in a FNFT
-		} `gorm:"-"` // 16 FNFT messages
-	} `json:"collections"` //collection information
-}
-
-func FindSNFTGroups(owner string, page, size int) (res SNFTGroupsRes, err error) {
-	db := DB.Model(&model.SNFT{}).Joins("LEFT JOIN collections on LEFT(address,40) = id AND owner=?", owner)
-	err = db.Select("`collections`.*,COUNT(address) AS total_hold").Group("id").
-		Order("id DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Collections).Error
-	if err != nil {
-		return
-	}
-	if err = db.Count(&res.Total).Error; err != nil {
-		return
-	}
-	for i := range res.Collections {
-		db = DB.Model(&model.SNFT{}).Joins("LEFT JOIN fnfts on LEFT(address,41) = fnfts.id").Select("fnfts.*,COUNT(*) AS total_hold")
-		err = db.Where("LEFT(address, 40)=? AND owner=?", res.Collections[i].Id, owner).Group("id").
-			Scan(&res.Collections[i].FullNFTs).Error
-		if err != nil {
-			return
-		}
-	}
-	return
-}
-
-func FNFTs(FNFTId string) (res []model.SNFT, err error) {
-	err = DB.Where("LEFT(address, 41)=?", FNFTId).Find(&res).Error
+func BlockSNFTs(number string) (res []model.SNFT, err error) {
+	err = DB.Find(&res, "reward_number=?", number).Error
 	return
 }

@@ -9,7 +9,7 @@ type EpochsRes struct {
 }
 
 func FetchEpochs(creator, order string, page, size int) (res EpochsRes, err error) {
-	db := DB.Model(&Epoch{})
+	db := DB.Model(&model.Epoch{})
 	if creator != "" {
 		db = db.Where("creator=?", creator)
 	}
@@ -29,20 +29,11 @@ func FetchEpochs(creator, order string, page, size int) (res EpochsRes, err erro
 	return
 }
 
-type Epoch struct {
-	model.Epoch
-	Collections []model.Collection `json:"collections" gorm:"-"` // 16 collection information
-}
-
-func GetEpoch(id string) (res Epoch, err error) {
+func GetEpoch(id string) (res model.Epoch, err error) {
 	if id != "current" {
 		err = DB.Where("id=?", id).First(&res).Error
 	} else {
-		err = DB.Order("id DESC").First(&res).Error
+		err = DB.Order("number DESC").First(&res).Error
 	}
-	if err != nil {
-		return
-	}
-	err = DB.Where("LEFT(id,39)=?", res.ID).Find(&res.Collections).Error
 	return
 }

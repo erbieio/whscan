@@ -6,11 +6,8 @@ import (
 
 // RankingSNFTRes SNFT ranking return parameters
 type RankingSNFTRes struct {
-	Total int64 `json:"total"` //The total number of SNFTs
-	Data  []struct {
-		model.SNFT
-		model.FNFT
-	} `json:"data"` //SNFT list
+	Total int64        `json:"total"` //The total number of SNFTs
+	Data  []model.SNFT `json:"data"`  //SNFT list
 }
 
 func RankingSNFT(page, size int) (res RankingSNFTRes, err error) {
@@ -18,7 +15,7 @@ func RankingSNFT(page, size int) (res RankingSNFTRes, err error) {
 	if err = db.Count(&res.Total).Error; err != nil {
 		return
 	}
-	err = db.Joins("LEFT JOIN fnfts ON LEFT(address,41)=fnfts.id").Offset((page - 1) * size).Limit(size).Select("*").Find(&res.Data).Error
+	err = db.Offset((page - 1) * size).Limit(size).Find(&res.Data).Error
 	return
 }
 
