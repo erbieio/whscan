@@ -17,7 +17,6 @@ var (
 	Interval   = time.Second
 	Thread     = int64(8 * runtime.NumCPU())
 	MysqlDsn   = "root:123456@tcp(127.0.0.1:3306)/scan"
-	IpfsServer = "http://localhost:8080"
 )
 
 func init() {
@@ -51,8 +50,5 @@ func init() {
 	}
 	if mysqlDsn := os.Getenv("MYSQL_DSN"); mysqlDsn != "" {
 		MysqlDsn = mysqlDsn
-	}
-	if ipfsServer := os.Getenv("IPFS_SERVER"); ipfsServer != "" {
-		IpfsServer = ipfsServer
 	}
 }

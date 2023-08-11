@@ -477,10 +477,10 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
 	// Non-wormholes and failed transactions are not resolved
-	if len(input) < 10 || string(input[0:10]) != "wormholes:" || *tx.Status == 0 {
+	if *tx.Status == 0 || len(input) < 6 || string(input[0:6]) != "erbie:" {
 		return
 	}
-	type Wormholes struct {
+	w := struct {
 		Type         uint8  `json:"type"`
 		NFTAddress   string `json:"nft_address"`
 		ProxyAddress string `json:"proxy_address"`
@@ -527,9 +527,8 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		Creator    string `json:"creator"`
 		Version    string `json:"version"`
 		RewardFlag uint8  `json:"reward_flag"`
-	}
-	var w Wormholes
-	if err = json.Unmarshal(input[10:], &w); err != nil {
+	}{}
+	if err = json.Unmarshal(input[6:], &w); err != nil {
 		return
 	}
 
