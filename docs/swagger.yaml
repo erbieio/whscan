@@ -439,6 +439,9 @@ definitions:
       totalEpoch:
         description: Total number of epoch
         type: integer
+      totalErbieTx:
+        description: Total number of  erbie transactions
+        type: integer
       totalInternalTx:
         description: Total number of internal transactions
         type: integer
@@ -493,9 +496,6 @@ definitions:
       totalValidatorOnline:
         description: Total amount of validator online
         type: integer
-      totalWormholesTx:
-        description: Total number of  wormholes transactions
-        type: integer
     type: object
   model.Validator:
     properties:
@@ -506,7 +506,7 @@ definitions:
         description: pledge amount
         type: string
       block_number:
-        description: The block number at latest rewarding
+        description: The block number at latest updated
         type: integer
       proxy:
         description: proxy address
@@ -517,8 +517,14 @@ definitions:
       reward_count:
         description: reward coin count
         type: integer
+      reward_number:
+        description: The number at latest reward
+        type: integer
+      score:
+        description: node comprehensive score
+        type: integer
       timestamp:
-        description: The time at latest rewarding
+        description: The time at latest updated
         type: integer
       weight:
         description: online weight,if it is not 70, it means that it is not online
@@ -990,8 +996,8 @@ definitions:
 info:
   contact: {}
   description: Block browser back-end interface, parses data from the blockchain,
-    provides information retrieval services for blocks, transactions, NFT, SNFT, NFT
-    collections, and exchanges
+    provides information retrieval services for blocks, transactions, NFT, SNFT, validators,
+    and rewards
   title: block explorer API
   version: "1.0"
 paths:
@@ -1893,7 +1899,7 @@ paths:
       summary: Query the list of stakers
       tags:
       - Staker
-  /totals:
+  /stats:
     get:
       consumes:
       - application/json
@@ -1909,7 +1915,27 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/service.ErrRes'
-      summary: query some total data
+      summary: query some stats data
+      tags:
+      - block
+  /totals:
+    get:
+      consumes:
+      - application/json
+      deprecated: true
+      description: Query the total number of blocks, transactions, accounts, etc.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Stats'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query some total data (new /stats)
       tags:
       - block
   /transaction/{hash}:

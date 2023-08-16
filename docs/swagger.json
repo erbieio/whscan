@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, NFT collections, and exchanges",
+        "description": "Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, validators, and rewards",
         "title": "block explorer API",
         "contact": {},
         "version": "1.0"
@@ -1374,6 +1374,35 @@
                 }
             }
         },
+        "/stats": {
+            "get": {
+                "description": "Query the total number of blocks, transactions, accounts, etc.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "block"
+                ],
+                "summary": "query some stats data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Stats"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/totals": {
             "get": {
                 "description": "Query the total number of blocks, transactions, accounts, etc.",
@@ -1386,7 +1415,8 @@
                 "tags": [
                     "block"
                 ],
-                "summary": "query some total data",
+                "summary": "query some total data (new /stats)",
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2318,6 +2348,10 @@
                     "description": "Total number of epoch",
                     "type": "integer"
                 },
+                "totalErbieTx": {
+                    "description": "Total number of  erbie transactions",
+                    "type": "integer"
+                },
                 "totalInternalTx": {
                     "description": "Total number of internal transactions",
                     "type": "integer"
@@ -2389,10 +2423,6 @@
                 "totalValidatorOnline": {
                     "description": "Total amount of validator online",
                     "type": "integer"
-                },
-                "totalWormholesTx": {
-                    "description": "Total number of  wormholes transactions",
-                    "type": "integer"
                 }
             }
         },
@@ -2408,7 +2438,7 @@
                     "type": "string"
                 },
                 "block_number": {
-                    "description": "The block number at latest rewarding",
+                    "description": "The block number at latest updated",
                     "type": "integer"
                 },
                 "proxy": {
@@ -2423,8 +2453,16 @@
                     "description": "reward coin count",
                     "type": "integer"
                 },
+                "reward_number": {
+                    "description": "The number at latest reward",
+                    "type": "integer"
+                },
+                "score": {
+                    "description": "node comprehensive score",
+                    "type": "integer"
+                },
                 "timestamp": {
-                    "description": "The time at latest rewarding",
+                    "description": "The time at latest updated",
                     "type": "integer"
                 },
                 "weight": {

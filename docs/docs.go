@@ -1383,6 +1383,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/stats": {
+            "get": {
+                "description": "Query the total number of blocks, transactions, accounts, etc.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "block"
+                ],
+                "summary": "query some stats data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Stats"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/totals": {
             "get": {
                 "description": "Query the total number of blocks, transactions, accounts, etc.",
@@ -1395,7 +1424,8 @@ const docTemplate = `{
                 "tags": [
                     "block"
                 ],
-                "summary": "query some total data",
+                "summary": "query some total data (new /stats)",
+                "deprecated": true,
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2327,6 +2357,10 @@ const docTemplate = `{
                     "description": "Total number of epoch",
                     "type": "integer"
                 },
+                "totalErbieTx": {
+                    "description": "Total number of  erbie transactions",
+                    "type": "integer"
+                },
                 "totalInternalTx": {
                     "description": "Total number of internal transactions",
                     "type": "integer"
@@ -2398,10 +2432,6 @@ const docTemplate = `{
                 "totalValidatorOnline": {
                     "description": "Total amount of validator online",
                     "type": "integer"
-                },
-                "totalWormholesTx": {
-                    "description": "Total number of  wormholes transactions",
-                    "type": "integer"
                 }
             }
         },
@@ -2417,7 +2447,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "block_number": {
-                    "description": "The block number at latest rewarding",
+                    "description": "The block number at latest updated",
                     "type": "integer"
                 },
                 "proxy": {
@@ -2432,8 +2462,16 @@ const docTemplate = `{
                     "description": "reward coin count",
                     "type": "integer"
                 },
+                "reward_number": {
+                    "description": "The number at latest reward",
+                    "type": "integer"
+                },
+                "score": {
+                    "description": "node comprehensive score",
+                    "type": "integer"
+                },
                 "timestamp": {
-                    "description": "The time at latest rewarding",
+                    "description": "The time at latest updated",
                     "type": "integer"
                 },
                 "weight": {
@@ -3105,7 +3143,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "block explorer API",
-	Description:      "Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, NFT collections, and exchanges",
+	Description:      "Block browser back-end interface, parses data from the blockchain, provides information retrieval services for blocks, transactions, NFT, SNFT, validators, and rewards",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

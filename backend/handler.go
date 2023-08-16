@@ -66,7 +66,7 @@ func decode(c *node.Client, ctx context.Context, number types.Long) (parsed *mod
 	if err = decodeAccounts(c, ctx, parsed); err != nil {
 		return nil, fmt.Errorf("decodeAccounts err:%v", err)
 	}
-	// Parse things specific to wormholes
+	// Parse things specific to erbie
 	err = decodeWH(c, parsed)
 	return
 }
@@ -366,7 +366,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 		}
 
-		// wormholes transaction processing
+		// erbie transaction processing
 		for _, tx := range wh.CacheTxs {
 			err = decodeWHTx(wh, tx)
 			if err != nil {
@@ -374,7 +374,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 		}
 
-		// wormholes auto merge snft
+		// erbie auto merge snft
 		for _, eventLog := range wh.CacheLogs {
 			if len(eventLog.Topics) == 3 && len(eventLog.Data) >= 66 {
 				if eventLog.Topics[0] == "0x77415a68a0d28daf11e1308e53371f573e0920810c9cd9de7904777d5fb9d625" {
@@ -473,10 +473,10 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 	return
 }
 
-// decodeWHTx parses the special transaction of the wormholes blockchain
+// decodeWHTx parses the special transaction of the erbie blockchain
 func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
-	// Non-wormholes and failed transactions are not resolved
+	// Non-erbie and failed transactions are not resolved
 	if *tx.Status == 0 || len(input) < 6 || string(input[0:6]) != "erbie:" {
 		return
 	}

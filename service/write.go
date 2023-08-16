@@ -56,7 +56,7 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 			return
 		}
 
-		// wormholes unique data write
+		// erbie unique data write
 		// NFT creation
 		if err = saveNFT(db, parsed); err != nil {
 			return
@@ -224,8 +224,7 @@ func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 
 func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 	for _, reward := range wh.Rewards {
-		err = db.Exec("INSERT INTO rewards (`address`, `proxy`, `identity`, `block_number`, `snft`, `amount`) VALUES "+
-			"(@Address, (SELECT `proxy` FROM validators WHERE address=@Address), @Identity, @BlockNumber, @SNFT, @Amount)", reward).Error
+		err = db.Exec("INSERT INTO rewards (`address`, `proxy`, `identity`, `block_number`, `snft`, `amount`) VALUES (@Address, (SELECT `proxy` FROM validators WHERE address=@Address), @Identity, @BlockNumber, @SNFT, @Amount)", reward).Error
 		if err != nil {
 			return
 		}
@@ -260,9 +259,10 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 			if validator.Address != "" {
 				validator.Reward = BigIntAdd(validator.Reward, *reward.Amount)
 				validator.RewardCount++
+				validator.RewardNumber = int64(wh.Number)
 				validator.Timestamp = int64(wh.Timestamp)
 				validator.BlockNumber = int64(wh.Number)
-				if err = db.Select("reward", "reward_count", "timestamp", "block_number").Updates(&validator).Error; err != nil {
+				if err = db.Select("reward", "reward_count", "reward_number", "timestamp", "block_number").Updates(&validator).Error; err != nil {
 					return
 				}
 			}

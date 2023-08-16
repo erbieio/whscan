@@ -48,7 +48,7 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Transaction{}).Where("input='0x'").Count(&stats.TotalTransferTx).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Transaction{}).Where("LEFT(input,22)='0x776f726d686f6c65733a'").Count(&stats.TotalWormholesTx).Error; err != nil {
+	if err = db.Model(&model.Transaction{}).Where("LEFT(input,14)='0x65726269653a'").Count(&stats.TotalErbieTx).Error; err != nil {
 		return
 	}
 	if err = db.Model(&model.NFT{}).Count(&stats.TotalNFT).Error; err != nil {
@@ -198,8 +198,8 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	for _, tx := range parsed.CacheTxs {
 		if tx.Input == "0x" {
 			stats.TotalTransferTx++
-		} else if len(tx.Input) > 22 && tx.Input[:22] == "0x776f726d686f6c65733a" {
-			stats.TotalWormholesTx++
+		} else if len(tx.Input) > 14 && tx.Input[:14] == "0x65726269653a" {
+			stats.TotalErbieTx++
 		}
 	}
 	return
@@ -264,6 +264,26 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 					totalProfit = totalProfit.Add(totalProfit, value)
 				}
 				stats.TotalProfit = totalProfit.Text(10)
+			}
+			var validators []*model.Validator
+			db.Find(&validators)
+			for _, validator := range validators {
+				switch validator.Weight {
+				case 70:
+					validator.Score = 50
+				case 50:
+					validator.Score = 40
+				case 30, 10:
+					validator.Score = 0
+				default:
+					validator.Score = -50
+				}
+				validator.Score += validator.RewardCount * 20 / stats.RewardCoinCount
+				rewardScore := 30 - (stats.TotalBlock-validator.RewardNumber)/stats.TotalValidator
+				if rewardScore > 0 {
+					validator.Score += rewardScore
+				}
+				db.Select("score").Updates(validator)
 			}
 		}
 	}

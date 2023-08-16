@@ -56,7 +56,7 @@ type Stats struct {
 	TotalTransaction     int64  `json:"totalTransaction" gorm:"-"`             //Total number of transactions
 	TotalInternalTx      int64  `json:"totalInternalTx" gorm:"-"`              //Total number of internal transactions
 	TotalTransferTx      int64  `json:"totalTransferTx" gorm:"-"`              //Total number of  transfer transactions
-	TotalWormholesTx     int64  `json:"totalWormholesTx" gorm:"-"`             //Total number of  wormholes transactions
+	TotalErbieTx         int64  `json:"totalErbieTx" gorm:"-"`                 //Total number of  erbie transactions
 	TotalAccount         int64  `json:"totalAccount" gorm:"-"`                 //Total account number of used
 	TotalBalance         string `json:"totalBalance" gorm:"-"`                 //The total amount of coins in the chain
 	ActiveAccount        int64  `json:"activeAccount" gorm:"-"`                //The number of active account
@@ -314,14 +314,16 @@ type Staker struct {
 
 // Validator pledge information
 type Validator struct {
-	Address     string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
-	Proxy       string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
-	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`          //pledge amount
-	Reward      string `json:"reward" gorm:"type:DECIMAL(65)"`          //amount of total reward
-	RewardCount int64  `json:"reward_count"`                            //reward coin count
-	Timestamp   int64  `json:"timestamp"`                               //The time at latest rewarding
-	BlockNumber int64  `json:"block_number"`                            //The block number at latest rewarding
-	Weight      int64  `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
+	Address      string `json:"address" gorm:"type:CHAR(42);primaryKey"` //staking account
+	Proxy        string `json:"proxy" gorm:"type:CHAR(42)"`              //proxy address
+	Amount       string `json:"amount" gorm:"type:DECIMAL(65)"`          //pledge amount
+	Reward       string `json:"reward" gorm:"type:DECIMAL(65)"`          //amount of total reward
+	RewardCount  int64  `json:"reward_count"`                            //reward coin count
+	RewardNumber int64  `json:"reward_number"`                           //The number at latest reward
+	Timestamp    int64  `json:"timestamp"`                               //The time at latest updated
+	BlockNumber  int64  `json:"block_number"`                            //The block number at latest updated
+	Weight       int64  `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
+	Score        int64  `json:"score"`                                   //node comprehensive score
 }
 
 type Location struct {
@@ -340,7 +342,7 @@ type Parsed struct {
 	CacheAccounts     []*Account
 	CacheLogs         []*EventLog
 
-	// wormholes, which need to be inserted into the database by priority (later data may query previous data)
+	// erbie, which need to be inserted into the database by priority (later data may query previous data)
 	Epoch            *Epoch       //Official injection of the first phase of SNFT
 	NFTs             []*NFT       //Newly created NFT
 	NFTTxs           []*NFTTx     //NFT transaction record, transfer, recycle, pledge
