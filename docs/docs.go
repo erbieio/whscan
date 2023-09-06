@@ -1557,6 +1557,12 @@ const docTemplate = `{
                         "description": "Account address, if empty, query all",
                         "name": "addr",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "erbie tx type,supports multiple types,if empty, query all",
+                        "name": "types",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2604,6 +2610,10 @@ const docTemplate = `{
                             "name": {
                                 "description": "name",
                                 "type": "string"
+                            },
+                            "nftCount": {
+                                "description": "hold NFT number",
+                                "type": "integer"
                             },
                             "nonce": {
                                 "description": "transaction random number, transaction volume",

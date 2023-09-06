@@ -26,12 +26,13 @@ func Transaction(e *gin.Engine) {
 // @Param       page_size query    string false "Page size, default 10"
 // @Param       number    query    string false "Block number, if empty, query all"
 // @Param       addr      query    string false "Account address, if empty, query all"
+// @Param       types     query    string false "erbie tx type,supports multiple types,if empty, query all"
 // @Success     200       {object} service.TransactionsRes
 // @Failure     400       {object} service.ErrRes
 // @Router      /transaction/page [get]
 func pageTransaction(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	data, err := service.FetchTransactions(page, size, c.Query("number"), c.Query("addr"))
+	data, err := service.FetchTransactions(page, size, c.Query("number"), c.Query("addr"), c.Query("types"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

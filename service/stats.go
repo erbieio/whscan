@@ -266,7 +266,7 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 				stats.TotalProfit = totalProfit.Text(10)
 			}
 			var validators []*model.Validator
-			db.Find(&validators)
+			db.Where("weight>0").Find(&validators)
 			for _, validator := range validators {
 				switch validator.Weight {
 				case 70:
@@ -278,10 +278,15 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 				default:
 					validator.Score = -50
 				}
-				validator.Score += validator.RewardCount * 20 / stats.RewardCoinCount
-				rewardScore := 30 - (stats.TotalBlock-validator.RewardNumber)/stats.TotalValidator
-				if rewardScore > 0 {
-					validator.Score += rewardScore
+				score := validator.RewardCount * stats.TotalValidator * 20 / stats.RewardCoinCount
+				if score > 20 {
+					validator.Score += 20
+				} else {
+					validator.Score += score
+				}
+				score = 30 - (stats.TotalBlock-validator.RewardNumber)/stats.TotalValidator
+				if score > 0 {
+					validator.Score += score
 				}
 				db.Select("score").Updates(validator)
 			}

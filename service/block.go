@@ -36,10 +36,10 @@ func FetchPledges(staker, validator string, page, size int) (res PledgesRes, err
 	if validator != "" {
 		db = db.Where("validator=?", validator)
 	}
-	err = db.Offset((page - 1) * size).Limit(size).Find(&res.Data).Error
+	err = db.Count(&res.Total).Error
 	if err != nil {
 		return
 	}
-	err = db.Count(&res.Total).Error
+	err = db.Offset((page - 1) * size).Limit(size).Find(&res.Data).Error
 	return
 }

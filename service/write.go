@@ -278,6 +278,7 @@ func saveNFT(db *gorm.DB, wh *model.Parsed) (err error) {
 		if err = db.Create(nft).Error; err != nil {
 			return
 		}
+		db.Exec("UPDATE accounts SET nft_count=(SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) WHERE address=?", nft.Owner)
 	}
 	return
 }
@@ -318,6 +319,7 @@ func saveNFTTx(db *gorm.DB, wh *model.Parsed) (err error) {
 				if err = db.Select("last_price", "tx_amount", "owner").Updates(&nft).Error; err != nil {
 					return
 				}
+				db.Exec("UPDATE accounts SET nft_count=(SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) WHERE address IN (?,?)", tx.From, tx.To)
 			} else if tx.TxType == 28 {
 				addr := [16]string{}
 				for i := int64(0); i < 16; i++ {

@@ -1,6 +1,11 @@
 package service
 
-import "server/common/model"
+import (
+	"errors"
+	"strings"
+
+	"server/common/model"
+)
 
 // TransactionRes transaction return parameters
 type TransactionRes struct {
@@ -20,7 +25,7 @@ type TransactionsRes struct {
 	Transactions []*TransactionRes `json:"transactions"` //transaction list
 }
 
-func FetchTransactions(page, size int, number, addr string) (res TransactionsRes, err error) {
+func FetchTransactions(page, size int, number, addr, types string) (res TransactionsRes, err error) {
 	db := DB.Model(&model.Transaction{})
 	if number != "" {
 		db = db.Where("block_number=?", number)
@@ -28,7 +33,34 @@ func FetchTransactions(page, size int, number, addr string) (res TransactionsRes
 	if addr != "" {
 		db = db.Where("`from`=? OR `to`=?", addr, addr)
 	}
-	if number != "" || addr != "" {
+	if types != "" {
+		conditions := ""
+		for _, t := range strings.Split(types, ",") {
+			if conditions != "" {
+				conditions += " OR "
+			}
+			switch t {
+			case "0":
+				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a302c'"
+			case "1":
+				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a312c'"
+			case "6":
+				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a362c'"
+			case "9":
+				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a392c'"
+			case "10":
+				conditions += "LEFT(input,36)='0x65726269653a7b2274797065223a31302c'"
+			case "26":
+				conditions += "LEFT(input,36)='0x65726269653a7b2274797065223a32362c'"
+			case "31":
+				conditions += "LEFT(input,36)='0x65726269653a7b2274797065223a33312c'"
+			default:
+				return TransactionsRes{}, errors.New(t + " not support erbie tx type")
+			}
+		}
+		db = db.Where(conditions)
+	}
+	if number != "" || addr != "" || types != "" {
 		err = db.Count(&res.Total).Error
 	} else {
 		// use stats to speed up queries

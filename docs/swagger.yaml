@@ -622,6 +622,9 @@ definitions:
             name:
               description: name
               type: string
+            nftCount:
+              description: hold NFT number
+              type: integer
             nonce:
               description: transaction random number, transaction volume
               type: integer
@@ -2035,6 +2038,10 @@ paths:
       - description: Account address, if empty, query all
         in: query
         name: addr
+        type: string
+      - description: erbie tx type,supports multiple types,if empty, query all
+        in: query
+        name: types
         type: string
       produces:
       - application/json

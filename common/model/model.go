@@ -134,6 +134,7 @@ type Account struct {
 	CreatedTx *types.Hash         `json:"createdTx,omitempty" gorm:"type:CHAR(66)"` //create transaction
 	SNFTCount int64               `json:"snftCount"`                                //hold SNFT number
 	SNFTValue string              `json:"snftValue"`                                //hold SNFT value
+	NFTCount  int64               `json:"nftCount"`                                 //hold NFT number
 }
 
 // Transaction information
@@ -142,7 +143,7 @@ type Transaction struct {
 	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`                //block number
 	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
 	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
-	Input             string         `json:"input"`                                   //Additional input data, contract call encoded data
+	Input             string         `json:"input" gorm:"type:TEXT"`                  //Additional input data, contract call encoded data
 	Value             types.BigInt   `json:"value" gorm:"type:DECIMAL(65)"`           //Amount, unit wei
 	Nonce             types.Long     `json:"nonce"`                                   //Random number, the number of transactions initiated by the account
 	Gas               types.Long     `json:"gas"`                                     //fuel
