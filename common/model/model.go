@@ -20,6 +20,7 @@ var Tables = []interface{}{
 	&ERC1155Transfer{},
 	&Pledge{},
 	&Staker{},
+	&Slashing{},
 	&Validator{},
 	&NFT{},
 	&Epoch{},
@@ -110,14 +111,17 @@ type Block struct {
 	Header
 	Uncles           []types.Hash    `json:"uncles" gorm:"type:VARCHAR(139);serializer:json"` //Uncle block hash
 	TotalTransaction types.Long      `json:"totalTransaction"`                                //number of transactions
-	Validators       []*Penalty      `json:"validators" gorm:"serializer:json"`               //black hole block validators address
-	Proposers        []types.Address `json:"proposers" gorm:"serializer:json"`                //black hole block proposers address
+	Proposers        []types.Address `json:"proposers,omitempty" gorm:"serializer:json"`      //black hole block proposers address
+	Proof            []types.Hash    `json:"proof,omitempty" gorm:"index;serializer:json"`    //slash validator proof, multi-signature block hash
 }
 
-// Penalty black hole block penalty
-type Penalty struct {
-	Address types.Address `json:"address"` //validator address
-	Weight  types.Long    `json:"weight"`  //validator weight
+// Slashing validator and staker penalty record
+type Slashing struct {
+	Address types.Address `json:"address" gorm:"type:CHAR(42);index"`       //account address, validator or staker
+	Number  types.Long    `json:"number" gorm:"index"`                      //block number
+	Amount  types.BigInt  `json:"amount,omitempty" gorm:"type:DECIMAL(65)"` //penalty amount, unit wei
+	Weight  types.Long    `json:"weight,omitempty"`                         //weight after penalty
+	Reason  string        `json:"reason" gorm:"type:VARCHAR(42)"`           //penalty reason, 1: no block; 2: multi-signature; address: validator penalty
 }
 
 // Account information
@@ -345,6 +349,7 @@ type Parsed struct {
 
 	// erbie, which need to be inserted into the database by priority (later data may query previous data)
 	Epoch            *Epoch       //Official injection of the first phase of SNFT
+	Slashing         []*Slashing  //penalty slash
 	NFTs             []*NFT       //Newly created NFT
 	NFTTxs           []*NFTTx     //NFT transaction record, transfer, recycle, pledge
 	Rewards          []*Reward    //reward record

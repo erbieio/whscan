@@ -84,6 +84,9 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		if err = saveMerge(db, parsed); err != nil {
 			return
 		}
+		if err = saveSlashing(db, parsed); err != nil {
+			return
+		}
 
 		// update the query stats
 		return updateStats(db, parsed)
@@ -265,6 +268,41 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 				if err = db.Select("reward", "reward_count", "reward_number", "timestamp", "block_number").Updates(&validator).Error; err != nil {
 					return
 				}
+			}
+		}
+	}
+	return
+}
+
+func saveSlashing(db *gorm.DB, wh *model.Parsed) (err error) {
+	for _, slashing := range wh.Slashing {
+		if err = db.Create(slashing).Error; err != nil {
+			return
+		}
+		if slashing.Reason == "2" {
+			err = db.Exec("UPDATE slashings SET amount = (SELECT amount FROM validators WHERE validators.address=slashings.address) WHERE address=? AND number=?", slashing.Address, slashing.Number).Error
+			if err != nil {
+				return
+			}
+			err = db.Exec("DELETE FROM validators WHERE address=?", slashing.Address).Error
+			if err != nil {
+				return
+			}
+			err = db.Exec("INSERT INTO slashings (SELECT staker AS address, ? AS number, amount, 0 AS weight, validator AS reason FROM pledges WHERE validator=?)", slashing.Number, slashing.Address).Error
+			if err != nil {
+				return
+			}
+			err = db.Exec("UPDATE stakers SET amount=amount-(SELECT amount FROM pledges WHERE staker=address AND validator=?) WHERE address IN (SELECT staker FROM pledges WHERE validator=?)", slashing.Address, slashing.Address).Error
+			if err != nil {
+				return
+			}
+			err = db.Exec("DELETE FROM stakers WHERE amount='0'").Error
+			if err != nil {
+				return
+			}
+			err = db.Exec("DELETE FROM pledges WHERE validator=?", slashing.Address).Error
+			if err != nil {
+				return
 			}
 		}
 	}

@@ -351,9 +351,14 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		}
 
 		if wh.Miner == types.ZeroAddress {
-			wh.Validators = make([]*model.Penalty, 0, len(onlineWeight))
 			for _, weight := range onlineWeight {
-				wh.Validators = append(wh.Validators, &model.Penalty{Address: types.Address(weight.Address), Weight: types.Long(weight.Value)})
+				wh.Slashing = append(wh.Slashing, &model.Slashing{
+					Address: types.Address(weight.Address),
+					Number:  wh.Number,
+					Amount:  "0",
+					Weight:  types.Long(weight.Value),
+					Reason:  "1",
+				})
 			}
 			var proposers []*struct {
 				Address string

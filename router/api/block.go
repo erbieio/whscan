@@ -22,6 +22,7 @@ func Block(e *gin.Engine) {
 // @Description Query the block list in reverse order of height
 // @Accept      json
 // @Produce     json
+// @Param       filter    query    string false "filter block, 0: all; 1: black hole; 2: penalty, default 0"
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Success     200       {object} service.BlocksRes
@@ -29,7 +30,7 @@ func Block(e *gin.Engine) {
 // @Router      /block/page [get]
 func pageBlock(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	data, err := service.FetchBlocks(page, size)
+	data, err := service.FetchBlocks(page, size, c.Query("filter"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

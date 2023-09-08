@@ -10,10 +10,23 @@ type BlocksRes struct {
 	Blocks []model.Block `json:"blocks"` //block list
 }
 
-func FetchBlocks(page, size int) (res BlocksRes, err error) {
-	err = DB.Order("number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Blocks).Error
-	// use stats to speed up queries
-	res.Total = stats.TotalBlock
+func FetchBlocks(page, size int, filter string) (res BlocksRes, err error) {
+	db := DB.Model(&model.Block{})
+	if filter == "1" {
+		db = db.Where("number!=0 AND `miner` = '0x0000000000000000000000000000000000000000'")
+	} else if filter == "2" {
+		db = db.Where("`proof` != '[]'")
+	}
+	if filter != "" {
+		if err = db.Count(&res.Total).Error; err != nil {
+			return
+		}
+	} else {
+		// use stats to speed up queries
+		res.Total = stats.TotalBlock
+	}
+
+	err = db.Debug().Order("number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Blocks).Error
 	return
 }
 

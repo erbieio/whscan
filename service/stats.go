@@ -240,7 +240,7 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.Creator{}).Count(&stats.TotalCreator)
 			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Staker{}).Count(&stats.TotalStaker)
-			db.Model(&model.Validator{}).Where("weight>0").Count(&stats.TotalValidator)
+			db.Model(&model.Validator{}).Where("`amount`>=70000000000000000000000").Count(&stats.TotalValidator)
 			db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
 			db.Model(&model.Validator{}).Where("weight>=10").Count(&stats.TotalValidatorOnline)
