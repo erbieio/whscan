@@ -26,7 +26,7 @@ var Tables = []interface{}{
 	&Epoch{},
 	&Creator{},
 	&SNFT{},
-	&NFTTx{},
+	&ErbieTx{},
 	&Reward{},
 	&Location{},
 }
@@ -117,11 +117,11 @@ type Block struct {
 
 // Slashing validator and staker penalty record
 type Slashing struct {
-	Address types.Address `json:"address" gorm:"type:CHAR(42);index"`       //account address, validator or staker
-	Number  types.Long    `json:"number" gorm:"index"`                      //block number
-	Amount  types.BigInt  `json:"amount,omitempty" gorm:"type:DECIMAL(65)"` //penalty amount, unit wei
-	Weight  types.Long    `json:"weight,omitempty"`                         //weight after penalty
-	Reason  string        `json:"reason" gorm:"type:VARCHAR(42)"`           //penalty reason, 1: no block; 2: multi-signature; address: validator penalty
+	Address     types.Address `json:"address" gorm:"type:CHAR(42);index"` //account address, validator or staker
+	BlockNumber types.Long    `json:"blockNumber" gorm:"index"`           //block number
+	Amount      types.BigInt  `json:"amount" gorm:"type:DECIMAL(65)"`     //penalty amount, unit wei
+	Weight      types.Long    `json:"weight,omitempty"`                   //weight after penalty
+	Reason      string        `json:"reason" gorm:"type:VARCHAR(42)"`     //penalty reason, 1: no block; 2: multi-signature; address: validator penalty
 }
 
 // Account information
@@ -270,20 +270,18 @@ type SNFT struct {
 	Remove       bool    `json:"remove" gorm:"index"`                        //SNFTs that are synthesized and then removed
 }
 
-// NFTTx NFT transaction attribute information
-type NFTTx struct {
-	//Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction
-	TxType        uint8   `json:"tx_type"`
-	NFTAddr       *string `json:"nft_addr" gorm:"type:VARCHAR(42);index"`              //The NFT address of the transaction
-	ExchangerAddr *string `json:"exchanger_addr,omitempty" gorm:"type:CHAR(42);index"` //Exchange address
-	From          string  `json:"from" gorm:"type:CHAR(42);index"`                     //Seller
-	To            string  `json:"to,omitempty" gorm:"type:CHAR(42);index"`             //buyer
-	Price         string  `json:"price"`                                               //price, the unit is wei
-	Timestamp     int64   `json:"timestamp" gorm:"index"`                              //transaction timestamp
-	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`            //transaction hash
-	BlockNumber   int64   `json:"block_number" gorm:"index"`                           //block number
-	Royalty       string  `json:"royalty"`                                             //for the creator royalty
-	Fee           *string `json:"fee,omitempty"`                                       //Transaction fee, in wei (only if there is an exchange and price)
+// ErbieTx erbie transaction attribute information
+type ErbieTx struct {
+	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`        //owned transaction hash
+	Type        uint8  `json:"type"`                                            //transaction type
+	Address     string `json:"address,omitempty" gorm:"type:VARCHAR(42);index"` //the NFT or SNFT address of the transaction
+	From        string `json:"from,omitempty" gorm:"type:CHAR(42);index"`       //seller or caller address
+	To          string `json:"to,omitempty" gorm:"type:CHAR(42);index"`         //buyer or receive address
+	Value       string `json:"value" gorm:"type:DECIMAL(65)"`                   //price value, the unit is wei
+	Timestamp   int64  `json:"timestamp"`                                       //transaction timestamp
+	BlockNumber int64  `json:"BlockNumber" gorm:"index"`                        //block number
+	Royalty     string `json:"royalty,omitempty" gorm:"type:DECIMAL(65)"`       //for the creator royalty
+	Fee         string `json:"fee,omitempty" gorm:"type:DECIMAL(65)"`           //transaction fee, unit wei
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
@@ -349,9 +347,9 @@ type Parsed struct {
 
 	// erbie, which need to be inserted into the database by priority (later data may query previous data)
 	Epoch            *Epoch       //Official injection of the first phase of SNFT
-	Slashing         []*Slashing  //penalty slash
+	Slashings        []*Slashing  //penalty slash
 	NFTs             []*NFT       //Newly created NFT
-	NFTTxs           []*NFTTx     //NFT transaction record, transfer, recycle, pledge
+	ErbieTxs         []*ErbieTx   //NFT transaction record, transfer, recycle, pledge
 	Rewards          []*Reward    //reward record
 	Mergers          []*SNFT      //merge snft
 	ChangePledges    []*Pledge    //modify the pledge

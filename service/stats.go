@@ -60,13 +60,10 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&stats.RewardCoinCount).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x0'").Count(&stats.TotalNFTTx).Error; err != nil {
+	if err = db.Model(&model.ErbieTx{}).Where("LEFT(address,3)='0x0'").Count(&stats.TotalNFTTx).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.NFTTx{}).Where("LEFT(nft_addr,3)='0x8'").Count(&stats.TotalSNFTTx).Error; err != nil {
-		return
-	}
-	if err = db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL").Count(&stats.TotalStakerTx).Error; err != nil {
+	if err = db.Model(&model.ErbieTx{}).Where("LEFT(address,3)='0x8'").Count(&stats.TotalSNFTTx).Error; err != nil {
 		return
 	}
 	if err = db.Model(&model.Epoch{}).Count(&stats.TotalEpoch).Error; err != nil {
@@ -101,7 +98,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
 	rewardSNFT, recycleSNFT, value := int64(0), int64(0), new(big.Int)
-	totalNFTTx, totalSNFTTx, totalStakerTx := stats.TotalNFTTx, stats.TotalSNFTTx, stats.TotalStakerTx
+	totalNFTTx, totalSNFTTx := stats.TotalNFTTx, stats.TotalSNFTTx
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
 		totalBalance = totalBalance.Add(totalBalance, value)
@@ -117,24 +114,21 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		value.SetString(pledge.Amount, 0)
 		totalPledge = totalPledge.Add(totalPledge, value)
 	}
-	for _, tx := range parsed.NFTTxs {
-		if tx.ExchangerAddr != nil {
-			totalStakerTx++
-		}
-		if (*tx.NFTAddr)[:3] == "0x0" {
+	for _, tx := range parsed.ErbieTxs {
+		if (tx.Address)[:3] == "0x0" {
 			totalNFTTx++
-			if tx.Price != "0" {
-				value.SetString(tx.Price, 0)
+			if tx.Value != "0" {
+				value.SetString(tx.Value, 0)
 				totalNFTAmount = totalNFTAmount.Add(totalNFTAmount, value)
 			}
 		} else {
 			totalSNFTTx++
-			if tx.Price != "0" {
-				value.SetString(tx.Price, 0)
+			if tx.Value != "0" {
+				value.SetString(tx.Value, 0)
 				totalSNFTAmount = totalSNFTAmount.Add(totalSNFTAmount, value)
 			}
-			if tx.TxType == 6 {
-				pieces, _ := strconv.ParseInt(*tx.Fee, 10, 32)
+			if tx.Type == 6 {
+				pieces, _ := strconv.ParseInt(tx.Fee, 10, 32)
 				recycleSNFT += pieces
 			}
 		}
@@ -162,7 +156,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			return
 		}
 	}
-	if len(parsed.NFTTxs) > 0 {
+	if len(parsed.ErbieTxs) > 0 {
 		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_nft_amount", totalNFTAmount.Text(10)).Error
 		if err != nil {
 			return
@@ -188,7 +182,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalPledge = totalPledge.Text(10)
 	stats.TotalNFTTx = totalNFTTx
 	stats.TotalSNFTTx = totalSNFTTx
-	stats.TotalStakerTx = totalStakerTx
 	stats.TotalNFTAmount = totalNFTAmount.Text(10)
 	stats.TotalSNFTAmount = totalSNFTAmount.Text(10)
 	stats.TotalEpoch = stats.RewardSNFTCount/4096 + 1
@@ -248,7 +241,6 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			if stats.Total24HTx == 0 || number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)
 				db.Model(&model.Transaction{}).Joins("LEFT JOIN blocks ON block_hash = blocks.hash").Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
-				db.Model(&model.NFTTx{}).Where("exchanger_addr IS NOT NULL AND timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HStakerTx)
 				db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
 
 				var creators []*struct {

@@ -156,6 +156,39 @@ definitions:
         description: snft value
         type: string
     type: object
+  model.ErbieTx:
+    properties:
+      BlockNumber:
+        description: block number
+        type: integer
+      address:
+        description: the NFT or SNFT address of the transaction
+        type: string
+      fee:
+        description: transaction fee, unit wei
+        type: string
+      from:
+        description: seller or caller address
+        type: string
+      royalty:
+        description: for the creator royalty
+        type: string
+      timestamp:
+        description: transaction timestamp
+        type: integer
+      to:
+        description: buyer or receive address
+        type: string
+      tx_hash:
+        description: owned transaction hash
+        type: string
+      type:
+        description: transaction type
+        type: integer
+      value:
+        description: price value, the unit is wei
+        type: string
+    type: object
   model.EventLog:
     properties:
       address:
@@ -245,45 +278,6 @@ definitions:
         description: The transaction hash created
         type: string
     type: object
-  model.NFTTx:
-    properties:
-      block_number:
-        description: block number
-        type: integer
-      exchanger_addr:
-        description: Exchange address
-        type: string
-      fee:
-        description: Transaction fee, in wei (only if there is an exchange and price)
-        type: string
-      from:
-        description: Seller
-        type: string
-      nft_addr:
-        description: The NFT address of the transaction
-        type: string
-      price:
-        description: price, the unit is wei
-        type: string
-      royalty:
-        description: for the creator royalty
-        type: string
-      timestamp:
-        description: transaction timestamp
-        type: integer
-      to:
-        description: buyer
-        type: string
-      tx_hash:
-        description: transaction hash
-        type: string
-      tx_type:
-        description: 'Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel
-          pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase,
-          17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction,
-          20: matching transaction'
-        type: integer
-    type: object
   model.Pledge:
     properties:
       amount:
@@ -353,6 +347,25 @@ definitions:
       tx_amount:
         description: the total transaction volume of this SNFT
         type: string
+    type: object
+  model.Slashing:
+    properties:
+      address:
+        description: address
+        type: string
+      amount:
+        description: The total amount of coins in the chain
+        type: string
+      blockNumber:
+        description: transaction random number, transaction volume
+        type: integer
+      reason:
+        description: 'penalty reason, 1: no block; 2: multi-signature; address: validator
+          penalty'
+        type: string
+      weight:
+        description: transaction random number, transaction volume
+        type: integer
     type: object
   model.Staker:
     properties:
@@ -560,10 +573,10 @@ definitions:
         description: vote profit
         type: string
       rewardCoinCount:
-        description: Number of times to get coin rewards, 0.1ERB once
+        description: BlockNumber of times to get coin rewards, 0.1ERB once
         type: integer
       rewardSNFTCount:
-        description: Number of times to get SNFT rewards
+        description: BlockNumber of times to get SNFT rewards
         type: integer
       snftCount:
         description: hold SNFT number
@@ -768,7 +781,7 @@ definitions:
       nft_txs:
         description: NFT transaction list
         items:
-          $ref: '#/definitions/model.NFTTx'
+          $ref: '#/definitions/model.ErbieTx'
         type: array
       total:
         description: The total number of NFTs
@@ -901,6 +914,17 @@ definitions:
         type: array
       total:
         description: The total number of SNFTs
+        type: integer
+    type: object
+  service.SlashingsRes:
+    properties:
+      data:
+        description: slashing list
+        items:
+          $ref: '#/definitions/model.Slashing'
+        type: array
+      total:
+        description: The total number of slashing
         type: integer
     type: object
   service.StakersRes:
@@ -1330,7 +1354,7 @@ paths:
             $ref: '#/definitions/api.price'
       summary: query ERB price
       tags:
-      - other interfaces
+      - extra
   /exec_sql:
     get:
       consumes:
@@ -1360,7 +1384,7 @@ paths:
             $ref: '#/definitions/service.ErrRes'
       summary: exec sql statement
       tags:
-      - other interfaces
+      - extra
   /nft/{addr}:
     get:
       consumes:
@@ -1435,7 +1459,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.NFTTx'
+            $ref: '#/definitions/model.ErbieTx'
         "400":
           description: Bad Request
           schema:
@@ -1692,6 +1716,47 @@ paths:
       summary: query reward
       tags:
       - reward
+  /slashings:
+    get:
+      consumes:
+      - application/json
+      description: Query slashing list
+      parameters:
+      - description: Page, default 1
+        in: query
+        name: page
+        type: string
+      - description: Page size, default 10
+        in: query
+        name: page_size
+        type: string
+      - description: penalty address
+        in: query
+        name: address
+        type: string
+      - description: penalty block number
+        in: query
+        name: number
+        type: string
+      - description: 'penalty reason, 1: no block; 2: multi-signature; address: validator
+          penalty'
+        in: query
+        name: reason
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/service.SlashingsRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/service.ErrRes'
+      summary: query slashing list
+      tags:
+      - extra
   /snft/{addr}:
     get:
       consumes:
@@ -1800,7 +1865,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.NFTTx'
+            $ref: '#/definitions/model.ErbieTx'
         "400":
           description: Bad Request
           schema:

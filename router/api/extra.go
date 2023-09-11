@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"server/common/utils"
 
 	"github.com/gin-gonic/gin"
 	"server/service"
@@ -10,9 +11,10 @@ import (
 func Extra(e *gin.Engine) {
 	e.GET("/exec_sql", execSql)
 	e.GET("/erb_price", erbPrice)
+	e.GET("/slashings", pageSlashing)
 }
 
-// @Tags        other interfaces
+// @Tags        extra
 // @Summary     exec sql statement
 // @Description execute sql statement and return the result, only read
 // @Accept      json
@@ -40,7 +42,7 @@ type price struct {
 	CNY float64 `json:"CNY"` //The price of an ERB in RMB
 }
 
-// @Tags        other interfaces
+// @Tags        extra
 // @Summary     query ERB price
 // @Description Query an ERB price, 1ERB=10^18wei, failed to implement the ERB price definition, fixed at 1ERB=0.5USD
 // @Accept      json
@@ -49,4 +51,27 @@ type price struct {
 // @Router      /erb_price [get]
 func erbPrice(c *gin.Context) {
 	c.JSON(http.StatusOK, price{CNY: 3.2, USD: 0.5})
+}
+
+// @Tags        extra
+// @Summary     query slashing list
+// @Description Query slashing list
+// @Accept      json
+// @Produce     json
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Param       address   query    string false "penalty address"
+// @Param       number    query    string false "penalty block number"
+// @Param       reason    query    string false "penalty reason, 1: no block; 2: multi-signature; address: validator penalty"
+// @Success     200       {object} service.SlashingsRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /slashings [get]
+func pageSlashing(c *gin.Context) {
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	data, err := service.FetchSlashings(c.Query("address"), c.Query("number"), c.Query("reason"), page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
 }

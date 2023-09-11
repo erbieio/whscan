@@ -35,8 +35,8 @@ type AccountRes struct {
 	NFTCount        int64  `json:"nftCount"`        // hold NFT number
 	ValidatorAmount string `json:"validatorAmount"` // validator pledge amount
 	StakerAmount    string `json:"stakerAmount"`    // staker pledge amount
-	RewardCoinCount int64  `json:"rewardCoinCount"` // Number of times to get coin rewards, 0.1ERB once
-	RewardSNFTCount int64  `json:"rewardSNFTCount"` // Number of times to get SNFT rewards
+	RewardCoinCount int64  `json:"rewardCoinCount"` // BlockNumber of times to get coin rewards, 0.1ERB once
+	RewardSNFTCount int64  `json:"rewardSNFTCount"` // BlockNumber of times to get SNFT rewards
 	ValidatorReward string `json:"validatorReward"` // validator reward
 	LastNumber      int64  `json:"lastNumber"`
 	Reward          string `json:"reward"` //vote profit

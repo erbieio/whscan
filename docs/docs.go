@@ -513,7 +513,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "other interfaces"
+                    "extra"
                 ],
                 "summary": "query ERB price",
                 "responses": {
@@ -536,7 +536,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "other interfaces"
+                    "extra"
                 ],
                 "summary": "exec sql statement",
                 "parameters": [
@@ -758,7 +758,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.NFTTx"
+                            "$ref": "#/definitions/model.ErbieTx"
                         }
                     },
                     "400": {
@@ -1076,6 +1076,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/slashings": {
+            "get": {
+                "description": "Query slashing list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "extra"
+                ],
+                "summary": "query slashing list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "penalty address",
+                        "name": "address",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "penalty block number",
+                        "name": "number",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "penalty reason, 1: no block; 2: multi-signature; address: validator penalty",
+                        "name": "reason",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/service.SlashingsRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
         "/snft/block": {
             "get": {
                 "description": "Query the list of SNFT rewards for the specified block",
@@ -1203,7 +1264,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.NFTTx"
+                            "$ref": "#/definitions/model.ErbieTx"
                         }
                     },
                     "400": {
@@ -1990,6 +2051,51 @@ const docTemplate = `{
                 }
             }
         },
+        "model.ErbieTx": {
+            "type": "object",
+            "properties": {
+                "BlockNumber": {
+                    "description": "block number",
+                    "type": "integer"
+                },
+                "address": {
+                    "description": "the NFT or SNFT address of the transaction",
+                    "type": "string"
+                },
+                "fee": {
+                    "description": "transaction fee, unit wei",
+                    "type": "string"
+                },
+                "from": {
+                    "description": "seller or caller address",
+                    "type": "string"
+                },
+                "royalty": {
+                    "description": "for the creator royalty",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "transaction timestamp",
+                    "type": "integer"
+                },
+                "to": {
+                    "description": "buyer or receive address",
+                    "type": "string"
+                },
+                "tx_hash": {
+                    "description": "owned transaction hash",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "transaction type",
+                    "type": "integer"
+                },
+                "value": {
+                    "description": "price value, the unit is wei",
+                    "type": "string"
+                }
+            }
+        },
         "model.EventLog": {
             "type": "object",
             "properties": {
@@ -2109,55 +2215,6 @@ const docTemplate = `{
                 }
             }
         },
-        "model.NFTTx": {
-            "type": "object",
-            "properties": {
-                "block_number": {
-                    "description": "block number",
-                    "type": "integer"
-                },
-                "exchanger_addr": {
-                    "description": "Exchange address",
-                    "type": "string"
-                },
-                "fee": {
-                    "description": "Transaction fee, in wei (only if there is an exchange and price)",
-                    "type": "string"
-                },
-                "from": {
-                    "description": "Seller",
-                    "type": "string"
-                },
-                "nft_addr": {
-                    "description": "The NFT address of the transaction",
-                    "type": "string"
-                },
-                "price": {
-                    "description": "price, the unit is wei",
-                    "type": "string"
-                },
-                "royalty": {
-                    "description": "for the creator royalty",
-                    "type": "string"
-                },
-                "timestamp": {
-                    "description": "transaction timestamp",
-                    "type": "integer"
-                },
-                "to": {
-                    "description": "buyer",
-                    "type": "string"
-                },
-                "tx_hash": {
-                    "description": "transaction hash",
-                    "type": "string"
-                },
-                "tx_type": {
-                    "description": "Transaction type, 1: transfer, 6:recycle, 7:pledge, 8:cancel pledge 14: bid transaction, 15: fixed price purchase, 16: lazy price purchase, 17: lazy price purchase, 18: bid transaction, 19: lazy bid transaction, 20: matching transaction",
-                    "type": "integer"
-                }
-            }
-        },
         "model.Pledge": {
             "type": "object",
             "properties": {
@@ -2250,6 +2307,31 @@ const docTemplate = `{
                 "tx_amount": {
                     "description": "the total transaction volume of this SNFT",
                     "type": "string"
+                }
+            }
+        },
+        "model.Slashing": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "amount": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
+                },
+                "blockNumber": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "reason": {
+                    "description": "penalty reason, 1: no block; 2: multi-signature; address: validator penalty",
+                    "type": "string"
+                },
+                "weight": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
                 }
             }
         },
@@ -2531,11 +2613,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "rewardCoinCount": {
-                    "description": "Number of times to get coin rewards, 0.1ERB once",
+                    "description": "BlockNumber of times to get coin rewards, 0.1ERB once",
                     "type": "integer"
                 },
                 "rewardSNFTCount": {
-                    "description": "Number of times to get SNFT rewards",
+                    "description": "BlockNumber of times to get SNFT rewards",
                     "type": "integer"
                 },
                 "snftCount": {
@@ -2829,7 +2911,7 @@ const docTemplate = `{
                     "description": "NFT transaction list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.NFTTx"
+                        "$ref": "#/definitions/model.ErbieTx"
                     }
                 },
                 "total": {
@@ -3015,6 +3097,22 @@ const docTemplate = `{
                 },
                 "total": {
                     "description": "The total number of SNFTs",
+                    "type": "integer"
+                }
+            }
+        },
+        "service.SlashingsRes": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "slashing list",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Slashing"
+                    }
+                },
+                "total": {
+                    "description": "The total number of slashing",
                     "type": "integer"
                 }
             }
