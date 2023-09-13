@@ -13,7 +13,6 @@ func Block(e *gin.Engine) {
 	e.GET("/block/page", pageBlock)
 	e.GET("/block/:number", getBlock)
 	e.GET("/stats", stats)
-	e.GET("/totals", totals)
 	e.GET("/pledge/page", pagePledge)
 }
 
@@ -67,19 +66,6 @@ func getBlock(c *gin.Context) {
 // @Failure     400 {object} service.ErrRes
 // @Router      /stats [get]
 func stats(c *gin.Context) {
-	c.JSON(http.StatusOK, service.GetStats())
-}
-
-// @Tags        block
-// @Summary     query some total data (new /stats)
-// @Description Query the total number of blocks, transactions, accounts, etc.
-// @Deprecated
-// @Accept  json
-// @Produce json
-// @Success 200 {object} model.Stats
-// @Failure 400 {object} service.ErrRes
-// @Router  /totals [get]
-func totals(c *gin.Context) {
 	c.JSON(http.StatusOK, service.GetStats())
 }
 

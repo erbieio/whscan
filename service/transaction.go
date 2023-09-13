@@ -1,28 +1,18 @@
 package service
 
 import (
-	"errors"
-	"strings"
-
 	"server/common/model"
 )
 
-// TransactionRes transaction return parameters
-type TransactionRes struct {
-	model.Transaction
-	Timestamp uint64 `json:"timestamp"` //The event stamp of the block it is in
-}
-
-func GetTransaction(hash string) (res TransactionRes, err error) {
-	err = DB.Model(&model.Transaction{}).Joins("LEFT JOIN blocks ON number=block_number").Where("transactions.hash=?", hash).
-		Select("transactions.*,timestamp").First(&res).Error
+func GetTransaction(hash string) (res model.Transaction, err error) {
+	err = DB.Where("transactions.hash=?", hash).Take(&res).Error
 	return
 }
 
 // TransactionsRes transaction paging return parameters
 type TransactionsRes struct {
-	Total        int64             `json:"total"`        //The total number of transactions
-	Transactions []*TransactionRes `json:"transactions"` //transaction list
+	Total        int64                `json:"total"`        //The total number of transactions
+	Transactions []*model.Transaction `json:"transactions"` //transaction list
 }
 
 func FetchTransactions(page, size int, number, addr, types string) (res TransactionsRes, err error) {
@@ -34,31 +24,7 @@ func FetchTransactions(page, size int, number, addr, types string) (res Transact
 		db = db.Where("`from`=? OR `to`=?", addr, addr)
 	}
 	if types != "" {
-		conditions := ""
-		for _, t := range strings.Split(types, ",") {
-			if conditions != "" {
-				conditions += " OR "
-			}
-			switch t {
-			case "0":
-				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a302c'"
-			case "1":
-				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a312c'"
-			case "6":
-				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a362c'"
-			case "9":
-				conditions += "LEFT(input,34)='0x65726269653a7b2274797065223a392c'"
-			case "10":
-				conditions += "LEFT(input,36)='0x65726269653a7b2274797065223a31302c'"
-			case "26":
-				conditions += "LEFT(input,36)='0x65726269653a7b2274797065223a32362c'"
-			case "31":
-				conditions += "LEFT(input,36)='0x65726269653a7b2274797065223a33312c'"
-			default:
-				return TransactionsRes{}, errors.New(t + " not support erbie tx type")
-			}
-		}
-		db = db.Where(conditions)
+		db.Joins("LEFT JOIN erbies ON hash=tx_hash").Where("`type` IN (?)", types)
 	}
 	if number != "" || addr != "" || types != "" {
 		err = db.Count(&res.Total).Error
@@ -69,8 +35,7 @@ func FetchTransactions(page, size int, number, addr, types string) (res Transact
 	if err != nil {
 		return
 	}
-	err = db.Joins("LEFT JOIN blocks ON number=block_number").Select("transactions.*,timestamp").
-		Order("block_number DESC").Offset((page - 1) * size).Limit(size).Scan(&res.Transactions).Error
+	err = db.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Transactions).Error
 	return
 }
 
@@ -91,7 +56,40 @@ func GetInternalTransactions(page, size int) (res InternalTxsRes, err error) {
 	return
 }
 
-func GetInternalTransaction(hash string) (t []*model.InternalTx, err error) {
-	err = DB.Where("`tx_hash`=?", hash).Find(&t).Error
+func GetInternalTransaction(hash string) (res []*model.InternalTx, err error) {
+	err = DB.Where("`tx_hash`=?", hash).Find(&res).Error
+	return
+}
+
+// ErbiesRes erbie transaction paging return parameters
+type ErbiesRes struct {
+	Total int64          `json:"total"` //The total number of transactions
+	Data  []*model.Erbie `json:"data"`  //erbie transaction list
+}
+
+func FetchErbieTxs(page, size int, number, address, account, types string) (res ErbiesRes, err error) {
+	db := DB.Model(&model.Erbie{})
+	if number != "" {
+		db = db.Where("`block_number`=?", number)
+	}
+	if address != "" {
+		db = db.Where("`address`=?", address)
+	}
+	if account != "" {
+		db = db.Where("`from`=? OR `to`=?", account, account)
+	}
+	if types != "" {
+		db = db.Where("`type` IN (?)", types)
+	}
+
+	if err = db.Count(&res.Total).Error; err != nil {
+		return
+	}
+	err = db.Offset((page - 1) * size).Limit(size).Find(&res.Data).Error
+	return
+}
+
+func GetErbieTransaction(hash string) (res model.Erbie, err error) {
+	err = DB.Where("`tx_hash`=?", hash).Take(&res).Error
 	return
 }

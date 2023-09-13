@@ -1,10 +1,8 @@
 package service
 
 import (
-	"math/big"
-	"strconv"
-
 	"gorm.io/gorm"
+	"math/big"
 	"server/common/model"
 	"server/common/types"
 	"server/common/utils"
@@ -60,10 +58,13 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&stats.RewardCoinCount).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.ErbieTx{}).Where("LEFT(address,3)='0x0'").Count(&stats.TotalNFTTx).Error; err != nil {
+	if err = db.Model(&model.Erbie{}).Select("IFNULL(SUM(fee_rate),0)").Scan(&stats.TotalRecycle).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.ErbieTx{}).Where("LEFT(address,3)='0x8'").Count(&stats.TotalSNFTTx).Error; err != nil {
+	if err = db.Model(&model.Erbie{}).Where("LEFT(address,3)='0x0'").Count(&stats.TotalNFTTx).Error; err != nil {
+		return
+	}
+	if err = db.Model(&model.Erbie{}).Where("LEFT(address,3)='0x8'").Count(&stats.TotalSNFTTx).Error; err != nil {
 		return
 	}
 	if err = db.Model(&model.Epoch{}).Count(&stats.TotalEpoch).Error; err != nil {
@@ -97,8 +98,8 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalPledge, _ := new(big.Int).SetString(stats.TotalPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
-	rewardSNFT, recycleSNFT, value := int64(0), int64(0), new(big.Int)
-	totalNFTTx, totalSNFTTx := stats.TotalNFTTx, stats.TotalSNFTTx
+	rewardSNFT, value := int64(0), new(big.Int)
+	totalNFT, totalNFTTx, totalSNFTTx, totalRecycle := stats.TotalNFT, stats.TotalNFTTx, stats.TotalSNFTTx, stats.TotalRecycle
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
 		totalBalance = totalBalance.Add(totalBalance, value)
@@ -110,27 +111,30 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		value.SetString(string(tx.Value), 0)
 		totalAmount = totalAmount.Add(totalAmount, value)
 	}
-	for _, pledge := range parsed.ChangePledges {
-		value.SetString(pledge.Amount, 0)
-		totalPledge = totalPledge.Add(totalPledge, value)
-	}
-	for _, tx := range parsed.ErbieTxs {
-		if (tx.Address)[:3] == "0x0" {
-			totalNFTTx++
-			if tx.Value != "0" {
-				value.SetString(tx.Value, 0)
-				totalNFTAmount = totalNFTAmount.Add(totalNFTAmount, value)
+	for _, erbie := range parsed.Erbies {
+		if len(erbie.Address) > 3 {
+			value.SetString(erbie.Value, 0)
+			if erbie.Address[2] == '0' {
+				totalNFTTx++
+				if erbie.Value != "0" {
+					totalNFTAmount = totalNFTAmount.Add(totalNFTAmount, value)
+				}
+			} else {
+				totalSNFTTx++
+				if erbie.Value != "0" {
+					totalSNFTAmount = totalSNFTAmount.Add(totalSNFTAmount, value)
+				}
 			}
-		} else {
-			totalSNFTTx++
-			if tx.Value != "0" {
-				value.SetString(tx.Value, 0)
-				totalSNFTAmount = totalSNFTAmount.Add(totalSNFTAmount, value)
-			}
-			if tx.Type == 6 {
-				pieces, _ := strconv.ParseInt(tx.Fee, 10, 32)
-				recycleSNFT += pieces
-			}
+		}
+		switch erbie.Type {
+		case 0, 16, 17, 19:
+			totalNFT++
+		case 6:
+			totalRecycle += erbie.FeeRate
+		case 9:
+			totalPledge = totalPledge.Add(totalPledge, value)
+		case 10:
+			totalPledge = totalPledge.Sub(totalPledge, value)
 		}
 	}
 	for _, reward := range parsed.Rewards {
@@ -144,19 +148,14 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			return
 		}
 	}
-	if recycleSNFT > 0 {
-		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_recycle", stats.TotalRecycle+recycleSNFT).Error
-		if err != nil {
-			return
-		}
-	}
+
 	if len(parsed.CacheTxs) > 0 {
 		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_amount", totalAmount.Text(10)).Error
 		if err != nil {
 			return
 		}
 	}
-	if len(parsed.ErbieTxs) > 0 {
+	if len(parsed.Erbies) > 0 {
 		err = db.Model(&model.Stats{}).Where("`chain_id`=?", stats.ChainId).Update("total_nft_amount", totalNFTAmount.Text(10)).Error
 		if err != nil {
 			return
@@ -172,11 +171,11 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalBlock++
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
-	stats.TotalNFT += int64(len(parsed.NFTs))
+	stats.TotalNFT = totalNFT
 	stats.RewardSNFTCount += rewardSNFT
 	stats.RewardCoinCount += int64(len(parsed.Rewards)) - rewardSNFT
 	stats.TotalAccount = int64(len(stats.Balances))
-	stats.TotalRecycle += recycleSNFT
+	stats.TotalRecycle = totalRecycle
 	stats.TotalBalance = totalBalance.Text(10)
 	stats.TotalAmount = totalAmount.Text(10)
 	stats.TotalPledge = totalPledge.Text(10)

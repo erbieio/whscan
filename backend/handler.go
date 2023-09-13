@@ -47,6 +47,7 @@ func decode(c *node.Client, ctx context.Context, number types.Long) (parsed *mod
 			if reqs[i].Error != nil || parsed.CacheTxs[i].GasUsed == 0 {
 				return nil, fmt.Errorf("eth_getTransactionReceipt receipt:%v,err:%v", reqs[i].Result, reqs[i].Error)
 			}
+			parsed.CacheTxs[i].Timestamp = parsed.Timestamp
 		}
 		// Get the receipt logs, which can only be checked according to the block hash (there may be multiple blocks with the same block height)
 		err = c.CallContext(ctx, &parsed.CacheLogs, "eth_getLogs", map[string]any{"blockHash": parsed.Hash})
@@ -452,6 +453,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 	} else {
 		info := struct {
 			Worm *struct {
+				FeeRate         int64 `json:"FeeRate"`
 				StakerExtension *struct {
 					StakerExtensions []struct {
 						Addr    string   `json:"Addr"`
@@ -466,11 +468,14 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 			if info.Worm != nil && info.Worm.StakerExtension != nil {
 				for _, pledge := range info.Worm.StakerExtension.StakerExtensions {
-					wh.ChangePledges = append(wh.ChangePledges, &model.Pledge{
-						Staker:    string(account.Address),
-						Validator: pledge.Addr,
-						Amount:    pledge.Balance.Text(10),
+					wh.Erbies = append(wh.Erbies, &model.Erbie{
 						TxHash:    "0x0",
+						Type:      9,
+						From:      string(account.Address),
+						To:        pledge.Addr,
+						Value:     pledge.Balance.Text(10),
+						Timestamp: int64(wh.Timestamp),
+						FeeRate:   info.Worm.FeeRate,
 					})
 				}
 			}
@@ -485,11 +490,14 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			return
 		}
 		for _, validator := range result.Validators {
-			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{
-				Address: validator.Addr,
-				Proxy:   validator.Proxy,
-				Weight:  70,
+			wh.Erbies = append(wh.Erbies, &model.Erbie{
+				TxHash:    "0x0",
+				Type:      31,
+				From:      validator.Addr,
+				To:        validator.Proxy,
+				Timestamp: int64(wh.Timestamp),
 			})
+
 		}
 	}
 	return
@@ -554,89 +562,48 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		return
 	}
 
-	blockNumber := int64(wh.Number)
-	timestamp := int64(wh.Timestamp)
-	txHash := string(tx.Hash)
-	from := string(tx.From)
-	value := string(tx.Value)
+	erbie := &model.Erbie{
+		TxHash:      string(tx.Hash),
+		Type:        w.Type,
+		Address:     strings.ToLower(w.NFTAddress),
+		From:        string(tx.From),
+		To:          string(*tx.To),
+		Value:       string(tx.Value),
+		Extra:       w.MetaURL,
+		Timestamp:   int64(wh.Timestamp),
+		BlockNumber: int64(wh.Number),
+		RoyaltyRate: w.Royalty,
+		FeeRate:     w.FeeRate,
+	}
 	switch w.Type {
 	case 0: //Users mint NFT by themselves
-		nftAddr := "" //Calculate fill in real time when inserting into database
-		wh.NFTs = append(wh.NFTs, &model.NFT{
-			Address:       &nftAddr,
-			RoyaltyRatio:  w.Royalty, //The unit is one ten thousandth
-			MetaUrl:       w.MetaURL,
-			ExchangerAddr: strings.ToLower(w.Exchanger),
-			TxAmount:      "0",
-			Creator:       string(*tx.To),
-			Timestamp:     timestamp,
-			BlockNumber:   blockNumber,
-			TxHash:        txHash,
-			Owner:         string(*tx.To),
-		})
 
 	case 1: //Users transfer NFT by themselves
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        1,
-			Address:     strings.ToLower(w.NFTAddress),
-			To:          string(*tx.To),
-			Value:       value,
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+
+	case 2: //authorize a snft or nft
+
+	case 3: //cancel authorize a snft or nft
+
+	case 4: //authorize all snft or nft
+
+	case 5: //cancel authorize all snft or nft
 
 	case 6: //recycle snft
-		w.NFTAddress = strings.ToLower(w.NFTAddress)
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        6,
-			Address:     w.NFTAddress,
-			From:        from,
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
 
-	case 9, 10: //staker pledge
-		pledge := &model.Pledge{
-			Staker:      from,
-			Validator:   string(*tx.To),
-			Timestamp:   timestamp,
-			BlockNumber: blockNumber,
-			TxHash:      txHash,
-		}
-		if w.Type == 9 {
-			pledge.Amount = value
-		} else {
-			pledge.Amount = "-" + value
-		}
-		wh.ChangePledges = append(wh.ChangePledges, pledge)
+	case 9: //staker pledge add, and set fee rate
+
+	case 10: //staker pledge sub
 
 	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
-		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
-		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        14,
-			Address:     w.Buyer.NFTAddress,
-			To:          string(*tx.To),
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
+		erbie.From = ""
+		erbie.Extra = strings.ToLower(w.Buyer.Exchanger)
 
 	case 15: //NFT pricing purchase transaction (buyer initiates, seller signs price)
-		w.Seller1.NFTAddress = strings.ToLower(w.Seller1.NFTAddress)
-		w.Seller1.Exchanger = strings.ToLower(w.Seller1.Exchanger)
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        15,
-			Address:     w.Seller1.NFTAddress,
-			To:          from,  //The transaction initiator is the buyer
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.Address = strings.ToLower(w.Seller1.NFTAddress)
+		erbie.From = string(*tx.To)
+		erbie.To = string(tx.From)
+		erbie.Extra = strings.ToLower(w.Seller1.Exchanger)
 
 	case 16: //NFT lazy pricing purchase transaction, the buyer initiates (the NFT is minted first, and the seller signs the price)
 		// Restore NFT creator address (also seller address) from signature
@@ -645,35 +612,10 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		if err != nil {
 			return err
 		}
-		// royalty rate string to number
-		royaltyRatio, err := strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
-		if err != nil {
-			return err
-		}
-		w.Seller2.Exchanger = strings.ToLower(w.Seller2.Exchanger)
-		nftAddr := "" //Calculate fill when inserting into database
-		wh.NFTs = append(wh.NFTs, &model.NFT{
-			Address:       &nftAddr,
-			RoyaltyRatio:  royaltyRatio,
-			MetaUrl:       w.Seller2.MetaURL,
-			ExchangerAddr: w.Seller2.Exchanger,
-			TxAmount:      "0",
-			Creator:       string(creator),
-			Timestamp:     timestamp,
-			BlockNumber:   blockNumber,
-			TxHash:        txHash,
-			Owner:         string(creator),
-		})
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        16,
-			Address:     nftAddr,
-			From:        string(creator),
-			To:          from,  //The transaction initiator is the buyer
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.From = string(creator)
+		erbie.To = string(tx.From)
+		erbie.Extra = w.Seller2.MetaURL
+		erbie.RoyaltyRate, _ = strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
 
 	case 17: //NFT lazy pricing purchase transaction, initiated by the exchange (mint NFT first, and the seller signs the price)
 		// Restore NFT creator address (also seller address) from signature
@@ -682,49 +624,17 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		if err != nil {
 			return err
 		}
-		// royalty rate string to number
-		royaltyRatio, err := strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
-		if err != nil {
-			return err
-		}
-		nftAddr := "" //Calculate fill when inserting into database
-		wh.NFTs = append(wh.NFTs, &model.NFT{
-			Address:       &nftAddr,
-			RoyaltyRatio:  royaltyRatio,
-			MetaUrl:       w.Seller2.MetaURL,
-			ExchangerAddr: from, //The transaction initiator is the exchange address
-			TxAmount:      "0",
-			Creator:       string(creator),
-			Timestamp:     timestamp,
-			BlockNumber:   blockNumber,
-			TxHash:        txHash,
-			Owner:         string(creator),
-		})
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        17,
-			Address:     nftAddr,
-			From:        string(creator),
-			To:          string(*tx.To),
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.From = string(creator)
+		erbie.Extra = w.Seller2.MetaURL
+		erbie.RoyaltyRate, _ = strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
 
 	case 18: //The NFT bid transaction is initiated by the address authorized by the exchange (the buyer signs the price)
-		if err != nil {
-			return err
-		}
-		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        18,
-			Address:     w.Buyer.NFTAddress,
-			To:          string(*tx.To),
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		// restore the seller and exchanger address from the authorized signature
+		seller, _ := utils.RecoverAddress(w.Seller1.Amount+w.Seller1.NFTAddress+w.Seller1.Exchanger+w.Seller1.BlockNumber, w.Seller1.Sig)
+		exchanger, _ := utils.RecoverAddress(w.ExchangerAuth.ExchangerOwner+w.ExchangerAuth.To+w.ExchangerAuth.BlockNumber, w.ExchangerAuth.Sig)
+		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
+		erbie.From = string(seller)
+		erbie.Extra = string(exchanger)
 
 	case 19: //NFT lazy bid transaction, initiated by the address authorized by the exchange (the buyer signs the price)
 		// Restore NFT creator address (also seller address) from signature
@@ -733,81 +643,30 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		if err != nil {
 			return err
 		}
-		// restore the exchange address from the authorized signature
-		msg = w.ExchangerAuth.ExchangerOwner + w.ExchangerAuth.To + w.ExchangerAuth.BlockNumber
-		exchangerAddr, err := utils.RecoverAddress(msg, w.ExchangerAuth.Sig)
-		if err != nil {
-			return err
-		}
-		// royalty rate string to number
-		royaltyRatio, err := strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
-		if err != nil {
-			return err
-		}
-		nftAddr := "" //Calculate fill when inserting into database
-		wh.NFTs = append(wh.NFTs, &model.NFT{
-			Address:       &nftAddr,
-			RoyaltyRatio:  royaltyRatio,
-			MetaUrl:       w.Seller2.MetaURL,
-			ExchangerAddr: string(exchangerAddr), //The transaction initiator is the exchange address
-			TxAmount:      "0",
-			Creator:       string(creator),
-			Timestamp:     timestamp,
-			BlockNumber:   blockNumber,
-			TxHash:        txHash,
-			Owner:         string(creator),
-		})
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        19,
-			Address:     nftAddr,
-			From:        string(creator),
-			To:          string(*tx.To),
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.From = string(creator)
+		erbie.Extra = w.Seller2.MetaURL
+		erbie.RoyaltyRate, _ = strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
 
 	case 20: //NFT matches the transaction, and the exchange initiates it
-		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        20,
-			Address:     w.Buyer.NFTAddress,
-			To:          string(*tx.To),
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
+		erbie.From = ""
+		erbie.Extra = string(tx.From)
+
+	case 26: //recover validator online weight
 
 	case 27: //forcibly buy snft that does not belong to you(level 1 address)
-		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
-		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
-		w.Buyer.Seller = strings.ToLower(w.Buyer.Seller)
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        27,
-			Address:     w.Buyer.NFTAddress,
-			From:        w.Buyer.Seller,
-			To:          string(*tx.To),
-			Value:       value, //The unit is wei
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
+		erbie.From = strings.ToLower(w.Buyer.Seller)
+		erbie.Extra = strings.ToLower(w.Buyer.Exchanger)
+
 	case 28: //forcibly buy snft that does not belong to you(level 1 address)
-		w.Buyer.NFTAddress = strings.ToLower(w.Buyer.NFTAddress)
-		w.Buyer.Exchanger = strings.ToLower(w.Buyer.Exchanger)
-		wh.ErbieTxs = append(wh.ErbieTxs, &model.ErbieTx{
-			Type:        28,
-			Address:     w.Buyer.NFTAddress,
-			From:        types.ZeroAddress,
-			To:          string(*tx.To),
-			Timestamp:   timestamp,
-			TxHash:      txHash,
-			BlockNumber: blockNumber,
-		})
+		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
+		erbie.From = types.ZeroAddress
+		erbie.Extra = strings.ToLower(w.Buyer.Exchanger)
+
 	case 31:
-		wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: from, Proxy: w.ProxyAddress})
+		erbie.To = strings.ToLower(w.ProxyAddress)
 	}
+	wh.Erbies = append(wh.Erbies, erbie)
 	return
 }

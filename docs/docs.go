@@ -758,7 +758,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.ErbieTx"
+                            "$ref": "#/definitions/model.Erbie"
                         }
                     },
                     "400": {
@@ -1264,7 +1264,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.ErbieTx"
+                            "$ref": "#/definitions/model.Erbie"
                         }
                     },
                     "400": {
@@ -1479,9 +1479,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/totals": {
+        "/transaction/erbie/page": {
             "get": {
-                "description": "Query the total number of blocks, transactions, accounts, etc.",
+                "description": "query erbie transaction list in reverse order",
                 "consumes": [
                     "application/json"
                 ],
@@ -1489,15 +1489,87 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "block"
+                    "transaction"
                 ],
-                "summary": "query some total data (new /stats)",
-                "deprecated": true,
+                "summary": "query erbie transaction list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Page, default 1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Page size, default 10",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Block number, if empty, query all",
+                        "name": "number",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "nft or snft address, if empty, query all",
+                        "name": "address",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Account address, if empty, query all",
+                        "name": "account",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "erbie tx type,supports multiple types,if empty, query all",
+                        "name": "types",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Stats"
+                            "$ref": "#/definitions/service.ErbiesRes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/service.ErrRes"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaction/erbie/{hash}": {
+            "get": {
+                "description": "specifies the hash query internal transaction",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaction"
+                ],
+                "summary": "query erbie transaction list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "tx hash",
+                        "name": "hash",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Erbie"
                         }
                     },
                     "400": {
@@ -1674,7 +1746,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/service.TransactionRes"
+                            "$ref": "#/definitions/model.Transaction"
                         }
                     },
                     "400": {
@@ -2051,28 +2123,32 @@ const docTemplate = `{
                 }
             }
         },
-        "model.ErbieTx": {
+        "model.Erbie": {
             "type": "object",
             "properties": {
-                "BlockNumber": {
-                    "description": "block number",
-                    "type": "integer"
-                },
                 "address": {
                     "description": "the NFT or SNFT address of the transaction",
                     "type": "string"
                 },
-                "fee": {
-                    "description": "transaction fee, unit wei",
+                "block_number": {
+                    "description": "block number",
+                    "type": "integer"
+                },
+                "extra": {
+                    "description": "fee receive address or meta url",
                     "type": "string"
+                },
+                "fee_rate": {
+                    "description": "transaction fee, unit wei",
+                    "type": "integer"
                 },
                 "from": {
                     "description": "seller or caller address",
                     "type": "string"
                 },
-                "royalty": {
+                "royalty_rate": {
                     "description": "for the creator royalty",
-                    "type": "string"
+                    "type": "integer"
                 },
                 "timestamp": {
                     "description": "transaction timestamp",
@@ -2179,10 +2255,6 @@ const docTemplate = `{
                 },
                 "creator": {
                     "description": "Creator address",
-                    "type": "string"
-                },
-                "exchanger_addr": {
-                    "description": "The address of the exchange, if there is none, it can be traded on any exchange",
                     "type": "string"
                 },
                 "last_price": {
@@ -2321,7 +2393,7 @@ const docTemplate = `{
                     "description": "The total amount of coins in the chain",
                     "type": "string"
                 },
-                "blockNumber": {
+                "block_number": {
                     "description": "transaction random number, transaction volume",
                     "type": "integer"
                 },
@@ -2350,6 +2422,10 @@ const docTemplate = `{
                     "description": "the block number when created",
                     "type": "integer"
                 },
+                "fee_rate": {
+                    "description": "fee charged when nft or snft transaction",
+                    "type": "integer"
+                },
                 "reward": {
                     "description": "amount of total reward",
                     "type": "string"
@@ -2361,10 +2437,6 @@ const docTemplate = `{
                 "timestamp": {
                     "description": "create time",
                     "type": "integer"
-                },
-                "tx_hash": {
-                    "description": "the transaction created",
-                    "type": "string"
                 }
             }
         },
@@ -2514,6 +2586,79 @@ const docTemplate = `{
                 "totalValidatorOnline": {
                     "description": "Total amount of validator online",
                     "type": "integer"
+                }
+            }
+        },
+        "model.Transaction": {
+            "type": "object",
+            "properties": {
+                "blockHash": {
+                    "description": "create transaction",
+                    "type": "string"
+                },
+                "blockNumber": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "contractAddress": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "cumulativeGasUsed": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "error": {
+                    "description": "exec error",
+                    "type": "string"
+                },
+                "from": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "gas": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "gasPrice": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "gasUsed": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "hash": {
+                    "description": "create transaction",
+                    "type": "string"
+                },
+                "input": {
+                    "description": "Additional input data, contract call encoded data",
+                    "type": "string"
+                },
+                "nonce": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "to": {
+                    "description": "address",
+                    "type": "string"
+                },
+                "transactionIndex": {
+                    "description": "transaction random number, transaction volume",
+                    "type": "integer"
+                },
+                "value": {
+                    "description": "The total amount of coins in the chain",
+                    "type": "string"
                 }
             }
         },
@@ -2784,6 +2929,22 @@ const docTemplate = `{
                 }
             }
         },
+        "service.ErbiesRes": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "erbie transaction list",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Erbie"
+                    }
+                },
+                "total": {
+                    "description": "The total number of transactions",
+                    "type": "integer"
+                }
+            }
+        },
         "service.ErrRes": {
             "type": "object",
             "properties": {
@@ -2911,7 +3072,7 @@ const docTemplate = `{
                     "description": "NFT transaction list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/model.ErbieTx"
+                        "$ref": "#/definitions/model.Erbie"
                     }
                 },
                 "total": {
@@ -3133,79 +3294,6 @@ const docTemplate = `{
                 }
             }
         },
-        "service.TransactionRes": {
-            "type": "object",
-            "properties": {
-                "blockHash": {
-                    "description": "create transaction",
-                    "type": "string"
-                },
-                "blockNumber": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "contractAddress": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "cumulativeGasUsed": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "error": {
-                    "description": "exec error",
-                    "type": "string"
-                },
-                "from": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "gas": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "gasPrice": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "gasUsed": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "hash": {
-                    "description": "create transaction",
-                    "type": "string"
-                },
-                "input": {
-                    "description": "Additional input data, contract call encoded data",
-                    "type": "string"
-                },
-                "nonce": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "status": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "description": "The event stamp of the block it is in",
-                    "type": "integer"
-                },
-                "to": {
-                    "description": "address",
-                    "type": "string"
-                },
-                "transactionIndex": {
-                    "description": "transaction random number, transaction volume",
-                    "type": "integer"
-                },
-                "value": {
-                    "description": "The total amount of coins in the chain",
-                    "type": "string"
-                }
-            }
-        },
         "service.TransactionsRes": {
             "type": "object",
             "properties": {
@@ -3217,7 +3305,7 @@ const docTemplate = `{
                     "description": "transaction list",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/service.TransactionRes"
+                        "$ref": "#/definitions/model.Transaction"
                     }
                 }
             }

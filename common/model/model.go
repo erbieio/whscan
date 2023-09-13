@@ -26,7 +26,7 @@ var Tables = []interface{}{
 	&Epoch{},
 	&Creator{},
 	&SNFT{},
-	&ErbieTx{},
+	&Erbie{},
 	&Reward{},
 	&Location{},
 }
@@ -50,7 +50,7 @@ type Stats struct {
 	TotalAmount          string `json:"totalAmount" gorm:"type:CHAR(128)"`     //total transaction volume
 	TotalNFTAmount       string `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
 	TotalSNFTAmount      string `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
-	TotalRecycle         int64  `json:"totalRecycle"`                          //Total number of recycle SNFT
+	TotalRecycle         int64  `json:"totalRecycle" gorm:"-"`                 //Total number of recycle SNFT
 	AvgBlockTime         int64  `json:"avgBlockTime" gorm:"-"`                 //average block time, ms
 	TotalBlock           int64  `json:"totalBlock" gorm:"-"`                   //Total number of blocks
 	TotalBlackHole       int64  `json:"totalBlackHole" gorm:"-"`               //Total number of BlackHole blocks
@@ -118,7 +118,7 @@ type Block struct {
 // Slashing validator and staker penalty record
 type Slashing struct {
 	Address     types.Address `json:"address" gorm:"type:CHAR(42);index"` //account address, validator or staker
-	BlockNumber types.Long    `json:"blockNumber" gorm:"index"`           //block number
+	BlockNumber types.Long    `json:"block_number" gorm:"index"`          //block number
 	Amount      types.BigInt  `json:"amount" gorm:"type:DECIMAL(65)"`     //penalty amount, unit wei
 	Weight      types.Long    `json:"weight,omitempty"`                   //weight after penalty
 	Reason      string        `json:"reason" gorm:"type:VARCHAR(42)"`     //penalty reason, 1: no block; 2: multi-signature; address: validator penalty
@@ -137,7 +137,7 @@ type Account struct {
 	Creator   *types.Address      `json:"creator,omitempty" gorm:"type:CHAR(42)"`   //the creator, the contract account has value
 	CreatedTx *types.Hash         `json:"createdTx,omitempty" gorm:"type:CHAR(66)"` //create transaction
 	SNFTCount int64               `json:"snftCount"`                                //hold SNFT number
-	SNFTValue string              `json:"snftValue"`                                //hold SNFT value
+	SNFTValue string              `json:"snftValue" gorm:"type:DECIMAL(65)"`        //hold SNFT value
 	NFTCount  int64               `json:"nftCount"`                                 //hold NFT number
 }
 
@@ -145,6 +145,7 @@ type Account struct {
 type Transaction struct {
 	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66);index"`    //Block Hash
 	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`                //block number
+	Timestamp         types.Long     `json:"timestamp"`                               //The event stamp of the block it is in
 	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
 	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
 	Input             string         `json:"input" gorm:"type:TEXT"`                  //Additional input data, contract call encoded data
@@ -214,17 +215,16 @@ type ERC1155Transfer struct {
 
 // NFT User NFT attribute information
 type NFT struct {
-	Address       *string `json:"address" gorm:"type:CHAR(42);primary_key"`  //NFT address, grows automatically from 0x1
-	RoyaltyRatio  int64   `json:"royalty_ratio"`                             //Royalty rate, in ten thousandths
-	MetaUrl       string  `json:"meta_url"`                                  //Real meta information URL
-	ExchangerAddr string  `json:"exchanger_addr" gorm:"type:CHAR(42);index"` //The address of the exchange, if there is none, it can be traded on any exchange
-	LastPrice     *string `json:"last_price"`                                //The last transaction price (null if the transaction is not completed), the unit is wei
-	TxAmount      string  `json:"tx_amount" gorm:"type:DECIMAL(65);index"`   //the total transaction volume of this NFT
-	Creator       string  `json:"creator" gorm:"type:CHAR(42)"`              //Creator address
-	Timestamp     int64   `json:"timestamp" gorm:"index"`                    //Create timestamp
-	BlockNumber   int64   `json:"block_number"`                              //The height of the created block
-	TxHash        string  `json:"tx_hash" gorm:"type:CHAR(66)"`              //The transaction hash created
-	Owner         string  `json:"owner" gorm:"type:CHAR(42);index"`          //owner
+	Address      string  `json:"address" gorm:"type:CHAR(42);primary_key"` //NFT address, grows automatically from 0x1
+	RoyaltyRatio int64   `json:"royalty_ratio"`                            //Royalty rate, in ten thousandths
+	MetaUrl      string  `json:"meta_url" gorm:"type:VARCHAR(8192)"`       //Real meta information URL
+	LastPrice    *string `json:"last_price" gorm:"type:DECIMAL(65)"`       //The last transaction price (null if the transaction is not completed), the unit is wei
+	TxAmount     string  `json:"tx_amount" gorm:"type:DECIMAL(65);index"`  //the total transaction volume of this NFT
+	Creator      string  `json:"creator" gorm:"type:CHAR(42)"`             //Creator address
+	Timestamp    int64   `json:"timestamp" gorm:"index"`                   //Create timestamp
+	BlockNumber  int64   `json:"block_number"`                             //The height of the created block
+	TxHash       string  `json:"tx_hash" gorm:"type:CHAR(66)"`             //The transaction hash created
+	Owner        string  `json:"owner" gorm:"type:CHAR(42);index"`         //owner
 }
 
 // Epoch SNFT Phase 1
@@ -233,7 +233,7 @@ type Epoch struct {
 	ID           string `json:"id" gorm:"type:CHAR(39);primary_key"` //period ID
 	Creator      string `json:"creator" gorm:"type:CHAR(42);index"`  //creator address, also the address of royalty income
 	RoyaltyRatio int64  `json:"royaltyRatio"`                        //the royalty rate of the same period of SNFT, the unit is one ten thousandth
-	MetaUrl      string `json:"meta_url"`                            //Real meta information URL
+	MetaUrl      string `json:"meta_url" gorm:"type:VARCHAR(8192)"`  //Real meta information URL
 	WeightValue  string `json:"weightValue"`                         //snft value
 	WeightAmount int64  `json:"weightAmount"`                        //hold block number amount
 	Voter        string `json:"voter" gorm:"type:CHAR(42);index"`    //voter
@@ -270,18 +270,19 @@ type SNFT struct {
 	Remove       bool    `json:"remove" gorm:"index"`                        //SNFTs that are synthesized and then removed
 }
 
-// ErbieTx erbie transaction attribute information
-type ErbieTx struct {
+// Erbie erbie transaction attribute information
+type Erbie struct {
 	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66);primary_key"`        //owned transaction hash
-	Type        uint8  `json:"type"`                                            //transaction type
+	Type        uint8  `json:"type" gorm:"index"`                               //transaction type
 	Address     string `json:"address,omitempty" gorm:"type:VARCHAR(42);index"` //the NFT or SNFT address of the transaction
-	From        string `json:"from,omitempty" gorm:"type:CHAR(42);index"`       //seller or caller address
-	To          string `json:"to,omitempty" gorm:"type:CHAR(42);index"`         //buyer or receive address
+	From        string `json:"from" gorm:"type:CHAR(42);index"`                 //seller or caller address
+	To          string `json:"to" gorm:"type:CHAR(42);index"`                   //buyer or receive address
 	Value       string `json:"value" gorm:"type:DECIMAL(65)"`                   //price value, the unit is wei
+	Extra       string `json:"extra,omitempty" gorm:"type:VARCHAR(8192)"`       //fee receive address or meta url
 	Timestamp   int64  `json:"timestamp"`                                       //transaction timestamp
-	BlockNumber int64  `json:"BlockNumber" gorm:"index"`                        //block number
-	Royalty     string `json:"royalty,omitempty" gorm:"type:DECIMAL(65)"`       //for the creator royalty
-	Fee         string `json:"fee,omitempty" gorm:"type:DECIMAL(65)"`           //transaction fee, unit wei
+	BlockNumber int64  `json:"block_number" gorm:"index"`                       //block number
+	RoyaltyRate int64  `json:"royalty_rate,omitempty"`                          //for the creator royalty
+	FeeRate     int64  `json:"fee_rate,omitempty"`                              //transaction fee, unit wei
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
@@ -309,8 +310,8 @@ type Staker struct {
 	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //staker address
 	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //create time
 	BlockNumber int64  `json:"block_number" gorm:"index"`                //the block number when created
-	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //the transaction created
 	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`           //pledge amount
+	FeeRate     int64  `json:"fee_rate"`                                 //fee charged when nft or snft transaction
 	Reward      string `json:"reward" gorm:"type:DECIMAL(65);index"`     //amount of total reward
 	RewardCount int64  `json:"reward_count"`                             //reward snft count
 }
@@ -348,10 +349,8 @@ type Parsed struct {
 	// erbie, which need to be inserted into the database by priority (later data may query previous data)
 	Epoch            *Epoch       //Official injection of the first phase of SNFT
 	Slashings        []*Slashing  //penalty slash
-	NFTs             []*NFT       //Newly created NFT
-	ErbieTxs         []*ErbieTx   //NFT transaction record, transfer, recycle, pledge
+	Erbies           []*Erbie     //NFT transaction record, transfer, recycle, pledge
 	Rewards          []*Reward    //reward record
 	Mergers          []*SNFT      //merge snft
-	ChangePledges    []*Pledge    //modify the pledge
 	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
 }

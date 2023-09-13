@@ -93,7 +93,7 @@ func epochNFTTx(c *gin.Context) {
 // @Accept      json
 // @Produce     json
 // @Param       hash path     string true "transaction hash"
-// @Success     200  {object} model.ErbieTx
+// @Success     200  {object} model.Erbie
 // @Failure     400  {object} service.ErrRes
 // @Router      /nft/tx/{hash} [get]
 func getNFTTx(c *gin.Context) {
@@ -134,7 +134,7 @@ func pageSNFT(c *gin.Context) {
 // @Produce     json
 // @Param       hash query    string false "recycle tx hash"
 // @Param       addr query    string false "recycle address"
-// @Success     200  {object} model.ErbieTx
+// @Success     200  {object} model.Erbie
 // @Failure     400  {object} service.ErrRes
 // @Router      /snft/recycle_tx [get]
 func getRecycleTx(c *gin.Context) {
