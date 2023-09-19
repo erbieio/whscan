@@ -259,7 +259,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		// Miner reward SNFT processing
 		var rewards []*struct {
 			Address      string   `json:"Address"`
-			NFTAddress   *string  `json:"NftAddress"`
+			NFTAddress   string   `json:"NftAddress"`
 			RewardAmount *big.Int `json:"RewardAmount"`
 		}
 		err = c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", number, true)
@@ -287,7 +287,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				// Note that when NFTAddress is zero address error
 				wh.Rewards[i].SNFT = rewards[i].NFTAddress
 				// Parse the new phase ID
-				if addr := *rewards[i].NFTAddress; addr[39:] == "000" {
+				if addr := rewards[i].NFTAddress; addr[39:] == "000" {
 					// Write the current information, once every 4096 SNFT rewards
 					epoch := struct {
 						StartIndex int64    `json:"start_Index"`
@@ -299,9 +299,6 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 					}{}
 					if err = c.Call(&epoch, "eth_getCurrentNFTInfo", number); err != nil {
 						return fmt.Errorf("GetEpoch() err:%v", err)
-					}
-					if len(epoch.Dir) == 52 {
-						epoch.Dir = epoch.Dir + "/"
 					}
 					wh.Epoch = &model.Epoch{
 						ID:           addr[:39],
@@ -339,18 +336,6 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 		}
 
-		var onlineWeight []*struct {
-			Address string `json:"address"`
-			Value   int64  `json:"value"`
-		}
-		if err = c.Call(&onlineWeight, "eth_getValidators", number); err != nil {
-			return fmt.Errorf("getWeights() err:%v", err)
-		}
-		wh.ChangeValidators = make([]*model.Validator, 0, len(onlineWeight))
-		for _, weight := range onlineWeight {
-			wh.ChangeValidators = append(wh.ChangeValidators, &model.Validator{Address: weight.Address, Weight: weight.Value})
-		}
-
 		var punished struct {
 			PunishedHash       []types.Hash    `json:"punishedHash"`
 			PunishedValidators []types.Address `json:"punishedValidators"`
@@ -363,29 +348,34 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			wh.Slashings = append(wh.Slashings, &model.Slashing{
 				Address:     validator,
 				BlockNumber: wh.Number,
-				Amount:      "0",
 				Reason:      "2",
 			})
 		}
 
 		if wh.Miner == types.ZeroAddress {
+			var onlineWeight []*struct {
+				Address types.Address `json:"address"`
+				Value   types.Long    `json:"value"`
+			}
+			if err = c.Call(&onlineWeight, "eth_getValidators", number); err != nil {
+				return fmt.Errorf("getWeights() err:%v", err)
+			}
 			for _, weight := range onlineWeight {
 				wh.Slashings = append(wh.Slashings, &model.Slashing{
-					Address:     types.Address(weight.Address),
+					Address:     weight.Address,
 					BlockNumber: wh.Number,
-					Amount:      "0",
-					Weight:      types.Long(weight.Value),
+					Weight:      weight.Value,
 					Reason:      "1",
 				})
 			}
 			var proposers []*struct {
-				Address string
+				Address types.Address
 			}
 			if err = c.Call(&proposers, "eth_getRealParticipantsByNumber", number); err != nil {
 				return fmt.Errorf("getProposers() err:%v", err)
 			}
 			for _, proposer := range proposers {
-				wh.Proposers = append(wh.Proposers, types.Address(proposer.Address))
+				wh.Proposers = append(wh.Proposers, proposer.Address)
 			}
 		}
 
@@ -421,8 +411,8 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 		}
 		for _, reward := range wh.Rewards {
-			if reward.SNFT != nil && (*reward.SNFT)[41] == 'f' {
-				addr := (*reward.SNFT)[:41] + "0"
+			if reward.SNFT != "" && reward.SNFT[41] == 'f' {
+				addr := (reward.SNFT)[:41] + "0"
 				for i := 0; i < 3; i++ {
 					info := struct {
 						NFT *struct {

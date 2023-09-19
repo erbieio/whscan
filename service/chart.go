@@ -26,7 +26,7 @@ func LineChart(limit int) (res LineChartRes, err error) {
 	if err != nil {
 		return
 	}
-	err = DB.Model(&model.Transaction{}).Order("block_number DESC, tx_index DESC").Limit(limit).Scan(&res.Txs).Error
+	err = DB.Model(&model.Transaction{}).Order("block_number DESC").Limit(limit).Scan(&res.Txs).Error
 	if err != nil {
 		return
 	}

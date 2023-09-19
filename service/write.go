@@ -61,10 +61,6 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		if err = saveErbie(db, parsed); err != nil {
 			return
 		}
-		// validator change
-		if err = saveValidator(db, parsed); err != nil {
-			return
-		}
 		// Officially inject SNFT meta information
 		if err = injectSNFT(db, parsed); err != nil {
 			return
@@ -218,14 +214,26 @@ func saveMerge(db *gorm.DB, wh *model.Parsed) (err error) {
 }
 
 func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
-	for _, reward := range wh.Rewards {
-		err = db.Exec("INSERT INTO rewards (`address`, `proxy`, `identity`, `block_number`, `snft`, `amount`) VALUES (@Address, (SELECT `proxy` FROM validators WHERE address=@Address), @Identity, @BlockNumber, @SNFT, @Amount)", reward).Error
-		if err != nil {
+	if len(wh.Rewards) > 0 {
+		if err = db.Create(wh.Rewards).Error; err != nil {
 			return
 		}
-		if reward.SNFT != nil {
+		if err = db.Exec("UPDATE rewards SET proxy=(SELECT proxy FROM validators WHERE address=rewards.address) WHERE block_number=? AND snft=''", wh.Number).Error; err != nil {
+			return
+		}
+		if err = db.Exec("UPDATE validators SET weight=70 WHERE address IN (SELECT address FROM rewards WHERE block_number=? AND snft='')", wh.Number).Error; err != nil {
+			return
+		}
+	} else if len(wh.Proposers) > 0 {
+		if err = db.Model(&model.Validator{}).Where("address IN (?)", wh.Proposers).Update("weight", 70).Error; err != nil {
+			return
+		}
+	}
+
+	for _, reward := range wh.Rewards {
+		if reward.SNFT != "" {
 			err = db.Create(&model.SNFT{
-				Address:      *reward.SNFT,
+				Address:      reward.SNFT,
 				TxAmount:     "0",
 				RewardAt:     int64(wh.Timestamp),
 				RewardNumber: int64(wh.Number),
@@ -240,7 +248,7 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 				return
 			}
 			if staker.Address != "" {
-				staker.Reward = BigIntAdd(staker.Reward, snftValue(*reward.SNFT, 1))
+				staker.Reward = BigIntAdd(staker.Reward, snftValue(reward.SNFT, 1))
 				staker.RewardCount++
 				if err = db.Select("reward", "reward_count").Updates(&staker).Error; err != nil {
 					return
@@ -271,8 +279,12 @@ func saveSlashing(db *gorm.DB, wh *model.Parsed) (err error) {
 		if err = db.Create(slashing).Error; err != nil {
 			return
 		}
-		if slashing.Reason == "2" {
-			err = db.Exec("UPDATE slashings SET amount = (SELECT amount FROM validators WHERE validators.address=slashings.address) WHERE address=? AND block_number=?", slashing.Address, slashing.BlockNumber).Error
+		if slashing.Reason == "1" {
+			if err = db.Model(&model.Validator{}).Where("address=?", slashing.Address).Update("weight", slashing.Weight).Error; err != nil {
+				return
+			}
+		} else {
+			err = db.Exec("UPDATE slashings SET amount=(SELECT amount FROM validators WHERE address=slashings.address) WHERE address=? AND block_number=?", slashing.Address, slashing.BlockNumber).Error
 			if err != nil {
 				return
 			}
@@ -288,15 +300,14 @@ func saveSlashing(db *gorm.DB, wh *model.Parsed) (err error) {
 			if err != nil {
 				return
 			}
-			err = db.Exec("DELETE FROM stakers WHERE amount='0'").Error
-			if err != nil {
-				return
-			}
 			err = db.Exec("DELETE FROM pledges WHERE validator=?", slashing.Address).Error
 			if err != nil {
 				return
 			}
 		}
+	}
+	if err = db.Where("amount=0").Delete(&model.Staker{}).Error; err != nil {
+		return
 	}
 	return
 }
@@ -305,7 +316,6 @@ func saveSlashing(db *gorm.DB, wh *model.Parsed) (err error) {
 func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 	nftCount := int64(0)
 	for _, erbie := range wh.Erbies {
-		_, snft := model.NFT{}, model.SNFT{}
 		switch erbie.Type {
 		case 0: //mint NFT
 			nftCount++
@@ -339,6 +349,7 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 			}
 
 		case 6: //recycle SNFT
+			snft := model.SNFT{}
 			if err = db.Where("address=?", erbie.Address).Take(&snft).Error; err != nil {
 				return
 			}
@@ -366,7 +377,7 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 				return
 			}
 
-			staker := model.Staker{Address: from, Amount: "0", Reward: "0"}
+			staker := model.Staker{Address: from, Amount: "0", Reward: "0", TxHash: erbie.TxHash}
 			if err = db.Find(&staker).Error; err != nil {
 				return
 			}
@@ -380,7 +391,7 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 				return
 			}
 
-			validator := model.Validator{Address: to, Proxy: to, Amount: "0", Reward: "0", Weight: 70}
+			validator := model.Validator{Address: to, Proxy: to, Amount: "0", Reward: "0", TxHash: erbie.TxHash, Weight: 70}
 			if err = db.Find(&validator).Error; err != nil {
 				return
 			}
@@ -504,33 +515,6 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 		}
 		if erbie.TxHash != "0x0" {
 			if err = db.Create(&erbie).Error; err != nil {
-				return
-			}
-		}
-	}
-	return
-}
-
-func saveValidator(db *gorm.DB, wh *model.Parsed) (err error) {
-	for i, change := range wh.ChangeValidators {
-		if wh.Number > 0 && i < 11 {
-			if err = db.Select("weight").Updates(change).Error; err != nil {
-				return
-			}
-		} else {
-			validator := model.Validator{Address: change.Address, Proxy: change.Address, Amount: "0", Reward: "0"}
-			if err = db.Find(&validator).Error; err != nil {
-				return
-			}
-			if change.Weight != 0 {
-				validator.Weight = change.Weight
-			}
-			validator.Timestamp = int64(wh.Timestamp)
-			validator.BlockNumber = int64(wh.Number)
-			err = db.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"timestamp", "block_number", "weight"}),
-			}).Create(&validator).Error
-			if err != nil {
 				return
 			}
 		}

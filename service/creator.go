@@ -22,7 +22,7 @@ func FetchCreators(page, size int, order string) (res CreatorsRes, err error) {
 }
 
 func GetCreator(addr string) (res model.Creator, err error) {
-	err = DB.Where("address=?", addr).First(&res).Error
+	err = DB.Where("address=?", addr).Take(&res).Error
 	return
 }
 

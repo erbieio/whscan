@@ -117,11 +117,11 @@ type Block struct {
 
 // Slashing validator and staker penalty record
 type Slashing struct {
-	Address     types.Address `json:"address" gorm:"type:CHAR(42);index"` //account address, validator or staker
-	BlockNumber types.Long    `json:"block_number" gorm:"index"`          //block number
-	Amount      types.BigInt  `json:"amount" gorm:"type:DECIMAL(65)"`     //penalty amount, unit wei
-	Weight      types.Long    `json:"weight,omitempty"`                   //weight after penalty
-	Reason      string        `json:"reason" gorm:"type:VARCHAR(42)"`     //penalty reason, 1: no block; 2: multi-signature; address: validator penalty
+	Address     types.Address `json:"address" gorm:"type:CHAR(42);index"`       //account address, validator or staker
+	BlockNumber types.Long    `json:"block_number" gorm:"index"`                //block number
+	Amount      *types.BigInt `json:"amount,omitempty" gorm:"type:DECIMAL(65)"` //penalty amount, unit wei
+	Weight      types.Long    `json:"weight,omitempty"`                         //weight after penalty
+	Reason      string        `json:"reason" gorm:"type:VARCHAR(42)"`           //penalty reason, 1: no block; 2: multi-signature; address: validator penalty
 }
 
 // Account information
@@ -143,7 +143,7 @@ type Account struct {
 
 // Transaction information
 type Transaction struct {
-	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66);index"`    //Block Hash
+	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
 	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`                //block number
 	Timestamp         types.Long     `json:"timestamp"`                               //The event stamp of the block it is in
 	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
@@ -154,11 +154,11 @@ type Transaction struct {
 	Gas               types.Long     `json:"gas"`                                     //fuel
 	GasPrice          types.Long     `json:"gasPrice"`                                //Gas price
 	Hash              types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //Hash
-	Status            *types.Long    `json:"status,omitempty" gorm:"index"`           //Status, 1: success; 0: failure
+	Status            *types.Long    `json:"status,omitempty"`                        //Status, 1: success; 0: failure
 	CumulativeGasUsed types.Long     `json:"cumulativeGasUsed"`                       //Cumulative gas consumption
 	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"`    //The created contract address
 	GasUsed           types.Long     `json:"gasUsed"`                                 //Gas consumption
-	TxIndex           types.Long     `json:"transactionIndex" gorm:"index"`           //The serial number in the block
+	TxIndex           types.Long     `json:"transactionIndex"`                        //The serial number in the block
 	Error             *string        `json:"error,omitempty" gorm:"type:VARCHAR(66)"` //exec error
 }
 
@@ -276,23 +276,23 @@ type Erbie struct {
 	Type        uint8  `json:"type" gorm:"index"`                               //transaction type
 	Address     string `json:"address,omitempty" gorm:"type:VARCHAR(42);index"` //the NFT or SNFT address of the transaction
 	From        string `json:"from" gorm:"type:CHAR(42);index"`                 //seller or caller address
-	To          string `json:"to" gorm:"type:CHAR(42);index"`                   //buyer or receive address
+	To          string `json:"to" gorm:"type:CHAR(42);index"`                   //buyer or proxy address to set
 	Value       string `json:"value" gorm:"type:DECIMAL(65)"`                   //price value, the unit is wei
 	Extra       string `json:"extra,omitempty" gorm:"type:VARCHAR(8192)"`       //fee receive address or meta url
 	Timestamp   int64  `json:"timestamp"`                                       //transaction timestamp
 	BlockNumber int64  `json:"block_number" gorm:"index"`                       //block number
-	RoyaltyRate int64  `json:"royalty_rate,omitempty"`                          //for the creator royalty
-	FeeRate     int64  `json:"fee_rate,omitempty"`                              //transaction fee, unit wei
+	RoyaltyRate int64  `json:"royalty_rate,omitempty"`                          //for the creator royalty rate
+	FeeRate     int64  `json:"fee_rate,omitempty"`                              //fee rate, unit wei; or number of recycle snft pieces
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
 type Reward struct {
-	Address     string  `json:"address" gorm:"type:CHAR(42)"`   //reward address
-	Proxy       *string `json:"proxy" gorm:"type:CHAR(42)"`     //proxy address
-	Identity    uint8   `json:"identity"`                       //Identity, 1: block producer, 2: validator, 3, staker
-	BlockNumber int64   `json:"block_number" gorm:"index"`      //The block number when rewarding
-	SNFT        *string `json:"snft" gorm:"type:CHAR(42)"`      //SNFT address
-	Amount      *string `json:"amount" gorm:"type:DECIMAL(65)"` //Amount of reward
+	Address     string  `json:"address" gorm:"type:CHAR(42);index"`       //reward address
+	Proxy       *string `json:"proxy,omitempty" gorm:"type:CHAR(42)"`     //proxy address
+	Identity    uint8   `json:"identity"`                                 //Identity, 1: block producer, 2: validator, 3, staker
+	BlockNumber int64   `json:"block_number" gorm:"index"`                //The block number when rewarding
+	SNFT        string  `json:"snft,omitempty" gorm:"type:CHAR(42)"`      //SNFT address
+	Amount      *string `json:"amount,omitempty" gorm:"type:DECIMAL(65)"` //Amount of reward
 }
 
 // Pledge records from stakers to validators
@@ -310,6 +310,7 @@ type Staker struct {
 	Address     string `json:"address" gorm:"type:CHAR(42);primary_key"` //staker address
 	Timestamp   int64  `json:"timestamp" gorm:"index"`                   //create time
 	BlockNumber int64  `json:"block_number" gorm:"index"`                //the block number when created
+	TxHash      string `json:"tx_hash" gorm:"type:CHAR(66)"`             //the record created
 	Amount      string `json:"amount" gorm:"type:DECIMAL(65)"`           //pledge amount
 	FeeRate     int64  `json:"fee_rate"`                                 //fee charged when nft or snft transaction
 	Reward      string `json:"reward" gorm:"type:DECIMAL(65);index"`     //amount of total reward
@@ -326,6 +327,7 @@ type Validator struct {
 	RewardNumber int64  `json:"reward_number"`                           //The number at latest reward
 	Timestamp    int64  `json:"timestamp"`                               //The time at latest updated
 	BlockNumber  int64  `json:"block_number"`                            //The block number at latest updated
+	TxHash       string `json:"tx_hash" gorm:"type:CHAR(66)"`            //the record created
 	Weight       int64  `json:"weight"`                                  //online weight,if it is not 70, it means that it is not online
 	Score        int64  `json:"score"`                                   //node comprehensive score
 }
@@ -347,10 +349,9 @@ type Parsed struct {
 	CacheLogs         []*EventLog
 
 	// erbie, which need to be inserted into the database by priority (later data may query previous data)
-	Epoch            *Epoch       //Official injection of the first phase of SNFT
-	Slashings        []*Slashing  //penalty slash
-	Erbies           []*Erbie     //NFT transaction record, transfer, recycle, pledge
-	Rewards          []*Reward    //reward record
-	Mergers          []*SNFT      //merge snft
-	ChangeValidators []*Validator //modify the validator, including proxy, staking and other operations
+	Epoch     *Epoch      //Official injection of the first phase of SNFT
+	Slashings []*Slashing //penalty slash
+	Erbies    []*Erbie    //NFT transaction record, transfer, recycle, pledge
+	Rewards   []*Reward   //reward record
+	Mergers   []*SNFT     //merge snft
 }

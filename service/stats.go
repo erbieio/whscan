@@ -46,7 +46,7 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.Transaction{}).Where("input='0x'").Count(&stats.TotalTransferTx).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Transaction{}).Where("LEFT(input,14)='0x65726269653a'").Count(&stats.TotalErbieTx).Error; err != nil {
+	if err = db.Model(&model.Erbie{}).Count(&stats.TotalErbieTx).Error; err != nil {
 		return
 	}
 	if err = db.Model(&model.NFT{}).Count(&stats.TotalNFT).Error; err != nil {
@@ -98,7 +98,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalPledge, _ := new(big.Int).SetString(stats.TotalPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
-	rewardSNFT, value := int64(0), new(big.Int)
+	rewardCoin, rewardSNFT, value := int64(0), int64(0), new(big.Int)
 	totalNFT, totalNFTTx, totalSNFTTx, totalRecycle := stats.TotalNFT, stats.TotalNFTTx, stats.TotalSNFTTx, stats.TotalRecycle
 	for _, account := range parsed.CacheAccounts {
 		value.SetString(string(account.Balance), 0)
@@ -138,7 +138,9 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		}
 	}
 	for _, reward := range parsed.Rewards {
-		if reward.SNFT != nil {
+		if reward.SNFT == "" {
+			rewardCoin++
+		} else {
 			rewardSNFT++
 		}
 	}
@@ -172,8 +174,8 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalTransaction += int64(len(parsed.CacheTxs))
 	stats.TotalInternalTx += int64(len(parsed.CacheInternalTxs))
 	stats.TotalNFT = totalNFT
+	stats.RewardCoinCount += rewardCoin
 	stats.RewardSNFTCount += rewardSNFT
-	stats.RewardCoinCount += int64(len(parsed.Rewards)) - rewardSNFT
 	stats.TotalAccount = int64(len(stats.Balances))
 	stats.TotalRecycle = totalRecycle
 	stats.TotalBalance = totalBalance.Text(10)
@@ -181,6 +183,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalPledge = totalPledge.Text(10)
 	stats.TotalNFTTx = totalNFTTx
 	stats.TotalSNFTTx = totalSNFTTx
+	stats.TotalErbieTx += int64(len(parsed.Erbies))
 	stats.TotalNFTAmount = totalNFTAmount.Text(10)
 	stats.TotalSNFTAmount = totalSNFTAmount.Text(10)
 	stats.TotalEpoch = stats.RewardSNFTCount/4096 + 1
@@ -190,8 +193,6 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	for _, tx := range parsed.CacheTxs {
 		if tx.Input == "0x" {
 			stats.TotalTransferTx++
-		} else if len(tx.Input) > 14 && tx.Input[:14] == "0x65726269653a" {
-			stats.TotalErbieTx++
 		}
 	}
 	return
@@ -235,11 +236,11 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.Validator{}).Where("`amount`>=70000000000000000000000").Count(&stats.TotalValidator)
 			db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
-			db.Model(&model.Validator{}).Where("weight>=10").Count(&stats.TotalValidatorOnline)
+			db.Model(&model.Validator{}).Where("`amount`>=70000000000000000000000 AND weight>=10").Count(&stats.TotalValidatorOnline)
 			db.Model(&model.Transaction{}).Where("block_number>?", parsed.Number-10000).Select("COUNT(DISTINCT `from`)").Scan(&stats.ActiveAccount)
 			if stats.Total24HTx == 0 || number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)
-				db.Model(&model.Transaction{}).Joins("LEFT JOIN blocks ON block_hash = blocks.hash").Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
+				db.Model(&model.Transaction{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
 				db.Model(&model.NFT{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HNFT)
 
 				var creators []*struct {

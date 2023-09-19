@@ -2139,7 +2139,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "fee_rate": {
-                    "description": "transaction fee, unit wei",
+                    "description": "fee rate, unit wei; or number of recycle snft pieces",
                     "type": "integer"
                 },
                 "from": {
@@ -2147,7 +2147,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "royalty_rate": {
-                    "description": "for the creator royalty",
+                    "description": "for the creator royalty rate",
                     "type": "integer"
                 },
                 "timestamp": {
@@ -2155,7 +2155,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "to": {
-                    "description": "buyer or receive address",
+                    "description": "buyer or proxy address to set",
                     "type": "string"
                 },
                 "tx_hash": {
@@ -2437,6 +2437,10 @@ const docTemplate = `{
                 "timestamp": {
                     "description": "create time",
                     "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "the record created",
+                    "type": "string"
                 }
             }
         },
@@ -2700,6 +2704,10 @@ const docTemplate = `{
                 "timestamp": {
                     "description": "The time at latest updated",
                     "type": "integer"
+                },
+                "tx_hash": {
+                    "description": "the record created",
+                    "type": "string"
                 },
                 "weight": {
                     "description": "online weight,if it is not 70, it means that it is not online",
