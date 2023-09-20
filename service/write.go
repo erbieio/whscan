@@ -100,7 +100,7 @@ func VerifyHead(parsed *model.Parsed) (pass bool, err error) {
 func SetHead(parsed *model.Parsed) error {
 	return DB.Transaction(func(db *gorm.DB) (err error) {
 		if head := parsed.Number; head >= 0 {
-			if err = db.Delete(&model.Epoch{}, "number>?", head).Error; err != nil {
+			if err = db.Delete(&model.Epoch{}, "start_number>?", head).Error; err != nil {
 				return
 			}
 			if err = db.Delete(&model.Staker{}, "block_number>?", head).Error; err != nil {

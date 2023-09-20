@@ -26,7 +26,7 @@ func FetchBlocks(page, size int, filter string) (res BlocksRes, err error) {
 		res.Total = stats.TotalBlock
 	}
 
-	err = db.Debug().Order("number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Blocks).Error
+	err = db.Order("number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Blocks).Error
 	return
 }
 

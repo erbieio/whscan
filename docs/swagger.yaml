@@ -846,17 +846,6 @@ definitions:
         description: number of nft
         type: integer
     type: object
-  service.NFTTxsRes:
-    properties:
-      nft_txs:
-        description: NFT transaction list
-        items:
-          $ref: '#/definitions/model.Erbie'
-        type: array
-      total:
-        description: The total number of NFTs
-        type: integer
-    type: object
   service.NFTsRes:
     properties:
       nfts:
@@ -1124,7 +1113,7 @@ paths:
       - application/json
       description: Query the block list in reverse order of height
       parameters:
-      - description: 'filter block, 0: all; 1: black hole; 2: penalty, default 0'
+      - description: 'filter block, 1: black hole; 2: penalty; other: all'
         in: query
         name: filter
         type: string
@@ -1458,105 +1447,6 @@ paths:
       summary: query NFT list
       tags:
       - NFT
-  /nft/tx/{hash}:
-    get:
-      consumes:
-      - application/json
-      description: Query the NFT of SNFT transactions by hash
-      parameters:
-      - description: transaction hash
-        in: path
-        name: hash
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Erbie'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query NFT transaction
-      tags:
-      - NFT
-  /nft/tx/epoch:
-    get:
-      consumes:
-      - application/json
-      description: Query the specified period of snft transactions
-      parameters:
-      - description: Specify the period id
-        in: query
-        name: id
-        required: true
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.NFTTxsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query SNFT transaction list
-      tags:
-      - NFT
-  /nft/tx/page:
-    get:
-      consumes:
-      - application/json
-      description: Query the list of NFT transactions in reverse order of creation
-        time
-      parameters:
-      - description: Specify the NFT address, if empty, query all addresses
-        in: query
-        name: address
-        type: string
-      - description: Exchange, if empty, query all exchanges
-        in: query
-        name: exchanger
-        type: string
-      - description: Specify an account, if empty, query all accounts
-        in: query
-        name: account
-        type: string
-      - description: Page, default 1
-        in: query
-        name: page
-        type: string
-      - description: Page size, default 10
-        in: query
-        name: page_size
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/service.NFTTxsRes'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: Query NFT transaction list
-      tags:
-      - NFT
   /pledge/page:
     get:
       consumes:
@@ -1861,34 +1751,6 @@ paths:
       summary: query SNFT list
       tags:
       - NFT
-  /snft/recycle_tx:
-    get:
-      consumes:
-      - application/json
-      description: Query one SNFT recycle transaction by address or tx hash
-      parameters:
-      - description: recycle tx hash
-        in: query
-        name: hash
-        type: string
-      - description: recycle address
-        in: query
-        name: addr
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Erbie'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/service.ErrRes'
-      summary: query recycle transaction
-      tags:
-      - NFT
   /snft_meta/page:
     get:
       consumes:
@@ -2063,6 +1925,10 @@ paths:
       - description: Block number, if empty, query all
         in: query
         name: number
+        type: string
+      - description: Specify the period id
+        in: query
+        name: epoch
         type: string
       - description: nft or snft address, if empty, query all
         in: query

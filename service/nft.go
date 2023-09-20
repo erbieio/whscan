@@ -22,46 +22,6 @@ func FetchNFTs(owner string, page, size int) (res NFTsRes, err error) {
 	return
 }
 
-// NFTTxsRes NFT transaction paging return parameters
-type NFTTxsRes struct {
-	Total  int64         `json:"total"`   //The total number of NFTs
-	NFTTxs []model.Erbie `json:"nft_txs"` //NFT transaction list
-}
-
-func FetchNFTTxs(address, exchanger, account string, page, size int) (res NFTTxsRes, err error) {
-	db := DB
-	if exchanger != "" {
-		db = db.Where("exchanger_addr=?", exchanger)
-	}
-	if account != "" {
-		db = db.Where("`from`=? OR `to`=?", account, account)
-	}
-	if address != "" {
-		db = db.Where("address=?", address)
-	}
-
-	err = db.Model(&model.Erbie{}).Count(&res.Total).Error
-	if err != nil {
-		return
-	}
-	err = db.Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTTxs).Error
-	return
-}
-
-func EpochNFTTxs(epoch string, page, size int) (res NFTTxsRes, err error) {
-	db := DB.Model(&model.Erbie{}).Where("LEFT(nft_addr,39)=? AND tx_type!=6", epoch)
-	if err = db.Count(&res.Total).Error; err != nil {
-		return
-	}
-	err = db.Order("timestamp DESC").Offset((page - 1) * size).Limit(size).Find(&res.NFTTxs).Error
-	return
-}
-
-func GetNFTTx(hash string) (res model.Erbie, err error) {
-	err = DB.Where("tx_hash=?", hash).Take(&res).Error
-	return
-}
-
 // SNFTsRes SNFT paging return parameters
 type SNFTsRes struct {
 	Total int64        `json:"total"` //The total number of SNFTs
@@ -126,11 +86,6 @@ func FetchSNFTsAndMeta(owner string, page, size int) (res SNFTsAndMetaRes, err e
 
 func GetNFT(addr string) (res model.NFT, err error) {
 	err = DB.Find(&res, "address=?", addr).Error
-	return
-}
-
-func GetRecycleTx(hash, addr string) (res *model.Erbie, err error) {
-	err = DB.Model(&model.Erbie{}).Where("tx_type=6 AND (tx_hash=? OR nft_addr=?)", hash, addr).Limit(1).Scan(&res).Error
 	return
 }
 

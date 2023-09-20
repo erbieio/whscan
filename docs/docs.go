@@ -119,7 +119,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "filter block, 0: all; 1: black hole; 2: penalty, default 0",
+                        "description": "filter block, 1: black hole; 2: penalty; other: all",
                         "name": "filter",
                         "in": "query"
                     },
@@ -621,155 +621,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/nft/tx/epoch": {
-            "get": {
-                "description": "Query the specified period of snft transactions",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "NFT"
-                ],
-                "summary": "Query SNFT transaction list",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Specify the period id",
-                        "name": "id",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page, default 1",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page size, default 10",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/service.NFTTxsRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/nft/tx/page": {
-            "get": {
-                "description": "Query the list of NFT transactions in reverse order of creation time",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "NFT"
-                ],
-                "summary": "Query NFT transaction list",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Specify the NFT address, if empty, query all addresses",
-                        "name": "address",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Exchange, if empty, query all exchanges",
-                        "name": "exchanger",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Specify an account, if empty, query all accounts",
-                        "name": "account",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page, default 1",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Page size, default 10",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/service.NFTTxsRes"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
-        "/nft/tx/{hash}": {
-            "get": {
-                "description": "Query the NFT of SNFT transactions by hash",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "NFT"
-                ],
-                "summary": "Query NFT transaction",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "transaction hash",
-                        "name": "hash",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Erbie"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
         "/nft/{addr}": {
             "get": {
                 "description": "Query one NFT by address",
@@ -1233,49 +1084,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/snft/recycle_tx": {
-            "get": {
-                "description": "Query one SNFT recycle transaction by address or tx hash",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "NFT"
-                ],
-                "summary": "query recycle transaction",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "recycle tx hash",
-                        "name": "hash",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "recycle address",
-                        "name": "addr",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.Erbie"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/service.ErrRes"
-                        }
-                    }
-                }
-            }
-        },
         "/snft/{addr}": {
             "get": {
                 "description": "Query one SNFT by address",
@@ -1509,6 +1317,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Block number, if empty, query all",
                         "name": "number",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Specify the period id",
+                        "name": "epoch",
                         "in": "query"
                     },
                     {
@@ -3069,22 +2883,6 @@ const docTemplate = `{
                 },
                 "num": {
                     "description": "number of nft",
-                    "type": "integer"
-                }
-            }
-        },
-        "service.NFTTxsRes": {
-            "type": "object",
-            "properties": {
-                "nft_txs": {
-                    "description": "NFT transaction list",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/model.Erbie"
-                    }
-                },
-                "total": {
-                    "description": "The total number of NFTs",
                     "type": "integer"
                 }
             }

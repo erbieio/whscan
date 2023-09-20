@@ -126,6 +126,7 @@ func getInternalTransaction(c *gin.Context) {
 // @Param       page      query    string false "Page, default 1"
 // @Param       page_size query    string false "Page size, default 10"
 // @Param       number    query    string false "Block number, if empty, query all"
+// @Param       epoch     query    string false "Specify the period id"
 // @Param       address   query    string false "nft or snft address, if empty, query all"
 // @Param       account   query    string false "Account address, if empty, query all"
 // @Param       types     query    string false "erbie tx type,supports multiple types,if empty, query all"
@@ -134,7 +135,7 @@ func getInternalTransaction(c *gin.Context) {
 // @Router      /transaction/erbie/page [get]
 func pageErbieTransaction(c *gin.Context) {
 	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
-	data, err := service.FetchErbieTxs(page, size, c.Query("number"), c.Query("address"), c.Query("account"), c.Query("types"))
+	data, err := service.FetchErbieTxs(page, size, c.Query("number"), c.Query("address"), c.Query("epoch"), c.Query("account"), c.Query("types"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

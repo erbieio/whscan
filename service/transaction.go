@@ -2,6 +2,7 @@ package service
 
 import (
 	"server/common/model"
+	"strings"
 )
 
 func GetTransaction(hash string) (res model.Transaction, err error) {
@@ -24,7 +25,7 @@ func FetchTransactions(page, size int, number, addr, types string) (res Transact
 		db = db.Where("`from`=? OR `to`=?", addr, addr)
 	}
 	if types != "" {
-		db.Joins("LEFT JOIN erbies ON hash=tx_hash").Where("`type` IN (?)", types)
+		db.Joins("LEFT JOIN erbies ON hash=tx_hash").Where("`type` IN (?)", strings.Split(types, ","))
 	}
 	if number != "" || addr != "" || types != "" {
 		err = db.Count(&res.Total).Error
@@ -67,7 +68,7 @@ type ErbiesRes struct {
 	Data  []*model.Erbie `json:"data"`  //erbie transaction list
 }
 
-func FetchErbieTxs(page, size int, number, address, account, types string) (res ErbiesRes, err error) {
+func FetchErbieTxs(page, size int, number, address, epoch, account, types string) (res ErbiesRes, err error) {
 	db := DB.Model(&model.Erbie{})
 	if number != "" {
 		db = db.Where("`block_number`=?", number)
@@ -75,11 +76,14 @@ func FetchErbieTxs(page, size int, number, address, account, types string) (res 
 	if address != "" {
 		db = db.Where("`address`=?", address)
 	}
+	if epoch != "" {
+		db = db.Where("LEFT(address,39)=?", epoch)
+	}
 	if account != "" {
 		db = db.Where("`from`=? OR `to`=?", account, account)
 	}
 	if types != "" {
-		db = db.Where("`type` IN (?)", types)
+		db = db.Where("`type` IN (?)", strings.Split(types, ","))
 	}
 
 	if err = db.Count(&res.Total).Error; err != nil {
