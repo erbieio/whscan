@@ -154,9 +154,9 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 		info := struct {
 			Nonce   types.Long `json:"Nonce"`
 			Balance *big.Int   `json:"Balance"`
-			Worm    *struct {
-				VoteWeight *big.Int `json:"VoteWeight"`
-			} `json:"Worm"`
+			//Worm    *struct {
+			//	VoteWeight *big.Int `json:"VoteWeight"`
+			//} `json:"Worm"`
 		}{}
 		for _, address := range modifiedAccounts {
 			if address != types.ZeroAddress && (address[:12] == "0x0000000000" || address[:12] == "0x8000000000") {
@@ -179,11 +179,11 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			account.Number = parsed.Number
 			account.Nonce = info.Nonce
 			account.Balance = types.BigInt(info.Balance.String())
-			if info.Worm != nil {
-				account.SNFTValue = info.Worm.VoteWeight.String()
-			} else {
-				account.SNFTValue = "0"
-			}
+			//if info.Worm != nil {
+			//	account.SNFTValue = info.Worm.VoteWeight.String()
+			//} else {
+			//	account.SNFTValue = "0"
+			//}
 			parsed.CacheAccounts = append(parsed.CacheAccounts, account)
 		}
 	}
@@ -207,9 +207,9 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 				info := struct {
 					Nonce   types.Long `json:"Nonce"`
 					Balance *big.Int   `json:"Balance"`
-					Worm    *struct {
-						VoteWeight *big.Int `json:"VoteWeight"`
-					} `json:"Worm"`
+					//Worm    *struct {
+					//	VoteWeight *big.Int `json:"VoteWeight"`
+					//} `json:"Worm"`
 				}{}
 				if err = c.Call(&info, "eth_getAccountInfo", account.Address, number); err != nil {
 					return
@@ -217,11 +217,11 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 				account.Number = parsed.Number
 				account.Nonce = info.Nonce
 				account.Balance = types.BigInt(info.Balance.String())
-				if info.Worm != nil {
-					account.SNFTValue = info.Worm.VoteWeight.String()
-				} else {
-					account.SNFTValue = "0"
-				}
+				//if info.Worm != nil {
+				//	account.SNFTValue = info.Worm.VoteWeight.String()
+				//} else {
+				//	account.SNFTValue = "0"
+				//}
 			}
 			break
 		}
@@ -443,6 +443,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		info := struct {
 			Worm *struct {
 				//FeeRate         int64 `json:"FeeRate"`
+				ValidatorProxy  string `json:"ValidatorProxy"`
 				StakerExtension *struct {
 					StakerExtensions []struct {
 						Addr    string   `json:"Addr"`
@@ -459,35 +460,36 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				for _, pledge := range info.Worm.StakerExtension.StakerExtensions {
 					wh.Erbies = append(wh.Erbies, &model.Erbie{
 						TxHash:    "0x0",
-						Type:      9,
+						Type:      3,
 						From:      string(account.Address),
 						To:        pledge.Addr,
 						Value:     pledge.Balance.Text(10),
 						Timestamp: int64(wh.Timestamp),
+						Proxy:     info.Worm.ValidatorProxy,
 						//FeeRate:   info.Worm.FeeRate,
 					})
 				}
 			}
 		}
-		result := struct {
-			Validators []*struct {
-				Addr  string `json:"Addr"`
-				Proxy string `json:"Proxy"`
-			} `json:"Validators"`
-		}{}
-		if err = c.Call(&result, "eth_getValidator", "0x0"); err != nil {
-			return
-		}
-		for _, validator := range result.Validators {
-			wh.Erbies = append(wh.Erbies, &model.Erbie{
-				TxHash:    "0x0",
-				Type:      31,
-				From:      validator.Addr,
-				To:        validator.Proxy,
-				Timestamp: int64(wh.Timestamp),
-			})
-
-		}
+		//result := struct {
+		//	Validators []*struct {
+		//		Addr  string `json:"Addr"`
+		//		Proxy string `json:"Proxy"`
+		//	} `json:"Validators"`
+		//}{}
+		//if err = c.Call(&result, "eth_getValidator", "0x0"); err != nil {
+		//	return
+		//}
+		//for _, validator := range result.Validators {
+		//	wh.Erbies = append(wh.Erbies, &model.Erbie{
+		//		TxHash:    "0x0",
+		//		Type:      31,
+		//		From:      validator.Addr,
+		//		To:        validator.Proxy,
+		//		Timestamp: int64(wh.Timestamp),
+		//	})
+		//
+		//}
 	}
 	return
 }

@@ -284,31 +284,37 @@ func saveSlashing(db *gorm.DB, wh *model.Parsed) (err error) {
 				return
 			}
 		} else {
-			err = db.Exec("UPDATE slashings SET amount=(SELECT amount FROM validators WHERE address=slashings.address) WHERE address=? AND block_number=?", slashing.Address, slashing.BlockNumber).Error
-			if err != nil {
+
+			// erbie链上validator的最小权重为1
+			if err = db.Model(&model.Validator{}).Where("address=?", slashing.Address).Update("weight", 1).Error; err != nil {
 				return
 			}
-			err = db.Exec("DELETE FROM validators WHERE address=?", slashing.Address).Error
-			if err != nil {
-				return
-			}
-			err = db.Exec("INSERT INTO slashings (SELECT staker AS address, ? AS block_number, amount, 0 AS weight, validator AS reason FROM pledges WHERE validator=?)", slashing.BlockNumber, slashing.Address).Error
-			if err != nil {
-				return
-			}
-			err = db.Exec("UPDATE stakers SET amount=amount-(SELECT amount FROM pledges WHERE staker=address AND validator=?) WHERE address IN (SELECT staker FROM pledges WHERE validator=?)", slashing.Address, slashing.Address).Error
-			if err != nil {
-				return
-			}
-			err = db.Exec("DELETE FROM pledges WHERE validator=?", slashing.Address).Error
-			if err != nil {
-				return
-			}
+
+			//err = db.Exec("UPDATE slashings SET amount=(SELECT amount FROM validators WHERE address=slashings.address) WHERE address=? AND block_number=?", slashing.Address, slashing.BlockNumber).Error
+			//if err != nil {
+			//	return
+			//}
+			//err = db.Exec("DELETE FROM validators WHERE address=?", slashing.Address).Error
+			//if err != nil {
+			//	return
+			//}
+			//err = db.Exec("INSERT INTO slashings (SELECT staker AS address, ? AS block_number, amount, 0 AS weight, validator AS reason FROM pledges WHERE validator=?)", slashing.BlockNumber, slashing.Address).Error
+			//if err != nil {
+			//	return
+			//}
+			//err = db.Exec("UPDATE stakers SET amount=amount-(SELECT amount FROM pledges WHERE staker=address AND validator=?) WHERE address IN (SELECT staker FROM pledges WHERE validator=?)", slashing.Address, slashing.Address).Error
+			//if err != nil {
+			//	return
+			//}
+			//err = db.Exec("DELETE FROM pledges WHERE validator=?", slashing.Address).Error
+			//if err != nil {
+			//	return
+			//}
 		}
 	}
-	if err = db.Where("amount=0").Delete(&model.Staker{}).Error; err != nil {
-		return
-	}
+	//if err = db.Where("amount=0").Delete(&model.Staker{}).Error; err != nil {
+	//	return
+	//}
 	return
 }
 

@@ -283,6 +283,7 @@ type Erbie struct {
 	BlockNumber int64  `json:"block_number" gorm:"index"`                       //block number
 	RoyaltyRate int64  `json:"royalty_rate,omitempty"`                          //for the creator royalty rate
 	FeeRate     int64  `json:"fee_rate,omitempty"`                              //fee rate, unit wei; or number of recycle snft pieces
+	Proxy       string `json:"proxy,omitempty"`                                 //It's validator's proxy address to run a node
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB

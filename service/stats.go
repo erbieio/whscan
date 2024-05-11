@@ -127,13 +127,13 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			}
 		}
 		switch erbie.Type {
-		case 0, 16, 17, 19:
-			totalNFT++
-		case 6:
-			totalRecycle += erbie.FeeRate
-		case 9:
+		//case 0, 16, 17, 19:
+		//	totalNFT++
+		//case 6:
+		//	totalRecycle += erbie.FeeRate
+		case 3:
 			totalPledge = totalPledge.Add(totalPledge, value)
-		case 10:
+		case 4:
 			totalPledge = totalPledge.Sub(totalPledge, value)
 		}
 	}
