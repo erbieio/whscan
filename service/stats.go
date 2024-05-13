@@ -132,8 +132,10 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		//case 6:
 		//	totalRecycle += erbie.FeeRate
 		case 3:
+			value.SetString(erbie.Value, 0)
 			totalPledge = totalPledge.Add(totalPledge, value)
 		case 4:
+			value.SetString(erbie.Value, 0)
 			totalPledge = totalPledge.Sub(totalPledge, value)
 		}
 	}
