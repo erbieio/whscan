@@ -395,8 +395,12 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 				return
 			}
 
-			//validator := model.Validator{Address: to, Proxy: to, Amount: "0", Reward: "0", TxHash: erbie.TxHash, Weight: 70}
-			validator := model.Validator{Address: to, Proxy: erbie.Proxy, Amount: "0", Reward: "0", TxHash: erbie.TxHash, Weight: 70}
+			validator := model.Validator{Address: to, Proxy: to, Amount: "0", Reward: "0", TxHash: erbie.TxHash, Weight: 70}
+			// 如果有代理地址，改为代理地址
+			if erbie.Proxy != "" {
+				validator.Proxy = erbie.Proxy
+			}
+
 			if err = db.Find(&validator).Error; err != nil {
 				return
 			}

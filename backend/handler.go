@@ -458,16 +458,21 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 			if info.Worm != nil && info.Worm.StakerExtension != nil {
 				for _, pledge := range info.Worm.StakerExtension.StakerExtensions {
-					wh.Erbies = append(wh.Erbies, &model.Erbie{
+					tempEribie := &model.Erbie{
 						TxHash:    "0x0",
 						Type:      3,
 						From:      string(account.Address),
 						To:        pledge.Addr,
 						Value:     pledge.Balance.Text(10),
 						Timestamp: int64(wh.Timestamp),
-						Proxy:     info.Worm.ValidatorProxy,
 						//FeeRate:   info.Worm.FeeRate,
-					})
+					}
+					if string(account.Address) == pledge.Addr {
+						if info.Worm.ValidatorProxy != "0x0000000000000000000000000000000000000000" {
+							tempEribie.Proxy = info.Worm.ValidatorProxy
+						}
+					}
+					wh.Erbies = append(wh.Erbies, tempEribie)
 				}
 			}
 		}
@@ -533,7 +538,9 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 
 	case 3: //to be a validator or staker
 		if tx.From == *tx.To {
-			erbie.Proxy = w.ProxyAddress
+			if w.ProxyAddress != "" && w.ProxyAddress != "0x0000000000000000000000000000000000000000" {
+				erbie.Proxy = w.ProxyAddress
+			}
 		}
 
 	case 4: //not to be a validator or staker
