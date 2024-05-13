@@ -532,6 +532,9 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 	case 2: //withdraw erb to owner of csbt
 
 	case 3: //to be a validator or staker
+		if tx.From == *tx.To {
+			erbie.Proxy = w.ProxyAddress
+		}
 
 	case 4: //not to be a validator or staker
 
