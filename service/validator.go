@@ -56,14 +56,16 @@ func updateLocation(db *gorm.DB, fileName string, lastLine, lastSize int64) (int
 						splits := strings.Split(scanner.Text(), " ")
 						if len(splits) == 3 {
 							if ip := splits[2]; ip != "127.0.0.1" && ip != "0.0.0.0" {
-								_, latitude, longitude := utils.IP2Location(ip)
+								countryName, cityName, latitude, longitude := utils.IP2Location(ip)
 								db.Clauses(clause.OnConflict{
-									DoUpdates: clause.AssignmentColumns([]string{"ip", "latitude", "longitude"}),
+									DoUpdates: clause.AssignmentColumns([]string{"ip", "latitude", "longitude", "city", "country"}),
 								}).Create(&model.Location{
 									Address:   strings.ToLower(splits[1]),
 									IP:        ip,
 									Latitude:  latitude,
 									Longitude: longitude,
+									City:      cityName,
+									Country:   countryName,
 								})
 							}
 						}

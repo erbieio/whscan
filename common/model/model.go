@@ -338,6 +338,8 @@ type Location struct {
 	IP        string  `json:"ip" gorm:"type:VARCHAR(15)"`              //account ip
 	Latitude  float64 `json:"latitude"`                                //latitude
 	Longitude float64 `json:"longitude"`                               //longitude
+	City      string  `json:"city"`                                    //city
+	Country   string  `json:"country"`                                 //country
 }
 
 // Parsed block parsing result
