@@ -131,6 +131,8 @@ type LocationRes struct {
 	Proxy     string  `json:"proxy"`     //proxy address
 	Latitude  float64 `json:"latitude"`  //latitude
 	Longitude float64 `json:"longitude"` //longitude
+	City      string  `json:"city"`      //city
+	Country   string  `json:"country"`   //country
 }
 
 func FetchLocations() (res []*LocationRes, err error) {
