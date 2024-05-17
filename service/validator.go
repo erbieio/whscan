@@ -137,7 +137,7 @@ type LocationRes struct {
 
 func FetchLocations() (res []*LocationRes, err error) {
 	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`proxy`=`locations`.`address`").
-		Where("`amount`>=70000000000000000000000").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`").Scan(&res).Error
+		Where("`amount`>=70000000000000000000000").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`city`,`country`").Scan(&res).Error
 	return
 }
 
