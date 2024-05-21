@@ -184,6 +184,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			//} else {
 			//	account.SNFTValue = "0"
 			//}
+			account.SNFTValue = "0"
 			parsed.CacheAccounts = append(parsed.CacheAccounts, account)
 		}
 	}
