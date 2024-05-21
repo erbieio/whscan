@@ -223,6 +223,7 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 				//} else {
 				//	account.SNFTValue = "0"
 				//}
+				account.SNFTValue = "0"
 			}
 			break
 		}
