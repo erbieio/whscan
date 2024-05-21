@@ -89,6 +89,21 @@ func loadStats(db *gorm.DB) (err error) {
 		totalPledge = totalPledge.Add(totalPledge, value)
 	}
 	stats.TotalPledge = totalPledge.Text(10)
+
+	//validator's stake
+	validatorAmounts := make([]string, 0)
+	validatorValue := new(big.Int)
+	validatorTotalPledge := big.NewInt(0)
+	err = db.Model(&model.Pledge{}).Where("staker = validator").Pluck("amount", &validatorAmounts).Error
+	if err != nil {
+		return
+	}
+	for _, amount := range validatorAmounts {
+		validatorValue.SetString(amount, 0)
+		validatorTotalPledge = validatorTotalPledge.Add(validatorTotalPledge, validatorValue)
+	}
+	stats.ValidatorTotalPledge = validatorTotalPledge.Text(10)
+
 	return
 }
 
@@ -96,6 +111,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
 	totalPledge, _ := new(big.Int).SetString(stats.TotalPledge, 0)
+	validatorTotalPledge, _ := new(big.Int).SetString(stats.ValidatorTotalPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
 	rewardCoin, rewardSNFT, value := int64(0), int64(0), new(big.Int)
@@ -134,9 +150,15 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 		case 3:
 			value.SetString(erbie.Value, 0)
 			totalPledge = totalPledge.Add(totalPledge, value)
+			if erbie.From == erbie.To {
+				validatorTotalPledge = validatorTotalPledge.Add(validatorTotalPledge, value)
+			}
 		case 4:
 			value.SetString(erbie.Value, 0)
 			totalPledge = totalPledge.Sub(totalPledge, value)
+			if erbie.From == erbie.To {
+				validatorTotalPledge = validatorTotalPledge.Sub(validatorTotalPledge, value)
+			}
 		}
 	}
 	for _, reward := range parsed.Rewards {

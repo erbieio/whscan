@@ -74,6 +74,7 @@ type Stats struct {
 	RewardCoinCount      int64  `json:"rewardCoinCount" gorm:"-"`              //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount      int64  `json:"rewardSNFTCount" gorm:"-"`              //Total number of times to get SNFT rewards
 	TotalPledge          string `json:"totalPledge" gorm:"-"`                  //Total amount of  pledge
+	ValidatorTotalPledge string `json:"validatorTotalPledge" gorm:"-"`         //Total amount of validator pledge
 	Total24HStakerTx     int64  `json:"total24HStakerTx" gorm:"-"`             //Total number of staker transactions within 24 hours
 	Total24HNFT          int64  `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64  `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
