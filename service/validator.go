@@ -88,7 +88,7 @@ func updateLastMsg(db *gorm.DB, fileName string) {
 	if file, err := os.Open(fileName); err == nil {
 		lastMsg = lastMsg[:0]
 		data, proxies, exist := []string(nil), map[string]bool{}, map[string]bool{}
-		db.Model(&model.Validator{}).Where("`amount`>=70000000000000000000000").Select("proxy").Scan(&data)
+		db.Model(&model.Validator{}).Where("`amount`>=35000000000000000000000").Select("proxy").Scan(&data)
 		for _, proxy := range data {
 			proxies[proxy] = true
 		}
@@ -117,7 +117,7 @@ type ValidatorsRes struct {
 }
 
 func FetchValidator(page, size int, order string) (res ValidatorsRes, err error) {
-	db := DB.Where("`amount`>=70000000000000000000000")
+	db := DB.Where("`amount`>=35000000000000000000000")
 	if order != "" {
 		db = db.Order(order)
 	}
@@ -137,7 +137,7 @@ type LocationRes struct {
 
 func FetchLocations() (res []*LocationRes, err error) {
 	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`proxy`=`locations`.`address`").
-		Where("`amount`>=70000000000000000000000").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`city`,`country`").Scan(&res).Error
+		Where("`amount`>=35000000000000000000000").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`city`,`country`").Scan(&res).Error
 	return
 }
 
