@@ -140,6 +140,7 @@ type Account struct {
 	SNFTCount int64               `json:"snftCount"`                                //hold SNFT number
 	SNFTValue string              `json:"snftValue" gorm:"type:DECIMAL(65)"`        //hold SNFT value
 	NFTCount  int64               `json:"nftCount"`                                 //hold NFT number
+	Timestamp types.Long          `json:"timestamp"`                                //The event stamp of the account it is in
 }
 
 // Transaction information

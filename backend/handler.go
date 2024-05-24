@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"server/common/model"
 	"server/common/types"
@@ -123,6 +124,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 		for address, account := range state.Accounts {
 			account.Address = address
 			account.SNFTValue = "0"
+			account.Timestamp = types.Long(time.Now().Local().Unix())
 			if account.Code != nil {
 				if err = utils.SetProperty(c, ctx, "0x0", account); err != nil {
 					return
@@ -176,6 +178,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			if err = c.CallContext(ctx, &info, "eth_getAccountInfo", address, number); err != nil {
 				return
 			}
+			account.Timestamp = types.Long(time.Now().Local().Unix())
 			account.Number = parsed.Number
 			account.Nonce = info.Nonce
 			account.Balance = types.BigInt(info.Balance.String())
