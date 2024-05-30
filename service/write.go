@@ -43,11 +43,12 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 		}
 		// write account information
 		if len(parsed.CacheAccounts) > 0 {
-			if err = db.Clauses(clause.OnConflict{
-				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "number", "snft_value"}),
-			}).Create(parsed.CacheAccounts).Error; err != nil {
-				return
-			}
+			//if err = db.Clauses(clause.OnConflict{
+			//	DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "number", "snft_value"}),
+			//}).Create(parsed.CacheAccounts).Error; err != nil {
+			//	return
+			//}
+			InsertAccounts(db, parsed.CacheAccounts)
 		}
 		// write block
 		if err = db.Create(parsed.Block).Error; err != nil {
@@ -79,6 +80,44 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 	})
 	freshStats(DB, parsed)
 	return
+}
+
+func InsertAccounts(db *gorm.DB, accounts []*model.Account) error {
+	// insertNum 是每批次插入最多行数
+	insertNum := 2000
+	// batchNum 是批次数
+	var batchNum int
+
+	accountsLen := len(accounts)
+	if accountsLen <= insertNum {
+		if err := db.Clauses(clause.OnConflict{
+			DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "number", "snft_value"}),
+		}).Create(accounts).Error; err != nil {
+			return err
+		}
+	} else {
+		if accountsLen%insertNum == 0 {
+			batchNum = accountsLen / insertNum
+		} else {
+			batchNum = (accountsLen / insertNum) + 1
+		}
+
+		for i := 0; i < batchNum; i++ {
+			var batchAccounts []*model.Account
+			if i+1 < batchNum {
+				batchAccounts = accounts[i*insertNum : (i+1)*insertNum-1]
+			} else {
+				batchAccounts = accounts[i*insertNum:]
+			}
+
+			if err := db.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "number", "snft_value"}),
+			}).Create(batchAccounts).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func VerifyHead(parsed *model.Parsed) (pass bool, err error) {
