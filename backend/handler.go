@@ -272,16 +272,21 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		}
 		for i := range rewards {
 			identity := uint8(0)
-			switch i {
-			case 7, 8, 9, 10:
+			if wh.Number == 1 {
 				identity = 3
-			case 0, 1, 2, 3, 4, 5:
-				identity = 2
-			case 6:
-				identity = 1
-			default:
-				return fmt.Errorf("reward length more than 11")
+			} else {
+				switch i {
+				case 7, 8, 9, 10:
+					identity = 3
+				case 0, 1, 2, 3, 4, 5:
+					identity = 2
+				case 6:
+					identity = 1
+				default:
+					return fmt.Errorf("reward length more than 11")
+				}
 			}
+
 			wh.Rewards = append(wh.Rewards, &model.Reward{
 				Address:     rewards[i].Address,
 				Identity:    identity,
