@@ -11,20 +11,21 @@ import (
 var geoLite2 []byte
 var geoDB, _ = geoip2.FromBytes(geoLite2)
 
-func IP2Location(ip string) (name string, latitude, longitude float64) {
+func IP2Location(ip string) (countryName, cityName string, latitude, longitude float64) {
 	city, err := geoDB.City(net.ParseIP(ip))
 	if err != nil {
 		return
 	}
 	language := "en"
-	name += city.Country.Names[language] + ","
-	if len(city.Subdivisions) > 0 {
-		name += city.Subdivisions[0].Names[language] + ","
-	} else {
-		name += city.City.Names[language] + ","
-	}
-	name += city.City.Names[language]
+	countryName = city.Country.Names[language] + ","
+	//if len(city.Subdivisions) > 0 {
+	//	name += city.Subdivisions[0].Names[language] + ","
+	//} else {
+	//	name += city.City.Names[language] + ","
+	//}
+	cityName = city.City.Names[language]
 	latitude = city.Location.Latitude
 	longitude = city.Location.Longitude
+
 	return
 }

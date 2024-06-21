@@ -59,3 +59,15 @@ func NFTChart() (res []*NFTChartRes, err error) {
 		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`hour`").Order("`hour`").Select("`hour`, COUNT(address) AS num").Scan(&res).Error
 	return
 }
+
+type AccountChartRes struct {
+	Hour uint64 `json:"hour"` // hour
+	Num  uint64 `json:"num"`  // number of account
+}
+
+func AccountChart() (res []*AccountChartRes, err error) {
+	start, stop := utils.LastTimeRange2(int64(1))
+	err = DB.Table("(?) A", DB.Model(&model.Account{}).Select("(timestamp-?) DIV 3600 AS `hour`,`address`", start).
+		Where("timestamp>=? AND timestamp<?", start, stop)).Group("`hour`").Order("`hour`").Select("`hour`, COUNT(address) AS num").Scan(&res).Error
+	return
+}

@@ -74,6 +74,7 @@ type Stats struct {
 	RewardCoinCount      int64  `json:"rewardCoinCount" gorm:"-"`              //Total number of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount      int64  `json:"rewardSNFTCount" gorm:"-"`              //Total number of times to get SNFT rewards
 	TotalPledge          string `json:"totalPledge" gorm:"-"`                  //Total amount of  pledge
+	ValidatorTotalPledge string `json:"validatorTotalPledge" gorm:"-"`         //Total amount of validator pledge
 	Total24HStakerTx     int64  `json:"total24HStakerTx" gorm:"-"`             //Total number of staker transactions within 24 hours
 	Total24HNFT          int64  `json:"total24HNFT" gorm:"-"`                  //Total number of NFT within 24 hours
 	Total24HTx           int64  `json:"total24HTx" gorm:"-"`                   //Total number of transactions within 24 hours
@@ -139,6 +140,7 @@ type Account struct {
 	SNFTCount int64               `json:"snftCount"`                                //hold SNFT number
 	SNFTValue string              `json:"snftValue" gorm:"type:DECIMAL(65)"`        //hold SNFT value
 	NFTCount  int64               `json:"nftCount"`                                 //hold NFT number
+	Timestamp types.Long          `json:"timestamp"`                                //The event stamp of the account it is in
 }
 
 // Transaction information
@@ -283,6 +285,7 @@ type Erbie struct {
 	BlockNumber int64  `json:"block_number" gorm:"index"`                       //block number
 	RoyaltyRate int64  `json:"royalty_rate,omitempty"`                          //for the creator royalty rate
 	FeeRate     int64  `json:"fee_rate,omitempty"`                              //fee rate, unit wei; or number of recycle snft pieces
+	Proxy       string `json:"proxy,omitempty"`                                 //It's validator's proxy address to run a node
 }
 
 // Reward miner reward, the reward method is SNFT and Amount, and Amount is tentatively set to 0.1ERB
@@ -337,6 +340,8 @@ type Location struct {
 	IP        string  `json:"ip" gorm:"type:VARCHAR(15)"`              //account ip
 	Latitude  float64 `json:"latitude"`                                //latitude
 	Longitude float64 `json:"longitude"`                               //longitude
+	City      string  `json:"city"`                                    //city
+	Country   string  `json:"country"`                                 //country
 }
 
 // Parsed block parsing result

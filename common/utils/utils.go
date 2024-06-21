@@ -193,3 +193,10 @@ func LastTimeRange(day int64) (start, stop int64) {
 	start = stop - DaySecond*day
 	return
 }
+
+// LastTimeRange2 unix time range for the specified number of days based on the current time
+func LastTimeRange2(day int64) (start, stop int64) {
+	stop = time.Now().Unix()
+	start = stop - DaySecond*day
+	return
+}

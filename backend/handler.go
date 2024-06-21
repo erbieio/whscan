@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strconv"
 	"strings"
+	"time"
 
 	"server/common/model"
 	"server/common/types"
@@ -124,6 +124,7 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 		for address, account := range state.Accounts {
 			account.Address = address
 			account.SNFTValue = "0"
+			account.Timestamp = types.Long(time.Now().Local().Unix())
 			if account.Code != nil {
 				if err = utils.SetProperty(c, ctx, "0x0", account); err != nil {
 					return
@@ -155,9 +156,9 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 		info := struct {
 			Nonce   types.Long `json:"Nonce"`
 			Balance *big.Int   `json:"Balance"`
-			Worm    *struct {
-				VoteWeight *big.Int `json:"VoteWeight"`
-			} `json:"Worm"`
+			//Worm    *struct {
+			//	VoteWeight *big.Int `json:"VoteWeight"`
+			//} `json:"Worm"`
 		}{}
 		for _, address := range modifiedAccounts {
 			if address != types.ZeroAddress && (address[:12] == "0x0000000000" || address[:12] == "0x8000000000") {
@@ -177,14 +178,16 @@ func decodeAccounts(c *node.Client, ctx context.Context, parsed *model.Parsed) (
 			if err = c.CallContext(ctx, &info, "eth_getAccountInfo", address, number); err != nil {
 				return
 			}
+			account.Timestamp = types.Long(time.Now().Local().Unix())
 			account.Number = parsed.Number
 			account.Nonce = info.Nonce
 			account.Balance = types.BigInt(info.Balance.String())
-			if info.Worm != nil {
-				account.SNFTValue = info.Worm.VoteWeight.String()
-			} else {
-				account.SNFTValue = "0"
-			}
+			//if info.Worm != nil {
+			//	account.SNFTValue = info.Worm.VoteWeight.String()
+			//} else {
+			//	account.SNFTValue = "0"
+			//}
+			account.SNFTValue = "0"
 			parsed.CacheAccounts = append(parsed.CacheAccounts, account)
 		}
 	}
@@ -208,9 +211,9 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 				info := struct {
 					Nonce   types.Long `json:"Nonce"`
 					Balance *big.Int   `json:"Balance"`
-					Worm    *struct {
-						VoteWeight *big.Int `json:"VoteWeight"`
-					} `json:"Worm"`
+					//Worm    *struct {
+					//	VoteWeight *big.Int `json:"VoteWeight"`
+					//} `json:"Worm"`
 				}{}
 				if err = c.Call(&info, "eth_getAccountInfo", account.Address, number); err != nil {
 					return
@@ -218,11 +221,12 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 				account.Number = parsed.Number
 				account.Nonce = info.Nonce
 				account.Balance = types.BigInt(info.Balance.String())
-				if info.Worm != nil {
-					account.SNFTValue = info.Worm.VoteWeight.String()
-				} else {
-					account.SNFTValue = "0"
-				}
+				//if info.Worm != nil {
+				//	account.SNFTValue = info.Worm.VoteWeight.String()
+				//} else {
+				//	account.SNFTValue = "0"
+				//}
+				account.SNFTValue = "0"
 			}
 			break
 		}
@@ -268,16 +272,21 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		}
 		for i := range rewards {
 			identity := uint8(0)
-			switch i {
-			case 7, 8, 9, 10:
+			if wh.Number == 1 {
 				identity = 3
-			case 0, 1, 2, 3, 4, 5:
-				identity = 2
-			case 6:
-				identity = 1
-			default:
-				return fmt.Errorf("reward length more than 11")
+			} else {
+				switch i {
+				case 7, 8, 9, 10:
+					identity = 3
+				case 0, 1, 2, 3, 4, 5:
+					identity = 2
+				case 6:
+					identity = 1
+				default:
+					return fmt.Errorf("reward length more than 11")
+				}
 			}
+
 			wh.Rewards = append(wh.Rewards, &model.Reward{
 				Address:     rewards[i].Address,
 				Identity:    identity,
@@ -287,49 +296,49 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				// Note that when NFTAddress is zero address error
 				wh.Rewards[i].SNFT = rewards[i].NFTAddress
 				// Parse the new phase ID
-				if addr := rewards[i].NFTAddress; addr[39:] == "000" {
-					// Write the current information, once every 4096 SNFT rewards
-					epoch := struct {
-						StartIndex int64    `json:"start_Index"`
-						Dir        string   `json:"dir"`
-						Royalty    int64    `json:"royalty"`
-						Address    string   `json:"Address"`
-						Creator    string   `json:"creator"`
-						VoteWeight *big.Int `json:"vote_weight"`
-					}{}
-					if err = c.Call(&epoch, "eth_getCurrentNFTInfo", number); err != nil {
-						return fmt.Errorf("GetEpoch() err:%v", err)
-					}
-					wh.Epoch = &model.Epoch{
-						ID:           addr[:39],
-						Creator:      strings.ToLower(epoch.Creator),
-						RoyaltyRatio: epoch.Royalty,
-						MetaUrl:      epoch.Dir,
-						WeightValue:  epoch.VoteWeight.Text(10),
-						Voter:        strings.ToLower(epoch.Address),
-						StartNumber:  int64(wh.Number),
-						StartTime:    int64(wh.Timestamp),
-					}
-
-					selected := wh.Number - 1
-					for startIndex := epoch.StartIndex; selected > wh.Number-64 && selected > 0; selected-- {
-						if err = c.Call(&epoch, "eth_getCurrentNFTInfo", selected.Hex()); err != nil {
-							return fmt.Errorf("GetEpoch() err:%v", err)
-						}
-						if startIndex != epoch.StartIndex {
-							break
-						}
-					}
-					info := struct {
-						Balance *big.Int `json:"Balance"`
-					}{}
-					if err = c.Call(&info, "eth_getAccountInfo", "0xffffffffffffffffffffffffffffffffffffffff", selected.Hex()); err != nil {
-						return
-					}
-					wh.Epoch.Number = int64(selected + 1)
-					wh.Epoch.Reward = info.Balance.Text(10)
-					wh.Epoch.Profit = "0"
-				}
+				//if addr := rewards[i].NFTAddress; addr[39:] == "000" {
+				//	// Write the current information, once every 4096 SNFT rewards
+				//	epoch := struct {
+				//		StartIndex int64    `json:"start_Index"`
+				//		Dir        string   `json:"dir"`
+				//		Royalty    int64    `json:"royalty"`
+				//		Address    string   `json:"Address"`
+				//		Creator    string   `json:"creator"`
+				//		VoteWeight *big.Int `json:"vote_weight"`
+				//	}{}
+				//	if err = c.Call(&epoch, "eth_getCurrentNFTInfo", number); err != nil {
+				//		return fmt.Errorf("GetEpoch() err:%v", err)
+				//	}
+				//	wh.Epoch = &model.Epoch{
+				//		ID:           addr[:39],
+				//		Creator:      strings.ToLower(epoch.Creator),
+				//		RoyaltyRatio: epoch.Royalty,
+				//		MetaUrl:      epoch.Dir,
+				//		WeightValue:  epoch.VoteWeight.Text(10),
+				//		Voter:        strings.ToLower(epoch.Address),
+				//		StartNumber:  int64(wh.Number),
+				//		StartTime:    int64(wh.Timestamp),
+				//	}
+				//
+				//	selected := wh.Number - 1
+				//	for startIndex := epoch.StartIndex; selected > wh.Number-64 && selected > 0; selected-- {
+				//		if err = c.Call(&epoch, "eth_getCurrentNFTInfo", selected.Hex()); err != nil {
+				//			return fmt.Errorf("GetEpoch() err:%v", err)
+				//		}
+				//		if startIndex != epoch.StartIndex {
+				//			break
+				//		}
+				//	}
+				//	info := struct {
+				//		Balance *big.Int `json:"Balance"`
+				//	}{}
+				//	if err = c.Call(&info, "eth_getAccountInfo", "0xffffffffffffffffffffffffffffffffffffffff", selected.Hex()); err != nil {
+				//		return
+				//	}
+				//	wh.Epoch.Number = int64(selected + 1)
+				//	wh.Epoch.Reward = info.Balance.Text(10)
+				//	wh.Epoch.Profit = "0"
+				//}
 			} else {
 				wh.Rewards[i].Amount = new(string)
 				*wh.Rewards[i].Amount = rewards[i].RewardAmount.Text(10)
@@ -388,62 +397,63 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 		}
 
 		// erbie auto merge snft
-		for _, eventLog := range wh.CacheLogs {
-			if len(eventLog.Topics) == 3 && len(eventLog.Data) >= 66 {
-				if eventLog.Topics[0] == "0x77415a68a0d28daf11e1308e53371f573e0920810c9cd9de7904777d5fb9d625" {
-					pieces, _ := strconv.ParseInt(eventLog.Data[62:66], 16, 32)
-					if pieces > 0 {
-						addr := string(eventLog.Topics[1][27:])
-						for i := 0; i < 3; i++ {
-							if addr[i] == '8' {
-								wh.Mergers = append(wh.Mergers, &model.SNFT{
-									Address:      "0x" + addr[i:],
-									TxAmount:     "0",
-									RewardAt:     int64(wh.Timestamp),
-									RewardNumber: int64(wh.Number),
-									Owner:        "0x" + string(eventLog.Topics[2][26:]),
-									Pieces:       pieces,
-								})
-							}
-						}
-					}
-				}
-			}
-		}
-		for _, reward := range wh.Rewards {
-			if reward.SNFT != "" && reward.SNFT[41] == 'f' {
-				addr := (reward.SNFT)[:41] + "0"
-				for i := 0; i < 3; i++ {
-					info := struct {
-						NFT *struct {
-							MergeLevel  int    `json:"MergeLevel"`
-							MergeNumber int64  `json:"MergeNumber"`
-							Owner       string `json:"Owner"`
-						} `json:"Nft"`
-					}{}
-					if err = c.Call(&info, "eth_getAccountInfo", addr, number); err != nil {
-						return
-					}
-					if info.NFT != nil && info.NFT.MergeLevel > i {
-						wh.Mergers = append(wh.Mergers, &model.SNFT{
-							Address:      addr[:41-i],
-							TxAmount:     "0",
-							RewardAt:     int64(wh.Timestamp),
-							RewardNumber: int64(wh.Number),
-							Owner:        info.NFT.Owner,
-							Pieces:       info.NFT.MergeNumber,
-						})
-						addr = addr[:40-i] + "0" + addr[41+i:]
-					} else {
-						break
-					}
-				}
-			}
-		}
+		//for _, eventLog := range wh.CacheLogs {
+		//	if len(eventLog.Topics) == 3 && len(eventLog.Data) >= 66 {
+		//		if eventLog.Topics[0] == "0x77415a68a0d28daf11e1308e53371f573e0920810c9cd9de7904777d5fb9d625" {
+		//			pieces, _ := strconv.ParseInt(eventLog.Data[62:66], 16, 32)
+		//			if pieces > 0 {
+		//				addr := string(eventLog.Topics[1][27:])
+		//				for i := 0; i < 3; i++ {
+		//					if addr[i] == '8' {
+		//						wh.Mergers = append(wh.Mergers, &model.SNFT{
+		//							Address:      "0x" + addr[i:],
+		//							TxAmount:     "0",
+		//							RewardAt:     int64(wh.Timestamp),
+		//							RewardNumber: int64(wh.Number),
+		//							Owner:        "0x" + string(eventLog.Topics[2][26:]),
+		//							Pieces:       pieces,
+		//						})
+		//					}
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+		//for _, reward := range wh.Rewards {
+		//	if reward.SNFT != "" && reward.SNFT[41] == 'f' {
+		//		addr := (reward.SNFT)[:41] + "0"
+		//		for i := 0; i < 3; i++ {
+		//			info := struct {
+		//				NFT *struct {
+		//					MergeLevel  int    `json:"MergeLevel"`
+		//					MergeNumber int64  `json:"MergeNumber"`
+		//					Owner       string `json:"Owner"`
+		//				} `json:"Nft"`
+		//			}{}
+		//			if err = c.Call(&info, "eth_getAccountInfo", addr, number); err != nil {
+		//				return
+		//			}
+		//			if info.NFT != nil && info.NFT.MergeLevel > i {
+		//				wh.Mergers = append(wh.Mergers, &model.SNFT{
+		//					Address:      addr[:41-i],
+		//					TxAmount:     "0",
+		//					RewardAt:     int64(wh.Timestamp),
+		//					RewardNumber: int64(wh.Number),
+		//					Owner:        info.NFT.Owner,
+		//					Pieces:       info.NFT.MergeNumber,
+		//				})
+		//				addr = addr[:40-i] + "0" + addr[41+i:]
+		//			} else {
+		//				break
+		//			}
+		//		}
+		//	}
+		//}
 	} else {
 		info := struct {
 			Worm *struct {
-				FeeRate         int64 `json:"FeeRate"`
+				//FeeRate         int64 `json:"FeeRate"`
+				ValidatorProxy  string `json:"ValidatorProxy"`
 				StakerExtension *struct {
 					StakerExtensions []struct {
 						Addr    string   `json:"Addr"`
@@ -458,37 +468,43 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 			}
 			if info.Worm != nil && info.Worm.StakerExtension != nil {
 				for _, pledge := range info.Worm.StakerExtension.StakerExtensions {
-					wh.Erbies = append(wh.Erbies, &model.Erbie{
+					tempEribie := &model.Erbie{
 						TxHash:    "0x0",
-						Type:      9,
+						Type:      3,
 						From:      string(account.Address),
 						To:        pledge.Addr,
 						Value:     pledge.Balance.Text(10),
 						Timestamp: int64(wh.Timestamp),
-						FeeRate:   info.Worm.FeeRate,
-					})
+						//FeeRate:   info.Worm.FeeRate,
+					}
+					if string(account.Address) == pledge.Addr {
+						if info.Worm.ValidatorProxy != "0x0000000000000000000000000000000000000000" {
+							tempEribie.Proxy = info.Worm.ValidatorProxy
+						}
+					}
+					wh.Erbies = append(wh.Erbies, tempEribie)
 				}
 			}
 		}
-		result := struct {
-			Validators []*struct {
-				Addr  string `json:"Addr"`
-				Proxy string `json:"Proxy"`
-			} `json:"Validators"`
-		}{}
-		if err = c.Call(&result, "eth_getValidator", "0x0"); err != nil {
-			return
-		}
-		for _, validator := range result.Validators {
-			wh.Erbies = append(wh.Erbies, &model.Erbie{
-				TxHash:    "0x0",
-				Type:      31,
-				From:      validator.Addr,
-				To:        validator.Proxy,
-				Timestamp: int64(wh.Timestamp),
-			})
-
-		}
+		//result := struct {
+		//	Validators []*struct {
+		//		Addr  string `json:"Addr"`
+		//		Proxy string `json:"Proxy"`
+		//	} `json:"Validators"`
+		//}{}
+		//if err = c.Call(&result, "eth_getValidator", "0x0"); err != nil {
+		//	return
+		//}
+		//for _, validator := range result.Validators {
+		//	wh.Erbies = append(wh.Erbies, &model.Erbie{
+		//		TxHash:    "0x0",
+		//		Type:      31,
+		//		From:      validator.Addr,
+		//		To:        validator.Proxy,
+		//		Timestamp: int64(wh.Timestamp),
+		//	})
+		//
+		//}
 	}
 	return
 }
@@ -502,51 +518,11 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 	}
 	w := struct {
 		Type         uint8  `json:"type"`
-		NFTAddress   string `json:"nft_address"`
-		ProxyAddress string `json:"proxy_address"`
-		Exchanger    string `json:"exchanger"`
-		Royalty      int64  `json:"royalty"`
-		MetaURL      string `json:"meta_url"`
-		FeeRate      int64  `json:"fee_rate"`
-		Name         string `json:"name"`
-		Url          string `json:"url"`
-		Dir          string `json:"dir"`
-		StartIndex   string `json:"start_index"`
-		Number       uint64 `json:"number"`
-		Buyer        struct {
-			Amount      string `json:"price"`
-			NFTAddress  string `json:"nft_address"`
-			Exchanger   string `json:"exchanger"`
-			BlockNumber string `json:"block_number"`
-			Seller      string `json:"seller"`
-			Sig         string `json:"sig"`
-		} `json:"buyer"`
-		Seller1 struct {
-			Amount      string `json:"price"`
-			NFTAddress  string `json:"nft_address"`
-			Exchanger   string `json:"exchanger"`
-			BlockNumber string `json:"block_number"`
-			Seller      string `json:"seller"`
-			Sig         string `json:"sig"`
-		} `json:"seller1"`
-		Seller2 struct {
-			Amount        string `json:"price"`
-			Royalty       string `json:"royalty"`
-			MetaURL       string `json:"meta_url"`
-			ExclusiveFlag string `json:"exclusive_flag"`
-			Exchanger     string `json:"exchanger"`
-			BlockNumber   string `json:"block_number"`
-			Sig           string `json:"sig"`
-		} `json:"seller2"`
-		ExchangerAuth struct {
-			ExchangerOwner string `json:"exchanger_owner"`
-			To             string `json:"to"`
-			BlockNumber    string `json:"block_number"`
-			Sig            string `json:"sig"`
-		} `json:"exchanger_auth"`
-		Creator    string `json:"creator"`
-		Version    string `json:"version"`
-		RewardFlag uint8  `json:"reward_flag"`
+		CSBTAddress  string `json:"csbt_address,omitempty"`
+		ProxyAddress string `json:"proxy_address,omitempty"`
+		ProxySign    string `json:"proxy_sign,omitempty"`
+		Creator      string `json:"creator,omitempty"`
+		Version      string `json:"version,omitempty"`
 	}{}
 	if err = json.Unmarshal(input[6:], &w); err != nil {
 		return
@@ -555,107 +531,32 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 	erbie := &model.Erbie{
 		TxHash:      string(tx.Hash),
 		Type:        w.Type,
-		Address:     strings.ToLower(w.NFTAddress),
+		Address:     strings.ToLower(w.CSBTAddress),
 		From:        string(tx.From),
 		To:          string(*tx.To),
 		Value:       string(tx.Value),
-		Extra:       w.MetaURL,
+		Extra:       "",
 		Timestamp:   int64(wh.Timestamp),
 		BlockNumber: int64(wh.Number),
-		RoyaltyRate: w.Royalty,
-		FeeRate:     w.FeeRate,
+		RoyaltyRate: 0,
+		FeeRate:     0,
 	}
 	switch w.Type {
-	case 0: //Users mint NFT by themselves
+	case 1: //transfer csbt
 
-	case 1: //Users transfer NFT by themselves
+	case 2: //withdraw erb to owner of csbt
 
-	case 2: //authorize a snft or nft
-
-	case 3: //cancel authorize a snft or nft
-
-	case 4: //authorize all snft or nft
-
-	case 5: //cancel authorize all snft or nft
-
-	case 6: //recycle snft
-
-	case 9: //staker pledge add, and set fee rate
-
-	case 10: //staker pledge sub
-
-	case 14: //NFT bid transaction (initiated by the seller or the exchange, and the buyer signs the price)
-		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
-		erbie.From = ""
-		erbie.Extra = strings.ToLower(w.Buyer.Exchanger)
-
-	case 15: //NFT pricing purchase transaction (buyer initiates, seller signs price)
-		erbie.Address = strings.ToLower(w.Seller1.NFTAddress)
-		erbie.From = string(*tx.To)
-		erbie.To = string(tx.From)
-		erbie.Extra = strings.ToLower(w.Seller1.Exchanger)
-
-	case 16: //NFT lazy pricing purchase transaction, the buyer initiates (the NFT is minted first, and the seller signs the price)
-		// Restore NFT creator address (also seller address) from signature
-		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
-		if err != nil {
-			return err
+	case 3: //to be a validator or staker
+		if tx.From == *tx.To {
+			if w.ProxyAddress != "" && w.ProxyAddress != "0x0000000000000000000000000000000000000000" {
+				erbie.Proxy = w.ProxyAddress
+			}
 		}
-		erbie.From = string(creator)
-		erbie.To = string(tx.From)
-		erbie.Extra = w.Seller2.MetaURL
-		erbie.RoyaltyRate, _ = strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
 
-	case 17: //NFT lazy pricing purchase transaction, initiated by the exchange (mint NFT first, and the seller signs the price)
-		// Restore NFT creator address (also seller address) from signature
-		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
-		if err != nil {
-			return err
-		}
-		erbie.From = string(creator)
-		erbie.Extra = w.Seller2.MetaURL
-		erbie.RoyaltyRate, _ = strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
+	case 4: //not to be a validator or staker
 
-	case 18: //The NFT bid transaction is initiated by the address authorized by the exchange (the buyer signs the price)
-		// restore the seller and exchanger address from the authorized signature
-		seller, _ := utils.RecoverAddress(w.Seller1.Amount+w.Seller1.NFTAddress+w.Seller1.Exchanger+w.Seller1.BlockNumber, w.Seller1.Sig)
-		exchanger, _ := utils.RecoverAddress(w.ExchangerAuth.ExchangerOwner+w.ExchangerAuth.To+w.ExchangerAuth.BlockNumber, w.ExchangerAuth.Sig)
-		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
-		erbie.From = string(seller)
-		erbie.Extra = string(exchanger)
+	case 5: //recover validator online weight
 
-	case 19: //NFT lazy bid transaction, initiated by the address authorized by the exchange (the buyer signs the price)
-		// Restore NFT creator address (also seller address) from signature
-		msg := w.Seller2.Amount + w.Seller2.Royalty + w.Seller2.MetaURL + w.Seller2.ExclusiveFlag + w.Seller2.Exchanger + w.Seller2.BlockNumber
-		creator, err := utils.RecoverAddress(msg, w.Seller2.Sig)
-		if err != nil {
-			return err
-		}
-		erbie.From = string(creator)
-		erbie.Extra = w.Seller2.MetaURL
-		erbie.RoyaltyRate, _ = strconv.ParseInt(w.Seller2.Royalty[2:], 16, 64)
-
-	case 20: //NFT matches the transaction, and the exchange initiates it
-		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
-		erbie.From = ""
-		erbie.Extra = string(tx.From)
-
-	case 26: //recover validator online weight
-
-	case 27: //forcibly buy snft that does not belong to you(level 1 address)
-		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
-		erbie.From = strings.ToLower(w.Buyer.Seller)
-		erbie.Extra = strings.ToLower(w.Buyer.Exchanger)
-
-	case 28: //forcibly buy snft that does not belong to you(level 1 address)
-		erbie.Address = strings.ToLower(w.Buyer.NFTAddress)
-		erbie.From = types.ZeroAddress
-		erbie.Extra = strings.ToLower(w.Buyer.Exchanger)
-
-	case 31:
-		erbie.To = strings.ToLower(w.ProxyAddress)
 	}
 	wh.Erbies = append(wh.Erbies, erbie)
 	return

@@ -89,6 +89,21 @@ func loadStats(db *gorm.DB) (err error) {
 		totalPledge = totalPledge.Add(totalPledge, value)
 	}
 	stats.TotalPledge = totalPledge.Text(10)
+
+	//validator's stake
+	validatorAmounts := make([]string, 0)
+	validatorValue := new(big.Int)
+	validatorTotalPledge := big.NewInt(0)
+	err = db.Model(&model.Pledge{}).Where("staker = validator").Pluck("amount", &validatorAmounts).Error
+	if err != nil {
+		return
+	}
+	for _, amount := range validatorAmounts {
+		validatorValue.SetString(amount, 0)
+		validatorTotalPledge = validatorTotalPledge.Add(validatorTotalPledge, validatorValue)
+	}
+	stats.ValidatorTotalPledge = validatorTotalPledge.Text(10)
+
 	return
 }
 
@@ -96,6 +111,7 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	totalBalance, _ := new(big.Int).SetString(stats.TotalBalance, 0)
 	totalAmount, _ := new(big.Int).SetString(stats.TotalAmount, 0)
 	totalPledge, _ := new(big.Int).SetString(stats.TotalPledge, 0)
+	validatorTotalPledge, _ := new(big.Int).SetString(stats.ValidatorTotalPledge, 0)
 	totalNFTAmount, _ := new(big.Int).SetString(stats.TotalNFTAmount, 0)
 	totalSNFTAmount, _ := new(big.Int).SetString(stats.TotalSNFTAmount, 0)
 	rewardCoin, rewardSNFT, value := int64(0), int64(0), new(big.Int)
@@ -127,14 +143,22 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 			}
 		}
 		switch erbie.Type {
-		case 0, 16, 17, 19:
-			totalNFT++
-		case 6:
-			totalRecycle += erbie.FeeRate
-		case 9:
+		//case 0, 16, 17, 19:
+		//	totalNFT++
+		//case 6:
+		//	totalRecycle += erbie.FeeRate
+		case 3:
+			value.SetString(erbie.Value, 0)
 			totalPledge = totalPledge.Add(totalPledge, value)
-		case 10:
+			if erbie.From == erbie.To {
+				validatorTotalPledge = validatorTotalPledge.Add(validatorTotalPledge, value)
+			}
+		case 4:
+			value.SetString(erbie.Value, 0)
 			totalPledge = totalPledge.Sub(totalPledge, value)
+			if erbie.From == erbie.To {
+				validatorTotalPledge = validatorTotalPledge.Sub(validatorTotalPledge, value)
+			}
 		}
 	}
 	for _, reward := range parsed.Rewards {
@@ -233,10 +257,10 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.Creator{}).Count(&stats.TotalCreator)
 			db.Model(&model.SNFT{}).Where("remove=false").Count(&stats.TotalSNFT)
 			db.Model(&model.Staker{}).Count(&stats.TotalStaker)
-			db.Model(&model.Validator{}).Where("`amount`>=70000000000000000000000").Count(&stats.TotalValidator)
+			db.Model(&model.Validator{}).Where("`amount`>=35000000000000000000000").Count(&stats.TotalValidator)
 			db.Model(&model.NFT{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalNFTCreator)
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
-			db.Model(&model.Validator{}).Where("`amount`>=70000000000000000000000 AND weight>=10").Count(&stats.TotalValidatorOnline)
+			db.Model(&model.Validator{}).Where("`amount`>=35000000000000000000000 AND weight>=10").Count(&stats.TotalValidatorOnline)
 			db.Model(&model.Transaction{}).Where("block_number>?", parsed.Number-10000).Select("COUNT(DISTINCT `from`)").Scan(&stats.ActiveAccount)
 			if stats.Total24HTx == 0 || number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)

@@ -42,7 +42,7 @@ func TxFee(price string, ratio int64) *string {
 	return &fee
 }
 
-var minValidatorAmount, _ = new(big.Int).SetString("70000000000000000000000", 10)
+var minValidatorAmount, _ = new(big.Int).SetString("35000000000000000000000", 10)
 
 func CheckValidatorAmount(amount string) bool {
 	value, ok := new(big.Int).SetString(amount, 0)

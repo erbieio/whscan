@@ -56,14 +56,16 @@ func updateLocation(db *gorm.DB, fileName string, lastLine, lastSize int64) (int
 						splits := strings.Split(scanner.Text(), " ")
 						if len(splits) == 3 {
 							if ip := splits[2]; ip != "127.0.0.1" && ip != "0.0.0.0" {
-								_, latitude, longitude := utils.IP2Location(ip)
+								countryName, cityName, latitude, longitude := utils.IP2Location(ip)
 								db.Clauses(clause.OnConflict{
-									DoUpdates: clause.AssignmentColumns([]string{"ip", "latitude", "longitude"}),
+									DoUpdates: clause.AssignmentColumns([]string{"ip", "latitude", "longitude", "city", "country"}),
 								}).Create(&model.Location{
 									Address:   strings.ToLower(splits[1]),
 									IP:        ip,
 									Latitude:  latitude,
 									Longitude: longitude,
+									City:      cityName,
+									Country:   countryName,
 								})
 							}
 						}
@@ -86,7 +88,7 @@ func updateLastMsg(db *gorm.DB, fileName string) {
 	if file, err := os.Open(fileName); err == nil {
 		lastMsg = lastMsg[:0]
 		data, proxies, exist := []string(nil), map[string]bool{}, map[string]bool{}
-		db.Model(&model.Validator{}).Where("`amount`>=70000000000000000000000").Select("proxy").Scan(&data)
+		db.Model(&model.Validator{}).Where("`amount`>=35000000000000000000000").Select("proxy").Scan(&data)
 		for _, proxy := range data {
 			proxies[proxy] = true
 		}
@@ -115,7 +117,7 @@ type ValidatorsRes struct {
 }
 
 func FetchValidator(page, size int, order string) (res ValidatorsRes, err error) {
-	db := DB.Where("`amount`>=70000000000000000000000")
+	db := DB.Where("`amount`>=35000000000000000000000")
 	if order != "" {
 		db = db.Order(order)
 	}
@@ -129,11 +131,13 @@ type LocationRes struct {
 	Proxy     string  `json:"proxy"`     //proxy address
 	Latitude  float64 `json:"latitude"`  //latitude
 	Longitude float64 `json:"longitude"` //longitude
+	City      string  `json:"city"`      //city
+	Country   string  `json:"country"`   //country
 }
 
 func FetchLocations() (res []*LocationRes, err error) {
 	err = DB.Model(&model.Validator{}).Joins("LEFT JOIN `locations` ON `validators`.`proxy`=`locations`.`address`").
-		Where("`amount`>=70000000000000000000000").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`").Scan(&res).Error
+		Where("`amount`>=35000000000000000000000").Select("`validators`.`address`,`proxy`,`latitude`,`longitude`,`city`,`country`").Scan(&res).Error
 	return
 }
 
