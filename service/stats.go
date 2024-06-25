@@ -60,8 +60,12 @@ func loadStats(db *gorm.DB) (err error) {
 	}
 
 	var totalRewardAmount string
-	if err = db.Model(&model.Reward{}).Select("SUM(amount)").Where("identity != 3").Scan(&totalRewardAmount).Error; err != nil {
-		return
+	if stats.RewardCoinCount == 0 { // 表中无数据，提一次同步
+		totalRewardAmount = "0"
+	} else {
+		if err = db.Model(&model.Reward{}).Select("SUM(amount)").Where("identity != 3").Scan(&totalRewardAmount).Error; err != nil {
+			return
+		}
 	}
 	rewardAmount, b := new(big.Int).SetString(totalRewardAmount, 10)
 	if !b {
