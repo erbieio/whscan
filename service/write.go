@@ -280,30 +280,52 @@ func saveReward(db *gorm.DB, wh *model.Parsed) (err error) {
 			if err != nil {
 				return
 			}
-			var staker model.Staker
-			if err = db.Find(&staker, "`address`=?", reward.Address).Error; err != nil {
+			account := &model.Account{
+				Address:   types.Address(reward.Address),
+				Balance:   "0",
+				SNFTValue: "0",
+			}
+			if err = db.Find(&account).Error; err != nil {
 				return
 			}
-			if staker.Address != "" {
-				staker.Reward = BigIntAdd(staker.Reward, snftValue(reward.SNFT, 1))
-				staker.RewardCount++
-				if err = db.Select("reward", "reward_count").Updates(&staker).Error; err != nil {
+			account.Number = wh.Number
+			account.SNFTCount = account.SNFTCount + 1
+			if err = db.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"number", "snft_count", "timestamp"}),
+			}).Create(account).Error; err != nil {
+				return
+			}
+
+		} else {
+			if reward.Address == reward.Validator {
+				var validator model.Validator
+				if err = db.Find(&validator, "address=?", reward.Address).Error; err != nil {
 					return
 				}
-			}
-		} else {
-			var validator model.Validator
-			if err = db.Find(&validator, "address=?", reward.Address).Error; err != nil {
-				return
-			}
-			if validator.Address != "" {
-				validator.Reward = BigIntAdd(validator.Reward, *reward.Amount)
-				validator.RewardCount++
-				validator.RewardNumber = int64(wh.Number)
-				validator.Timestamp = int64(wh.Timestamp)
-				validator.BlockNumber = int64(wh.Number)
-				if err = db.Select("reward", "reward_count", "reward_number", "timestamp", "block_number").Updates(&validator).Error; err != nil {
+				if validator.Address != "" {
+					validator.Reward = BigIntAdd(validator.Reward, *reward.Amount)
+					validator.RewardCount++
+					validator.RewardNumber = int64(wh.Number)
+					validator.Timestamp = int64(wh.Timestamp)
+					//validator.BlockNumber = int64(wh.Number)
+					//if err = db.Select("reward", "reward_count", "reward_number", "timestamp", "block_number").Updates(&validator).Error; err != nil {
+					if err = db.Select("reward", "reward_count", "reward_number", "timestamp").Updates(&validator).Error; err != nil {
+						return
+					}
+				}
+			} else {
+				var staker model.Staker
+				if err = db.Find(&staker, "`address`=?", reward.Address).Error; err != nil {
 					return
+				}
+				if staker.Address != "" {
+					staker.Reward = BigIntAdd(staker.Reward, *reward.Amount)
+					staker.RewardCount++
+					staker.RewardNumber = int64(wh.Number)
+					staker.Timestamp = int64(wh.Timestamp)
+					if err = db.Select("reward", "reward_count", "reward_number", "timestamp").Updates(&staker).Error; err != nil {
+						return
+					}
 				}
 			}
 		}
@@ -389,6 +411,8 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 				if err = db.Model(&model.SNFT{Address: erbie.Address}).Update("owner", erbie.To).Error; err != nil {
 					return
 				}
+				db.Exec("UPDATE accounts SET snft_count=snft_count+1 WHERE address=?", erbie.To)
+				db.Exec("UPDATE accounts SET snft_count=snft_count-1 WHERE address=?", erbie.From)
 			}
 
 		//case 6: //recycle SNFT
@@ -452,11 +476,11 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 				return
 			}
 
-			if erbie.Type == 4 {
-				db.Where("amount=0").Delete(&pledge)
-				db.Where("amount=0").Delete(&staker)
-				db.Where("amount=0").Delete(&validator)
-			}
+			//if erbie.Type == 4 {
+			//	db.Where("amount=0").Delete(&pledge)
+			//	db.Where("amount=0").Delete(&staker)
+			//	db.Where("amount=0").Delete(&validator)
+			//}
 
 		//case 14, 15, 18, 20, 27:
 		//	//14: trade NFT or SNFT, exchanger or seller send tx

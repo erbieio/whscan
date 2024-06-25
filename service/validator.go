@@ -117,7 +117,7 @@ type ValidatorsRes struct {
 }
 
 func FetchValidator(page, size int, order string) (res ValidatorsRes, err error) {
-	db := DB.Where("`amount`>=35000000000000000000000")
+	db := DB.Where("`amount`>=350000000000000000000")
 	if order != "" {
 		db = db.Order(order)
 	}

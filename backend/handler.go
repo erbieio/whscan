@@ -261,12 +261,23 @@ func check(c *node.Client, ctx context.Context) (stats *model.Stats, err error) 
 func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 	if number := wh.Number.Hex(); wh.Number > 0 {
 		// Miner reward SNFT processing
-		var rewards []*struct {
-			Address      string   `json:"Address"`
-			NFTAddress   string   `json:"NftAddress"`
+		//var rewards []*struct {
+		//	Address      string   `json:"Address"`
+		//	NFTAddress   string   `json:"NftAddress"`
+		//	RewardAmount *big.Int `json:"RewardAmount"`
+		//}
+		type StakerReward struct {
+			StakerAddr   string   `json:"StakerAddr"`
 			RewardAmount *big.Int `json:"RewardAmount"`
 		}
-		err = c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", number, true)
+		var rewards []*struct {
+			Address       string          `json:"Address"`
+			NFTAddress    string          `json:"NftAddress"`
+			RewardAmount  *big.Int        `json:"RewardAmount"`
+			StakerRewards []*StakerReward `json:"StakerRewards"`
+		}
+		//err = c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumber", number, true)
+		err = c.Call(&rewards, "eth_getBlockBeneficiaryAddressByNumberNew", number, true)
 		if err != nil {
 			return fmt.Errorf("GetReward() err:%v", err)
 		}
@@ -287,61 +298,34 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 				}
 			}
 
-			wh.Rewards = append(wh.Rewards, &model.Reward{
+			validatorReward := &model.Reward{
 				Address:     rewards[i].Address,
+				Validator:   rewards[i].Address,
 				Identity:    identity,
 				BlockNumber: int64(wh.Number),
-			})
+			}
 			if rewards[i].RewardAmount == nil {
 				// Note that when NFTAddress is zero address error
-				wh.Rewards[i].SNFT = rewards[i].NFTAddress
-				// Parse the new phase ID
-				//if addr := rewards[i].NFTAddress; addr[39:] == "000" {
-				//	// Write the current information, once every 4096 SNFT rewards
-				//	epoch := struct {
-				//		StartIndex int64    `json:"start_Index"`
-				//		Dir        string   `json:"dir"`
-				//		Royalty    int64    `json:"royalty"`
-				//		Address    string   `json:"Address"`
-				//		Creator    string   `json:"creator"`
-				//		VoteWeight *big.Int `json:"vote_weight"`
-				//	}{}
-				//	if err = c.Call(&epoch, "eth_getCurrentNFTInfo", number); err != nil {
-				//		return fmt.Errorf("GetEpoch() err:%v", err)
-				//	}
-				//	wh.Epoch = &model.Epoch{
-				//		ID:           addr[:39],
-				//		Creator:      strings.ToLower(epoch.Creator),
-				//		RoyaltyRatio: epoch.Royalty,
-				//		MetaUrl:      epoch.Dir,
-				//		WeightValue:  epoch.VoteWeight.Text(10),
-				//		Voter:        strings.ToLower(epoch.Address),
-				//		StartNumber:  int64(wh.Number),
-				//		StartTime:    int64(wh.Timestamp),
-				//	}
-				//
-				//	selected := wh.Number - 1
-				//	for startIndex := epoch.StartIndex; selected > wh.Number-64 && selected > 0; selected-- {
-				//		if err = c.Call(&epoch, "eth_getCurrentNFTInfo", selected.Hex()); err != nil {
-				//			return fmt.Errorf("GetEpoch() err:%v", err)
-				//		}
-				//		if startIndex != epoch.StartIndex {
-				//			break
-				//		}
-				//	}
-				//	info := struct {
-				//		Balance *big.Int `json:"Balance"`
-				//	}{}
-				//	if err = c.Call(&info, "eth_getAccountInfo", "0xffffffffffffffffffffffffffffffffffffffff", selected.Hex()); err != nil {
-				//		return
-				//	}
-				//	wh.Epoch.Number = int64(selected + 1)
-				//	wh.Epoch.Reward = info.Balance.Text(10)
-				//	wh.Epoch.Profit = "0"
-				//}
+				validatorReward.SNFT = rewards[i].NFTAddress
 			} else {
-				wh.Rewards[i].Amount = new(string)
-				*wh.Rewards[i].Amount = rewards[i].RewardAmount.Text(10)
+				validatorReward.Amount = new(string)
+				*validatorReward.Amount = rewards[i].RewardAmount.Text(10)
+			}
+			wh.Rewards = append(wh.Rewards, validatorReward)
+
+			if rewards[i].StakerRewards != nil {
+				for _, stakerRd := range rewards[i].StakerRewards {
+					stakerReward := &model.Reward{
+						Address:     stakerRd.StakerAddr,
+						Validator:   rewards[i].Address,
+						Identity:    identity,
+						BlockNumber: int64(wh.Number),
+					}
+
+					stakerReward.Amount = new(string)
+					*stakerReward.Amount = stakerRd.RewardAmount.Text(10)
+					wh.Rewards = append(wh.Rewards, stakerReward)
+				}
 			}
 		}
 
@@ -390,7 +374,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 
 		// erbie transaction processing
 		for _, tx := range wh.CacheTxs {
-			err = decodeWHTx(wh, tx)
+			err = decodeWHTx(c, wh, tx)
 			if err != nil {
 				return err
 			}
@@ -510,7 +494,7 @@ func decodeWH(c *node.Client, wh *model.Parsed) (err error) {
 }
 
 // decodeWHTx parses the special transaction of the erbie blockchain
-func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
+func decodeWHTx(c *node.Client, wh *model.Parsed, tx *model.Transaction) (err error) {
 	input, _ := hex.DecodeString(tx.Input[2:])
 	// Non-erbie and failed transactions are not resolved
 	if *tx.Status == 0 || len(input) < 6 || string(input[0:6]) != "erbie:" {
@@ -554,6 +538,52 @@ func decodeWHTx(wh *model.Parsed, tx *model.Transaction) (err error) {
 		}
 
 	case 4: //not to be a validator or staker
+		if tx.From == *tx.To {
+			info := struct {
+				Worm *struct {
+					ValidatorProxy     string `json:"ValidatorProxy"`
+					ValidatorExtension *struct {
+						ValidatorExtensions []struct {
+							Addr    string   `json:"Addr"`
+							Balance *big.Int `json:"Balance"`
+						} `json:"ValidatorExtensions"`
+					}
+				} `json:"Worm"`
+			}{}
+			if err = c.Call(&info, "eth_getAccountInfo", tx.From, wh.Number.Hex()); err != nil {
+				return
+			}
+
+			//获得validator质押金额
+			var validatorPledge *big.Int
+			for _, validator := range info.Worm.ValidatorExtension.ValidatorExtensions {
+				if validator.Addr == string(tx.From) {
+					validatorPledge = validator.Balance
+				}
+			}
+			if validatorPledge.Text(10) == string(tx.Value) {
+				// 质押在当前validator上的staker都需要一起撤销
+				for _, validator := range info.Worm.ValidatorExtension.ValidatorExtensions {
+					if validator.Addr == string(tx.From) {
+						continue
+					}
+					erbieStaker := &model.Erbie{
+						TxHash:      "0x0",
+						Type:        w.Type,
+						Address:     strings.ToLower(w.CSBTAddress),
+						From:        validator.Addr,
+						To:          string(tx.From),
+						Value:       validator.Balance.Text(10),
+						Extra:       "",
+						Timestamp:   int64(wh.Timestamp),
+						BlockNumber: int64(wh.Number),
+						RoyaltyRate: 0,
+						FeeRate:     0,
+					}
+					wh.Erbies = append(wh.Erbies, erbieStaker)
+				}
+			}
+		}
 
 	case 5: //recover validator online weight
 

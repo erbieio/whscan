@@ -38,6 +38,7 @@ type AccountRes struct {
 	RewardCoinCount int64  `json:"rewardCoinCount"` // BlockNumber of times to get coin rewards, 0.1ERB once
 	RewardSNFTCount int64  `json:"rewardSNFTCount"` // BlockNumber of times to get SNFT rewards
 	ValidatorReward string `json:"validatorReward"` // validator reward
+	StakerReward    string `json:"stakerReward"`    // staker reward
 	LastNumber      int64  `json:"lastNumber"`
 	Reward          string `json:"reward"` //vote profit
 	Profit          string `json:"profit"` //royalty profit
@@ -49,7 +50,8 @@ func GetAccount(addr string) (res AccountRes, err error) {
 	db = db.Joins("LEFT JOIN creators ON creators.address=accounts.address")
 	s := "accounts.*, creators.last_number, IFNULL(creators.reward,'0') AS reward, (SELECT COUNT(*) FROM nfts WHERE owner=accounts.address) AS nft_count"
 	s += ", validators.weight AS weight, IFNULL(validators.amount,'0') AS validator_amount, validators.reward_count AS reward_coin_count"
-	s += ", IFNULL(validators.reward,'0') AS validator_reward, IFNULL(stakers.amount,'0') AS staker_amount, IFNULL(profit,'0') AS profit, stakers.reward_count AS reward_snft_count"
+	s += ", IFNULL(validators.reward,'0') AS validator_reward, IFNULL(stakers.amount,'0') AS staker_amount, IFNULL(profit,'0') AS profit, " +
+		"stakers.reward_count AS reward_snft_count, IFNULL(stakers.reward,'0') AS staker_reward"
 	err = db.Select(s).Where("accounts.address=?", addr).Scan(&res).Error
 	return
 }
