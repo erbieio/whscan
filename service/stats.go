@@ -52,10 +52,10 @@ func loadStats(db *gorm.DB) (err error) {
 	if err = db.Model(&model.NFT{}).Count(&stats.TotalNFT).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Reward{}).Select("COUNT(snft)").Scan(&stats.RewardSNFTCount).Error; err != nil {
+	if err = db.Model(&model.Reward{}).Select("COUNT(snft)").Where("identity = 3").Scan(&stats.RewardSNFTCount).Error; err != nil {
 		return
 	}
-	if err = db.Model(&model.Reward{}).Select("COUNT(amount)").Scan(&stats.RewardCoinCount).Error; err != nil {
+	if err = db.Model(&model.Reward{}).Select("COUNT(amount)").Where("identity != 3").Scan(&stats.RewardCoinCount).Error; err != nil {
 		return
 	}
 
@@ -67,11 +67,11 @@ func loadStats(db *gorm.DB) (err error) {
 			return
 		}
 	}
-	rewardAmount, b := new(big.Int).SetString(totalRewardAmount, 10)
-	if !b {
-		return
-	}
-	stats.TotalRewardAmount = rewardAmount
+	//rewardAmount, b := new(big.Int).SetString(totalRewardAmount, 10)
+	//if !b {
+	//	return
+	//}
+	stats.TotalRewardAmount = totalRewardAmount
 
 	if err = db.Model(&model.Erbie{}).Select("IFNULL(SUM(fee_rate),0)").Scan(&stats.TotalRecycle).Error; err != nil {
 		return
@@ -220,7 +220,11 @@ func updateStats(db *gorm.DB, parsed *model.Parsed) (err error) {
 	stats.TotalNFT = totalNFT
 	stats.RewardCoinCount += rewardCoin
 	stats.RewardSNFTCount += rewardSNFT
-	stats.TotalRewardAmount.Add(stats.TotalRewardAmount, rewardAmount)
+
+	tempAmount, _ := new(big.Int).SetString(stats.TotalRewardAmount, 10)
+	tempAmount.Add(tempAmount, rewardAmount)
+	stats.TotalRewardAmount = tempAmount.Text(10)
+
 	stats.TotalAccount = int64(len(stats.Balances))
 	stats.TotalRecycle = totalRecycle
 	stats.TotalBalance = totalBalance.Text(10)

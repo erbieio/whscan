@@ -44,44 +44,44 @@ func ClearTable(db *gorm.DB) (err error) {
 
 // Stats caches some database queries to speed up queries
 type Stats struct {
-	Ready                bool     `json:"ready" gorm:"-"`                        //ready, sync latest block
-	ChainId              int64    `json:"chainId" gorm:"primaryKey"`             //chain id
-	GenesisBalance       string   `json:"genesisBalance" gorm:"type:CHAR(128)"`  //Total amount of coins created
-	TotalAmount          string   `json:"totalAmount" gorm:"type:CHAR(128)"`     //total transaction volume
-	TotalNFTAmount       string   `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
-	TotalSNFTAmount      string   `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
-	TotalRecycle         int64    `json:"totalRecycle"`                          //Total number of recycle SNFT
-	AvgBlockTime         int64    `json:"avgBlockTime"`                          //average block time, ms
-	TotalBlock           int64    `json:"totalBlock"`                            //Total number of blocks
-	TotalBlackHole       int64    `json:"totalBlackHole"`                        //Total number of BlackHole blocks
-	TotalTransaction     int64    `json:"totalTransaction"`                      //Total number of transactions
-	TotalInternalTx      int64    `json:"totalInternalTx"`                       //Total number of internal transactions
-	TotalTransferTx      int64    `json:"totalTransferTx"`                       //Total number of  transfer transactions
-	TotalErbieTx         int64    `json:"totalErbieTx"`                          //Total number of  erbie transactions
-	TotalAccount         int64    `json:"totalAccount"`                          //Total account number of used
-	TotalBalance         string   `json:"totalBalance"`                          //The total amount of coins in the chain
-	ActiveAccount        int64    `json:"activeAccount"`                         //The number of active account
-	TotalStaker          int64    `json:"totalStaker"`                           //Total number of stakers
-	TotalNFT             int64    `json:"totalNFT"`                              //Total number of NFTs
-	TotalSNFT            int64    `json:"totalSNFT"`                             //Total number of SNFTs
-	TotalNFTTx           int64    `json:"totalNFTTx"`                            //Total number of  NFT transactions
-	TotalSNFTTx          int64    `json:"totalSNFTTx"`                           //Total number of  SNFT transactions
-	TotalValidatorOnline int64    `json:"totalValidatorOnline"`                  //Total amount of validator online
-	TotalValidator       int64    `json:"totalValidator"`                        //Total number of validator
-	TotalNFTCreator      int64    `json:"totalNFTCreator"`                       //Total creator of NFTs
-	TotalSNFTCreator     int64    `json:"totalSNFTCreator"`                      //Total creator of SNFTs
-	TotalStakerTx        int64    `json:"totalStakerTx"`                         //Total number of staker  transactions
-	RewardCoinCount      int64    `json:"rewardCoinCount"`                       //Total number of times to get coin rewards, 0.1ERB once
-	RewardSNFTCount      int64    `json:"rewardSNFTCount"`                       //Total number of times to get SNFT rewards
-	TotalRewardAmount    *big.Int `json:"totalRewardAmount" gorm:"-"`
-	TotalPledge          string   `json:"totalPledge"`          //Total amount of  pledge
-	ValidatorTotalPledge string   `json:"validatorTotalPledge"` //Total amount of validator pledge
-	Total24HStakerTx     int64    `json:"total24HStakerTx"`     //Total number of staker transactions within 24 hours
-	Total24HNFT          int64    `json:"total24HNFT"`          //Total number of NFT within 24 hours
-	Total24HTx           int64    `json:"total24HTx"`           //Total number of transactions within 24 hours
-	TotalEpoch           int64    `json:"totalEpoch"`           //Total number of epoch
-	TotalCreator         int64    `json:"totalCreator"`         //Total number of creator
-	TotalProfit          string   `json:"totalProfit"`          //Total number of creator profit
+	Ready                bool   `json:"ready" gorm:"-"`                        //ready, sync latest block
+	ChainId              int64  `json:"chainId" gorm:"primaryKey"`             //chain id
+	GenesisBalance       string `json:"genesisBalance" gorm:"type:CHAR(128)"`  //Total amount of coins created
+	TotalAmount          string `json:"totalAmount" gorm:"type:CHAR(128)"`     //total transaction volume
+	TotalNFTAmount       string `json:"totalNFTAmount" gorm:"type:CHAR(128)"`  //Total transaction volume of NFTs
+	TotalSNFTAmount      string `json:"totalSNFTAmount" gorm:"type:CHAR(128)"` //Total transaction volume of SNFTs
+	TotalRecycle         int64  `json:"totalRecycle"`                          //Total number of recycle SNFT
+	AvgBlockTime         int64  `json:"avgBlockTime"`                          //average block time, ms
+	TotalBlock           int64  `json:"totalBlock"`                            //Total number of blocks
+	TotalBlackHole       int64  `json:"totalBlackHole"`                        //Total number of BlackHole blocks
+	TotalTransaction     int64  `json:"totalTransaction"`                      //Total number of transactions
+	TotalInternalTx      int64  `json:"totalInternalTx"`                       //Total number of internal transactions
+	TotalTransferTx      int64  `json:"totalTransferTx"`                       //Total number of  transfer transactions
+	TotalErbieTx         int64  `json:"totalErbieTx"`                          //Total number of  erbie transactions
+	TotalAccount         int64  `json:"totalAccount"`                          //Total account number of used
+	TotalBalance         string `json:"totalBalance"`                          //The total amount of coins in the chain
+	ActiveAccount        int64  `json:"activeAccount"`                         //The number of active account
+	TotalStaker          int64  `json:"totalStaker"`                           //Total number of stakers
+	TotalNFT             int64  `json:"totalNFT"`                              //Total number of NFTs
+	TotalSNFT            int64  `json:"totalSNFT"`                             //Total number of SNFTs
+	TotalNFTTx           int64  `json:"totalNFTTx"`                            //Total number of  NFT transactions
+	TotalSNFTTx          int64  `json:"totalSNFTTx"`                           //Total number of  SNFT transactions
+	TotalValidatorOnline int64  `json:"totalValidatorOnline"`                  //Total amount of validator online
+	TotalValidator       int64  `json:"totalValidator"`                        //Total number of validator
+	TotalNFTCreator      int64  `json:"totalNFTCreator"`                       //Total creator of NFTs
+	TotalSNFTCreator     int64  `json:"totalSNFTCreator"`                      //Total creator of SNFTs
+	TotalStakerTx        int64  `json:"totalStakerTx"`                         //Total number of staker  transactions
+	RewardCoinCount      int64  `json:"rewardCoinCount"`                       //Total number of times to get coin rewards, 0.1ERB once
+	RewardSNFTCount      int64  `json:"rewardSNFTCount"`                       //Total number of times to get SNFT rewards
+	TotalRewardAmount    string `json:"totalRewardAmount" gorm:"-"`
+	TotalPledge          string `json:"totalPledge"`          //Total amount of  pledge
+	ValidatorTotalPledge string `json:"validatorTotalPledge"` //Total amount of validator pledge
+	Total24HStakerTx     int64  `json:"total24HStakerTx"`     //Total number of staker transactions within 24 hours
+	Total24HNFT          int64  `json:"total24HNFT"`          //Total number of NFT within 24 hours
+	Total24HTx           int64  `json:"total24HTx"`           //Total number of transactions within 24 hours
+	TotalEpoch           int64  `json:"totalEpoch"`           //Total number of epoch
+	TotalCreator         int64  `json:"totalCreator"`         //Total number of creator
+	TotalProfit          string `json:"totalProfit"`          //Total number of creator profit
 
 	Genesis  Header                     `json:"-" gorm:"-"`
 	Balances map[types.Address]*big.Int `json:"-" gorm:"-"`
