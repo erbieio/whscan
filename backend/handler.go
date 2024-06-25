@@ -550,7 +550,10 @@ func decodeWHTx(c *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 					}
 				} `json:"Worm"`
 			}{}
-			if err = c.Call(&info, "eth_getAccountInfo", tx.From, wh.Number.Hex()); err != nil {
+
+			//如果是查询validator是否完全撤销时,需要查询上一个区块高度的状态,因为执行撤销时,状态已经改变
+			parentNumber := wh.Number - 1
+			if err = c.Call(&info, "eth_getAccountInfo", tx.From, parentNumber.Hex()); err != nil {
 				return
 			}
 
