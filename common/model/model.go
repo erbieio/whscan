@@ -363,3 +363,46 @@ type Parsed struct {
 	Rewards   []*Reward   //reward record
 	Mergers   []*SNFT     //merge snft
 }
+
+type Contract struct {
+	gorm.Model
+	TxHash          string     `json:"tx_hash" gorm:"index"`     //创建合约的交易hash
+	BlockNumber     types.Long `json:"blockNumber" gorm:"index"` //block number
+	ContractAddress string     `json:"address" gorm:"index"`
+	ContractName    string     `json:"contract_name"`
+	ContractType    string     `json:"contract_type"` //合约类型, (列如：ERC20，ERC721， 1155)
+	TokenName       string     `json:"token_name"`
+	TotalSupply     string     `json:"total_supply"`
+	SourceCode      string     `json:"source_code"`
+	Holders         int64      `json:"holders"`
+	CallTimes       int64      `json:"call_times"`
+	Verified        bool       `json:"verified"`
+	Audited         bool       `json:"audited"`
+	ContractAbi     string     `json:"contract_abi" gorm:"type:TEXT"`
+	CreateCode      string     `json:"create_code" gorm:"type:TEXT"`
+	DeployedCode    string     `json:"deployed_code" gorm:"type:TEXT"`
+	ConstructorArg  string     `json:"constructor_arg"`
+	CompilerVersion string     `json:"compiler_version"`
+	License         string     `json:"license"`
+}
+
+// Transaction information
+type ContractTx struct {
+	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
+	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`                //block number
+	Timestamp         types.Long     `json:"timestamp"`                               //The event stamp of the block it is in
+	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
+	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
+	Input             string         `json:"input" gorm:"type:TEXT"`                  //Additional input data, contract call encoded data
+	Value             types.BigInt   `json:"value" gorm:"type:DECIMAL(65)"`           //Amount, unit wei
+	Nonce             types.Long     `json:"nonce"`                                   //Random number, the number of transactions initiated by the account
+	Gas               types.Long     `json:"gas"`                                     //fuel
+	GasPrice          types.Long     `json:"gasPrice"`                                //Gas price
+	Hash              types.Hash     `json:"hash" gorm:"type:CHAR(66);primaryKey"`    //Hash
+	Status            *types.Long    `json:"status,omitempty"`                        //Status, 1: success; 0: failure
+	CumulativeGasUsed types.Long     `json:"cumulativeGasUsed"`                       //Cumulative gas consumption
+	ContractAddress   *types.Address `json:"contractAddress" gorm:"type:CHAR(42)"`    //The created contract address
+	GasUsed           types.Long     `json:"gasUsed"`                                 //Gas consumption
+	TxIndex           types.Long     `json:"transactionIndex"`                        //The serial number in the block
+	Error             *string        `json:"error,omitempty" gorm:"type:VARCHAR(66)"` //exec error
+}
