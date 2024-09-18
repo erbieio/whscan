@@ -29,6 +29,10 @@ var Tables = []interface{}{
 	&Erbie{},
 	&Reward{},
 	&Location{},
+	&Contract{},
+	&ContractTx{},
+	&ContractAccount{},
+	&ContractNFT{},
 }
 
 func Migrate(db *gorm.DB) error {
@@ -362,16 +366,25 @@ type Parsed struct {
 	Erbies    []*Erbie    //NFT transaction record, transfer, recycle, pledge
 	Rewards   []*Reward   //reward record
 	Mergers   []*SNFT     //merge snft
+
+	// Contract
+	CacheContract        []*Contract
+	CacheContractTx      []*ContractTx
+	CacheContractAccount []*ContractAccount
+	CacheContractNFT     []*ContractNFT
 }
 
 type Contract struct {
 	gorm.Model
 	TxHash          string     `json:"tx_hash" gorm:"index"`     //创建合约的交易hash
 	BlockNumber     types.Long `json:"blockNumber" gorm:"index"` //block number
-	ContractAddress string     `json:"address" gorm:"index"`
+	ContractCreator string     `json:"contract_creator"`
+	ContractAddress string     `json:"contract_address" gorm:"index"`
 	ContractName    string     `json:"contract_name"`
 	ContractType    string     `json:"contract_type"` //合约类型, (列如：ERC20，ERC721， 1155)
 	TokenName       string     `json:"token_name"`
+	Symbol          string     `json:"symbol,omitempty" gorm:"type:VARCHAR(66)"` //symbol
+	Icon            string     `json:"icon"`
 	TotalSupply     string     `json:"total_supply"`
 	SourceCode      string     `json:"source_code"`
 	Holders         int64      `json:"holders"`
@@ -405,4 +418,30 @@ type ContractTx struct {
 	GasUsed           types.Long     `json:"gasUsed"`                                 //Gas consumption
 	TxIndex           types.Long     `json:"transactionIndex"`                        //The serial number in the block
 	Error             *string        `json:"error,omitempty" gorm:"type:VARCHAR(66)"` //exec error
+}
+
+// Contract Account information
+type ContractAccount struct {
+	gorm.Model
+	Address         string       `json:"address"` //address
+	ContractAddress string       `json:"contract_address" gorm:"index"`
+	Balance         types.BigInt `json:"balance"`             //The total amount of coins in the chain
+	Number          types.Long   `json:"number" gorm:"index"` //last update block number
+	Timestamp       types.Long   `json:"timestamp"`           //The event stamp of the account it is in
+}
+
+// ContractNFT User NFT attribute information (ERC721,ERC1155)
+type ContractNFT struct {
+	gorm.Model
+	ContractAddress string       `json:"contract_address" gorm:"type:CHAR(42)"` //NFT contract address
+	MetaUrl         string       `json:"meta_url" gorm:"type:VARCHAR(8192)"`    //Real meta information URL
+	Creator         string       `json:"creator" gorm:"type:CHAR(42)"`          //Creator address
+	Timestamp       int64        `json:"timestamp" gorm:"index"`                //Create timestamp
+	BlockNumber     int64        `json:"block_number"`                          //The height of the created block
+	TxHash          string       `json:"tx_hash" gorm:"type:CHAR(66)"`          //The transaction hash created
+	Owner           string       `json:"owner" gorm:"type:CHAR(42);index"`      //owner
+	Classification  string       `json:"classification"`
+	TokenId         types.BigInt `json:"tokenId" gorm:"type:VARCHAR(80)"` //Token ID
+	Quantity        int64        `json:"quantity"`
+	TokenStandard   string       `json:"token_standard"` // ERC721,ERC1155
 }
