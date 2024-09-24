@@ -23,6 +23,16 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 				return
 			}
 		}
+		if len(parsed.CacheContractTx) > 0 {
+			if err = db.Create(parsed.CacheContractTx).Error; err != nil {
+				return
+			}
+		}
+		if len(parsed.CacheContract) > 0 {
+			if err = db.Create(parsed.CacheContract).Error; err != nil {
+				return
+			}
+		}
 		// write transaction cacheLog
 		if len(parsed.CacheLogs) > 0 {
 			if err = db.Create(parsed.CacheLogs).Error; err != nil {
@@ -49,6 +59,9 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 			//	return
 			//}
 			InsertAccounts(db, parsed.CacheAccounts)
+		}
+		if len(parsed.CacheContractAccount) > 0 {
+			InsertERC20Accounts(db, parsed.CacheContractAccount)
 		}
 		// write block
 		if err = db.Create(parsed.Block).Error; err != nil {
@@ -112,6 +125,44 @@ func InsertAccounts(db *gorm.DB, accounts []*model.Account) error {
 
 			if err := db.Clauses(clause.OnConflict{
 				DoUpdates: clause.AssignmentColumns([]string{"balance", "nonce", "number", "snft_value"}),
+			}).Create(batchAccounts).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func InsertERC20Accounts(db *gorm.DB, accounts []*model.ContractAccountErc20) error {
+	// insertNum 是每批次插入最多行数
+	insertNum := 2000
+	// batchNum 是批次数
+	var batchNum int
+
+	accountsLen := len(accounts)
+	if accountsLen <= insertNum {
+		if err := db.Clauses(clause.OnConflict{
+			DoUpdates: clause.AssignmentColumns([]string{"balance", "number", "timestamp"}),
+		}).Create(accounts).Error; err != nil {
+			return err
+		}
+	} else {
+		if accountsLen%insertNum == 0 {
+			batchNum = accountsLen / insertNum
+		} else {
+			batchNum = (accountsLen / insertNum) + 1
+		}
+
+		for i := 0; i < batchNum; i++ {
+			var batchAccounts []*model.ContractAccountErc20
+			if i+1 < batchNum {
+				batchAccounts = accounts[i*insertNum : (i+1)*insertNum-1]
+			} else {
+				batchAccounts = accounts[i*insertNum:]
+			}
+
+			if err := db.Clauses(clause.OnConflict{
+				DoUpdates: clause.AssignmentColumns([]string{"balance", "number", "timestamp"}),
 			}).Create(batchAccounts).Error; err != nil {
 				return err
 			}

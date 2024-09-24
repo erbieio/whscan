@@ -24,7 +24,7 @@ func init() {
 	log.SetOutput(os.Stdout)
 
 	// read configuration to override default value
-	err := godotenv.Load("scan.env")
+	err := godotenv.Load("D:\\me_work\\execute\\testnet\\whscan\\scan.env")
 	if err != nil {
 		log.Println("Failed to load environment variables from .env file,", err)
 	}

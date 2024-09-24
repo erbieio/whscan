@@ -88,6 +88,111 @@ func UnpackTransferLog(log *EventLog) []any {
 	return nil
 }
 
+func GetAddressFromTransferLog(log *EventLog) *ContractTransAddress {
+	var strAddrs ContractTransAddress
+	topicsLen := len(log.Topics)
+	if topicsLen == 3 {
+		if log.Topics[0] == erc20TransferEventId && len(log.Data) == 66 {
+			// Parse ERC20 transition events
+			strAddrs.Contract = string(log.Address)
+			strAddrs.FromAddr = string("0x" + log.Topics[1][26:])
+			strAddrs.ToAddr = string("0x" + log.Topics[2][26:])
+			return &strAddrs
+		}
+	} else if topicsLen == 4 {
+		if log.Topics[0] == erc721TransferEventId && len(log.Data) == 2 {
+			// Parse ERC721 transition events
+			strAddrs.Contract = string(log.Address)
+			strAddrs.FromAddr = string("0x" + log.Topics[1][26:])
+			strAddrs.ToAddr = string("0x" + log.Topics[2][26:])
+			return &strAddrs
+		} else if log.Topics[0] == erc1155TransferSingleEventId && len(log.Data) == 130 {
+			// Parse ERC1155 transition events
+			from, to := Address("0x"+log.Topics[2][26:]), Address("0x"+log.Topics[3][26:])
+			strAddrs.Contract = string(log.Address)
+			strAddrs.FromAddr = string(from)
+			strAddrs.ToAddr = string(to)
+			return &strAddrs
+		} else if log.Topics[0] == erc1155TransferBatchEventId {
+			// Parse the batch transfer events of ERC1155
+			from, to := Address("0x"+log.Topics[2][26:]), Address("0x"+log.Topics[3][26:])
+			strAddrs.Contract = string(log.Address)
+			strAddrs.FromAddr = string(from)
+			strAddrs.ToAddr = string(to)
+			return &strAddrs
+		}
+	}
+	return nil
+}
+
+func ContractTransferLog(log *EventLog) []*ContractTransfer {
+	topicsLen := len(log.Topics)
+	if topicsLen == 3 {
+		if log.Topics[0] == erc20TransferEventId && len(log.Data) == 66 {
+			// Parse ERC20 transition events
+			return []*ContractTransfer{&ContractTransfer{
+				TxHash:          string(log.TxHash),
+				ContractAddress: string(log.Address),
+				FromAddr:        string("0x" + log.Topics[1][26:]),
+				ToAddr:          string("0x" + log.Topics[2][26:]),
+				Value:           HexToBigInt(log.Data[2:66]),
+				ContractType:    "ERC20",
+			}}
+		}
+	} else if topicsLen == 4 {
+		if log.Topics[0] == erc721TransferEventId && len(log.Data) == 2 {
+			// Parse ERC721 transition events
+			return []*ContractTransfer{&ContractTransfer{
+				TxHash:          string(log.TxHash),
+				ContractAddress: string(log.Address),
+				FromAddr:        string("0x" + log.Topics[1][26:]),
+				ToAddr:          string("0x" + log.Topics[2][26:]),
+				TokenId:         HexToBigInt(string(log.Topics[3][2:])),
+				ContractType:    "ERC721",
+			}}
+		} else if log.Topics[0] == erc1155TransferSingleEventId && len(log.Data) == 130 {
+			// Parse ERC1155 transition events
+			operator, from, to := Address("0x"+log.Topics[1][26:]), Address("0x"+log.Topics[2][26:]), Address("0x"+log.Topics[3][26:])
+			return []*ContractTransfer{&ContractTransfer{
+				TxHash:          string(log.TxHash),
+				ContractAddress: string(log.Address),
+				Operator:        string(operator),
+				FromAddr:        string(from),
+				ToAddr:          string(to),
+				TokenId:         HexToBigInt(log.Data[2:66]),
+				Value:           HexToBigInt(log.Data[66:130]),
+				ContractType:    "ERC1155",
+			}}
+		} else if log.Topics[0] == erc1155TransferBatchEventId {
+			// Parse the batch transfer events of ERC1155
+			operator, from, to := Address("0x"+log.Topics[1][26:]), Address("0x"+log.Topics[2][26:]), Address("0x"+log.Topics[3][26:])
+			// Dynamic data type codec reference: https://docs.soliditylang.org/en/v0.8.13/abi-spec.html#argument-encoding
+			// The word length is 256 bits, or 32 bytes
+			wordLen := (len(log.Data) - 2) / 64
+			if wordLen < 4 || wordLen%2 != 0 || log.Data[2:66] != "0000000000000000000000000000000000000000000000000000000000000040" {
+				return nil
+			}
+			transferCount := (wordLen - 4) / 2
+			transferLogs := make([]*ContractTransfer, transferCount)
+			for i := 0; i < transferCount; i++ {
+				idOffset, valueOffset := 2+(i+3)*64, 2+(transferCount+i+4)*64
+				transferLogs[i] = &ContractTransfer{
+					TxHash:          string(log.TxHash),
+					ContractAddress: string(log.Address),
+					Operator:        string(operator),
+					FromAddr:        string(from),
+					ToAddr:          string(to),
+					TokenId:         HexToBigInt(log.Data[idOffset : idOffset+64]),
+					Value:           HexToBigInt(log.Data[valueOffset : valueOffset+64]),
+					ContractType:    "ERC1155",
+				}
+			}
+			return transferLogs
+		}
+	}
+	return nil
+}
+
 // HexToBigInt converts a hexadecimal string without 0x prefix to a big number BigInt (illegal input will return 0)
 func HexToBigInt(hex string) BigInt {
 	b := new(big.Int)

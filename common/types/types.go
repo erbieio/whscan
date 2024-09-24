@@ -187,6 +187,7 @@ const (
 	ERC165
 	ERC721
 	ERC1155
+	ERCOther
 )
 
 // ImplementsGraphQLType returns true if Long implements the provided GraphQL type.
@@ -225,4 +226,21 @@ func (e *ContractType) MarshalJSON() ([]byte, error) {
 	default:
 		return []byte("\"NONE\"")[:], nil
 	}
+}
+
+type ContractTransAddress struct {
+	Contract string
+	FromAddr string
+	ToAddr   string
+}
+
+type ContractTransfer struct {
+	TxHash          string
+	ContractAddress string
+	FromAddr        string
+	ToAddr          string
+	Value           BigInt
+	TokenId         BigInt
+	Operator        string
+	ContractType    string
 }

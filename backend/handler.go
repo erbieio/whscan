@@ -69,6 +69,9 @@ func decode(c *node.Client, ctx context.Context, number types.Long) (parsed *mod
 	}
 	// Parse things specific to erbie
 	err = decodeWH(c, parsed)
+
+	err = decodeContract(c, parsed)
+
 	return
 }
 
@@ -232,6 +235,37 @@ func write(c *node.Client, ctx context.Context, parsed *model.Parsed) (head type
 		}
 	}
 	return parsed.Number, service.SetHead(parsed)
+}
+
+func updateDelegateContractType(c *node.Client, ctx context.Context, parsed *model.Parsed) {
+	var contracts []model.Contract
+	err := service.DB.Model(model.Contract{}).Where("block_number <= ? and block_number > ?", parsed.Number-60, parsed.Number-70).Find(&contracts).Error
+	if err != nil {
+		return
+	}
+	for _, contract := range contracts {
+		if contract.ImplementContractAddr == "" {
+			continue
+		}
+		var implementContract model.Contract
+		err := service.DB.Model(model.Contract{}).Where("contract_address = ?",
+			contract.ImplementContractAddr).First(&implementContract).Error
+		if err == nil {
+			contract.ContractType = implementContract.ContractType
+		}
+
+		if contract.ContractType == "ERC20" {
+			totalSupply, err := utils.TotalSupply(c, context.Background(), parsed.Number.Hex(), contract.ContractAddress)
+			if err == nil {
+				total, _ := new(big.Int).SetString(totalSupply[2:], 16)
+				if total != nil {
+					contract.TotalSupply = total.Text(10)
+				}
+
+			}
+		}
+		service.DB.Save(contract)
+	}
 }
 
 func check(c *node.Client, ctx context.Context) (stats *model.Stats, err error) {
@@ -593,4 +627,149 @@ func decodeWHTx(c *node.Client, wh *model.Parsed, tx *model.Transaction) (err er
 	}
 	wh.Erbies = append(wh.Erbies, erbie)
 	return
+}
+
+func decodeContract(c *node.Client, wh *model.Parsed) error {
+
+	// Contract tx
+	for _, tx := range wh.CacheTxs {
+		if len(tx.Input) > 2 {
+			input, _ := hex.DecodeString(tx.Input[2:])
+			if len(input) >= 6 && string(input[0:6]) == "erbie:" {
+				// 是erbie交易
+				continue
+			}
+
+			contractTx := copyTx(tx)
+			wh.CacheContractTx = append(wh.CacheContractTx, contractTx)
+		}
+	}
+
+	// Contract Info
+	for _, cTx := range wh.CacheContractTx {
+		// get create contract tx
+		if cTx.To == nil {
+			var contractInfo model.Contract
+			contractInfo.TxHash = string(cTx.Hash)
+			contractInfo.BlockNumber = cTx.BlockNumber
+			contractInfo.ContractAddress = string(*cTx.ContractAddress)
+			contractInfo.ContractCreator = string(cTx.From)
+
+			name, err := utils.Name(c, context.Background(), wh.Number.Hex(), contractInfo.ContractAddress)
+			if err == nil {
+				contractInfo.TokenName = name
+			}
+
+			symbol, err := utils.Symbol(c, context.Background(), wh.Number.Hex(), contractInfo.ContractAddress)
+			if err == nil {
+				contractInfo.Symbol = symbol
+			}
+
+			contractType := utils.GetContractType(c, context.Background(), cTx.Input, wh.Number.Hex(), contractInfo.ContractAddress)
+			contractInfo.ContractType = contractType
+			for _, log := range wh.CacheLogs {
+				if log.TxHash == cTx.Hash {
+					delegateFlag := utils.IsDelegateContract(log)
+					if delegateFlag {
+						contractInfo.ImplementContractAddr = "0x" + string(log.Topics[1])[len(log.Topics[1])-40:]
+						var implementContract model.Contract
+						err := service.DB.Model(model.Contract{}).Where("contract_address = ?",
+							contractInfo.ImplementContractAddr).First(&implementContract).Error
+						if err == nil {
+							contractInfo.ContractType = implementContract.ContractType
+						}
+
+					}
+					break
+				}
+			}
+			if contractInfo.ContractType == "ERC20" {
+				totalSupply, err := utils.TotalSupply(c, context.Background(), wh.Number.Hex(), contractInfo.ContractAddress)
+				if err == nil {
+					total, _ := new(big.Int).SetString(totalSupply[2:], 16)
+					if total != nil {
+						contractInfo.TotalSupply = total.Text(10)
+					}
+
+				}
+			}
+
+			contractInfo.CreateCode = cTx.Input
+			for _, acct := range wh.CacheAccounts {
+				if string(acct.Address) == contractInfo.ContractAddress {
+					contractInfo.DeployedCode = *acct.Code
+				}
+			}
+			wh.CacheContract = append(wh.CacheContract, &contractInfo)
+		}
+	}
+
+	// contract nft
+	for _, log := range wh.CacheLogs {
+		transferLogs := utils.ContractTransferLog(log)
+		for _, transferLog := range transferLogs {
+			if transferLog.ContractType == "ERC20" {
+				for idx, tx := range wh.CacheContractTx {
+					if string(tx.Hash) == transferLog.TxHash {
+						wh.CacheContractTx[idx].Value = transferLog.Value
+					}
+				}
+
+				amount, err := utils.BalanceOf(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.FromAddr)
+				if err == nil {
+					conAccount := &model.ContractAccountErc20{
+						Address:         transferLog.FromAddr,
+						ContractAddress: transferLog.ContractAddress,
+						Balance:         utils.HexToBigInt(amount[2:]),
+						Number:          wh.Number,
+						Timestamp:       types.Long(time.Now().Unix()),
+					}
+					wh.CacheContractAccount = append(wh.CacheContractAccount, conAccount)
+				}
+				amount, err = utils.BalanceOf(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.ToAddr)
+				if err == nil {
+					conAccount := &model.ContractAccountErc20{
+						Address:         transferLog.ToAddr,
+						ContractAddress: transferLog.ContractAddress,
+						Balance:         utils.HexToBigInt(amount[2:]),
+						Number:          wh.Number,
+						Timestamp:       types.Long(time.Now().Unix()),
+					}
+					wh.CacheContractAccount = append(wh.CacheContractAccount, conAccount)
+				}
+
+			}
+			if transferLog.ContractType == "ERC721" {
+
+			}
+			if transferLog.ContractType == "ERC1155" {
+
+			}
+		}
+	}
+
+	return nil
+}
+
+func copyTx(tx *model.Transaction) *model.ContractTx {
+	var cTx model.ContractTx
+	cTx.BlockHash = tx.BlockHash
+	cTx.BlockNumber = tx.BlockNumber
+	cTx.Timestamp = tx.Timestamp
+	cTx.From = tx.From
+	cTx.To = tx.To
+	cTx.Input = tx.Input
+	cTx.Value = tx.Value
+	cTx.Nonce = tx.Nonce
+	cTx.Gas = tx.Gas
+	cTx.GasPrice = tx.GasPrice
+	cTx.Hash = tx.Hash
+	cTx.Status = tx.Status
+	cTx.CumulativeGasUsed = tx.CumulativeGasUsed
+	cTx.ContractAddress = tx.ContractAddress
+	cTx.GasUsed = tx.GasUsed
+	cTx.TxIndex = tx.TxIndex
+	cTx.Error = tx.Error
+
+	return &cTx
 }

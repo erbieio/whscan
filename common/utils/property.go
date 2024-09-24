@@ -114,6 +114,36 @@ func IsERC20(c ContractClient, ctx context.Context, number, address any) (bool, 
 	return true, nil
 }
 
+func IsERC20_2(data string) bool {
+	totalSupplySelector := "18160ddd"
+	transferSelector := "a9059cbb"
+
+	if strings.Contains(data, totalSupplySelector) &&
+		strings.Contains(data, transferSelector) {
+		return true
+	}
+
+	return false
+}
+
+func IsDelegateContract(log *model.EventLog) bool {
+	delegateContractId := types.Hash("0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b")
+	if log.Topics[0] == delegateContractId {
+		return true
+	}
+
+	return false
+}
+
+func IsDelegateContract_2(topic0 string) bool {
+	delegateContractId := "0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b"
+	if topic0 == delegateContractId {
+		return true
+	}
+
+	return false
+}
+
 // filterContractErr Filter out errors except network connections
 func filterContractErr(err error) error {
 	if err != nil {
@@ -125,4 +155,34 @@ func filterContractErr(err error) error {
 		}
 	}
 	return nil
+}
+
+func GetContractType(c ContractClient, ctx context.Context, data string, number, address any) string {
+	ok, err := IsERC165(c, ctx, number, address)
+	if err != nil {
+		return "ERCOther"
+	}
+	if !ok {
+		ok = IsERC20_2(data)
+		if ok {
+			return "ERC20"
+		}
+		return "ERCOther"
+	}
+
+	ok, err = IsERC721(c, ctx, number, address)
+	if err != nil {
+		return "ERCOther"
+	}
+	if ok {
+		return "ERC721"
+	}
+	ok, err = IsERC1155(c, ctx, number, address)
+	if err != nil {
+		return "ERCOther"
+	}
+	if ok {
+		return "ERC1155"
+	}
+	return "ERC165"
 }

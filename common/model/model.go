@@ -31,7 +31,7 @@ var Tables = []interface{}{
 	&Location{},
 	&Contract{},
 	&ContractTx{},
-	&ContractAccount{},
+	&ContractAccountErc20{},
 	&ContractNFT{},
 }
 
@@ -370,33 +370,34 @@ type Parsed struct {
 	// Contract
 	CacheContract        []*Contract
 	CacheContractTx      []*ContractTx
-	CacheContractAccount []*ContractAccount
+	CacheContractAccount []*ContractAccountErc20
 	CacheContractNFT     []*ContractNFT
 }
 
 type Contract struct {
 	gorm.Model
-	TxHash          string     `json:"tx_hash" gorm:"index"`     //创建合约的交易hash
-	BlockNumber     types.Long `json:"blockNumber" gorm:"index"` //block number
-	ContractCreator string     `json:"contract_creator"`
-	ContractAddress string     `json:"contract_address" gorm:"index"`
-	ContractName    string     `json:"contract_name"`
-	ContractType    string     `json:"contract_type"` //合约类型, (列如：ERC20，ERC721， 1155)
-	TokenName       string     `json:"token_name"`
-	Symbol          string     `json:"symbol,omitempty" gorm:"type:VARCHAR(66)"` //symbol
-	Icon            string     `json:"icon"`
-	TotalSupply     string     `json:"total_supply"`
-	SourceCode      string     `json:"source_code"`
-	Holders         int64      `json:"holders"`
-	CallTimes       int64      `json:"call_times"`
-	Verified        bool       `json:"verified"`
-	Audited         bool       `json:"audited"`
-	ContractAbi     string     `json:"contract_abi" gorm:"type:TEXT"`
-	CreateCode      string     `json:"create_code" gorm:"type:TEXT"`
-	DeployedCode    string     `json:"deployed_code" gorm:"type:TEXT"`
-	ConstructorArg  string     `json:"constructor_arg"`
-	CompilerVersion string     `json:"compiler_version"`
-	License         string     `json:"license"`
+	TxHash                string     `json:"tx_hash" gorm:"index"`     //创建合约的交易hash
+	BlockNumber           types.Long `json:"blockNumber" gorm:"index"` //block number
+	ContractCreator       string     `json:"contract_creator"`
+	ContractAddress       string     `json:"contract_address" gorm:"index"`
+	ImplementContractAddr string     `json:"implement_contract_addr" gorm:"index"`
+	ContractName          string     `json:"contract_name"`
+	ContractType          string     `json:"contract_type"` //合约类型, (列如：ERC20，ERC721， 1155)
+	TokenName             string     `json:"token_name"`
+	Symbol                string     `json:"symbol,omitempty" gorm:"type:VARCHAR(66)"` //symbol
+	Icon                  string     `json:"icon"`
+	TotalSupply           string     `json:"total_supply"`
+	SourceCode            string     `json:"source_code"`
+	Holders               int64      `json:"holders"`
+	CallTimes             int64      `json:"call_times"`
+	Verified              bool       `json:"verified"`
+	Audited               bool       `json:"audited"`
+	ContractAbi           string     `json:"contract_abi" gorm:"type:TEXT"`
+	CreateCode            string     `json:"create_code" gorm:"type:TEXT"`
+	DeployedCode          string     `json:"deployed_code" gorm:"type:TEXT"`
+	ConstructorArg        string     `json:"constructor_arg"`
+	CompilerVersion       string     `json:"compiler_version"`
+	License               string     `json:"license"`
 }
 
 // Transaction information
@@ -418,13 +419,13 @@ type ContractTx struct {
 	GasUsed           types.Long     `json:"gasUsed"`                                 //Gas consumption
 	TxIndex           types.Long     `json:"transactionIndex"`                        //The serial number in the block
 	Error             *string        `json:"error,omitempty" gorm:"type:VARCHAR(66)"` //exec error
+	FunctionName      string         `json:"function_name"`
 }
 
 // Contract Account information
-type ContractAccount struct {
-	gorm.Model
-	Address         string       `json:"address"` //address
-	ContractAddress string       `json:"contract_address" gorm:"index"`
+type ContractAccountErc20 struct {
+	Address         string       `json:"address" gorm:"primary_key;index"` //address
+	ContractAddress string       `json:"contract_address" gorm:"primary_key;index"`
 	Balance         types.BigInt `json:"balance"`             //The total amount of coins in the chain
 	Number          types.Long   `json:"number" gorm:"index"` //last update block number
 	Timestamp       types.Long   `json:"timestamp"`           //The event stamp of the account it is in

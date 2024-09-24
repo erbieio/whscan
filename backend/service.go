@@ -55,6 +55,7 @@ func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread i
 			parsed := <-parsedCh
 			taskCount, cache[parsed.Number] = taskCount-1, parsed
 			for newHead := types.Long(stats.TotalBlock); cache[newHead] != nil; {
+				updateDelegateContractType(client, ctx, cache[newHead])
 				if head, err := write(client, ctx, cache[newHead]); err != nil {
 					log.Printf("%v block write error: %v\n", newHead, err)
 					time.Sleep(10 * interval)

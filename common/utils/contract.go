@@ -21,6 +21,13 @@ var (
 	transferSelector          = "0xa9059cbb"
 	transferFromSelector      = "0x23b872dd"
 	approveSelector           = "0x095ea7b3"
+
+	//erc721
+	tokenURISelector = "0xc87b56dd"
+	ownerOfSelector  = "0x6352211e"
+
+	//erc1155
+	balanceOf1155Selector = "0x00fdd58e"
 )
 
 type ContractClient interface {
@@ -126,9 +133,10 @@ func ABIDecodeString(out types.Bytes) (string, error) {
 	}
 	strLen := new(big.Int)
 	strLen.SetString(string(out[66:130]), 16)
-	if (outLen-130)/64 != int(strLen.Int64())/32 {
-		return "", errors.New("return data string length error")
-	}
+	//fmt.Println("(outLen-130)/64 = ", (outLen-130)/64, "int(strLen.Int64())/32 = ", int(strLen.Int64())/32, "strLen.Int64() = ", strLen.Int64())
+	//if (outLen-130)/64 != int(strLen.Int64())/32 {
+	//	return "", errors.New("return data string length error")
+	//}
 	data, err := hex.DecodeString(string(out[130:int(130+strLen.Int64()*2)]))
 	return string(data), err
 }
@@ -154,8 +162,69 @@ func ABIDecodeBigInt(out types.Bytes) (string, error) {
 // ABIDecodeBool parses bool from the return data with only one contract return value
 func ABIDecodeBool(out types.Bytes) (bool, error) {
 	outLen := len(out)
-	if outLen != 66 || out[:65] != "0x00000000000000000000000000000000000000000000000000000000000000" {
+	if outLen != 66 || out[:65] != "0x000000000000000000000000000000000000000000000000000000000000000" {
 		return false, errors.New("return data format error")
 	}
 	return out[65] == '1', nil
+}
+
+// ABIDecodeAddress parses address from the return data with only one contract return value
+func ABIDecodeAddress(out types.Bytes) (string, error) {
+	outLen := len(out)
+	if outLen != 66 {
+		return "", errors.New("return data format error")
+	}
+	return "0x" + string(out[26:]), nil
+}
+
+// nft
+
+// GetTokenURI get tokenURI of a given ERC721 contract (optional interface)
+func GetTokenURI(c ContractClient, ctx context.Context, number, address any, tokenId int64) (string, error) {
+	strTokenId := big.NewInt(tokenId).Text(16)
+	var str0 string
+	for i := 0; i < 64-len(strTokenId); i++ {
+		str0 = str0 + "0"
+	}
+	strTokenId = str0 + strTokenId
+
+	data := tokenURISelector + strTokenId
+	out, err := c.CallContract(ctx, address, data, number)
+	if err != nil {
+		return "", err
+	}
+	return ABIDecodeString(out)
+}
+
+// GetOwnerOf get owner of a given ERC721 contract (optional interface)
+func GetOwnerOf(c ContractClient, ctx context.Context, number, address any, tokenId int64) (string, error) {
+	strTokenId := big.NewInt(tokenId).Text(16)
+	var str0 string
+	for i := 0; i < 64-len(strTokenId); i++ {
+		str0 = str0 + "0"
+	}
+	strTokenId = str0 + strTokenId
+
+	data := ownerOfSelector + strTokenId
+	out, err := c.CallContract(ctx, address, data, number)
+	if err != nil {
+		return "", err
+	}
+	return ABIDecodeAddress(out)
+}
+
+func BalanceOf1155(c ContractClient, ctx context.Context, number, address any, account string, tokenId int64) (string, error) {
+	strTokenId := big.NewInt(tokenId).Text(16)
+	var str0 string
+	for i := 0; i < 64-len(strTokenId); i++ {
+		str0 = str0 + "0"
+	}
+	strTokenId = str0 + strTokenId
+
+	data := balanceOf1155Selector + "000000000000000000000000" + account[2:] + strTokenId
+	out, err := c.CallContract(ctx, address, data, number)
+	if err != nil {
+		return "", err
+	}
+	return ABIDecodeBigInt(out)
 }
