@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"strconv"
 
@@ -85,6 +86,11 @@ func Insert(parsed *model.Parsed) (head types.Long, err error) {
 			return
 		}
 		if err = saveSlashing(db, parsed); err != nil {
+			return
+		}
+
+		// contract nft
+		if err = saveContractNFT(db, parsed); err != nil {
 			return
 		}
 
@@ -229,6 +235,18 @@ func SetHead(parsed *model.Parsed) error {
 				return
 			}
 			if err = db.Delete(&model.Block{}, "number>?", head).Error; err != nil {
+				return
+			}
+			if err = db.Delete(&model.ContractTx{}, "block_number>?", head).Error; err != nil {
+				return
+			}
+			if err = db.Delete(&model.Contract{}, "block_number>?", head).Error; err != nil {
+				return
+			}
+			if err = db.Delete(&model.ContractNFT{}, "block_number>?", head).Error; err != nil {
+				return
+			}
+			if err = db.Delete(&model.ContractAccountErc20{}, "number>?", head).Error; err != nil {
 				return
 			}
 			return fixStats(db, parsed)
@@ -643,4 +661,32 @@ func saveErbie(db *gorm.DB, wh *model.Parsed) (err error) {
 		}
 	}
 	return
+}
+
+func saveContractNFT(db *gorm.DB, wh *model.Parsed) (err error) {
+	for _, contractNFT := range wh.CacheContractNFT {
+		var dbNFT model.ContractNFT
+		if contractNFT.TokenStandard == "ERC721" {
+			err = db.Model(model.ContractNFT{}).Where("contract_address = ? and token_id = ?",
+				contractNFT.ContractAddress, contractNFT.TokenId).First(&dbNFT).Error
+		} else {
+			err = db.Model(model.ContractNFT{}).Where("contract_address = ? and token_id = ? and owner = ?",
+				contractNFT.ContractAddress, contractNFT.TokenId, contractNFT.Owner).First(&dbNFT).Error
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			db.Save(contractNFT)
+		} else if err == nil {
+			dbNFT.MetaUrl = contractNFT.MetaUrl
+			dbNFT.Timestamp = contractNFT.Timestamp
+			dbNFT.BlockNumber = contractNFT.BlockNumber
+			dbNFT.Owner = contractNFT.Owner
+			dbNFT.TokenId = contractNFT.TokenId
+			dbNFT.Quantity = contractNFT.Quantity
+			db.Save(dbNFT)
+		} else {
+			return
+		}
+	}
+
+	return nil
 }

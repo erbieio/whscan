@@ -376,8 +376,8 @@ type Parsed struct {
 
 type Contract struct {
 	gorm.Model
-	TxHash                string     `json:"tx_hash" gorm:"index"`     //创建合约的交易hash
-	BlockNumber           types.Long `json:"blockNumber" gorm:"index"` //block number
+	TxHash                string     `json:"tx_hash" gorm:"index"`      //创建合约的交易hash
+	BlockNumber           types.Long `json:"block_number" gorm:"index"` //block number
 	ContractCreator       string     `json:"contract_creator"`
 	ContractAddress       string     `json:"contract_address" gorm:"index"`
 	ImplementContractAddr string     `json:"implement_contract_addr" gorm:"index"`
@@ -403,7 +403,7 @@ type Contract struct {
 // Transaction information
 type ContractTx struct {
 	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
-	BlockNumber       types.Long     `json:"blockNumber" gorm:"index"`                //block number
+	BlockNumber       types.Long     `json:"block_number" gorm:"index"`               //block number
 	Timestamp         types.Long     `json:"timestamp"`                               //The event stamp of the block it is in
 	From              types.Address  `json:"from" gorm:"type:CHAR(42);index"`         //Send address
 	To                *types.Address `json:"to" gorm:"type:CHAR(42);index"`           //Receive address
@@ -442,7 +442,7 @@ type ContractNFT struct {
 	TxHash          string       `json:"tx_hash" gorm:"type:CHAR(66)"`          //The transaction hash created
 	Owner           string       `json:"owner" gorm:"type:CHAR(42);index"`      //owner
 	Classification  string       `json:"classification"`
-	TokenId         types.BigInt `json:"tokenId" gorm:"type:VARCHAR(80)"` //Token ID
+	TokenId         types.BigInt `json:"token_id" gorm:"type:VARCHAR(80)"` //Token ID
 	Quantity        int64        `json:"quantity"`
 	TokenStandard   string       `json:"token_standard"` // ERC721,ERC1155
 }

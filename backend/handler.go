@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
 	"time"
 
@@ -708,13 +709,21 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 	for _, log := range wh.CacheLogs {
 		transferLogs := utils.ContractTransferLog(log)
 		for _, transferLog := range transferLogs {
-			if transferLog.ContractType == "ERC20" {
-				for idx, tx := range wh.CacheContractTx {
-					if string(tx.Hash) == transferLog.TxHash {
+
+			//更改合约交易记录的交易金额
+			var contx *model.ContractTx
+			for idx, tx := range wh.CacheContractTx {
+				if string(tx.Hash) == transferLog.TxHash {
+					if transferLog.ContractType == "ERC20" ||
+						transferLog.ContractType == "ERC1155" {
 						wh.CacheContractTx[idx].Value = transferLog.Value
 					}
+					contx = tx
+					break
 				}
+			}
 
+			if transferLog.ContractType == "ERC20" {
 				amount, err := utils.BalanceOf(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.FromAddr)
 				if err == nil {
 					conAccount := &model.ContractAccountErc20{
@@ -733,17 +742,93 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 						ContractAddress: transferLog.ContractAddress,
 						Balance:         utils.HexToBigInt(amount[2:]),
 						Number:          wh.Number,
-						Timestamp:       types.Long(time.Now().Unix()),
+						Timestamp:       wh.Timestamp,
 					}
 					wh.CacheContractAccount = append(wh.CacheContractAccount, conAccount)
 				}
 
 			}
 			if transferLog.ContractType == "ERC721" {
+				nft721 := &model.ContractNFT{
+					ContractAddress: transferLog.ContractAddress,
+					Timestamp:       int64(wh.Timestamp),
+					BlockNumber:     int64(wh.Number),
+					TokenId:         transferLog.TokenId,
+					TokenStandard:   "ERC721",
+				}
+				if transferLog.FromAddr == "0x0000000000000000000000000000000000000000" {
+					//铸造
+					nft721.TxHash = string(contx.Hash)
+					nft721.Creator = transferLog.ToAddr
+				}
+				tokenid, err := strconv.ParseInt(string(transferLog.TokenId), 10, 64)
+				if err == nil {
+					uri, err := utils.GetTokenURI(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, tokenid)
+					if err == nil {
+						nft721.MetaUrl = uri
+					}
+					owner, err := utils.GetOwnerOf(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, tokenid)
+					if err == nil {
+						nft721.Owner = owner
+					} else {
+						nft721.Owner = transferLog.ToAddr
+					}
+				}
 
+				wh.CacheContractNFT = append(wh.CacheContractNFT, nft721)
 			}
 			if transferLog.ContractType == "ERC1155" {
+				nft1155 := &model.ContractNFT{
+					ContractAddress: transferLog.ContractAddress,
+					Timestamp:       int64(wh.Timestamp),
+					BlockNumber:     int64(wh.Number),
+					TokenId:         transferLog.TokenId,
+					TokenStandard:   "ERC1155",
+				}
+				nft1155From := &model.ContractNFT{
+					ContractAddress: transferLog.ContractAddress,
+					Timestamp:       int64(wh.Timestamp),
+					BlockNumber:     int64(wh.Number),
+					TokenId:         transferLog.TokenId,
+					TokenStandard:   "ERC1155",
+				}
 
+				if transferLog.FromAddr == "0x0000000000000000000000000000000000000000" {
+					//铸造
+					nft1155.TxHash = string(contx.Hash)
+					nft1155.Creator = transferLog.ToAddr
+				}
+				nft1155.Owner = transferLog.ToAddr
+				nft1155From.Owner = transferLog.FromAddr
+				tokenid, err := strconv.ParseInt(string(transferLog.TokenId), 10, 64)
+				if err == nil {
+					uri, err := utils.GetTokenURI(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, tokenid)
+					if err == nil {
+						nft1155.MetaUrl = uri
+						nft1155From.MetaUrl = uri
+					}
+					toQuantity, err := utils.BalanceOf1155(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.ToAddr, tokenid)
+					if err == nil {
+						quantity, err := strconv.ParseInt(string(toQuantity), 10, 64)
+						if err == nil {
+							nft1155.Quantity = quantity
+						}
+					}
+					if nft1155From.Owner != "0x0000000000000000000000000000000000000000" {
+						fromQuantity, err := utils.BalanceOf1155(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.ToAddr, tokenid)
+						if err == nil {
+							quantity, err := strconv.ParseInt(string(fromQuantity), 10, 64)
+							if err == nil {
+								nft1155From.Quantity = quantity
+							}
+						}
+					}
+
+				}
+				wh.CacheContractNFT = append(wh.CacheContractNFT, nft1155)
+				if nft1155From.Owner != "0x0000000000000000000000000000000000000000" {
+					wh.CacheContractNFT = append(wh.CacheContractNFT, nft1155From)
+				}
 			}
 		}
 	}
