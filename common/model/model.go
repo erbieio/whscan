@@ -400,7 +400,7 @@ type Contract struct {
 	License               string     `json:"license"`
 }
 
-// Transaction information
+// Contract Transaction information
 type ContractTx struct {
 	BlockHash         types.Hash     `json:"blockHash" gorm:"type:CHAR(66)"`          //Block Hash
 	BlockNumber       types.Long     `json:"block_number" gorm:"index"`               //block number
