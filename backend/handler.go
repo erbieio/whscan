@@ -815,7 +815,7 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 						}
 					}
 					if nft1155From.Owner != "0x0000000000000000000000000000000000000000" {
-						fromQuantity, err := utils.BalanceOf1155(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.ToAddr, tokenid)
+						fromQuantity, err := utils.BalanceOf1155(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.FromAddr, tokenid)
 						if err == nil {
 							quantity, err := strconv.ParseInt(string(fromQuantity)[2:], 16, 64)
 							if err == nil {
