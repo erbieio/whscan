@@ -66,6 +66,7 @@ func GetContract(addr string) (*model.Contract, error) {
 	}
 
 	var holders int64
+	var callTimes int64
 	if contract.ContractType == "ERC20" {
 		err = DB.Model(&model.ContractAccountErc20{}).Where("contract_address = ?", contract.ContractAddress).Count(&holders).Error
 		if err != nil {
@@ -87,6 +88,12 @@ func GetContract(addr string) (*model.Contract, error) {
 	}
 	contract.Holders = holders
 
+	err = DB.Model(&model.ContractTx{}).Where("contract_txes.to = ?", addr).Count(&callTimes).Error
+	if err != nil {
+		return nil, err
+	}
+	contract.CallTimes = callTimes
+
 	return &contract, nil
 }
 
@@ -96,7 +103,7 @@ type HolderInfo struct {
 	Quantity float64 `json:"quantity"`
 }
 type HoldersRes struct {
-	TotalCount  int64         `json:"total_count"` //The total number of holders
+	Total       int64         `json:"total"` //The total number of holders
 	TotalAmount string        `json:"total_amount"`
 	Holders     []*HolderInfo `json:"holders"` //holders list
 }
@@ -110,7 +117,7 @@ func FetchHolders(addr string, page, size int) (*HoldersRes, error) {
 	}
 	if contract.ContractType == "ERC20" {
 		holdersRes.TotalAmount = contract.TotalSupply
-		err = DB.Model(&model.ContractAccountErc20{}).Where("contract_address = ?", addr).Count(&holdersRes.TotalCount).Error
+		err = DB.Model(&model.ContractAccountErc20{}).Where("contract_address = ?", addr).Count(&holdersRes.Total).Error
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +136,7 @@ func FetchHolders(addr string, page, size int) (*HoldersRes, error) {
 		}
 		holdersRes.TotalAmount = string(tmpNft.TokenId)
 		err = DB.Model(&model.ContractNFT{}).Select("owner as address",
-			"count(owner) as quantity").Group("owner").Count(&holdersRes.TotalCount).Error
+			"count(owner) as quantity").Group("owner").Count(&holdersRes.Total).Error
 		if err != nil {
 			return nil, err
 		}

@@ -14,8 +14,8 @@ type ContractTxsRes struct {
 func FetchContractTxs(addr string, page, size int) (res ContractTxsRes, err error) {
 	var db *gorm.DB
 
-	db = DB.Model(&model.ContractTx{}).Where("to = ?", addr).Order("block_number DESC")
-	err = DB.Model(&model.ContractTx{}).Where("to = ?", addr).Count(&res.Total).Error
+	db = DB.Model(&model.ContractTx{}).Where("contract_txes.to = ?", addr).Order("block_number DESC")
+	err = DB.Model(&model.ContractTx{}).Where("contract_txes.to = ?", addr).Count(&res.Total).Error
 	if err != nil {
 		return
 	}
