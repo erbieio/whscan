@@ -85,3 +85,14 @@ func TestGetOwnerOf(t *testing.T) {
 	ty, err := GetOwnerOf(client, context.Background(), "0x59a65", "0xce1cc1aa4e1cee97b13c9e650a7be66345d7d04f", 1)
 	t.Log(ty, err)
 }
+
+func TestBalanceOf1155(t *testing.T) {
+	client := createClient()
+	toQuantity, err := BalanceOf1155(client, context.Background(), "0x72627", "0x03cff07122b8e82418bd9152763516f7141a2c39", "0x2a241105a70c6372f9b4274158d74efa38ab5cbb", 0)
+	t.Log(toQuantity, err)
+}
+func TestGetTokenURI1155(t *testing.T) {
+	client := createClient()
+	ty, err := GetTokenURI1155(client, context.Background(), "0x72627", "0x03cff07122b8e82418bd9152763516f7141a2c39", 0)
+	t.Log(ty, err)
+}

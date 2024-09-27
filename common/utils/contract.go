@@ -28,6 +28,7 @@ var (
 
 	//erc1155
 	balanceOf1155Selector = "0x00fdd58e"
+	tokenURI1155Selector  = "0x0e89341c"
 )
 
 type ContractClient interface {
@@ -227,4 +228,21 @@ func BalanceOf1155(c ContractClient, ctx context.Context, number, address any, a
 		return "", err
 	}
 	return ABIDecodeBigInt(out)
+}
+
+// GetTokenURI get tokenURI of a given ERC1155 contract (optional interface)
+func GetTokenURI1155(c ContractClient, ctx context.Context, number, address any, tokenId int64) (string, error) {
+	strTokenId := big.NewInt(tokenId).Text(16)
+	var str0 string
+	for i := 0; i < 64-len(strTokenId); i++ {
+		str0 = str0 + "0"
+	}
+	strTokenId = str0 + strTokenId
+
+	data := tokenURI1155Selector + strTokenId
+	out, err := c.CallContract(ctx, address, data, number)
+	if err != nil {
+		return "", err
+	}
+	return ABIDecodeString(out)
 }

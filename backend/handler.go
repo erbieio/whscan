@@ -802,14 +802,14 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 				nft1155From.Owner = transferLog.FromAddr
 				tokenid, err := strconv.ParseInt(string(transferLog.TokenId), 10, 64)
 				if err == nil {
-					uri, err := utils.GetTokenURI(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, tokenid)
+					uri, err := utils.GetTokenURI1155(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, tokenid)
 					if err == nil {
 						nft1155.MetaUrl = uri
 						nft1155From.MetaUrl = uri
 					}
 					toQuantity, err := utils.BalanceOf1155(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.ToAddr, tokenid)
 					if err == nil {
-						quantity, err := strconv.ParseInt(string(toQuantity), 10, 64)
+						quantity, err := strconv.ParseInt(string(toQuantity)[2:], 16, 64)
 						if err == nil {
 							nft1155.Quantity = quantity
 						}
@@ -817,7 +817,7 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 					if nft1155From.Owner != "0x0000000000000000000000000000000000000000" {
 						fromQuantity, err := utils.BalanceOf1155(c, context.Background(), wh.Number.Hex(), transferLog.ContractAddress, transferLog.ToAddr, tokenid)
 						if err == nil {
-							quantity, err := strconv.ParseInt(string(fromQuantity), 10, 64)
+							quantity, err := strconv.ParseInt(string(fromQuantity)[2:], 16, 64)
 							if err == nil {
 								nft1155From.Quantity = quantity
 							}
