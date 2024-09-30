@@ -158,15 +158,16 @@ func filterContractErr(err error) error {
 }
 
 func GetContractType(c ContractClient, ctx context.Context, data string, number, address any) string {
+	ok := IsERC20_2(data)
+	if ok {
+		return "ERC20"
+	}
+
 	ok, err := IsERC165(c, ctx, number, address)
 	if err != nil {
 		return "ERCOther"
 	}
 	if !ok {
-		ok = IsERC20_2(data)
-		if ok {
-			return "ERC20"
-		}
 		return "ERCOther"
 	}
 
