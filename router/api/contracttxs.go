@@ -10,6 +10,7 @@ import (
 // Contract ContractAPI
 func ContractTxs(e *gin.Engine) {
 	e.GET("/contract_tx/page", pageContractTxs)
+	e.GET("/contract_tx/total_num", getContractTxTotalNum)
 }
 
 // @Tags        contract txs
@@ -28,6 +29,25 @@ func pageContractTxs(c *gin.Context) {
 	addr := c.Query("addr")
 
 	res, err := service.FetchContractTxs(addr, page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        contract txs total number
+// @Summary     query contract txs total number
+// @Description query contract txs total number
+// @Accept      json
+// @Produce     json
+// @Param
+// @Success     200  {object} int64
+// @Failure     400  {object} service.ErrRes
+// @Router      /contract_tx/total_num [get]
+func getContractTxTotalNum(c *gin.Context) {
+	res, err := service.GetContractTxTotalNum()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

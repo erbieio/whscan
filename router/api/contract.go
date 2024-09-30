@@ -13,6 +13,10 @@ func Contract(e *gin.Engine) {
 	e.GET("/contract/page", pageContract)
 	e.GET("/contract/:addr", getContract)
 	e.GET("/contract/holders/page", pageHolders)
+	e.GET("/contract/total_num", getContractTotalNum)
+	e.GET("/contract/token_total_num", getTokenTotalNum)
+	e.GET("/contract/nft_total_num", getNftTotalNum)
+	e.GET("/contract/transfer_num/:addr", getTransferNum)
 }
 
 // @Tags        contract
@@ -78,6 +82,82 @@ func pageHolders(c *gin.Context) {
 	addr := c.Query("addr")
 
 	res, err := service.FetchHolders(addr, page, size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        contract total number
+// @Summary     query contract total number
+// @Description query contract total number
+// @Accept      json
+// @Produce     json
+// @Param
+// @Success     200  {object} int64
+// @Failure     400  {object} service.ErrRes
+// @Router      /contract/total_num [get]
+func getContractTotalNum(c *gin.Context) {
+	res, err := service.GetContractTotalNum()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        token total number
+// @Summary     query token total number
+// @Description query token total number
+// @Accept      json
+// @Produce     json
+// @Param
+// @Success     200  {object} int64
+// @Failure     400  {object} service.ErrRes
+// @Router      /contract/token_total_num [get]
+func getTokenTotalNum(c *gin.Context) {
+	res, err := service.GetTokenTotalNum()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        nft total number
+// @Summary     query nft total number
+// @Description query nft total number
+// @Accept      json
+// @Produce     json
+// @Param
+// @Success     200  {object} int64
+// @Failure     400  {object} service.ErrRes
+// @Router      /contract/nft_total_num [get]
+func getNftTotalNum(c *gin.Context) {
+	res, err := service.GetNftTotalNum()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        contract transfer number
+// @Summary     query contract transfer number
+// @Description query contract transfer number
+// @Accept      json
+// @Produce     json
+// @Param		addr path     string true "contract address"
+// @Success     200  {object} int64
+// @Failure     400  {object} service.ErrRes
+// @Router      /contract/transfer_num [get]
+func getTransferNum(c *gin.Context) {
+	res, err := service.GetTransferNum(c.Param("addr"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

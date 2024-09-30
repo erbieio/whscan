@@ -17,6 +17,7 @@ func Transaction(e *gin.Engine) {
 	e.GET("/transaction/internal/:hash", getInternalTransaction)
 	e.GET("/transaction/erbie/page", pageErbieTransaction)
 	e.GET("/transaction/erbie/:hash", getErbieTransaction)
+	e.GET("/transaction/growth_rate", getTransactionGrowthRate)
 }
 
 // @Tags        transaction
@@ -158,4 +159,23 @@ func getErbieTransaction(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, data)
+}
+
+// @Tags        transaction growth rate
+// @Summary     query transaction growth rate
+// @Description query transaction growth rate
+// @Accept      json
+// @Produce     json
+// @Param
+// @Success     200  {object} float64
+// @Failure     400  {object} service.ErrRes
+// @Router      /transaction/growth_rate [get]
+func getTransactionGrowthRate(c *gin.Context) {
+	res, err := service.GetTransactionGrowthRate()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }

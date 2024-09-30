@@ -731,7 +731,7 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 						ContractAddress: transferLog.ContractAddress,
 						Balance:         utils.HexToBigInt(amount[2:]),
 						Number:          wh.Number,
-						Timestamp:       types.Long(time.Now().Unix()),
+						Timestamp:       wh.Timestamp,
 					}
 					wh.CacheContractAccount = append(wh.CacheContractAccount, conAccount)
 				}

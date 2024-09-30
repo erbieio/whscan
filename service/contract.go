@@ -117,12 +117,12 @@ func FetchHolders(addr string, page, size int) (*HoldersRes, error) {
 	}
 	if contract.ContractType == "ERC20" {
 		holdersRes.TotalAmount = contract.TotalSupply
-		err = DB.Model(&model.ContractAccountErc20{}).Where("contract_address = ?", addr).Count(&holdersRes.Total).Error
+		err = DB.Model(&model.ContractAccountErc20{}).Where("contract_address = ? and address != '0x0000000000000000000000000000000000000000'", addr).Count(&holdersRes.Total).Error
 		if err != nil {
 			return nil, err
 		}
 
-		err = DB.Model(&model.ContractAccountErc20{}).Select("address", "balance").Where("contract_address = ?",
+		err = DB.Model(&model.ContractAccountErc20{}).Select("address", "balance as quantity").Where("contract_address = ?  and address != '0x0000000000000000000000000000000000000000'",
 			addr).Order("balance DESC").Offset((page - 1) * size).Limit(size).Find(&holdersRes.Holders).Error
 		if err != nil {
 			return nil, err
@@ -149,4 +149,64 @@ func FetchHolders(addr string, page, size int) (*HoldersRes, error) {
 	}
 
 	return &holdersRes, nil
+}
+
+func GetContractTotalNum() (int64, error) {
+	var total int64
+	err := DB.Model(&model.Contract{}).Count(&total).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func GetTokenTotalNum() (int64, error) {
+	var total int64
+	err := DB.Model(&model.Contract{}).Where("contract_type = ?", "ERC20").Count(&total).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func GetNftTotalNum() (int64, error) {
+	var total int64
+	err := DB.Model(&model.Contract{}).Where("contract_type = ? || contract_type = ?", "ERC721", "ERC1155").Count(&total).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+func GetTransferNum(addr string) (int64, error) {
+	var total int64
+	var contract model.Contract
+	err := DB.Model(&model.Contract{}).Where("contract_address = ?", addr).First(&contract).Error
+	if err != nil {
+		return 0, err
+	}
+
+	if contract.ContractType == "ERC20" {
+		err = DB.Model(&model.ERC20Transfer{}).Where("erc20_transfers.from != '0x0000000000000000000000000000000000000000'").Count(&total).Error
+		if err != nil {
+			return 0, err
+		}
+	}
+	if contract.ContractType == "ERC721" {
+		err = DB.Model(&model.ERC721Transfer{}).Where("erc721_transfers.from != '0x0000000000000000000000000000000000000000'").Count(&total).Error
+		if err != nil {
+			return 0, err
+		}
+	}
+	if contract.ContractType == "ERC721" {
+		err = DB.Model(&model.ERC1155Transfer{}).Where("erc1155_transfers.from != '0x0000000000000000000000000000000000000000'").Count(&total).Error
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return total, nil
 }

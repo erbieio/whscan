@@ -12,6 +12,8 @@ import (
 func Account(e *gin.Engine) {
 	e.GET("/account/page", pageAccount)
 	e.GET("/account/:addr", getAccount)
+	e.GET("/account/growth_rate", getAccountGrowthRate)
+	e.GET("/account/total_num", getAccountTotalNum)
 }
 
 // @Tags        account
@@ -47,6 +49,44 @@ func pageAccount(c *gin.Context) {
 // @Router      /account/{addr} [get]
 func getAccount(c *gin.Context) {
 	res, err := service.GetAccount(c.Param("addr"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        account growth rate
+// @Summary     query account growth rate
+// @Description query account growth rate
+// @Accept      json
+// @Produce     json
+// @Param
+// @Success     200  {object} float64
+// @Failure     400  {object} service.ErrRes
+// @Router      /account/growth_rate [get]
+func getAccountGrowthRate(c *gin.Context) {
+	res, err := service.GetAccountGrowthRate()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        account total number
+// @Summary     query account growth rate
+// @Description query account total number
+// @Accept      json
+// @Produce     json
+// @Param
+// @Success     200  {object} int64
+// @Failure     400  {object} service.ErrRes
+// @Router      /account/total_num [get]
+func getAccountTotalNum(c *gin.Context) {
+	res, err := service.GetAccountTotalNum()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return

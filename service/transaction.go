@@ -3,6 +3,7 @@ package service
 import (
 	"server/common/model"
 	"strings"
+	"time"
 )
 
 func GetTransaction(hash string) (res model.Transaction, err error) {
@@ -96,4 +97,22 @@ func FetchErbieTxs(page, size int, number, address, epoch, account, types string
 func GetErbieTransaction(hash string) (res model.Erbie, err error) {
 	err = DB.Where("`tx_hash`=?", hash).Take(&res).Error
 	return
+}
+
+func GetTransactionGrowthRate() (float64, error) {
+	var TotalNum int64
+	err := DB.Model(&model.Transaction{}).Count(&TotalNum).Error
+	if err != nil {
+		return 0.0, err
+	}
+
+	var TotalNum24 int64
+	err = DB.Model(&model.Transaction{}).Where("timestamp >= ?", time.Now().Unix()-86400).Count(&TotalNum24).Error
+	if err != nil {
+		return 0.0, err
+	}
+
+	rate := float64(TotalNum24) / float64(TotalNum)
+
+	return rate, nil
 }

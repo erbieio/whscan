@@ -27,3 +27,13 @@ func FetchContractTxs(addr string, page, size int) (res ContractTxsRes, err erro
 
 	return
 }
+
+func GetContractTxTotalNum() (int64, error) {
+	var total int64
+	err := DB.Model(&model.ContractTx{}).Count(&total).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}

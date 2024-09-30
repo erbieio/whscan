@@ -2,6 +2,7 @@ package service
 
 import (
 	"server/common/model"
+	"time"
 )
 
 // AccountsRes account paging return parameters
@@ -54,4 +55,71 @@ func GetAccount(addr string) (res AccountRes, err error) {
 		"stakers.reward_count AS reward_snft_count, IFNULL(stakers.reward,'0') AS staker_reward"
 	err = db.Select(s).Where("accounts.address=?", addr).Scan(&res).Error
 	return
+}
+
+func GetAccountGrowthRate() (float64, error) {
+	var accounts []string
+	err := DB.Model(&model.Account{}).Select("address as accounts").Find(&accounts).Error
+	if err != nil {
+		return 0.0, err
+	}
+	var contractAccts []string
+	err = DB.Model(&model.ContractAccountErc20{}).Select("address as contractAccts").Find(&contractAccts).Error
+	if err != nil {
+		return 0.0, err
+	}
+	totalAcctMap := make(map[string]bool)
+	for _, acc := range accounts {
+		totalAcctMap[acc] = true
+	}
+	for _, acc := range contractAccts {
+		totalAcctMap[acc] = true
+	}
+	totalAcctNum := len(totalAcctMap)
+
+	var accounts24 []string
+	err = DB.Model(&model.Account{}).Where("timestamp >= ?", time.Now().Unix()-86400).Select("address as accounts24").Find(&accounts24).Error
+	if err != nil {
+		return 0.0, err
+	}
+	var contractAccts24 []string
+	err = DB.Model(&model.ContractAccountErc20{}).Where("timestamp >= ?", time.Now().Unix()-86400).Select("address as contractAccts24").Find(&contractAccts24).Error
+	if err != nil {
+		return 0.0, err
+	}
+	totalAcctMap24 := make(map[string]bool)
+	for _, acc := range accounts24 {
+		totalAcctMap24[acc] = true
+	}
+	for _, acc := range contractAccts24 {
+		totalAcctMap24[acc] = true
+	}
+	totalAcctNum24 := len(totalAcctMap24)
+
+	rate := float64(totalAcctNum24) / float64(totalAcctNum)
+
+	return rate, nil
+}
+
+func GetAccountTotalNum() (int64, error) {
+	var accounts []string
+	err := DB.Model(&model.Account{}).Select("address as accounts").Find(&accounts).Error
+	if err != nil {
+		return 0.0, err
+	}
+	var contractAccts []string
+	err = DB.Model(&model.ContractAccountErc20{}).Select("address as contractAccts").Find(&contractAccts).Error
+	if err != nil {
+		return 0.0, err
+	}
+	totalAcctMap := make(map[string]bool)
+	for _, acc := range accounts {
+		totalAcctMap[acc] = true
+	}
+	for _, acc := range contractAccts {
+		totalAcctMap[acc] = true
+	}
+	totalAcctNum := len(totalAcctMap)
+
+	return int64(totalAcctNum), nil
 }
