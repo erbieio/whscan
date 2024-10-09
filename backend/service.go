@@ -81,7 +81,7 @@ func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread i
 
 func ScheduledTasks(client *node.Client, ctx context.Context, stats *model.Stats) {
 
-	totalSupplyTicker := time.NewTicker(10 * time.Second)
+	totalSupplyTicker := time.NewTicker(10 * time.Minute)
 	defer totalSupplyTicker.Stop()
 
 	for {
