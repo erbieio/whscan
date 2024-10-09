@@ -13,6 +13,9 @@ func createClient() *node.Client {
 	if client, err = node.Dial("http://192.168.1.235:8560"); err != nil {
 		return nil
 	}
+	//if client, err = node.Dial("http://192.168.84.240:8560"); err != nil {
+	//	return nil
+	//}
 	//if client, err = node.Dial("https://mainnet.infura.io/v3/b6bf7d3508c941499b10025c0776eaf8"); err != nil {
 	//	return nil
 	//}
@@ -43,7 +46,7 @@ func TestSymbol(t *testing.T) {
 func TestTotalSupply(t *testing.T) {
 	client := createClient()
 	//totalSupply, err := TotalSupply(client, context.Background(), "0x100", "0x1f22e90d61d08c4b327139728902682ca2bcb042")
-	totalSupply, err := TotalSupply(client, context.Background(), "0x100", "0x746c57d369849e73f27c7981331edfb8bcab7d89")
+	totalSupply, err := TotalSupply(client, context.Background(), "0x224c9f", "0x9c5e37716861a7e03976fb996228c00d31dd40ea")
 	//name, err := Name(client, context.Background(), "0x13D1F55", "0xdAC17F958D2ee523a2206206994597C13D831ec7 ")
 
 	//data, err := hex.DecodeString(string("584c"))

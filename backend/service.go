@@ -81,7 +81,7 @@ func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread i
 
 func ScheduledTasks(client *node.Client, ctx context.Context, stats *model.Stats) {
 
-	totalSupplyTicker := time.NewTicker(10 * time.Minute)
+	totalSupplyTicker := time.NewTicker(10 * time.Second)
 	defer totalSupplyTicker.Stop()
 
 	for {
@@ -111,7 +111,7 @@ func updateERC20TotalSupply(client *node.Client, ctx context.Context) error {
 			if total != nil {
 				if contract.TotalSupply != total.Text(10) {
 					contract.TotalSupply = total.Text(10)
-					service.DB.Model(&model.Contract{}).Save(contract)
+					service.DB.Save(contract)
 				}
 			}
 		}
