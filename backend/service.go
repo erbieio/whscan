@@ -3,6 +3,9 @@ package backend
 import (
 	"context"
 	"log"
+	"math/big"
+	"server/common/utils"
+	"server/service"
 	"time"
 
 	"server/common/model"
@@ -18,6 +21,7 @@ func Run(chainUrl string, thread int64, interval time.Duration) (err error) {
 	if stats, err = check(client, ctx); err != nil {
 		return
 	}
+	go ScheduledTasks(client, ctx, stats)
 	go loop(client, ctx, stats, thread, interval)
 	return
 }
@@ -73,4 +77,45 @@ func loop(client *node.Client, ctx context.Context, stats *model.Stats, thread i
 			}
 		}
 	}
+}
+
+func ScheduledTasks(client *node.Client, ctx context.Context, stats *model.Stats) {
+
+	totalSupplyTicker := time.NewTicker(10 * time.Minute)
+	defer totalSupplyTicker.Stop()
+
+	for {
+		select {
+		case <-totalSupplyTicker.C:
+			updateERC20TotalSupply(client, ctx)
+		}
+	}
+
+}
+
+func updateERC20TotalSupply(client *node.Client, ctx context.Context) error {
+	var contracts []model.Contract
+	err := service.DB.Model(&model.Contract{}).Where("contract_type = ?", "ERC20").Find(&contracts).Error
+	if err != nil {
+		return err
+	}
+	max, err := client.BlockNumber(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, contract := range contracts {
+		totalSupply, err := utils.TotalSupply(client, ctx, max.Hex(), contract.ContractAddress)
+		if err == nil {
+			total, _ := new(big.Int).SetString(totalSupply[2:], 16)
+			if total != nil {
+				if contract.TotalSupply != total.Text(10) {
+					contract.TotalSupply = total.Text(10)
+					service.DB.Model(&model.Contract{}).Save(contract)
+				}
+			}
+		}
+	}
+
+	return nil
 }
