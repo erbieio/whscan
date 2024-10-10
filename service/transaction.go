@@ -1,7 +1,9 @@
 package service
 
 import (
+	"encoding/hex"
 	"server/common/model"
+	"server/common/types"
 	"strings"
 	"time"
 )
@@ -115,4 +117,55 @@ func GetTransactionGrowthRate() (float64, error) {
 	rate := float64(TotalNum24) / float64(TotalNum)
 
 	return rate, nil
+}
+
+func FetchTransactionsOfAddress(page, size int, number, addr string) (res TransactionsRes, err error) {
+	db := DB.Model(&model.Transaction{})
+	if number != "" {
+		db = db.Where("block_number=?", number)
+	}
+	if addr != "" {
+		db = db.Where("`from`=? OR `to`=?", addr, addr)
+	}
+	if number != "" || addr != "" {
+		err = db.Count(&res.Total).Error
+	} else {
+		// use stats to speed up queries
+		res.Total = stats.TotalTransaction
+	}
+	if err != nil {
+		return
+	}
+	err = db.Order("block_number DESC").Offset((page - 1) * size).Limit(size).Find(&res.Transactions).Error
+
+	// 跟新合约交易的交易金额
+	// Contract tx
+	contractHashs := make([]types.Hash, 0)
+	for _, tx := range res.Transactions {
+		if len(tx.Input) > 2 {
+			input, _ := hex.DecodeString(tx.Input[2:])
+			if len(input) >= 6 && string(input[0:6]) == "erbie:" {
+				// 是erbie交易
+				continue
+			}
+			contractHashs = append(contractHashs, tx.Hash)
+		}
+	}
+	var contractTxs []model.ContractTx
+	if len(contractHashs) > 0 {
+		err = DB.Model(&model.ContractTx{}).Where("hash in ?", contractHashs).Find(&contractTxs).Error
+		if err != nil {
+			return
+		}
+	}
+	for idx, tx := range res.Transactions {
+		for _, cTx := range contractTxs {
+			if tx.Hash == cTx.Hash {
+				res.Transactions[idx].Value = cTx.Value
+				break
+			}
+		}
+	}
+
+	return
 }

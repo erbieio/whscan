@@ -18,6 +18,7 @@ func Transaction(e *gin.Engine) {
 	e.GET("/transaction/erbie/page", pageErbieTransaction)
 	e.GET("/transaction/erbie/:hash", getErbieTransaction)
 	e.GET("/transaction/growth_rate", getTransactionGrowthRate)
+	e.GET("/transaction/address_history", pageTransactionsOfAddress)
 }
 
 // @Tags        transaction
@@ -178,4 +179,26 @@ func getTransactionGrowthRate(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        transactions of address
+// @Summary     query transaction list of an address
+// @Description query transactions list in reverse order
+// @Accept      json
+// @Produce     json
+// @Param       page      query    string false "Page, default 1"
+// @Param       page_size query    string false "Page size, default 10"
+// @Param       number    query    string false "Block number, if empty, query all"
+// @Param       addr      query    string false "Account address, if empty, query all"
+// @Success     200       {object} service.TransactionsRes
+// @Failure     400       {object} service.ErrRes
+// @Router      /transaction/page [get]
+func pageTransactionsOfAddress(c *gin.Context) {
+	page, size := utils.ParsePagination(c.Query("page"), c.Query("page_size"))
+	data, err := service.FetchTransactionsOfAddress(page, size, c.Query("number"), c.Query("addr"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, data)
 }
