@@ -130,7 +130,7 @@ func FetchHolders(addr string, page, size int) (*HoldersRes, error) {
 	} else if contract.ContractType == "ERC721" ||
 		contract.ContractType == "ERC1155" {
 		var tmpNft model.ContractNFT
-		err = DB.Model(&model.ContractNFT{}).Where("contract_address = ?", addr).Order("token_id desc").First(&tmpNft).Error
+		err = DB.Model(&model.ContractNFT{}).Where("contract_address = ?", addr).Order("token_id+0 desc").First(&tmpNft).Error
 		if err != nil {
 			return nil, err
 		}

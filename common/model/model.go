@@ -428,9 +428,9 @@ type ContractTx struct {
 type ContractAccountErc20 struct {
 	Address         string       `json:"address" gorm:"primary_key;index"` //address
 	ContractAddress string       `json:"contract_address" gorm:"primary_key;index"`
-	Balance         types.BigInt `json:"balance"`             //The total amount of coins in the chain
-	Number          types.Long   `json:"number" gorm:"index"` //last update block number
-	Timestamp       types.Long   `json:"timestamp"`           //The event stamp of the account it is in
+	Balance         types.BigInt `json:"balance" gorm:"type:DECIMAL(65);index"` //The total amount of coins in the chain
+	Number          types.Long   `json:"number" gorm:"index"`                   //last update block number
+	Timestamp       types.Long   `json:"timestamp"`                             //The event stamp of the account it is in
 }
 
 // ContractNFT User NFT attribute information (ERC721,ERC1155)
