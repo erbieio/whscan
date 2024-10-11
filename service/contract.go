@@ -190,19 +190,19 @@ func GetTransferNum(addr string) (int64, error) {
 	}
 
 	if contract.ContractType == "ERC20" {
-		err = DB.Model(&model.ERC20Transfer{}).Where("erc20_transfers.from != '0x0000000000000000000000000000000000000000'").Count(&total).Error
+		err = DB.Model(&model.ERC20Transfer{}).Where("address = ?", addr).Count(&total).Error
 		if err != nil {
 			return 0, err
 		}
 	}
 	if contract.ContractType == "ERC721" {
-		err = DB.Model(&model.ERC721Transfer{}).Where("erc721_transfers.from != '0x0000000000000000000000000000000000000000'").Count(&total).Error
+		err = DB.Model(&model.ERC721Transfer{}).Where("address = ?", addr).Count(&total).Error
 		if err != nil {
 			return 0, err
 		}
 	}
-	if contract.ContractType == "ERC721" {
-		err = DB.Model(&model.ERC1155Transfer{}).Where("erc1155_transfers.from != '0x0000000000000000000000000000000000000000'").Count(&total).Error
+	if contract.ContractType == "ERC1155" {
+		err = DB.Model(&model.ERC1155Transfer{}).Where("address = ?", addr).Count(&total).Error
 		if err != nil {
 			return 0, err
 		}

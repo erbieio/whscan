@@ -167,6 +167,7 @@ type Transaction struct {
 	GasUsed           types.Long     `json:"gasUsed"`                                 //Gas consumption
 	TxIndex           types.Long     `json:"transactionIndex"`                        //The serial number in the block
 	Error             *string        `json:"error,omitempty" gorm:"type:VARCHAR(66)"` //exec error
+	ContractTo        types.Address  `json:"contract_to" gorm:"type:CHAR(42);index"`  //contract Receive address
 }
 
 // EventLog transaction log
@@ -420,6 +421,7 @@ type ContractTx struct {
 	TxIndex           types.Long     `json:"transactionIndex"`                        //The serial number in the block
 	Error             *string        `json:"error,omitempty" gorm:"type:VARCHAR(66)"` //exec error
 	FunctionName      string         `json:"function_name"`
+	ContractTo        types.Address  `json:"contract_to" gorm:"type:CHAR(42);index"` //contract Receive address
 }
 
 // Contract Account information

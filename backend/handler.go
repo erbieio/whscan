@@ -709,6 +709,13 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 	for _, log := range wh.CacheLogs {
 		transferLogs := utils.ContractTransferLog(log)
 		for _, transferLog := range transferLogs {
+			//更新交易里面的合约接收地址
+			for idx, tx := range wh.CacheTxs {
+				if string(tx.Hash) == transferLog.TxHash {
+					wh.CacheTxs[idx].ContractTo = types.Address(transferLog.ToAddr)
+					break
+				}
+			}
 
 			//更改合约交易记录的交易金额
 			var contx *model.ContractTx
@@ -718,6 +725,8 @@ func decodeContract(c *node.Client, wh *model.Parsed) error {
 						transferLog.ContractType == "ERC1155" {
 						wh.CacheContractTx[idx].Value = transferLog.Value
 					}
+					wh.CacheContractTx[idx].ContractTo = types.Address(transferLog.ToAddr)
+					tx.ContractTo = types.Address(transferLog.ToAddr)
 					contx = tx
 					break
 				}

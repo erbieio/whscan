@@ -125,7 +125,7 @@ func FetchTransactionsOfAddress(page, size int, number, addr string) (res Transa
 		db = db.Where("block_number=?", number)
 	}
 	if addr != "" {
-		db = db.Where("`from`=? OR `to`=?", addr, addr)
+		db = db.Where("`from`=? OR `to`=? or contract_to = ?", addr, addr, addr)
 	}
 	if number != "" || addr != "" {
 		err = db.Count(&res.Total).Error
