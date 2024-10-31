@@ -8,8 +8,21 @@ import (
 	"time"
 )
 
-func GetTransaction(hash string) (res model.Transaction, err error) {
-	err = DB.Where("transactions.hash=?", hash).Take(&res).Error
+// TransactionDetail
+type TransactionsDetail struct {
+	model.Transaction
+	TokenAmount types.BigInt `json:"token_amount"`
+}
+
+func GetTransaction(hash string) (res TransactionsDetail, err error) {
+	err = DB.Model(&model.Transaction{}).Where("transactions.hash=?", hash).Scan(&res).Error
+	if err == nil {
+		var contractTx model.ContractTx
+		err2 := DB.Model(&model.ContractTx{}).Where("hash=?", hash).Take(&contractTx).Error
+		if err2 == nil {
+			res.TokenAmount = contractTx.Value
+		}
+	}
 	return
 }
 
