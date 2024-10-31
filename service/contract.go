@@ -2,6 +2,7 @@ package service
 
 import (
 	"gorm.io/gorm"
+	"os"
 	"server/common/model"
 )
 
@@ -209,4 +210,66 @@ func GetTransferNum(addr string) (int64, error) {
 	}
 
 	return total, nil
+}
+
+type VerifyContractCode struct {
+	SourceCode      string `json:"source_code"`
+	ContractAddress string `json:"contract_address"`
+	Language        string `json:"language"`
+	Version         string `json:"version"`
+	License         string `json:"license"`
+}
+
+func VerifyCode(req *VerifyContractCode) (bool, error) {
+	var contract model.Contract
+	err := DB.Model(&model.Contract{}).Where("contract_address = ?", req.ContractAddress).First(&contract).Error
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func createDir(path string) error {
+	_, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(path, os.ModePerm)
+			if err != nil {
+				return err
+			} else {
+				return nil
+			}
+		} else {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func writeCodeToFile(req *VerifyContractCode) (string, error) {
+	path := "contractcode/" + req.ContractAddress[len(req.ContractAddress)-2:] + "/" + req.ContractAddress
+	err := createDir(path)
+	if err != nil {
+		return "", err
+	}
+
+	strFile := path + "/" + req.ContractAddress + ".sol"
+	err = os.WriteFile(strFile, []byte(req.SourceCode), 0666)
+	if err != nil {
+		return "", err
+	}
+
+	return path, nil
+}
+
+func compileSolidityCode(req *VerifyContractCode) error {
+
+	//output, err := solc.CompileSolidity("solidity", solidityCode)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+
+	return nil
 }

@@ -17,6 +17,7 @@ func Contract(e *gin.Engine) {
 	e.GET("/contract/token_total_num", getTokenTotalNum)
 	e.GET("/contract/nft_total_num", getNftTotalNum)
 	e.GET("/contract/transfer_num/:addr", getTransferNum)
+	e.POST("/contract/verify_code", verifyCode)
 }
 
 // @Tags        contract
@@ -158,6 +159,31 @@ func getNftTotalNum(c *gin.Context) {
 // @Router      /contract/transfer_num [get]
 func getTransferNum(c *gin.Context) {
 	res, err := service.GetTransferNum(c.Param("addr"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        verify contract code
+// @Summary     verify contract code
+// @Description verify contract code
+// @Accept      json
+// @Produce     json
+// @Param		addr path     string true "contract address"
+// @Success     200  {object} service.VerifyContractCode
+// @Failure     400  {object} service.ErrRes
+// @Router      /contract/verify_code [post]
+func verifyCode(c *gin.Context) {
+	var req service.VerifyContractCode
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+	res, err := service.VerifyCode(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
