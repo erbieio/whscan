@@ -10,12 +10,12 @@ import (
 
 // TransactionDetail
 type TransactionsDetail struct {
-	model.Transaction
-	TokenAmount types.BigInt `json:"token_amount"`
+	tx          model.Transaction `json:"tx"`
+	TokenAmount types.BigInt      `json:"token_amount"`
 }
 
 func GetTransaction(hash string) (res TransactionsDetail, err error) {
-	err = DB.Model(&model.Transaction{}).Where("transactions.hash=?", hash).Take(&res).Error
+	err = DB.Model(&model.Transaction{}).Where("transactions.hash=?", hash).Take(&res.tx).Error
 	if err != nil {
 		var contractTx model.ContractTx
 		err2 := DB.Model(&model.ContractTx{}).Where("transactions.hash=?", hash).Take(&contractTx).Error
