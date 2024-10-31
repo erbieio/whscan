@@ -34,6 +34,10 @@ func FetchContracts(contractType int, page, size int) (res ContractsRes, err err
 	}
 
 	for idx, contract := range res.Contracts {
+		// 数据量太大，清楚bytecode字段
+		res.Contracts[idx].CreateCode = ""
+		res.Contracts[idx].DeployedCode = ""
+
 		var holders int64
 		if contract.ContractType == "ERC20" {
 			err = DB.Model(&model.ContractAccountErc20{}).Where("contract_address = ?", contract.ContractAddress).Count(&holders).Error
