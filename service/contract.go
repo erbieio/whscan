@@ -1,9 +1,11 @@
 package service
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"os"
 	"server/common/model"
+	"strings"
 )
 
 // ContractsRes contract paging return parameters
@@ -253,13 +255,15 @@ func createDir(path string) error {
 }
 
 func writeCodeToFile(req *VerifyContractCode) (string, error) {
-	path := "contractcode/" + req.ContractAddress[len(req.ContractAddress)-2:] + "/" + req.ContractAddress
+
+	addr := strings.ToLower(req.ContractAddress)
+	path := "contractcode/" + addr[len(addr)-2:] + "/" + addr
 	err := createDir(path)
 	if err != nil {
 		return "", err
 	}
 
-	strFile := path + "/" + req.ContractAddress + ".sol"
+	strFile := path + "/" + addr + ".sol"
 	err = os.WriteFile(strFile, []byte(req.SourceCode), 0666)
 	if err != nil {
 		return "", err
@@ -276,4 +280,22 @@ func compileSolidityCode(req *VerifyContractCode) error {
 	//}
 
 	return nil
+}
+
+func GetSourceCode(addr string) (string, error) {
+	if len(addr) < 40 {
+		return "", errors.New("address error")
+	}
+
+	addr = strings.ToLower(addr)
+
+	path := "contractcode/" + addr[len(addr)-2:] + "/" + addr
+	strFile := path + "/" + addr + ".sol"
+
+	contentBytes, err := os.ReadFile(strFile)
+	if err != nil {
+		return "", err
+	}
+
+	return string(contentBytes), nil
 }

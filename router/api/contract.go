@@ -18,6 +18,7 @@ func Contract(e *gin.Engine) {
 	e.GET("/contract/nft_total_num", getNftTotalNum)
 	e.GET("/contract/transfer_num/:addr", getTransferNum)
 	e.POST("/contract/verify_code", verifyCode)
+	e.GET("/contract/source_code/:addr", getSourceCode)
 }
 
 // @Tags        contract
@@ -184,6 +185,25 @@ func verifyCode(c *gin.Context) {
 		return
 	}
 	res, err := service.VerifyCode(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// @Tags        query contract source code
+// @Summary     query contract source code
+// @Description query contract source code
+// @Accept      json
+// @Produce     json
+// @Param		addr path     string true "contract address"
+// @Success     200  {object} string
+// @Failure     400  {object} service.ErrRes
+// @Router      /contract/source_code [post]
+func getSourceCode(c *gin.Context) {
+	res, err := service.GetSourceCode(c.Param("addr"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, service.ErrRes{ErrStr: err.Error()})
 		return
