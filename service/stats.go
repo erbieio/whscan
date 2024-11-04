@@ -287,6 +287,10 @@ func freshStats(db *gorm.DB, parsed *model.Parsed) {
 			db.Model(&model.Epoch{}).Select("COUNT(DISTINCT creator)").Scan(&stats.TotalSNFTCreator)
 			db.Model(&model.Validator{}).Where("`amount`>=35000000000000000000000 AND weight>=10").Count(&stats.TotalValidatorOnline)
 			db.Model(&model.Transaction{}).Where("block_number>?", parsed.Number-10000).Select("COUNT(DISTINCT `from`)").Scan(&stats.ActiveAccount)
+			var erc20AccountNum int64
+			db.Model(&model.ContractAccountErc20{}).Where("number>?", parsed.Number-10000).Select("COUNT(DISTINCT `address`)").Scan(&erc20AccountNum)
+			stats.ActiveAccount = stats.ActiveAccount + erc20AccountNum
+
 			if stats.Total24HTx == 0 || number%720 == 0 {
 				start, stop := utils.LastTimeRange(1)
 				db.Model(&model.Transaction{}).Where("timestamp>=? AND timestamp<?", start, stop).Count(&stats.Total24HTx)
